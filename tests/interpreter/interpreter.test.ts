@@ -360,4 +360,44 @@ describe('Interpreter - Edge Cases', () => {
     expect(result).not.toBeNull();
     expect(result!.toString()).toBe('#FF5733');
   });
+
+  it('should handle fake function calls', () => {
+    const text = "linear-gradient(1, 2 5px, 3rem)";
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser, {});
+    const result = interpreter.interpret();
+    expect(result).not.toBeNull();
+    expect(result!.toString()).toBe('linear-gradient(1, 2 5px, 3rem)');
+  });
+
+  it('should handle return statements', () => {
+    const text = `
+    variable x: Number = 5;
+    if(x > 3) [
+        return x + 2;
+    ];
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser, {});
+    const result = interpreter.interpret();
+    expect(result).not.toBeNull();
+    expect(result!.value).toBe(7);
+  });
+
+  it('should handle parse_int function', () => {
+    const text = `
+    variable i: Number = parse_int("ff", 16);
+    variable j: Number = parse_int("00", 16);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser, {});
+    interpreter.interpret();
+    const i = interpreter.symbolTable.get("i");
+    const j = interpreter.symbolTable.get("j");
+    expect(i?.value).toBe(255);
+    expect(j?.value).toBe(0);
+  });
 });

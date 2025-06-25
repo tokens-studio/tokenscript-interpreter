@@ -163,9 +163,48 @@ describe('Lists - Methods', () => {
     const parser = new Parser(lexer);
     const interpreter = new Interpreter(parser, {});
     interpreter.interpret();
-    
+
     const result = interpreter.symbolTable.get("x");
     expect(result?.elements.map(e => e.value)).toEqual([1, 2, 99, 4]);
+  });
+
+  it('should handle list index method', () => {
+    const text = `
+    variable x: List = "a", "b", "c", "b";
+    variable index1: Number = x.index("b");
+    variable index2: Number = x.index("c");
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser, {});
+    interpreter.interpret();
+
+    const index1 = interpreter.symbolTable.get("index1");
+    const index2 = interpreter.symbolTable.get("index2");
+    expect(index1?.value).toBe(1); // First occurrence of "b"
+    expect(index2?.value).toBe(2);
+  });
+
+  it('should handle complex list operations', () => {
+    const text = `
+    variable numbers: List = 1, 2, 3;
+    numbers.append(4);
+    numbers.extend(5, 6);
+    variable item: Number = numbers.get(4);
+    variable len: Number = numbers.length();
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser, {});
+    interpreter.interpret();
+
+    const numbers = interpreter.symbolTable.get("numbers");
+    const item = interpreter.symbolTable.get("item");
+    const len = interpreter.symbolTable.get("len");
+
+    expect(numbers?.elements.map(e => e.value)).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(item?.value).toBe(5);
+    expect(len?.value).toBe(6);
   });
 });
 

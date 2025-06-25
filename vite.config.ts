@@ -21,5 +21,9 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, '.'),
     }
+  },
+  test: {
+    globals: true,
+    environment: 'node',
   }
 });

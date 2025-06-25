@@ -258,4 +258,41 @@ describe('Lexer - Additional Python Test Cases', () => {
       { type: TokenType.STRING, value: 'foo', line: 1 },
     ]);
   });
+
+  it('should tokenize static number with format', () => {
+    const text = "100px";
+    const lexer = new Lexer(text);
+    const result = [];
+    let token = lexer.getNextToken();
+    while (token.type !== TokenType.EOF) {
+      result.push(token);
+      token = lexer.getNextToken();
+    }
+    expect(result).toEqual([
+      { type: TokenType.NUMBER, value: '100', line: 1 },
+      { type: TokenType.FORMAT, value: SupportedFormats.PX, line: 1 },
+    ]);
+  });
+
+  it('should tokenize function with multiple inputs', () => {
+    const text = "abs(-100px, 200px)";
+    const lexer = new Lexer(text);
+    const result = [];
+    let token = lexer.getNextToken();
+    while (token.type !== TokenType.EOF) {
+      result.push(token);
+      token = lexer.getNextToken();
+    }
+    expect(result).toEqual([
+      { type: TokenType.STRING, value: 'abs', line: 1 },
+      { type: TokenType.LPAREN, value: '(', line: 1 },
+      { type: TokenType.OPERATION, value: Operations.SUBTRACT, line: 1 },
+      { type: TokenType.NUMBER, value: '100', line: 1 },
+      { type: TokenType.FORMAT, value: SupportedFormats.PX, line: 1 },
+      { type: TokenType.COMMA, value: ',', line: 1 },
+      { type: TokenType.NUMBER, value: '200', line: 1 },
+      { type: TokenType.FORMAT, value: SupportedFormats.PX, line: 1 },
+      { type: TokenType.RPAREN, value: ')', line: 1 },
+    ]);
+  });
 });
