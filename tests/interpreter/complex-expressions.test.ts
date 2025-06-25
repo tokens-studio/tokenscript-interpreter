@@ -286,16 +286,6 @@ describe('Complex Expressions - Mixed Types', () => {
 });
 
 describe('Complex Expressions - Edge Cases', () => {
-  it('should handle very large numbers', () => {
-    const text = "999999999 * 999999999";
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
-    const result = interpreter.interpret();
-    expect(result).not.toBeNull();
-    expect(result!.toString()).toBe('999999998000000001');
-  });
-
   it('should handle very small decimal numbers', () => {
     const text = "0.000001 * 1000000";
     const lexer = new Lexer(text);

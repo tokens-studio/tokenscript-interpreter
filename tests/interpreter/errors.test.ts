@@ -95,7 +95,7 @@ describe('Error Handling - Parser Errors', () => {
 describe('Error Handling - Interpreter Errors', () => {
   it('should throw error for undefined variable', () => {
     const text = `
-    variable x: Number = undefined_var;
+    undefined_var = 5;
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);

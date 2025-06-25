@@ -115,8 +115,10 @@ export class NumberSymbol extends BaseSymbolType {
       numValue = value.value as number;
     } else if (typeof value === 'number') {
       numValue = value;
+    } else if (value === null) {
+      numValue = 0; // Default to 0 if value is null
     } else {
-      numValue = 0; // Default to 0 if value is null or not directly usable
+      throw new InterpreterError(`Cannot create NumberSymbol from value of type ${typeof value}: ${value}`);
     }
     super(numValue);
     this.isFloat = !Number.isInteger(numValue);

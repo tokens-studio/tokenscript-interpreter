@@ -40,22 +40,39 @@ function mathWrapper(func: (v1: number, v2: number) => number): OperationFunctio
 
 function comparisonWrapper(func: (v1: any, v2: any) => boolean): BooleanOperationFunction {
   return (a: ISymbolType, b: ISymbolType): BooleanSymbol => {
+    // Check for type compatibility first
+    const isNumericA = a instanceof NumberSymbol || a instanceof NumberWithUnitSymbol;
+    const isNumericB = b instanceof NumberSymbol || b instanceof NumberWithUnitSymbol;
+    const isStringA = a instanceof StringSymbol;
+    const isStringB = b instanceof StringSymbol;
+    const isBooleanA = a instanceof BooleanSymbol;
+    const isBooleanB = b instanceof BooleanSymbol;
+
+    // Only allow comparisons between compatible types
+    if (isNumericA && !isNumericB) {
+        throw new InterpreterError(`Cannot compare ${a.type} with ${b.type}. Incompatible types.`);
+    }
+    if (isStringA && !isStringB) {
+        throw new InterpreterError(`Cannot compare ${a.type} with ${b.type}. Incompatible types.`);
+    }
+    if (isBooleanA && !isBooleanB) {
+        throw new InterpreterError(`Cannot compare ${a.type} with ${b.type}. Incompatible types.`);
+    }
+
     // For comparisons, we often compare raw values if types are compatible (e.g. Number and NumberWithUnit)
     let valA = a.value;
     let valB = b.value;
 
     if (a instanceof NumberWithUnitSymbol && b instanceof NumberSymbol) {
-        // Potentially disallow direct comparison or convert b to NumberWithUnit with same unit if contextually appropriate
-        // For now, comparing values directly if one is unitless and other has unit might be misleading.
-        // Let's assume simple value comparison for now, but this might need refinement based on language spec.
+        // Allow comparison between NumberWithUnit and Number
     } else if (a instanceof NumberSymbol && b instanceof NumberWithUnitSymbol) {
-        // similar to above
+        // Allow comparison between Number and NumberWithUnit
     } else if (a instanceof NumberWithUnitSymbol && b instanceof NumberWithUnitSymbol) {
         if (a.unit !== b.unit) {
             throw new InterpreterError(`Cannot compare NumberWithUnit of different units: ${a.unit} and ${b.unit}`);
         }
     }
-    // If types are not numeric, rely on their direct .value comparison
+    // If types are compatible, rely on their direct .value comparison
     return new BooleanSymbol(func(valA, valB));
   };
 }
@@ -115,6 +132,7 @@ export const DEFAULT_FUNCTION_MAP: Record<string, (...args: ISymbolType[]) => IS
     return new NumberSymbol(Math.max(...nums));
   },
   "sum": (...args: ISymbolType[]): NumberSymbol => {
+    if (args.length < 2) throw new InterpreterError("sum() requires at least two arguments.");
     const sum = args.reduce((acc, arg) => {
       if (arg instanceof NumberSymbol) return acc + (arg.value as number);
       if (arg instanceof NumberWithUnitSymbol) return acc + (arg.value as number);
