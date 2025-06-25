@@ -400,7 +400,12 @@ export class Parser {
     this.eat(TokenType.LPAREN);
     const args: ASTNode[] = [];
     if (this.currentToken.type !== TokenType.RPAREN) {
-      args.push(this.listExpr()); // listExpr handles comma-separated expressions
+      // Parse comma-separated arguments
+      args.push(this.implicitList()); // First argument
+      while (this.currentToken.type === TokenType.COMMA) {
+        this.eat(TokenType.COMMA);
+        args.push(this.implicitList()); // Additional arguments
+      }
     }
     this.eat(TokenType.RPAREN);
     return new FunctionNode(nameToken.value as string, args, nameToken);
