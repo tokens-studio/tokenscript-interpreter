@@ -1,0 +1,5 @@
+{
+  "name": "TokenScript Interpreter",
+  "description": "A web-based interpreter for TokenScript, allowing interactive execution and testing of TokenScript code. Based on a Python reference implementation.",
+  "requestFramePermissions": []
+}
