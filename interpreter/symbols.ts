@@ -26,9 +26,17 @@ export abstract class BaseSymbolType implements ISymbolType {
     if (!methodDefinition) return false;
 
     const requiredArgs = methodDefinition.args.filter((arg: any) => !arg.optional);
-    if (args.length < requiredArgs.length || args.length > methodDefinition.args.length) {
+    const hasUnpackArg = methodDefinition.args.some((arg: any) => arg.unpack);
+
+    if (args.length < requiredArgs.length) {
         return false;
     }
+
+    // If there's an unpack argument, allow any number of arguments >= required
+    if (!hasUnpackArg && args.length > methodDefinition.args.length) {
+        return false;
+    }
+
     // Basic type checking can be added here if needed
     return true;
   }
@@ -40,17 +48,31 @@ export abstract class BaseSymbolType implements ISymbolType {
     }
     
     const processedArgs: any[] = [];
-    methodDefinition.args.forEach((argDef: any, index: number) => {
-        if (args[index] !== undefined) {
-            if (argDef.unpack && args[index] instanceof ListSymbol) {
-                processedArgs.push(...(args[index] as ListSymbol).elements);
-            } else {
-                processedArgs.push(args[index]);
+
+    // Handle unpack arguments - if any argument has unpack: true, pass all remaining args to that parameter
+    const unpackArgIndex = methodDefinition.args.findIndex((argDef: any) => argDef.unpack);
+
+    if (unpackArgIndex !== -1) {
+        // Add regular arguments before the unpack argument
+        for (let i = 0; i < unpackArgIndex; i++) {
+            if (args[i] !== undefined) {
+                processedArgs.push(args[i]);
+            } else if (!methodDefinition.args[i].optional) {
+                throw new InterpreterError(`Missing required argument '${methodDefinition.args[i].name}' for method '${methodName}'.`);
             }
-        } else if (!argDef.optional) {
-            throw new InterpreterError(`Missing required argument '${argDef.name}' for method '${methodName}'.`);
         }
-    });
+        // Add all remaining arguments as unpacked arguments
+        processedArgs.push(...args.slice(unpackArgIndex));
+    } else {
+        // No unpack arguments, process normally
+        methodDefinition.args.forEach((argDef: any, index: number) => {
+            if (args[index] !== undefined) {
+                processedArgs.push(args[index]);
+            } else if (!argDef.optional) {
+                throw new InterpreterError(`Missing required argument '${argDef.name}' for method '${methodName}'.`);
+            }
+        });
+    }
 
     return methodDefinition.function.call(this, ...processedArgs);
   }
@@ -188,9 +210,9 @@ export class ListSymbol extends BaseSymbolType {
     this.isImplicit = isImplicit;
     this._SUPPORTED_METHODS = {
         "append": { function: this.append, args: [{name: "item", type: BaseSymbolType, unpack: false}], returnType: ListSymbol },
-        "extend": { function: this.extend, args: [{name: "items", type: ListSymbol, unpack: false}], returnType: ListSymbol },
+        "extend": { function: this.extend, args: [{name: "items", type: BaseSymbolType, unpack: true}], returnType: ListSymbol },
         "insert": { function: this.insert, args: [{name: "index", type: NumberSymbol}, {name: "item", type: BaseSymbolType, unpack: false}], returnType: ListSymbol },
-        "delete": { function: this.delete, args: [{name: "index", type: NumberSymbol}], returnType: undefined },
+        "delete": { function: this.delete, args: [{name: "index", type: NumberSymbol}], returnType: ListSymbol },
         "length": { function: this.length, args: [], returnType: NumberSymbol },
         "index": { function: this.index, args: [{name: "item", type: BaseSymbolType, unpack: false}], returnType: NumberSymbol },
         "get": { function: this.get, args: [{name: "index", type: NumberSymbol}], returnType: BaseSymbolType },
@@ -223,17 +245,28 @@ export class ListSymbol extends BaseSymbolType {
   }
 
   append(item: ISymbolType): ListSymbol { this.elements.push(item); return this; }
-  extend(items: ListSymbol): ListSymbol { this.elements.push(...items.elements); return this; }
+  extend(...items: ISymbolType[]): ListSymbol {
+    // Handle both individual arguments and ListSymbol arguments
+    for (const item of items) {
+      if (item instanceof ListSymbol) {
+        this.elements.push(...item.elements);
+      } else {
+        this.elements.push(item);
+      }
+    }
+    return this;
+  }
   insert(indexSymbol: NumberSymbol, item: ISymbolType): ListSymbol { 
     const index = indexSymbol.value as number;
     if (index < 0 || index > this.elements.length) throw new InterpreterError("Index out of range for insert.");
     this.elements.splice(index, 0, item); 
     return this; 
   }
-  delete(indexSymbol: NumberSymbol): void { 
+  delete(indexSymbol: NumberSymbol): ListSymbol {
     const index = indexSymbol.value as number;
     if (index < 0 || index >= this.elements.length) throw new InterpreterError("Index out of range for delete.");
-    this.elements.splice(index, 1); 
+    this.elements.splice(index, 1);
+    return this;
   }
   length(): NumberSymbol { return new NumberSymbol(this.elements.length); }
   index(item: ISymbolType): NumberSymbol {
