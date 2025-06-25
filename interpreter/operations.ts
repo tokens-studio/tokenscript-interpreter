@@ -154,6 +154,31 @@ export const DEFAULT_FUNCTION_MAP: Record<string, (...args: ISymbolType[]) => IS
     if (isNaN(parsed)) throw new InterpreterError(`Invalid string for parse_int: "${strSymbol.value}" with base ${base}.`);
     return new NumberSymbol(parsed);
   },
+
+  // Trigonometric functions
+  "sin": (arg: ISymbolType): NumberSymbol => {
+    if (!(arg instanceof NumberSymbol)) throw new InterpreterError("sin() expects a number argument.");
+    return new NumberSymbol(Math.sin(arg.value as number));
+  },
+  "cos": (arg: ISymbolType): NumberSymbol => {
+    if (!(arg instanceof NumberSymbol)) throw new InterpreterError("cos() expects a number argument.");
+    return new NumberSymbol(Math.cos(arg.value as number));
+  },
+  "tan": (arg: ISymbolType): NumberSymbol => {
+    if (!(arg instanceof NumberSymbol)) throw new InterpreterError("tan() expects a number argument.");
+    return new NumberSymbol(Math.tan(arg.value as number));
+  },
+
+  // Additional rounding functions
+  "floor": (arg: ISymbolType): NumberSymbol => {
+    if (!(arg instanceof NumberSymbol)) throw new InterpreterError("floor() expects a number argument.");
+    return new NumberSymbol(Math.floor(arg.value as number));
+  },
+  "ceil": (arg: ISymbolType): NumberSymbol => {
+    if (!(arg instanceof NumberSymbol)) throw new InterpreterError("ceil() expects a number argument.");
+    return new NumberSymbol(Math.ceil(arg.value as number));
+  },
+
   // Placeholder for non-mathematical functions that return strings
   "linear-gradient": (...args: ISymbolType[]): StringSymbol => {
     const stringArgs = args.map(arg => arg.toString()).join(', ');
