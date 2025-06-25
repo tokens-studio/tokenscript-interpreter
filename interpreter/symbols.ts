@@ -226,7 +226,7 @@ export class ListSymbol extends BaseSymbolType {
 
   toString(): string {
     if (this.isImplicit) {
-      // For implicit lists, check if any element is exactly a single space string
+      // Check if any element is exactly a single space string - this indicates explicit spacing
       const hasExplicitSingleSpaces = this.elements.some(e =>
         e instanceof StringSymbol && e.value === ' '
       );
@@ -234,10 +234,40 @@ export class ListSymbol extends BaseSymbolType {
       if (hasExplicitSingleSpaces) {
         // Direct concatenation when single space strings are present
         return this.elements.map(e => e.toString()).join('');
-      } else {
-        // Space separation for normal implicit lists
-        return this.elements.map(e => e.toString()).join(' ');
       }
+
+      // For other cases, use smart concatenation based on leading/trailing spaces
+      let result = '';
+
+      for (let i = 0; i < this.elements.length; i++) {
+        const current = this.elements[i].toString();
+
+        if (i === 0) {
+          // First element, just add it
+          result += current;
+        } else {
+          const previous = this.elements[i - 1];
+          const currentElement = this.elements[i];
+
+          // Check if previous element ends with space or current element starts with space
+          const prevEndsWithSpace = previous instanceof StringSymbol &&
+                                   typeof previous.value === 'string' &&
+                                   previous.value.endsWith(' ');
+          const currentStartsWithSpace = currentElement instanceof StringSymbol &&
+                                        typeof currentElement.value === 'string' &&
+                                        currentElement.value.startsWith(' ');
+
+          if (prevEndsWithSpace || currentStartsWithSpace) {
+            // No additional space needed
+            result += current;
+          } else {
+            // Add space between elements
+            result += ' ' + current;
+          }
+        }
+      }
+
+      return result;
     } else {
       // Comma separation for explicit lists
       return this.elements.map(e => e.toString()).join(', ');
@@ -323,12 +353,23 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
 
 export class ColorSymbol extends BaseSymbolType {
   type = "Color"; // Base color type, typically hex
-  constructor(value: string | null) { 
+  _SUPPORTED_METHODS: Record<string, MethodDefinitionDef>;
+
+  constructor(value: string | null) {
     const effectiveValue = value === null ? "#000000" : value; // Default to black if null
     super(effectiveValue);
     if (!ColorSymbol.isValidHex(effectiveValue)) {
       throw new InterpreterError(`Invalid hex color format: ${effectiveValue}`);
     }
+
+    // Add string methods to Color since it's essentially a string
+    this._SUPPORTED_METHODS = {
+        "split": { function: this.split, args: [{ name: "delimiter", type: StringSymbol, optional: true }], returnType: ListSymbol },
+        "upper": { function: this.upper, args: [], returnType: StringSymbol },
+        "lower": { function: this.lower, args: [], returnType: StringSymbol },
+        "length": { function: this.length, args: [], returnType: NumberSymbol },
+        "concat": { function: this.concat, args: [{ name: "other", type: StringSymbol }], returnType: StringSymbol },
+    };
   }
 
   static isValidHex(value: string): boolean {
@@ -352,5 +393,36 @@ export class ColorSymbol extends BaseSymbolType {
     }
     // Accept valid hex color strings
     return typeof val === 'string' && ColorSymbol.isValidHex(val);
+  }
+
+  // String-like methods for Color
+  split(delimiter?: StringSymbol): ListSymbol {
+    const strValue = this.value as string;
+    let parts: string[];
+    if (delimiter === undefined) {
+        parts = strValue.split('');
+    } else {
+        parts = strValue.split(delimiter.value as string);
+    }
+    return new ListSymbol(parts.map(p => new StringSymbol(p)));
+  }
+
+  upper(): StringSymbol {
+    return new StringSymbol((this.value as string).toUpperCase());
+  }
+
+  lower(): StringSymbol {
+    return new StringSymbol((this.value as string).toLowerCase());
+  }
+
+  length(): NumberSymbol {
+    return new NumberSymbol((this.value as string).length);
+  }
+
+  concat(other: StringSymbol): StringSymbol {
+    if (other instanceof StringSymbol) {
+      return new StringSymbol((this.value as string) + other.value);
+    }
+    throw new InterpreterError(`Cannot concatenate Color with ${typeof other}`);
   }
 }

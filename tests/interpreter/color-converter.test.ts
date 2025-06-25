@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { Lexer } from '../../interpreter/lexer';
 import { Parser } from '../../interpreter/parser';
 import { Interpreter } from '../../interpreter/interpreter';
-import { List, Number as NumberSymbol } from '../../interpreter/symbols';
+import { ListSymbol as List, NumberSymbol } from '../../interpreter/symbols';
 
 describe('Color Converter - Hex to RGB', () => {
   it('should convert hex color to RGB (6 digit)', () => {
