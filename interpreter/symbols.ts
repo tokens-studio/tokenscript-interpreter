@@ -297,6 +297,11 @@ export class ColorSymbol extends BaseSymbolType {
   }
 
   valid_value(val: any): boolean {
+    // Accept other ColorSymbol instances
+    if (val instanceof ColorSymbol) {
+      return true;
+    }
+    // Accept valid hex color strings
     return typeof val === 'string' && ColorSymbol.isValidHex(val);
   }
 }
