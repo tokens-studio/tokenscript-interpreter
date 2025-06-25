@@ -203,7 +203,23 @@ export class ListSymbol extends BaseSymbolType {
   }
 
   toString(): string {
-    return this.elements.map(e => e.toString()).join(this.isImplicit ? ' ' : ', ');
+    if (this.isImplicit) {
+      // For implicit lists, check if any element is exactly a single space string
+      const hasExplicitSingleSpaces = this.elements.some(e =>
+        e instanceof StringSymbol && e.value === ' '
+      );
+
+      if (hasExplicitSingleSpaces) {
+        // Direct concatenation when single space strings are present
+        return this.elements.map(e => e.toString()).join('');
+      } else {
+        // Space separation for normal implicit lists
+        return this.elements.map(e => e.toString()).join(' ');
+      }
+    } else {
+      // Comma separation for explicit lists
+      return this.elements.map(e => e.toString()).join(', ');
+    }
   }
 
   append(item: ISymbolType): ListSymbol { this.elements.push(item); return this; }

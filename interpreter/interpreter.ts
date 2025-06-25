@@ -245,7 +245,11 @@ export class Interpreter {
                                  // valueToAssign is confirmed ISymbolType here.
         const currentAssignmentValue: ISymbolType = valueToAssign;
 
-        if (!(currentAssignmentValue instanceof SymbolConstructor) && currentAssignmentValue.type && currentAssignmentValue.type.toLowerCase() !== SymbolConstructor.prototype.type.toLowerCase()) {
+        // Get the target type by creating a temporary instance
+        const tempInstance = new SymbolConstructor(null);
+        const targetType = tempInstance.type;
+
+        if (!(currentAssignmentValue instanceof SymbolConstructor) && currentAssignmentValue.type && currentAssignmentValue.type.toLowerCase() !== targetType.toLowerCase()) {
             const originalTypeForErrorMessage = currentAssignmentValue.type;
             try {
                 let rawValueForCoercion = currentAssignmentValue.value;
@@ -269,20 +273,25 @@ export class Interpreter {
                 if (currentAssignmentValue instanceof SymbolConstructor) {
                     valueForConstructor = currentAssignmentValue; // Pass instance if it's already the target type
                 } else {
-                     // Prepare rawValueForCoercion from currentAssignmentValue.value
-                    let preparedRawValue = currentAssignmentValue.value;
-                    if (SymbolConstructor === ListSymbol && Array.isArray(preparedRawValue)) {
-                        preparedRawValue = preparedRawValue.map(v => this.importReferenceValue(v));
+                    // Special handling for coercing to String - use toString() method
+                    if (SymbolConstructor === StringSymbol) {
+                        valueForConstructor = currentAssignmentValue.toString();
+                    } else {
+                        // Prepare rawValueForCoercion from currentAssignmentValue.value
+                        let preparedRawValue = currentAssignmentValue.value;
+                        if (SymbolConstructor === ListSymbol && Array.isArray(preparedRawValue)) {
+                            preparedRawValue = preparedRawValue.map(v => this.importReferenceValue(v));
+                        }
+                        // The original code had an unwrap: else if (preparedRawValue instanceof BaseSymbolType) preparedRawValue = preparedRawValue.value;
+                        // This general unwrap is removed to allow constructors to handle symbol inputs.
+                        valueForConstructor = preparedRawValue;
                     }
-                    // The original code had an unwrap: else if (preparedRawValue instanceof BaseSymbolType) preparedRawValue = preparedRawValue.value;
-                    // This general unwrap is removed to allow constructors to handle symbol inputs.
-                    valueForConstructor = preparedRawValue;
                 }
 
 
                 const coercedValue = new SymbolConstructor(valueForConstructor);
 
-                if (coercedValue.type.toLowerCase() === SymbolConstructor.prototype.type.toLowerCase() ||
+                if (coercedValue.type.toLowerCase() === targetType.toLowerCase() ||
                     this.symbolTable.getSymbolConstructor(typeName, subTypeName) === coercedValue.constructor) {
                     valueToAssign = coercedValue;
                 } else {
