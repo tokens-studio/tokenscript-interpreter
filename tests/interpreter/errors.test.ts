@@ -66,7 +66,7 @@ describe('Error Handling - Parser Errors', () => {
 
   it('should throw error for invalid expression', () => {
     const text = `
-    variable x: Number = + 5;
+    variable x: Number = 5 +;
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
