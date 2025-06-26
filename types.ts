@@ -90,6 +90,7 @@ export interface ISymbolType {
   valid_value(value: any): boolean;
   toString(): string; // JS equivalent of __repr__ or __str__
   equals(other: ISymbolType): boolean; // JS equivalent of __eq__
+  toJSON?(): any; // Optional JSON serialization
 
   hasMethod?(methodName: string, args: ISymbolType[]): boolean;
   callMethod?(methodName: string, args: ISymbolType[]): ISymbolType | null | undefined;

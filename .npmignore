@@ -1,0 +1,39 @@
+# Development files
+.github/
+.vscode/
+node_modules/
+coverage/
+tests/
+examples/
+specifications/
+
+# Source files (we publish compiled dist)
+interpreter/
+lib/
+*.ts
+*.tsx
+!dist/**/*.d.ts
+
+# Configuration files
+tsconfig.json
+tsconfig.lib.json
+biome.json
+.gitignore
+
+# Development assets
+gemini.txt
+python.txt
+metadata.json
+
+# Build artifacts we don't want
+*.log
+*.tgz
+.DS_Store
+Thumbs.db
+
+# Keep these files
+!README.md
+!LICENSE
+!package.json
+!CHANGELOG.md
+!dist/

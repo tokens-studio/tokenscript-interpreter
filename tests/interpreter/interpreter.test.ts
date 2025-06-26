@@ -264,7 +264,7 @@ describe("Interpreter - Return Statements", () => {
     const interpreter = new Interpreter(parser, {});
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
-    expect(parseFloat(result?.value)).toBe(7);
+    expect(Number.parseFloat(result?.value)).toBe(7);
   });
 });
 

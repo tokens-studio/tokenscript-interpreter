@@ -66,40 +66,171 @@ return padding;
 
 This demonstrates how TokenScript can make design decisions based on context, enabling truly responsive design systems.
 
-## Installation & Usage
+## Installation
 
-TokenScript Interpreter provides both a **web interface** and a **command-line interface (CLI)** for different use cases.
+### NPM Package Installation
 
-### Web Interface
+Install TokenScript Interpreter as a dependency in your project:
+
+```bash
+npm install tokenscript-interpreter
+```
+
+Or install globally to use the CLI:
+
+```bash
+npm install -g tokenscript-interpreter
+```
 
 **Prerequisites:** Node.js (v16 or higher)
 
-1. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+## Usage
 
-2. **Start the development server:**
-   ```bash
-   npm run dev
-   ```
+TokenScript Interpreter can be used in multiple ways:
 
-3. **Open your browser** and navigate to `http://localhost:5173`
+### 1. As a Library (Programmatic Usage)
 
-#### Web Usage
-1. **Write TokenScript code** in the main editor
-2. **Provide token references** in JSON format (optional)
-3. **Click "Interpret"** to execute your code
-4. **View results** including tokens, AST, and output
+Import and use the interpreter in your JavaScript/TypeScript projects:
 
-### Command Line Interface (CLI)
+```typescript
+import { Interpreter, Lexer, Parser } from 'tokenscript-interpreter';
 
-The CLI provides powerful tools for processing design token files and interactive development.
+// Basic usage
+const code = '16 * 1.5px';
+const lexer = new Lexer(code);
+const parser = new Parser(lexer);
+const interpreter = new Interpreter(parser);
 
-#### Installation for CLI
+const result = interpreter.interpret();
+console.log(result); // "24px"
+```
+
+#### With Token References
+
+```typescript
+import { Interpreter, Lexer, Parser } from 'tokenscript-interpreter';
+
+const code = '{base.spacing} * 2px';
+const references = {
+  'base.spacing': 16
+};
+
+const lexer = new Lexer(code);
+const parser = new Parser(lexer);
+const interpreter = new Interpreter(parser, references);
+
+const result = interpreter.interpret();
+console.log(result); // "32px"
+```
+
+#### Processing Token Sets
+
+```typescript
+import { interpretTokensets, processThemes } from 'tokenscript-interpreter';
+
+// Process a tokenset from a ZIP file
+const result = await interpretTokensets('path/to/tokens.zip', 'output.json');
+console.log('Processed tokens:', result);
+```
+
+### 2. Command Line Interface (CLI)
+
+Use the CLI for processing design token files and interactive development:
+
 ```bash
-npm install -g tokenscript-interpreter
-# Or run locally with npm scripts (see below)
+# Interactive mode
+tokenscript interactive
+
+# Process token files
+tokenscript parse_tokenset --tokenset tokens.zip --output resolved.json
+
+# Generate theme permutations
+tokenscript permutate_tokenset --tokenset tokens.zip --permutate-on Brand Mode --permutate-to Components --output themes.json
+```
+
+### 3. Development and Testing
+
+For development and testing, you can clone the repository:
+
+```bash
+# Clone the repository
+git clone https://github.com/tokens-studio/tokenscript-interpreter.git
+cd tokenscript-interpreter
+
+# Install dependencies
+npm install
+
+# Run tests
+npm test
+
+# Test CLI functionality
+npm run cli:interactive
+```
+
+## Package Structure
+
+The npm package provides multiple entry points for different use cases:
+
+### Main Library (`tokenscript-interpreter`)
+
+```typescript
+// Core interpreter functionality
+import {
+  Interpreter,
+  Lexer,
+  Parser,
+  ColorManager
+} from 'tokenscript-interpreter';
+
+// AST and symbol types
+import {
+  BinOpNode,
+  NumNode,
+  StringSymbol,
+  NumberSymbol
+} from 'tokenscript-interpreter';
+
+// Utility functions
+import {
+  interpretTokensets,
+  permutateTokensets,
+  processThemes
+} from 'tokenscript-interpreter';
+
+// Type definitions
+import type {
+  ReferenceRecord,
+  ISymbolType,
+  LanguageOptions
+} from 'tokenscript-interpreter';
+```
+
+### CLI (`tokenscript-interpreter/cli`)
+
+```typescript
+// Access CLI functionality programmatically
+import { /* CLI exports */ } from 'tokenscript-interpreter/cli';
+```
+
+### Package Exports
+
+The package is configured with proper ES modules and TypeScript support:
+
+```json
+{
+  "main": "./dist/lib/index.js",
+  "types": "./dist/lib/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/lib/index.js",
+      "types": "./dist/lib/index.d.ts"
+    },
+    "./cli": {
+      "import": "./dist/cli.js",
+      "types": "./dist/cli.d.ts"
+    }
+  }
+}
 ```
 
 #### CLI Commands
@@ -108,8 +239,14 @@ npm install -g tokenscript-interpreter
 Start an interactive REPL for experimenting with TokenScript expressions:
 
 ```bash
+# If installed globally
+tokenscript interactive
+
+# If installed locally
+npx tokenscript interactive
+
+# Or using npm scripts (for development)
 npm run cli:interactive
-# Or: npm run cli -- interactive
 ```
 
 **Interactive Mode Features:**
@@ -136,6 +273,13 @@ Result: 32px
 Process and resolve design token files from ZIP archives:
 
 ```bash
+# If installed globally
+tokenscript parse_tokenset --tokenset path/to/tokens.zip --output resolved-tokens.json
+
+# If installed locally
+npx tokenscript parse_tokenset --tokenset path/to/tokens.zip --output resolved-tokens.json
+
+# Or using npm scripts (for development)
 npm run cli:parse -- --tokenset path/to/tokens.zip --output resolved-tokens.json
 ```
 
@@ -158,6 +302,13 @@ This command will:
 Generate theme permutations for design system variations:
 
 ```bash
+# If installed globally
+tokenscript permutate_tokenset --tokenset tokens.zip --permutate-on theme1 theme2 --permutate-to target --output permutations.json
+
+# If installed locally
+npx tokenscript permutate_tokenset --tokenset tokens.zip --permutate-on theme1 theme2 --permutate-to target --output permutations.json
+
+# Or using npm scripts (for development)
 npm run cli:permutate -- --tokenset tokens.zip --permutate-on theme1 theme2 --permutate-to target --output permutations.json
 ```
 
@@ -190,6 +341,122 @@ npm run cli -- permutate_tokenset --help # Permutate command help
   "colors.primary": "#3B82F6",
   "spacing.base": 16,
   "typography.scale": 1.25
+}
+```
+
+## API Reference
+
+### Core Classes
+
+#### `Interpreter`
+
+The main interpreter class for executing TokenScript code.
+
+```typescript
+class Interpreter {
+  constructor(
+    parserOrAst: Parser | ASTNode | null,
+    references?: ReferenceRecord,
+    symbolTable?: SymbolTable,
+    languageOptions?: LanguageOptions,
+    colorManager?: ColorManager
+  )
+
+  interpret(): ISymbolType | string | null
+  setReferences(references: ReferenceRecord): void
+}
+```
+
+**Example:**
+```typescript
+const interpreter = new Interpreter(parser, { 'base.size': 16 });
+const result = interpreter.interpret();
+```
+
+#### `Lexer`
+
+Tokenizes TokenScript source code.
+
+```typescript
+class Lexer {
+  constructor(text: string)
+
+  getNextToken(): Token
+  isEOF(): boolean
+}
+```
+
+#### `Parser`
+
+Parses tokens into an Abstract Syntax Tree (AST).
+
+```typescript
+class Parser {
+  constructor(lexer: Lexer)
+
+  parse(): ASTNode | null
+  getRequiredReferences(): string[]
+}
+```
+
+### Utility Functions
+
+#### `interpretTokensets(tokensetPath: string, outputPath: string): Promise<any>`
+
+Process and resolve design token files from ZIP archives.
+
+```typescript
+import { interpretTokensets } from 'tokenscript-interpreter';
+
+const result = await interpretTokensets('./tokens.zip', './output.json');
+```
+
+#### `permutateTokensets(tokensetPath: string, permutateOn: string[], permutateTo: string, outputPath: string): Promise<any>`
+
+Generate theme permutations for design system variations.
+
+```typescript
+import { permutateTokensets } from 'tokenscript-interpreter';
+
+const result = await permutateTokensets(
+  './tokens.zip',
+  ['Brand', 'Mode'],
+  'Components',
+  './permutations.json'
+);
+```
+
+### Type Definitions
+
+#### `ReferenceRecord`
+
+```typescript
+type ReferenceRecord = Record<
+  string,
+  string | number | ISymbolType | Array<string | number | ISymbolType>
+>;
+```
+
+#### `ISymbolType`
+
+Base interface for all TokenScript values.
+
+```typescript
+interface ISymbolType {
+  type: string;
+  value: any;
+  valid_value(value: any): boolean;
+  toString(): string;
+  equals(other: ISymbolType): boolean;
+  toJSON?(): any;
+}
+```
+
+#### `LanguageOptions`
+
+```typescript
+interface LanguageOptions {
+  MAX_ITERATIONS: number;
 }
 ```
 
@@ -261,7 +528,7 @@ This TypeScript implementation provides the same CLI capabilities as the origina
 ## Project Structure
 
 - `/interpreter/` - Core TokenScript interpreter implementation
-- `/components/` - React UI components for web interface
+- `/lib/` - Library entry point and exports
 - `/tests/` - Test suite
 - `/types.ts` - TypeScript type definitions
 - `/cli.ts` - Command-line interface entry point
@@ -308,11 +575,77 @@ Integrate TokenScript processing into your build pipeline:
 This project is based on the original Python TokenScript interpreter. Contributions are welcome! Please ensure all tests pass before submitting a PR.
 
 ### Development Setup
-1. Clone the repository
-2. Install dependencies: `npm install`
-3. Run tests: `npm test`
-4. Test CLI: `npm run cli:interactive`
-5. Start web dev server: `npm run dev`
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/tokens-studio/tokenscript-interpreter.git
+   cd tokenscript-interpreter
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Run tests**
+   ```bash
+   npm test
+   npm run test:coverage  # With coverage report
+   ```
+
+4. **Development workflow**
+   ```bash
+   npm run dev           # Start web development server
+   npm run cli:interactive  # Test CLI interactively
+   npm run lint          # Check code quality
+   npm run format        # Format code
+   ```
+
+5. **Build and test library**
+   ```bash
+   npm run build:lib     # Build library for distribution
+   npm run build:web     # Build web interface
+   ```
+
+### Code Quality
+
+This project uses several tools to maintain code quality:
+
+- **Biome**: For linting and formatting
+- **TypeScript**: For type safety
+- **Vitest**: For testing with coverage
+- **GitHub Actions**: For CI/CD
+
+Before submitting a PR:
+```bash
+npm run lint          # Fix linting issues
+npm run format        # Format code
+npm test              # Ensure all tests pass
+npm run build:lib     # Ensure library builds successfully
+```
+
+### Project Structure
+
+```
+├── interpreter/          # Core TokenScript interpreter
+├── lib/                # Library entry point
+├── tests/              # Test suite
+├── cli.ts              # CLI entry point
+├── tokenset-processor.ts # Token processing utilities
+├── types.ts            # TypeScript definitions
+└── dist/               # Built library (generated)
+```
+
+### Release Process
+
+See [RELEASE.md](./RELEASE.md) for detailed release instructions.
+
+For maintainers:
+```bash
+npm run release:patch   # Bug fixes
+npm run release:minor   # New features
+npm run release:major   # Breaking changes
+```
 
 ## CLI Implementation Status
 

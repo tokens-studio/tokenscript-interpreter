@@ -1,14 +1,30 @@
 {
   "name": "tokenscript-interpreter",
-  "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "A TypeScript interpreter for TokenScript, a domain-specific language for design token manipulation and computation",
   "type": "module",
+  "main": "./dist/lib/index.js",
+  "types": "./dist/lib/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/lib/index.js",
+      "types": "./dist/lib/index.d.ts"
+    },
+    "./cli": {
+      "import": "./dist/cli.js",
+      "types": "./dist/cli.d.ts"
+    }
+  },
+  "bin": {
+    "tokenscript": "./dist/cli.js"
+  },
+  "files": ["dist", "README.md", "LICENSE"],
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
+    "build": "npm run build:lib",
+    "build:lib": "tsc -p tsconfig.lib.json",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "cli": "tsx cli.ts",
     "cli:interactive": "tsx cli.ts interactive",
     "cli:parse": "tsx cli.ts parse_tokenset",
@@ -16,31 +32,48 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
-    "check": "biome check --write ."
-  },
-  "bin": {
-    "tokenscript": "./cli.ts"
+    "check": "biome check --write .",
+    "prepublishOnly": "npm run test && npm run build:lib",
+    "version": "npm run build:lib",
+    "postversion": "git push && git push --tags",
+    "release:patch": "npm version patch && npm publish",
+    "release:minor": "npm version minor && npm publish",
+    "release:major": "npm version major && npm publish"
   },
   "dependencies": {
     "chalk": "^5.4.1",
     "commander": "^14.0.0",
-    "geist": "^1.4.2",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
     "readline-sync": "^1.4.10",
-    "vitest": "^3.2.4",
     "yauzl": "^3.2.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
     "@types/node": "^22.14.0",
-    "@types/react": "^19.1.8",
-    "@types/react-dom": "^19.1.6",
     "@types/readline-sync": "^1.4.8",
     "@types/yauzl": "^2.10.3",
-    "browserslist": "^4.25.1",
-    "lightningcss": "^1.30.1",
+    "@vitest/coverage-v8": "^3.2.4",
     "tsx": "^4.20.3",
     "typescript": "~5.7.2",
-    "vite": "^6.2.0"
+    "vitest": "^3.2.4"
+  },
+  "keywords": [
+    "tokenscript",
+    "design-tokens",
+    "design-system",
+    "interpreter",
+    "cli"
+  ],
+  "author": "Marco Christian Krenn <marco.krenn@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tokens-studio/tokenscript-interpreter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tokens-studio/tokenscript-interpreter/issues"
+  },
+  "homepage": "https://github.com/tokens-studio/tokenscript-interpreter#readme",
+  "engines": {
+    "node": ">=16.0.0"
   }
 }

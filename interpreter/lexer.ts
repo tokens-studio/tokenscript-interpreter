@@ -23,10 +23,10 @@ const RESERVED_KEYWORD_STRINGS: Record<string, ReservedKeyword> = {};
 
 export class Lexer {
   private text: string;
-  private pos: number = 0;
+  private pos = 0;
   private currentChar: string | null;
-  private line: number = 1;
-  private column: number = 1;
+  private line = 1;
+  private column = 1;
 
   constructor(text: string) {
     this.text = text;
@@ -43,7 +43,7 @@ export class Lexer {
     this.currentChar = this.pos < this.text.length ? this.text[this.pos] : null;
   }
 
-  private peek(n: number = 1): string | null {
+  private peek(n = 1): string | null {
     const peekPos = this.pos + n;
     return peekPos < this.text.length ? this.text[peekPos] : null;
   }

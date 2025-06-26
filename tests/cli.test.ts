@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { Interpreter } from "../interpreter/interpreter";
 import { Lexer } from "../interpreter/lexer";
 import { Parser } from "../interpreter/parser";
-import { buildThemeTree, processThemes, TokenSetResolver } from "../tokenset-processor";
+import { TokenSetResolver, buildThemeTree, processThemes } from "../tokenset-processor";
 
 describe("CLI Functionality", () => {
   describe("Expression Interpretation", () => {

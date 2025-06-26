@@ -40,7 +40,7 @@ export class Parser {
     return Array.from(this.requiredReferences);
   }
 
-  private error(message: string = "Invalid syntax"): never {
+  private error(message = "Invalid syntax"): never {
     throw new ParserError(message, this.currentToken?.line, this.currentToken);
   }
 
@@ -54,7 +54,7 @@ export class Parser {
     return eatenToken;
   }
 
-  private peekTokens(n: number = 1): Token[] {
+  private peekTokens(n = 1): Token[] {
     // Simplified peek, only gets next token
     // This is tricky without a lexer that supports peeking arbitrary tokens.
     // For robust peeking, lexer would need a buffer or ability to backtrack.
@@ -72,7 +72,7 @@ export class Parser {
   }
 
   // Program entry point
-  public parse(inlineMode: boolean = false): ASTNode | null {
+  public parse(inlineMode = false): ASTNode | null {
     if (this.currentToken.type === TokenType.EOF) {
       return null;
     }

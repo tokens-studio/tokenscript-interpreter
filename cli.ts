@@ -117,7 +117,7 @@ async function setVariablesInteractively(
       }
 
       // Try to parse as number first, then as string
-      const numValue = parseFloat(value);
+      const numValue = Number.parseFloat(value);
       if (!Number.isNaN(numValue)) {
         references[name] = numValue;
       } else {
@@ -336,11 +336,7 @@ async function loadZipToMemory(zipPath: string): Promise<Record<string, any>> {
 }
 
 // Flatten tokenset recursively
-function flattenTokenset(
-  tokenset: any,
-  prefix: string = "",
-  resolveAll: boolean = false
-): Record<string, any> {
+function flattenTokenset(tokenset: any, prefix = "", resolveAll = false): Record<string, any> {
   const flattenedTokens: Record<string, any> = {};
 
   for (const [setName, setData] of Object.entries(tokenset)) {

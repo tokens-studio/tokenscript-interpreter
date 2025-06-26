@@ -150,6 +150,6 @@ describe("Color Converter - RGB to Linear RGB", () => {
     expect(result).toBeDefined();
     // Low values should use the linear formula (r / 12.92)
     const expectedR = 5 / 255 / 12.92;
-    expect(parseFloat(result?.elements[0].toString())).toBeCloseTo(expectedR, 5);
+    expect(Number.parseFloat(result?.elements[0].toString())).toBeCloseTo(expectedR, 5);
   });
 });

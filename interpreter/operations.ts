@@ -100,12 +100,12 @@ export const OPERATION_IMPLEMENTATIONS: Record<
   [Operations.POWER]: mathWrapper((v1, v2) => v1 ** v2),
 
   // Logical operations for Booleans
-  [Operations.LOGIC_AND]: (a, b) => {
+  [Operations.LOGIC_AND]: (a: ISymbolType, b: ISymbolType) => {
     if (!(a instanceof BooleanSymbol) || !(b instanceof BooleanSymbol))
       throw new InterpreterError("&& operator requires boolean operands.");
     return new BooleanSymbol(a.value && b.value);
   },
-  [Operations.LOGIC_OR]: (a, b) => {
+  [Operations.LOGIC_OR]: (a: ISymbolType, b: ISymbolType) => {
     if (!(a instanceof BooleanSymbol) || !(b instanceof BooleanSymbol))
       throw new InterpreterError("|| operator requires boolean operands.");
     return new BooleanSymbol(a.value || b.value);
@@ -186,7 +186,7 @@ export const DEFAULT_FUNCTION_MAP: Record<string, (...args: ISymbolType[]) => IS
     if (!(strSymbol instanceof StringSymbol))
       throw new InterpreterError("parse_int() first argument must be a string.");
     const base = baseSymbol instanceof NumberSymbol ? (baseSymbol.value as number) : 10;
-    const parsed = parseInt(strSymbol.value as string, base);
+    const parsed = Number.parseInt(strSymbol.value as string, base);
     if (Number.isNaN(parsed))
       throw new InterpreterError(
         `Invalid string for parse_int: "${strSymbol.value}" with base ${base}.`

@@ -1,5 +1,8 @@
 import type { ASTNode, Operations, SupportedFormats, Token, TokenType } from "../types";
 
+// Re-export ASTNode for external consumers
+export type { ASTNode } from "../types";
+
 export class BinOpNode implements ASTNode {
   nodeType = "BinOpNode";
   constructor(
@@ -21,10 +24,10 @@ export class NumNode implements ASTNode {
   public isFloat: boolean;
   constructor(public token: Token) {
     if (String(this.token.value).includes(".")) {
-      this.value = parseFloat(String(this.token.value));
+      this.value = Number.parseFloat(String(this.token.value));
       this.isFloat = true;
     } else {
-      this.value = parseInt(String(this.token.value), 10);
+      this.value = Number.parseInt(String(this.token.value), 10);
       this.isFloat = false;
     }
   }

@@ -20,6 +20,7 @@ import {
   ImplicitListNode,
   type ListNode,
   type NumNode,
+  type ReassignNode,
   type ReferenceNode,
   type ReturnNode,
   type StatementListNode,
@@ -37,6 +38,7 @@ import {
   OPERATION_IMPLEMENTATIONS,
 } from "./operations";
 import { Parser } from "./parser";
+import { SymbolTable } from "./symbolTable";
 import {
   BaseSymbolType,
   BooleanSymbol,
@@ -46,7 +48,6 @@ import {
   NumberWithUnitSymbol,
   StringSymbol,
 } from "./symbols";
-import { SymbolTable } from "./symbolTable";
 
 class ReturnSignal {
   constructor(public value: ISymbolType | null) {}
@@ -77,7 +78,7 @@ export class Interpreter {
     }
     this.symbolTable = symbolTable || new SymbolTable();
     this.languageOptions = { ...DEFAULT_LANGUAGE_OPTIONS, ...languageOptions };
-    this.colorManager = colorManager; // Store if provided
+    this.colorManager = colorManager || null; // Store if provided
 
     // Register color types and functions if ColorManager is provided
     if (this.colorManager) {
@@ -87,8 +88,18 @@ export class Interpreter {
         if (colorType) {
           // Create a constructor function that creates new instances
           const colorManager = this.colorManager;
-          function ColorConstructor(value?: ISymbolType) {
-            return colorManager.initColorFormat(name, value);
+          class ColorConstructor extends BaseSymbolType {
+            type = colorType!.type;
+
+            constructor(value?: ISymbolType) {
+              const instance = colorManager.initColorFormat(name, value);
+              super(instance.value);
+              Object.assign(this, instance);
+            }
+
+            valid_value(value: any): boolean {
+              return colorType!.valid_value(value);
+            }
           }
 
           this.symbolTable.addColorSubType(name, ColorConstructor);
@@ -342,8 +353,11 @@ export class Interpreter {
       if (visitedValue === undefined) {
         // Explicitly check for void/undefined
         valueToAssign = null;
+      } else if (visitedValue === null) {
+        // Explicitly check for null
+        valueToAssign = null;
       } else {
-        // visitedValue is ISymbolType | null
+        // visitedValue is ISymbolType
         valueToAssign = visitedValue;
       }
     }
@@ -357,7 +371,7 @@ export class Interpreter {
     const SymbolConstructor: new (...args: any[]) => ISymbolType =
       this.symbolTable.getSymbolConstructor(typeName, subTypeName);
 
-    if (this.symbolTable.exists(varName) && !this.symbolTable.parent) {
+    if (this.symbolTable.exists(varName) && this.symbolTable.isRoot()) {
       throw new InterpreterError(
         `Variable '${varName}' already declared.`,
         node.varName.token.line,
@@ -365,7 +379,7 @@ export class Interpreter {
       );
     }
 
-    if (valueToAssign != null) {
+    if (valueToAssign !== null && valueToAssign !== undefined) {
       // Checks for both null and undefined. After above logic, effectively checks for not null.
       // valueToAssign is confirmed ISymbolType here.
       const currentAssignmentValue: ISymbolType = valueToAssign;
@@ -374,11 +388,12 @@ export class Interpreter {
       const tempInstance = new SymbolConstructor(null);
       const targetType = tempInstance.type;
 
-      if (
-        !(currentAssignmentValue instanceof SymbolConstructor) &&
-        currentAssignmentValue.type &&
-        currentAssignmentValue.type.toLowerCase() !== targetType.toLowerCase()
-      ) {
+      const isCorrectType = currentAssignmentValue instanceof SymbolConstructor;
+      const hasType = currentAssignmentValue.type;
+      const typeMismatch =
+        hasType && currentAssignmentValue.type.toLowerCase() !== targetType.toLowerCase();
+
+      if (!isCorrectType && typeMismatch) {
         const originalTypeForErrorMessage = currentAssignmentValue.type;
         try {
           let rawValueForCoercion = currentAssignmentValue.value;

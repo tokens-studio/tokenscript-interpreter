@@ -58,6 +58,10 @@ export class SymbolTable {
     return this.symbols[name.toLowerCase()] !== undefined || (this.parent?.exists(name) ?? false);
   }
 
+  isRoot(): boolean {
+    return this.parent === null;
+  }
+
   isSymbolType(typeName: string): boolean {
     const lowerTypeName = typeName.toLowerCase();
     if (this.activeSymbolTypes[lowerTypeName]) return true;

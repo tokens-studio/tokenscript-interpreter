@@ -355,11 +355,7 @@ export function buildThemeTree(
 }
 
 // Flatten tokenset helper function
-function flattenTokenset(
-  tokenset: any,
-  prefix: string = "",
-  resolveAll: boolean = false
-): Record<string, any> {
+function flattenTokenset(tokenset: any, prefix = "", resolveAll = false): Record<string, any> {
   const flattenedTokens: Record<string, any> = {};
 
   for (const [setName, setData] of Object.entries(tokenset)) {

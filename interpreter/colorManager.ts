@@ -49,6 +49,7 @@ interface ColorConversion {
 
 // Dynamic color symbol that can have custom attributes
 export class DynamicColorSymbol extends BaseSymbolType {
+  public type: string; // Implement the abstract property
   public _typeName: string;
   public _id: string;
   public _availableAttributes: any;
