@@ -72,10 +72,12 @@ describe("CLI Functionality", () => {
       };
 
       const resolver = new TokenSetResolver(tokens);
-      const resolved = resolver.resolve();
+      const result = resolver.resolve();
 
-      expect(resolved["simple.token"]?.toString()).toBe("16px");
-      expect(resolved["another.token"]?.toString()).toBe("24px");
+      expect(result.resolvedTokens["simple.token"]?.toString()).toBe("16px");
+      expect(result.resolvedTokens["another.token"]?.toString()).toBe("24px");
+      expect(result.warnings).toEqual([]);
+      expect(result.errors).toEqual([]);
     });
 
     it("should resolve token dependencies", () => {
@@ -85,10 +87,12 @@ describe("CLI Functionality", () => {
       };
 
       const resolver = new TokenSetResolver(tokens);
-      const resolved = resolver.resolve();
+      const result = resolver.resolve();
 
-      expect(resolved.base?.toString()).toBe("16");
-      expect(resolved.derived?.toString()).toBe("32px");
+      expect(result.resolvedTokens.base?.toString()).toBe("16");
+      expect(result.resolvedTokens.derived?.toString()).toBe("32px");
+      expect(result.warnings).toEqual([]);
+      expect(result.errors).toEqual([]);
     });
 
     it("should handle complex token dependencies", () => {
@@ -101,14 +105,45 @@ describe("CLI Functionality", () => {
       };
 
       const resolver = new TokenSetResolver(tokens);
-      const resolved = resolver.resolve();
+      const result = resolver.resolve();
 
-      expect(resolved["base.spacing"]?.toString()).toBe("8");
-      expect(resolved.scale?.toString()).toBe("2");
-      expect(resolved.small?.toString()).toBe("8px");
-      expect(resolved.medium?.toString()).toBe("16px");
+      expect(result.resolvedTokens["base.spacing"]?.toString()).toBe("8");
+      expect(result.resolvedTokens.scale?.toString()).toBe("2");
+      expect(result.resolvedTokens.small?.toString()).toBe("8px");
+      expect(result.resolvedTokens.medium?.toString()).toBe("16px");
       // Addition of 16px + 8px = 24px (mathematical addition)
-      expect(resolved.large?.toString()).toBe("24px");
+      expect(result.resolvedTokens.large?.toString()).toBe("24px");
+      expect(result.warnings).toEqual([]);
+      expect(result.errors).toEqual([]);
+    });
+
+    it("should collect warnings for circular references", () => {
+      const tokens = {
+        circular: "{circular}",
+        normal: "16px",
+      };
+
+      const resolver = new TokenSetResolver(tokens);
+      const result = resolver.resolve();
+
+      expect(result.warnings).toContain("Token 'circular' has a circular reference to itself.");
+      expect(result.errors).toEqual([]);
+      expect(result.resolvedTokens.normal?.toString()).toBe("16px");
+    });
+
+    it("should collect warnings for unresolved tokens", () => {
+      const tokens = {
+        invalid: "{nonexistent}",
+        valid: "16px",
+      };
+
+      const resolver = new TokenSetResolver(tokens);
+      const result = resolver.resolve();
+
+      expect(result.warnings.length).toBeGreaterThan(0);
+      expect(result.warnings.some(w => w.includes("Not all tokens could be resolved"))).toBe(true);
+      expect(result.errors).toEqual([]);
+      expect(result.resolvedTokens.valid?.toString()).toBe("16px");
     });
   });
 

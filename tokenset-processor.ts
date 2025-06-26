@@ -9,6 +9,12 @@ export interface TokenSetResolverOptions {
   maxIterations?: number;
 }
 
+export interface TokenSetResolverResult {
+  resolvedTokens: Record<string, any>;
+  warnings: string[];
+  errors: string[];
+}
+
 export class TokenSetResolver {
   private tokens: Record<string, any>;
   private resolvedTokens: Record<string, any>;
@@ -16,6 +22,8 @@ export class TokenSetResolver {
   private requiresTokens: Record<string, Set<string>> = {};
   private parsers: Record<string, ASTNode> = {};
   private referenceCache: Interpreter;
+  private warnings: string[] = [];
+  private errors: string[] = [];
 
   constructor(tokens: Record<string, any>, globalTokens: Record<string, any> = {}) {
     this.tokens = tokens;
@@ -51,9 +59,7 @@ export class TokenSetResolver {
 
           // Check for self-reference
           if (requiredRefs.includes(tokenName)) {
-            console.warn(
-              chalk.yellow(`⚠️  Token '${tokenName}' has a circular reference to itself.`)
-            );
+            this.warnings.push(`Token '${tokenName}' has a circular reference to itself.`);
           }
 
           // Build dependency graph
@@ -72,11 +78,7 @@ export class TokenSetResolver {
           this.resolvedTokens[tokenName] = tokenData;
         }
       } catch (error: any) {
-        console.warn(
-          chalk.yellow(
-            `⚠️  Error parsing token '${tokenName}': ${error.message} (value: ${tokenData})`
-          )
-        );
+        this.warnings.push(`Error parsing token '${tokenName}': ${error.message} (value: ${tokenData})`);
         this.resolvedTokens[tokenName] = tokenData;
       }
     }
@@ -102,11 +104,7 @@ export class TokenSetResolver {
         const result = interpreter.interpret();
         this.resolvedTokens[tokenName] = result;
       } catch (error: any) {
-        console.warn(
-          chalk.yellow(
-            `⚠️  Error interpreting token '${tokenName}': ${error.message} (value: ${this.tokens[tokenName]})`
-          )
-        );
+        this.warnings.push(`Error interpreting token '${tokenName}': ${error.message} (value: ${this.tokens[tokenName]})`);
         this.resolvedTokens[tokenName] = this.tokens[tokenName];
       }
     }
@@ -131,7 +129,7 @@ export class TokenSetResolver {
     }
   }
 
-  public resolve(): Record<string, any> {
+  public resolve(): TokenSetResolverResult {
     this.buildRequirementsGraph();
 
     // Resolve tokens that have no dependencies first
@@ -149,14 +147,16 @@ export class TokenSetResolver {
     );
 
     if (unresolvedTokens.length > 0) {
-      console.warn(
-        chalk.yellow(
-          `⚠️  Not all tokens could be resolved. Remaining tokens: ${unresolvedTokens.map((token) => `${token}: ${this.tokens[token]}`).join(", ")}`
-        )
+      this.warnings.push(
+        `Not all tokens could be resolved. Remaining tokens: ${unresolvedTokens.map((token) => `${token}: ${this.tokens[token]}`).join(", ")}`
       );
     }
 
-    return this.resolvedTokens;
+    return {
+      resolvedTokens: this.resolvedTokens,
+      warnings: this.warnings,
+      errors: this.errors
+    };
   }
 }
 
@@ -186,8 +186,18 @@ export async function processThemes(
 
     const startTime = Date.now();
     const tokenSet = new TokenSetResolver(themeTokens, {});
-    const resolvedTokens = tokenSet.resolve();
+    const result = tokenSet.resolve();
     const endTime = Date.now();
+
+    // Handle warnings and errors from the resolver
+    for (const warning of result.warnings) {
+      console.warn(chalk.yellow(`⚠️  ${warning}`));
+    }
+    for (const error of result.errors) {
+      console.error(chalk.red(`❌ ${error}`));
+    }
+
+    const resolvedTokens = result.resolvedTokens;
 
     const duration = (endTime - startTime) / 1000;
     const inputCount = Object.keys(themeTokens).length;
@@ -429,11 +439,11 @@ export function interpretTokensets(
   if (permutationDimensions.length === 0) {
     const relevantTokens = Object.keys(tokens);
     const tokenSet = new TokenSetResolver(permutationTree, {});
-    const resolvedTokens = tokenSet.resolve();
+    const result = tokenSet.resolve();
 
     const relevantTokensExtracted: Record<string, any> = {};
     for (const token of relevantTokens) {
-      relevantTokensExtracted[token] = resolvedTokens[token];
+      relevantTokensExtracted[token] = result.resolvedTokens[token];
     }
 
     return relevantTokensExtracted;
@@ -484,11 +494,11 @@ export function interpretTokens(dtcgJson: Record<string, any>): Record<string, a
     }
 
     const tokenSet = new TokenSetResolver(tokensToProcess, {});
-    const resolvedTokens = tokenSet.resolve();
+    const result = tokenSet.resolve();
 
     // Convert Symbol objects to strings
     const stringifiedTokens: Record<string, any> = {};
-    for (const [key, value] of Object.entries(resolvedTokens)) {
+    for (const [key, value] of Object.entries(result.resolvedTokens)) {
       if (value && typeof value === "object" && "toString" in value) {
         stringifiedTokens[key] = value.toString();
       } else {
@@ -557,12 +567,12 @@ export function interpretTokensWithMetadata(dtcgJson: Record<string, any>): Reco
 
       // Resolve token references
       const tokenSet = new TokenSetResolver(themeTokensFlat, {});
-      const resolvedTokens = tokenSet.resolve();
+      const result = tokenSet.resolve();
 
       // Create DTCG output with interpreted values
       const dtcgTokens: Record<string, any> = {};
       for (const [tokenName, tokenMetadata] of Object.entries(themeTokensWithMetadata)) {
-        const resolvedValue = resolvedTokens[tokenName];
+        const resolvedValue = result.resolvedTokens[tokenName];
 
         // Preserve all metadata and update $value with interpreted result
         dtcgTokens[tokenName] = {
@@ -599,12 +609,12 @@ export function interpretTokensWithMetadata(dtcgJson: Record<string, any>): Reco
 
       // Resolve token references
       const tokenSet = new TokenSetResolver(tokensToResolve, {});
-      const resolvedTokens = tokenSet.resolve();
+      const result = tokenSet.resolve();
 
       // Create DTCG output with interpreted values
       const dtcgTokens: Record<string, any> = {};
       for (const [tokenName, tokenMetadata] of Object.entries(tokensWithMetadata)) {
-        const resolvedValue = resolvedTokens[tokenName];
+        const resolvedValue = result.resolvedTokens[tokenName];
 
         // Preserve all metadata and update $value with interpreted result
         dtcgTokens[tokenName] = {
@@ -753,11 +763,11 @@ function processThemesSync(themes: Record<string, Record<string, any>>): Record<
 
   for (const [themeName, themeTokens] of Object.entries(themes)) {
     const tokenSet = new TokenSetResolver(themeTokens, {});
-    const resolvedTokens = tokenSet.resolve();
+    const result = tokenSet.resolve();
 
     // Convert Symbol objects to strings
     const stringifiedTokens: Record<string, any> = {};
-    for (const [key, value] of Object.entries(resolvedTokens)) {
+    for (const [key, value] of Object.entries(result.resolvedTokens)) {
       if (value && typeof value === "object" && "toString" in value) {
         stringifiedTokens[key] = value.toString();
       } else {
