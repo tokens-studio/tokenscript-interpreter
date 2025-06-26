@@ -1,11 +1,11 @@
-import { describe, it, expect } from 'vitest';
-import { Lexer } from '../../interpreter/lexer';
-import { Parser } from '../../interpreter/parser';
-import { Interpreter } from '../../interpreter/interpreter';
-import { InterpreterError } from '../../interpreter/errors';
+import { describe, expect, it } from "vitest";
+import { InterpreterError } from "../../interpreter/errors";
+import { Interpreter } from "../../interpreter/interpreter";
+import { Lexer } from "../../interpreter/lexer";
+import { Parser } from "../../interpreter/parser";
 
-describe('Control Structures - While Loops', () => {
-  it('should handle basic while loop', () => {
+describe("Control Structures - While Loops", () => {
+  it("should handle basic while loop", () => {
     const text = `
     variable i: Number = 0;
     while(i < 5) [
@@ -20,7 +20,7 @@ describe('Control Structures - While Loops', () => {
     expect(result?.value).toBe(5);
   });
 
-  it('should handle nested while loops', () => {
+  it("should handle nested while loops", () => {
     const text = `
     variable i: NumberWithUnit = 0px;
     variable j: Number = 0;
@@ -42,7 +42,7 @@ describe('Control Structures - While Loops', () => {
     expect(j?.value).toBe(2);
   });
 
-  it('should handle while loop with multiple statements', () => {
+  it("should handle while loop with multiple statements", () => {
     const text = `
     variable i: NumberWithUnit = 0px;
     variable j: Number = 0;
@@ -65,7 +65,7 @@ describe('Control Structures - While Loops', () => {
     expect(j?.value).toBe(2);
   });
 
-  it('should throw error for infinite while loop', () => {
+  it("should throw error for infinite while loop", () => {
     const text = `
     variable j: Number = 0;
     while(true) [
@@ -78,7 +78,7 @@ describe('Control Structures - While Loops', () => {
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
-  it('should throw error for non-boolean while condition', () => {
+  it("should throw error for non-boolean while condition", () => {
     const text = `
     variable i: Number = 0;
     while(5) [
@@ -92,8 +92,8 @@ describe('Control Structures - While Loops', () => {
   });
 });
 
-describe('Control Structures - If Statements', () => {
-  it('should handle basic if statement', () => {
+describe("Control Structures - If Statements", () => {
+  it("should handle basic if statement", () => {
     const text = `
     variable x: Number = 0;
     if(true) [
@@ -108,7 +108,7 @@ describe('Control Structures - If Statements', () => {
     expect(result?.value).toBe(5);
   });
 
-  it('should handle if statement with false condition', () => {
+  it("should handle if statement with false condition", () => {
     const text = `
     variable x: Number = 0;
     if(false) [
@@ -123,7 +123,7 @@ describe('Control Structures - If Statements', () => {
     expect(result?.value).toBe(0);
   });
 
-  it('should handle if statement with complex condition', () => {
+  it("should handle if statement with complex condition", () => {
     const text = `
     variable x: Number = 0;
     variable y: Number = 5;
@@ -139,7 +139,7 @@ describe('Control Structures - If Statements', () => {
     expect(result?.value).toBe(10);
   });
 
-  it('should throw error for non-boolean if condition', () => {
+  it("should throw error for non-boolean if condition", () => {
     const text = `
     variable x: Number = 0;
     if(5) [
@@ -152,7 +152,7 @@ describe('Control Structures - If Statements', () => {
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
-  it('should handle if-else statement', () => {
+  it("should handle if-else statement", () => {
     const text = `
     variable x: Number = 0;
     if(false) [

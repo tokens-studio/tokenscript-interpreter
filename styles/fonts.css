@@ -1,8 +1,9 @@
 /* Geist Mono Font Definitions */
 @font-face {
-  font-family: 'Geist Mono';
-  src: url('/GeistMono-Variable.woff2') format('woff2-variations'),
-       url('/GeistMono-Regular.woff2') format('woff2');
+  font-family: "Geist Mono";
+  src:
+    url("/GeistMono-Variable.woff2") format("woff2-variations"),
+    url("/GeistMono-Regular.woff2") format("woff2");
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
@@ -10,30 +11,33 @@
 
 /* Almarena Neue Font Definitions */
 @font-face {
-  font-family: 'Almarena Neue Display';
-  src: url('/AlmarenaNeue-DisplayExtraBold.woff2') format('woff2'),
-       url('/AlmarenaNeue-DisplayExtraBold.woff') format('woff'),
-       url('/AlmarenaNeue-DisplayExtraBold.otf') format('opentype');
+  font-family: "Almarena Neue Display";
+  src:
+    url("/AlmarenaNeue-DisplayExtraBold.woff2") format("woff2"),
+    url("/AlmarenaNeue-DisplayExtraBold.woff") format("woff"),
+    url("/AlmarenaNeue-DisplayExtraBold.otf") format("opentype");
   font-weight: 900;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Almarena Neue Display';
-  src: url('/AlmarenaNeue-DisplayBold.woff2') format('woff2'),
-       url('/AlmarenaNeue-DisplayBold.woff') format('woff'),
-       url('/AlmarenaNeue-DisplayBold.otf') format('opentype');
+  font-family: "Almarena Neue Display";
+  src:
+    url("/AlmarenaNeue-DisplayBold.woff2") format("woff2"),
+    url("/AlmarenaNeue-DisplayBold.woff") format("woff"),
+    url("/AlmarenaNeue-DisplayBold.otf") format("opentype");
   font-weight: 800;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Almarena Neue Display';
-  src: url('/AlmarenaNeue-DisplayMedium.woff2') format('woff2'),
-       url('/AlmarenaNeue-DisplayMedium.woff') format('woff'),
-       url('/AlmarenaNeue-DisplayMedium.otf') format('opentype');
+  font-family: "Almarena Neue Display";
+  src:
+    url("/AlmarenaNeue-DisplayMedium.woff2") format("woff2"),
+    url("/AlmarenaNeue-DisplayMedium.woff") format("woff"),
+    url("/AlmarenaNeue-DisplayMedium.otf") format("opentype");
   font-weight: 600;
   font-style: normal;
   font-display: swap;

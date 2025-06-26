@@ -1,11 +1,11 @@
-import { describe, it, expect } from 'vitest';
-import { Lexer } from '../../interpreter/lexer';
-import { Parser } from '../../interpreter/parser';
-import { Interpreter } from '../../interpreter/interpreter';
-import { ListSymbol as List, NumberSymbol } from '../../interpreter/symbols';
+import { describe, expect, it } from "vitest";
+import { Interpreter } from "../../interpreter/interpreter";
+import { Lexer } from "../../interpreter/lexer";
+import { Parser } from "../../interpreter/parser";
+import { ListSymbol as List, NumberSymbol } from "../../interpreter/symbols";
 
-describe('Color Converter - Hex to RGB', () => {
-  it('should convert hex color to RGB (6 digit)', () => {
+describe("Color Converter - Hex to RGB", () => {
+  it("should convert hex color to RGB (6 digit)", () => {
     const text = `
     variable color_parts: List = {COLOR}.split("#");
     variable color: List = color_parts.get(1).split();
@@ -25,14 +25,14 @@ describe('Color Converter - Hex to RGB', () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {"COLOR": "#FF5733"});
+    const interpreter = new Interpreter(parser, { COLOR: "#FF5733" });
     const result = interpreter.interpret();
-    
+
     expect(result).toBeDefined();
-    expect(result!.toString()).toBe("255, 87, 51");
+    expect(result?.toString()).toBe("255, 87, 51");
   });
 
-  it('should convert hex color to RGB (3 digit)', () => {
+  it("should convert hex color to RGB (3 digit)", () => {
     const text = `
     variable color_parts: List = {COLOR}.split("#");
     variable color: List = color_parts.get(1).split();
@@ -52,16 +52,16 @@ describe('Color Converter - Hex to RGB', () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {"COLOR": "#FF5"});
+    const interpreter = new Interpreter(parser, { COLOR: "#FF5" });
     const result = interpreter.interpret();
-    
+
     expect(result).toBeDefined();
-    expect(result!.toString()).toBe("255, 255, 85");
+    expect(result?.toString()).toBe("255, 255, 85");
   });
 });
 
-describe('Color Converter - RGB to Linear RGB', () => {
-  it('should convert RGB to linear RGB', () => {
+describe("Color Converter - RGB to Linear RGB", () => {
+  it("should convert RGB to linear RGB", () => {
     const text = `
     variable rgb: List = {rgb};
     variable rgb_linear: List = 0, 0, 0;
@@ -99,14 +99,14 @@ describe('Color Converter - RGB to Linear RGB', () => {
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
     const rgbList = new List([new NumberSymbol(255), new NumberSymbol(0), new NumberSymbol(0)]);
-    const interpreter = new Interpreter(parser, {"rgb": rgbList});
+    const interpreter = new Interpreter(parser, { rgb: rgbList });
     const result = interpreter.interpret();
-    
+
     expect(result).toBeDefined();
-    expect(result!.toString()).toBe("1, 0, 0");
+    expect(result?.toString()).toBe("1, 0, 0");
   });
 
-  it('should handle low RGB values in linear conversion', () => {
+  it("should handle low RGB values in linear conversion", () => {
     const text = `
     variable rgb: List = {rgb};
     variable rgb_linear: List = 0, 0, 0;
@@ -144,12 +144,12 @@ describe('Color Converter - RGB to Linear RGB', () => {
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
     const rgbList = new List([new NumberSymbol(5), new NumberSymbol(5), new NumberSymbol(5)]);
-    const interpreter = new Interpreter(parser, {"rgb": rgbList});
+    const interpreter = new Interpreter(parser, { rgb: rgbList });
     const result = interpreter.interpret();
-    
+
     expect(result).toBeDefined();
     // Low values should use the linear formula (r / 12.92)
-    const expectedR = (5 / 255) / 12.92;
-    expect(parseFloat(result!.elements[0].toString())).toBeCloseTo(expectedR, 5);
+    const expectedR = 5 / 255 / 12.92;
+    expect(parseFloat(result?.elements[0].toString())).toBeCloseTo(expectedR, 5);
   });
 });

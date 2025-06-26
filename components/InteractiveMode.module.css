@@ -24,13 +24,15 @@
 
 .label {
   display: block;
-  font-family: 'Almarena Neue Display', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  font-family:
+    "Almarena Neue Display", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
   font-size: 1.125rem;
   font-weight: 600;
-  color: #08022F;
-  background: #A499FF;
+  color: #08022f;
+  background: #a499ff;
   padding: 0.5rem 1rem;
-  border: 2px solid #162F02;
+  border: 2px solid #162f02;
   border-radius: 0.375rem 0.375rem 0 0;
   border-bottom: 0;
 }
@@ -39,15 +41,19 @@
   width: 100%;
   height: 120px;
   padding: 0.75rem;
-  font-family: 'Geist Mono', ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  font-family:
+    "Geist Mono", ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo,
+    monospace;
   font-size: 0.875rem;
-  background-color: #F7F8F8;
-  color: #08022F;
+  background-color: #f7f8f8;
+  color: #08022f;
   border-radius: 0 0 0.375rem 0.375rem;
-  border: 2px solid #08022F;
+  border: 2px solid #08022f;
   border-top: 0;
   resize: none;
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  transition:
+    border-color 0.15s ease-in-out,
+    box-shadow 0.15s ease-in-out;
 }
 
 .textarea:focus {
@@ -64,8 +70,8 @@
 
 .interpretButton {
   padding: 0.5rem 1.5rem;
-  background-color: #FF709C;
-  color: #2F0210;
+  background-color: #ff709c;
+  color: #2f0210;
   font-size: 1.5rem;
   font-weight: 600;
   border-radius: 0.375rem;
@@ -75,7 +81,7 @@
 }
 
 .interpretButton:hover {
-  background-color:rgb(207, 69, 111);
+  background-color: rgb(207, 69, 111);
 }
 
 .interpretButton:focus {
@@ -111,21 +117,23 @@
 .errorCard {
   margin-bottom: 1rem;
   padding: 0.75rem;
-  background-color: #FF764C;
-  color: #2F0D02;
+  background-color: #ff764c;
+  color: #2f0d02;
   border-radius: 0.375rem;
 }
 
 .successCard {
   margin-bottom: 1rem;
   padding: 0.75rem;
-  background-color: #91EB4C;
-  color: #162F02;
+  background-color: #91eb4c;
+  color: #162f02;
   border-radius: 0.375rem;
 }
 
 .cardTitle {
-  font-family: 'Almarena Neue Display', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  font-family:
+    "Almarena Neue Display", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
   font-weight: 600;
   font-size: 0.875rem;
   margin-bottom: 0.25rem;
@@ -134,7 +142,9 @@
 .cardContent {
   white-space: pre-wrap;
   font-size: 3rem;
-  font-family: 'Almarena Neue Display', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  font-family:
+    "Almarena Neue Display", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
 }
 
 .debugSection {
@@ -145,13 +155,15 @@
 }
 
 .debugCard {
-  background-color: #0C0F0F;
+  background-color: #0c0f0f;
   border-radius: 0.375rem;
   padding: 0.5rem;
 }
 
 .debugTitle {
-  font-family: 'Almarena Neue Display', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  font-family:
+    "Almarena Neue Display", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
   font-weight: 800;
   font-size: 0.875rem;
   color: rgb(125, 211, 252);
@@ -179,7 +191,9 @@
 }
 
 .tokenItem {
-  font-family: 'Geist Mono', ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  font-family:
+    "Geist Mono", ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo,
+    monospace;
   padding: 0.25rem;
   border-bottom: 1px solid rgb(55, 65, 81);
 }
@@ -197,8 +211,10 @@
 }
 
 .astContent {
-  background: 
+  background: #1a1a1a;
   white-space: pre-wrap;
-  font-family: 'Geist Mono', ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  font-family:
+    "Geist Mono", ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo,
+    monospace;
   color: #fff;
 }

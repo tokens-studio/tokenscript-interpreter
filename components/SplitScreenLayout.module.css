@@ -16,7 +16,7 @@
 
 .documentationPanel {
   width: 50%;
-  overflow-y: auto; 
+  overflow-y: auto;
 }
 
 .interpreterPanel {
@@ -30,7 +30,9 @@
 }
 
 .interpreterTitle {
-  font-family: 'Almarena Neue Display', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  font-family:
+    "Almarena Neue Display", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
   font-size: 3.75rem;
   font-weight: 800;
   margin-bottom: 1rem;
@@ -55,7 +57,7 @@
   .container {
     flex-direction: column;
   }
-  
+
   .documentationPanel,
   .interpreterPanel {
     width: 100%;

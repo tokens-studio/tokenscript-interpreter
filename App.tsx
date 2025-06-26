@@ -1,11 +1,8 @@
-
-import React from 'react';
-import { SplitScreenLayout } from './components/SplitScreenLayout';
+import type React from "react";
+import { SplitScreenLayout } from "./components/SplitScreenLayout";
 
 const App: React.FC = () => {
-  return (
-    <SplitScreenLayout />
-  );
+  return <SplitScreenLayout />;
 };
 
 export default App;

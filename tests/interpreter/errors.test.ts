@@ -1,41 +1,41 @@
-import { describe, it, expect } from 'vitest';
-import { Lexer } from '../../interpreter/lexer';
-import { Parser } from '../../interpreter/parser';
-import { Interpreter } from '../../interpreter/interpreter';
-import { InterpreterError, LexerError, ParserError } from '../../interpreter/errors';
+import { describe, expect, it } from "vitest";
+import { InterpreterError } from "../../interpreter/errors";
+import { Interpreter } from "../../interpreter/interpreter";
+import { Lexer } from "../../interpreter/lexer";
+import { Parser } from "../../interpreter/parser";
 
-describe('Error Handling - Lexer Errors', () => {
-  it('should throw error for unterminated string', () => {
+describe("Error Handling - Lexer Errors", () => {
+  it("should throw error for unterminated string", () => {
     const text = '"unterminated string';
     const lexer = new Lexer(text);
     expect(() => {
       let token = lexer.getNextToken();
-      while (token.type !== 'EOF') {
+      while (token.type !== "EOF") {
         token = lexer.getNextToken();
       }
     }).toThrow();
   });
 
-  it('should throw error for invalid character', () => {
-    const text = '@invalid';
+  it("should throw error for invalid character", () => {
+    const text = "@invalid";
     const lexer = new Lexer(text);
     expect(() => lexer.getNextToken()).toThrow();
   });
 
-  it('should throw error for unterminated reference', () => {
-    const text = '{unterminated';
+  it("should throw error for unterminated reference", () => {
+    const text = "{unterminated";
     const lexer = new Lexer(text);
     expect(() => {
       let token = lexer.getNextToken();
-      while (token.type !== 'EOF') {
+      while (token.type !== "EOF") {
         token = lexer.getNextToken();
       }
     }).toThrow();
   });
 });
 
-describe('Error Handling - Parser Errors', () => {
-  it('should throw error for missing semicolon', () => {
+describe("Error Handling - Parser Errors", () => {
+  it("should throw error for missing semicolon", () => {
     const text = `
     variable x: Number = 5
     variable y: Number = 10;
@@ -45,7 +45,7 @@ describe('Error Handling - Parser Errors', () => {
     expect(() => parser.parse()).toThrow();
   });
 
-  it('should throw error for missing closing bracket', () => {
+  it("should throw error for missing closing bracket", () => {
     const text = `
     if(true) [
         variable x: Number = 5;
@@ -55,7 +55,7 @@ describe('Error Handling - Parser Errors', () => {
     expect(() => parser.parse()).toThrow();
   });
 
-  it('should throw error for missing closing parenthesis', () => {
+  it("should throw error for missing closing parenthesis", () => {
     const text = `
     variable x: Number = (5 + 3;
     `;
@@ -64,7 +64,7 @@ describe('Error Handling - Parser Errors', () => {
     expect(() => parser.parse()).toThrow();
   });
 
-  it('should throw error for invalid expression', () => {
+  it("should throw error for invalid expression", () => {
     const text = `
     variable x: Number = 5 +;
     `;
@@ -73,7 +73,7 @@ describe('Error Handling - Parser Errors', () => {
     expect(() => parser.parse()).toThrow();
   });
 
-  it('should throw error for missing variable type', () => {
+  it("should throw error for missing variable type", () => {
     const text = `
     variable x = 5;
     `;
@@ -82,7 +82,7 @@ describe('Error Handling - Parser Errors', () => {
     expect(() => parser.parse()).toThrow();
   });
 
-  it('should throw error for missing variable name', () => {
+  it("should throw error for missing variable name", () => {
     const text = `
     variable : Number = 5;
     `;
@@ -92,8 +92,8 @@ describe('Error Handling - Parser Errors', () => {
   });
 });
 
-describe('Error Handling - Interpreter Errors', () => {
-  it('should throw error for undefined variable', () => {
+describe("Error Handling - Interpreter Errors", () => {
+  it("should throw error for undefined variable", () => {
     const text = `
     undefined_var = 5;
     `;
@@ -103,7 +103,7 @@ describe('Error Handling - Interpreter Errors', () => {
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
-  it('should throw error for type mismatch', () => {
+  it("should throw error for type mismatch", () => {
     const text = `
     variable x: Number = "string";
     `;
@@ -113,7 +113,7 @@ describe('Error Handling - Interpreter Errors', () => {
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
-  it('should throw error for division by zero', () => {
+  it("should throw error for division by zero", () => {
     const text = `
     variable x: Number = 5 / 0;
     `;
@@ -123,7 +123,7 @@ describe('Error Handling - Interpreter Errors', () => {
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
-  it('should throw error for invalid operation on strings', () => {
+  it("should throw error for invalid operation on strings", () => {
     const text = `
     variable x: String = "hello";
     variable y: String = "world";
@@ -135,7 +135,7 @@ describe('Error Handling - Interpreter Errors', () => {
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
-  it('should throw error for invalid function call', () => {
+  it("should throw error for invalid function call", () => {
     const text = `
     variable x: Number = unknown_function(5);
     `;
@@ -145,7 +145,7 @@ describe('Error Handling - Interpreter Errors', () => {
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
-  it('should throw error for wrong number of function arguments', () => {
+  it("should throw error for wrong number of function arguments", () => {
     const text = `
     variable x: Number = SUM(5);
     `;
@@ -155,7 +155,7 @@ describe('Error Handling - Interpreter Errors', () => {
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
-  it('should throw error for reassigning undefined variable', () => {
+  it("should throw error for reassigning undefined variable", () => {
     const text = `
     undefined_var = 5;
     `;
@@ -165,7 +165,7 @@ describe('Error Handling - Interpreter Errors', () => {
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
-  it('should throw error for duplicate variable declaration', () => {
+  it("should throw error for duplicate variable declaration", () => {
     const text = `
     variable x: Number = 5;
     variable x: String = "hello";
@@ -176,7 +176,7 @@ describe('Error Handling - Interpreter Errors', () => {
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
-  it('should throw error for invalid list operation', () => {
+  it("should throw error for invalid list operation", () => {
     const text = `
     variable x: List = 1, 2, 3;
     x.get(10);
@@ -187,7 +187,7 @@ describe('Error Handling - Interpreter Errors', () => {
     expect(() => interpreter.interpret()).toThrow();
   });
 
-  it('should throw error for invalid string method', () => {
+  it("should throw error for invalid string method", () => {
     const text = `
     variable x: String = "hello";
     x.invalid_method();
@@ -198,7 +198,7 @@ describe('Error Handling - Interpreter Errors', () => {
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
-  it('should throw error for non-boolean condition in if statement', () => {
+  it("should throw error for non-boolean condition in if statement", () => {
     const text = `
     if(5) [
         variable x: Number = 10;
@@ -210,7 +210,7 @@ describe('Error Handling - Interpreter Errors', () => {
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
-  it('should throw error for non-boolean condition in while loop', () => {
+  it("should throw error for non-boolean condition in while loop", () => {
     const text = `
     while("string") [
         variable x: Number = 10;
@@ -222,7 +222,7 @@ describe('Error Handling - Interpreter Errors', () => {
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
-  it('should throw error for infinite loop protection', () => {
+  it("should throw error for infinite loop protection", () => {
     const text = `
     variable i: Number = 0;
     while(true) [
@@ -235,16 +235,18 @@ describe('Error Handling - Interpreter Errors', () => {
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
-  it('should throw error for unsupported reference type', () => {
+  it("should throw error for unsupported reference type", () => {
     const text = `
     variable x: Number = {complex_ref};
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    expect(() => new Interpreter(parser, {"complex_ref": {"nested": "object"}})).toThrow(InterpreterError);
+    expect(() => new Interpreter(parser, { complex_ref: { nested: "object" } })).toThrow(
+      InterpreterError
+    );
   });
 
-  it('should throw error for multiple units in expression', () => {
+  it("should throw error for multiple units in expression", () => {
     const text = `
     variable x: NumberWithUnit = 10px^2rem;
     `;
@@ -254,7 +256,7 @@ describe('Error Handling - Interpreter Errors', () => {
     expect(() => interpreter.interpret()).toThrow();
   });
 
-  it('should throw error for invalid boolean operation', () => {
+  it("should throw error for invalid boolean operation", () => {
     const text = `
     variable x: Boolean = true + false;
     `;
@@ -264,7 +266,7 @@ describe('Error Handling - Interpreter Errors', () => {
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
-  it('should throw error for invalid comparison', () => {
+  it("should throw error for invalid comparison", () => {
     const text = `
     variable x: Boolean = "hello" > 5;
     `;

@@ -1,4 +1,3 @@
-
 // Enums from config.py and lexer.py
 
 export enum Operations {
@@ -80,38 +79,60 @@ export interface Token {
 export interface ASTNode {
   token?: Token; // Optional, as not all nodes directly correspond to a single token (e.g., StatementList)
   // Add a common property if needed, like a 'type' string for node identification during visitation
-  nodeType: string; 
+  nodeType: string;
 }
-
 
 // Forward declaration for mutually recursive types if needed, e.g. for SymbolType methods
 export interface ISymbolType {
   type: string;
   value: any;
-  
+
   valid_value(value: any): boolean;
   toString(): string; // JS equivalent of __repr__ or __str__
   equals(other: ISymbolType): boolean; // JS equivalent of __eq__
 
   hasMethod?(methodName: string, args: ISymbolType[]): boolean;
-  callMethod?(methodName: string, args: ISymbolType[]): ISymbolType | null | void;
+  callMethod?(methodName: string, args: ISymbolType[]): ISymbolType | null | undefined;
   hasAttribute?(attributeName: string): boolean;
   getAttribute?(attributeName: string): ISymbolType | null;
   setAttribute?(attributeName: string, value: ISymbolType): void;
 }
 
-export type InterpreterValue = ISymbolType | string | number | boolean | null | Array<InterpreterValue>;
+export type InterpreterValue =
+  | ISymbolType
+  | string
+  | number
+  | boolean
+  | null
+  | Array<InterpreterValue>;
 
 export interface LanguageOptions {
   MAX_ITERATIONS: number;
 }
 
 export const UNINTERPRETED_KEYWORDS: string[] = [
-    "inside", "outside", "above", "below", "left", "right", "top", "bottom",
-    "before", "after", "between", "uppercase", "lowercase", "underline",
-    "none", "innerShadow", "outerShadow", "shadow",
+  "inside",
+  "outside",
+  "above",
+  "below",
+  "left",
+  "right",
+  "top",
+  "bottom",
+  "before",
+  "after",
+  "between",
+  "uppercase",
+  "lowercase",
+  "underline",
+  "none",
+  "innerShadow",
+  "outerShadow",
+  "shadow",
 ];
 
 // For Interpreter references
-export type ReferenceRecord = Record<string, string | number | ISymbolType | Array<string | number | ISymbolType>>;
-
+export type ReferenceRecord = Record<
+  string,
+  string | number | ISymbolType | Array<string | number | ISymbolType>
+>;

@@ -1,5 +1,4 @@
-
-import { Token } from '../types';
+import type { Token } from "../types";
 
 export class LanguageError extends Error {
   public line?: number;

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { InteractiveMode } from './InteractiveMode';
-import { DocumentationPanel } from './DocumentationPanel';
-import styles from './SplitScreenLayout.module.css';
+import type React from "react";
+import { useState } from "react";
+import { DocumentationPanel } from "./DocumentationPanel";
+import { InteractiveMode } from "./InteractiveMode";
+import styles from "./SplitScreenLayout.module.css";
 
 export const SplitScreenLayout: React.FC = () => {
   const [currentExample, setCurrentExample] = useState<{
@@ -24,16 +25,10 @@ export const SplitScreenLayout: React.FC = () => {
       {/* Right Panel - Interactive Tool */}
       <div className={styles.interpreterPanel}>
         <div className={styles.interpreterHeader}>
-          <h2 className={styles.interpreterTitle}>
-            Interpreter
-          </h2>
-          <p className={styles.interpreterSubtitle}>
-            Interactive execution environment
-          </p>
+          <h2 className={styles.interpreterTitle}>Interpreter</h2>
+          <p className={styles.interpreterSubtitle}>Interactive execution environment</p>
           {currentExample && (
-            <p className={styles.currentExample}>
-              Current: {currentExample.title}
-            </p>
+            <p className={styles.currentExample}>Current: {currentExample.title}</p>
           )}
         </div>
         <div className={styles.interpreterContent}>

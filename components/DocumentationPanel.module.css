@@ -10,7 +10,9 @@
 }
 
 .title {
-  font-family: 'Almarena Neue Display', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  font-family:
+    "Almarena Neue Display", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
   font-size: 3.75rem;
   font-weight: 800;
   margin-bottom: 1rem;
@@ -26,7 +28,9 @@
 }
 
 .sectionTitle {
-  font-family: 'Almarena Neue Display', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  font-family:
+    "Almarena Neue Display", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
   font-size: 1.875rem;
   font-weight: 800;
   margin-bottom: 1.5rem;
@@ -50,28 +54,30 @@
 }
 
 .exampleCard {
-  background: #FFCA38;
-  color: #2F2302;
+  background: #ffca38;
+  color: #2f2302;
   border-radius: 0.5rem;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
 }
 
 .exampleTitle {
-  font-family: 'Almarena Neue Display', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  font-family:
+    "Almarena Neue Display", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
   font-size: 2rem;
   font-weight: 800;
-  color: #2F2302;
+  color: #2f2302;
   margin-bottom: 0.75rem;
 }
 
 .exampleDescription {
-  color: #2F2302;
+  color: #2f2302;
   margin-bottom: 1rem;
 }
 
 .exampleButton {
-  background-color: #2F2302;
+  background-color: #2f2302;
   color: white;
   padding: 0.5rem 1rem;
   border-radius: 0.375rem;
@@ -81,34 +87,38 @@
 }
 
 .exampleButton:hover {
-  background-color:rgb(32, 24, 1);
+  background-color: rgb(32, 24, 1);
 }
 
 .codeInline {
-  font-family: 'Geist Mono', ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  font-family:
+    "Geist Mono", ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo,
+    monospace;
   padding: 0.25rem;
   border-radius: 0.25rem;
-  background: #FFCA38;
-  color: #2F2302;
+  background: #ffca38;
+  color: #2f2302;
   margin: 0 0.25rem;
 }
 
 .footerSection {
-  background: #A499FF;
+  background: #a499ff;
   margin-bottom: 3rem;
   padding: 2rem;
   border-radius: 0.5rem;
 }
 
 .footerCard {
-  background: #08022F;
+  background: #08022f;
   color: #fff;
   border-radius: 0.375rem;
   padding: 1rem;
 }
 
 .footerTitle {
-  font-family: 'Almarena Neue Display', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  font-family:
+    "Almarena Neue Display", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
   font-size: 1.125rem;
   font-weight: 800;
   color: #fff;
@@ -122,7 +132,7 @@
 
 .footerButton {
   background: #fff;
-  color: #08022F;
+  color: #08022f;
   padding: 0.75rem 1.5rem;
   border-radius: 0.375rem;
   transition: all 0.2s ease-in-out;

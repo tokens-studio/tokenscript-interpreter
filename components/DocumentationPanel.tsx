@@ -1,5 +1,5 @@
-import React from 'react';
-import styles from './DocumentationPanel.module.css';
+import type React from "react";
+import styles from "./DocumentationPanel.module.css";
 
 interface DocumentationPanelProps {
   onLoadExample: (code: string, references: string, title: string) => void;
@@ -66,31 +66,29 @@ return result.upper();`,
       references: `{
   "brand.name": "acme"
 }`,
-    }
+    },
   };
 
   return (
     <div className={styles.container}>
       {/* Header */}
       <div className={styles.header}>
-        <h1 className={styles.title}>
-          TokenScript
-        </h1>
+        <h1 className={styles.title}>TokenScript</h1>
         <p className={styles.subtitle}>
-          TokenScript is an enigmatic design token manipulation language, that harnesses the mystical
-          power of mathematical expressions and conditional logic. Its methodology, defying conventional
-          design systems, is steeped in the esoteric knowledge of computational design. This magical
-          technology creates dynamic relationships between design tokens, producing visually striking
-          and maintainable design systems.
+          TokenScript is an enigmatic design token manipulation language, that harnesses the
+          mystical power of mathematical expressions and conditional logic. Its methodology, defying
+          conventional design systems, is steeped in the esoteric knowledge of computational design.
+          This magical technology creates dynamic relationships between design tokens, producing
+          visually striking and maintainable design systems.
         </p>
       </div>
 
       {/* Introduction */}
       <section className={styles.section}>
         <p className={styles.introText}>
-          The tome of TokenScript documentation is a comprehensive guide to the arcane arts of design
-          token computation. You will gain an understanding of how this tool creates dynamic and
-          responsive design systems through the following sections.
+          The tome of TokenScript documentation is a comprehensive guide to the arcane arts of
+          design token computation. You will gain an understanding of how this tool creates dynamic
+          and responsive design systems through the following sections.
         </p>
 
         <div className={styles.featureGrid}>
@@ -109,9 +107,10 @@ return result.upper();`,
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Basic Calculations</h2>
         <p className={styles.sectionText}>
-          The foundation of TokenScript lies in its ability to perform calculations with design tokens.
-          You can reference external tokens using the <code className={styles.codeInline}>{`{token.name}`}</code> syntax
-          and combine them with mathematical operations.
+          The foundation of TokenScript lies in its ability to perform calculations with design
+          tokens. You can reference external tokens using the{" "}
+          <code className={styles.codeInline}>{`{token.name}`}</code> syntax and combine them with
+          mathematical operations.
         </p>
 
         <div className={styles.exampleCard}>
@@ -120,11 +119,14 @@ return result.upper();`,
             Create consistent spacing scales by multiplying base values with ratios.
           </p>
           <button
-            onClick={() => onLoadExample(
-              examples.basicCalculation.code,
-              examples.basicCalculation.references,
-              examples.basicCalculation.title
-            )}
+            type="button"
+            onClick={() =>
+              onLoadExample(
+                examples.basicCalculation.code,
+                examples.basicCalculation.references,
+                examples.basicCalculation.title
+              )
+            }
             className={styles.exampleButton}
           >
             Try Example →
@@ -136,8 +138,9 @@ return result.upper();`,
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Variables & Types</h2>
         <p className={styles.sectionText}>
-          TokenScript features a strong type system with support for Numbers, Strings, Colors, Lists,
-          and NumberWithUnit types. Variables must be declared with explicit types for clarity and safety.
+          TokenScript features a strong type system with support for Numbers, Strings, Colors,
+          Lists, and NumberWithUnit types. Variables must be declared with explicit types for
+          clarity and safety.
         </p>
 
         <div className={styles.exampleCard}>
@@ -146,11 +149,14 @@ return result.upper();`,
             Define and manipulate color values with type safety.
           </p>
           <button
-            onClick={() => onLoadExample(
-              examples.colorManipulation.code,
-              examples.colorManipulation.references,
-              examples.colorManipulation.title
-            )}
+            type="button"
+            onClick={() =>
+              onLoadExample(
+                examples.colorManipulation.code,
+                examples.colorManipulation.references,
+                examples.colorManipulation.title
+              )
+            }
             className={styles.exampleButton}
           >
             Try Example →
@@ -172,11 +178,14 @@ return result.upper();`,
             Adjust spacing and sizing based on screen size or other contextual variables.
           </p>
           <button
-            onClick={() => onLoadExample(
-              examples.conditionalLogic.code,
-              examples.conditionalLogic.references,
-              examples.conditionalLogic.title
-            )}
+            type="button"
+            onClick={() =>
+              onLoadExample(
+                examples.conditionalLogic.code,
+                examples.conditionalLogic.references,
+                examples.conditionalLogic.title
+              )
+            }
             className={styles.exampleButton}
           >
             Try Example →
@@ -201,11 +210,14 @@ return result.upper();`,
             Use mathematical functions to create harmonious typography scales.
           </p>
           <button
-            onClick={() => onLoadExample(
-              examples.mathFunctions.code,
-              examples.mathFunctions.references,
-              examples.mathFunctions.title
-            )}
+            type="button"
+            onClick={() =>
+              onLoadExample(
+                examples.mathFunctions.code,
+                examples.mathFunctions.references,
+                examples.mathFunctions.title
+              )
+            }
             className={styles.exampleButton}
           >
             Try Example →
@@ -217,8 +229,8 @@ return result.upper();`,
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>List Operations</h2>
         <p className={styles.sectionText}>
-          Work with collections of values using Lists. Access elements, check lengths,
-          and manipulate arrays of colors, numbers, or other types.
+          Work with collections of values using Lists. Access elements, check lengths, and
+          manipulate arrays of colors, numbers, or other types.
         </p>
 
         <div className={styles.exampleCard}>
@@ -227,11 +239,14 @@ return result.upper();`,
             Manage collections of colors and extract specific values from palettes.
           </p>
           <button
-            onClick={() => onLoadExample(
-              examples.listOperations.code,
-              examples.listOperations.references,
-              examples.listOperations.title
-            )}
+            type="button"
+            onClick={() =>
+              onLoadExample(
+                examples.listOperations.code,
+                examples.listOperations.references,
+                examples.listOperations.title
+              )
+            }
             className={styles.exampleButton}
           >
             Try Example →
@@ -256,11 +271,14 @@ return result.upper();`,
             Combine and transform brand names and text tokens dynamically.
           </p>
           <button
-            onClick={() => onLoadExample(
-              examples.stringManipulation.code,
-              examples.stringManipulation.references,
-              examples.stringManipulation.title
-            )}
+            type="button"
+            onClick={() =>
+              onLoadExample(
+                examples.stringManipulation.code,
+                examples.stringManipulation.references,
+                examples.stringManipulation.title
+              )
+            }
             className={styles.exampleButton}
           >
             Try Example →
@@ -272,23 +290,26 @@ return result.upper();`,
       <section className={styles.footerSection}>
         <h2 className={styles.sectionTitle}>Explore & Experiment</h2>
         <p className={styles.sectionText}>
-          The true power of TokenScript is revealed through experimentation. Click any example
-          to load it into the interpreter, then modify the code to see how changes affect the output.
+          The true power of TokenScript is revealed through experimentation. Click any example to
+          load it into the interpreter, then modify the code to see how changes affect the output.
           Create your own token relationships and discover new possibilities for your design system.
         </p>
 
         <div className={styles.footerCard}>
           <h3 className={styles.footerTitle}>Ready to Begin?</h3>
           <p className={styles.footerDescription}>
-            Start with any example above, or write your own TokenScript expressions.
-            The interpreter on the right will execute your code in real-time.
+            Start with any example above, or write your own TokenScript expressions. The interpreter
+            on the right will execute your code in real-time.
           </p>
           <button
-            onClick={() => onLoadExample(
-              examples.basicCalculation.code,
-              examples.basicCalculation.references,
-              "Getting Started"
-            )}
+            type="button"
+            onClick={() =>
+              onLoadExample(
+                examples.basicCalculation.code,
+                examples.basicCalculation.references,
+                "Getting Started"
+              )
+            }
             className={styles.footerButton}
           >
             Start with Basic Example →

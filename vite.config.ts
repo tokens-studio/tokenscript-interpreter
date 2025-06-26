@@ -1,29 +1,29 @@
-import path from 'path';
-import { defineConfig } from 'vite';
-import browserslist from 'browserslist';
-import { browserslistToTargets } from 'lightningcss';
+import path from "node:path";
+import browserslist from "browserslist";
+import { browserslistToTargets } from "lightningcss";
+import { defineConfig } from "vite";
 
 export default defineConfig({
   css: {
-    transformer: 'lightningcss',
+    transformer: "lightningcss",
     lightningcss: {
-      targets: browserslistToTargets(browserslist('>= 0.25%')),
+      targets: browserslistToTargets(browserslist(">= 0.25%")),
       cssModules: {
-        pattern: '[name]_[local]_[hash]',
+        pattern: "[name]_[local]_[hash]",
         dashedIdents: false, // Disable CSS variable scoping
-      }
-    }
+      },
+    },
   },
   build: {
-    cssMinify: 'lightningcss'
+    cssMinify: "lightningcss",
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, '.'),
-    }
+      "@": path.resolve(__dirname, "."),
+    },
   },
   test: {
     globals: true,
-    environment: 'node',
-  }
+    environment: "node",
+  },
 });
