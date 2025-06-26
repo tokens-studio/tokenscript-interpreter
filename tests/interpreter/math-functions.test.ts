@@ -185,7 +185,7 @@ describe("Math Functions - RoundTo", () => {
     const result3 = interpreter.symbolTable.get("result3");
 
     expect(result1?.value).toBe(3.14);
-    expect(result2?.value).toBe(Math.E);
+    expect(result2?.value).toBe(2.718); // 2.71828 rounded to 3 decimal places
     expect(result3?.value).toBe(1.4);
   });
 
@@ -268,7 +268,7 @@ describe("Math Functions - RoundTo", () => {
     const result2 = interpreter.symbolTable.get("result2");
 
     expect(result1?.value).toBe(-3.14);
-    expect(result2?.value).toBe(-Math.E);
+    expect(result2?.value).toBe(-2.718); // -2.71828 rounded to 3 decimal places
   });
 });
 
