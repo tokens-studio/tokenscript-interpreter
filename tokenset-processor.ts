@@ -32,9 +32,15 @@ export class TokenSetResolver {
         continue;
       }
 
+      // Handle composition tokens (objects with $type and $value)
+      if (this.isCompositionToken(tokenData)) {
+        this.handleCompositionToken(tokenName, tokenData);
+        continue;
+      }
+
       try {
         const lexer = new Lexer(String(tokenData));
-        
+
         // Check if lexer is at EOF (empty or whitespace-only input)
         if (lexer.isEOF()) {
           this.resolvedTokens[tokenName] = tokenData;
@@ -43,13 +49,13 @@ export class TokenSetResolver {
 
         const parser = new Parser(lexer);
         const ast = parser.parse();
-        
+
         if (ast) {
           this.parsers[tokenName] = ast;
-          
+
           // Extract required references from parser
           const requiredRefs = parser.getRequiredReferences();
-          
+
           // Check for self-reference
           if (requiredRefs.includes(tokenName)) {
             console.warn(chalk.yellow(`⚠️  Token '${tokenName}' has a circular reference to itself.`));
@@ -63,7 +69,7 @@ export class TokenSetResolver {
             if (!this.requiredByTokens[refToken]) {
               this.requiredByTokens[refToken] = new Set();
             }
-            
+
             this.requiredByTokens[refToken].add(tokenName);
             this.requiresTokens[tokenName].add(refToken);
           }
@@ -77,15 +83,132 @@ export class TokenSetResolver {
     }
   }
 
+  private isCompositionToken(tokenData: any): boolean {
+    return typeof tokenData === 'object' &&
+           tokenData !== null &&
+           !Array.isArray(tokenData) &&
+           '$type' in tokenData &&
+           '$value' in tokenData;
+  }
+
+  private handleCompositionToken(tokenName: string, tokenData: any): void {
+    // Extract all references from the $value object
+    const references = this.extractReferencesFromValue(tokenData.$value);
+
+    // Build dependency graph for this composition token
+    if (references.length > 0) {
+      this.requiresTokens[tokenName] = new Set(references);
+
+      for (const refToken of references) {
+        if (!this.requiredByTokens[refToken]) {
+          this.requiredByTokens[refToken] = new Set();
+        }
+        this.requiredByTokens[refToken].add(tokenName);
+      }
+    } else {
+      // No dependencies, can be resolved immediately
+      this.resolvedTokens[tokenName] = tokenData;
+    }
+  }
+
+  private extractReferencesFromValue(value: any): string[] {
+    const references: string[] = [];
+
+    if (typeof value === 'string') {
+      // Extract references using regex pattern {reference.name}
+      const referencePattern = /\{([^}]+)\}/g;
+      let match;
+      while ((match = referencePattern.exec(value)) !== null) {
+        references.push(match[1]);
+      }
+    } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      // Recursively extract references from object properties
+      for (const prop in value) {
+        references.push(...this.extractReferencesFromValue(value[prop]));
+      }
+    } else if (Array.isArray(value)) {
+      // Recursively extract references from array elements
+      for (const item of value) {
+        references.push(...this.extractReferencesFromValue(item));
+      }
+    }
+
+    return references;
+  }
+
+  private resolveCompositionToken(tokenData: any): any {
+    // Create a deep copy of the token data
+    const resolved = JSON.parse(JSON.stringify(tokenData));
+
+    // Resolve references in the $value object
+    resolved.$value = this.resolveValueReferences(resolved.$value);
+
+    return resolved;
+  }
+
+  private resolveValueReferences(value: any): any {
+    if (typeof value === 'string') {
+      // Check if the string contains references or expressions
+      if (value.includes('{') || /[+\-*/]/.test(value)) {
+        try {
+          // Try to parse and evaluate as TokenScript expression
+          const lexer = new Lexer(value);
+          if (!lexer.isEOF()) {
+            const parser = new Parser(lexer);
+            const ast = parser.parse();
+            if (ast) {
+              const interpreter = new Interpreter(ast, {});
+              interpreter.setReferences(this.resolvedTokens);
+              const result = interpreter.interpret();
+              return result;
+            }
+          }
+        } catch (error) {
+          // If parsing/evaluation fails, fall back to simple string replacement
+          console.warn(chalk.yellow(`⚠️  Could not evaluate expression '${value}', falling back to string replacement`));
+        }
+      }
+
+      // Fallback: simple string replacement
+      return value.replace(/\{([^}]+)\}/g, (match, refName) => {
+        const resolvedValue = this.resolvedTokens[refName];
+        if (resolvedValue !== undefined) {
+          return resolvedValue.toString();
+        }
+        return match; // Keep original if not found
+      });
+    } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      // Recursively resolve object properties
+      const resolved: any = {};
+      for (const prop in value) {
+        resolved[prop] = this.resolveValueReferences(value[prop]);
+      }
+      return resolved;
+    } else if (Array.isArray(value)) {
+      // Recursively resolve array elements
+      return value.map(item => this.resolveValueReferences(item));
+    }
+
+    return value;
+  }
+
   private resolveSingleToken(tokenName: string): void {
     if (!(tokenName in this.tokens)) {
       throw new Error(`Token '${tokenName}' not found.`);
     }
 
     if (!(tokenName in this.resolvedTokens)) {
+      const tokenData = this.tokens[tokenName];
+
+      // Handle composition tokens
+      if (this.isCompositionToken(tokenData)) {
+        this.resolvedTokens[tokenName] = this.resolveCompositionToken(tokenData);
+        return;
+      }
+
       const ast = this.parsers[tokenName];
       if (!ast) {
-        this.resolvedTokens[tokenName] = this.tokens[tokenName];
+        this.resolvedTokens[tokenName] = tokenData;
         return;
       }
 
@@ -93,17 +216,22 @@ export class TokenSetResolver {
         const interpreter = new Interpreter(ast, {});
         // Share reference cache
         interpreter.setReferences(this.resolvedTokens);
-        
+
         const result = interpreter.interpret();
         this.resolvedTokens[tokenName] = result;
       } catch (error: any) {
-        console.warn(chalk.yellow(`⚠️  Error interpreting token '${tokenName}': ${error.message} (value: ${this.tokens[tokenName]})`));
-        this.resolvedTokens[tokenName] = this.tokens[tokenName];
+        console.warn(chalk.yellow(`⚠️  Error interpreting token '${tokenName}': ${error.message} (value: ${tokenData})`));
+        this.resolvedTokens[tokenName] = tokenData;
       }
     }
 
     // Update reference cache
-    this.referenceCache.setReferences({ [tokenName]: this.resolvedTokens[tokenName] });
+    try {
+      this.referenceCache.setReferences({ [tokenName]: this.resolvedTokens[tokenName] });
+    } catch (error: any) {
+      // If setting reference fails (e.g., for complex objects), skip it
+      console.warn(chalk.yellow(`⚠️  Could not cache reference for '${tokenName}': ${error.message}`));
+    }
 
     // Resolve dependent tokens
     if (tokenName in this.requiredByTokens) {

@@ -69,6 +69,11 @@ export class Interpreter {
     if (typeof value === 'boolean') return new BooleanSymbol(value);
     if (Array.isArray(value)) return new ListSymbol(value.map(v => this.importReferenceValue(v)));
 
+    // Handle composition tokens (objects with $type and $value)
+    if (typeof value === 'object' && value !== null && '$type' in value && '$value' in value) {
+        return new StringSymbol(JSON.stringify(value));
+    }
+
     throw new InterpreterError(`Invalid reference value type: ${typeof value}`);
   }
 
