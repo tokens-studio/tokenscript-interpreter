@@ -12,6 +12,7 @@
       "node_modules",
       "dist",
       "coverage",
+      "examples",
       "tsconfig*.json",
       "**/*.test.ts",
       "**/*.test.tsx"
