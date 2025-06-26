@@ -90,7 +90,7 @@ TokenScript Interpreter can be used in multiple ways:
 
 ### 1. As a Library (Programmatic Usage)
 
-Import and use the interpreter in your JavaScript/TypeScript projects:
+Import and use the interpreter in your JavaScript/TypeScript projects. The library core is **side-effect-free** - it returns structured data instead of logging to console, making it perfect for build tools and integrations:
 
 ```typescript
 import { Interpreter, Lexer, Parser } from 'tokenscript-interpreter';
@@ -201,6 +201,39 @@ const resolved = interpretTokens(flatTokens); // Same function handles both form
 - ✅ **Direct integration** - Perfect for build tools, APIs, and web applications
 - ✅ **Automatic format detection** - Intelligently processes different token formats
 - ✅ **String output** - Returns resolved values as strings, not internal Symbol objects
+- ✅ **Structured error handling** - Core library returns warnings/errors as data, not console output
+
+#### Advanced Usage with Error Handling
+
+For more control over warnings and errors, use the `TokenSetResolver` class directly:
+
+```typescript
+import { TokenSetResolver } from 'tokenscript-interpreter';
+
+const tokens = {
+  'valid.token': '16px',
+  'broken.reference': '{missing.token}',
+  'circular.ref': '{circular.ref}'
+};
+
+const resolver = new TokenSetResolver(tokens);
+const result = resolver.resolve();
+
+// Access resolved tokens
+console.log('Resolved:', result.resolvedTokens);
+
+// Handle warnings programmatically
+if (result.warnings.length > 0) {
+  console.log('⚠️ Warnings found:');
+  result.warnings.forEach(warning => console.log(`  - ${warning}`));
+}
+
+// Handle errors programmatically
+if (result.errors.length > 0) {
+  console.log('❌ Errors found:');
+  result.errors.forEach(error => console.log(`  - ${error}`));
+}
+```
 
 **Common Use Cases:**
 ```typescript
@@ -623,6 +656,57 @@ class Parser {
   getRequiredReferences(): string[]
 }
 ```
+
+#### `TokenSetResolver`
+
+Core library class for resolving token references and dependencies. Returns structured results with warnings and errors instead of logging directly to console.
+
+```typescript
+interface TokenSetResolverResult {
+  resolvedTokens: Record<string, any>;
+  warnings: string[];
+  errors: string[];
+}
+
+class TokenSetResolver {
+  constructor(tokens: Record<string, any>, globalTokens?: Record<string, any>)
+
+  resolve(): TokenSetResolverResult
+}
+```
+
+**Example:**
+```typescript
+import { TokenSetResolver } from 'tokenscript-interpreter';
+
+const tokens = {
+  'base.spacing': '8px',
+  'component.padding': '{base.spacing} * 2',
+  'invalid.token': '{nonexistent.reference}'
+};
+
+const resolver = new TokenSetResolver(tokens);
+const result = resolver.resolve();
+
+console.log('Resolved tokens:', result.resolvedTokens);
+// { 'base.spacing': '8px', 'component.padding': '16px', 'invalid.token': '{nonexistent.reference}' }
+
+console.log('Warnings:', result.warnings);
+// ['Not all tokens could be resolved. Remaining tokens: invalid.token: {nonexistent.reference}']
+
+console.log('Errors:', result.errors);
+// []
+
+// Handle warnings in your application
+if (result.warnings.length > 0) {
+  result.warnings.forEach(warning => console.warn(`⚠️ ${warning}`));
+}
+```
+
+**Key Benefits:**
+- ✅ **Pure function** - No side effects or console logging
+- ✅ **Structured output** - Warnings and errors as arrays for programmatic access
+- ✅ **Build tool friendly** - Consumers control when and how to display messages
 
 ### Utility Functions
 
