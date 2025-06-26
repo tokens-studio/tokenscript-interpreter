@@ -23,26 +23,14 @@ jobs:
         
     - name: Install dependencies
       run: npm ci
+
+    - name: Run code quality checks
+      run: npm run check
+
+    - name: Run tests
+      run: npm test
       
-    - name: Run Biome linting
-      run: npm run lint
-      
-    - name: Run Biome formatting check
-      run: npm run format -- --check
-      
-    - name: TypeScript type checking
-      run: npx tsc --noEmit
-      
-    - name: Test coverage
-      run: npm test -- --coverage
-      
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage/lcov.info
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: false
+
 
   dependency-review:
     name: Dependency Review
