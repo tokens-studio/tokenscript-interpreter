@@ -88,8 +88,9 @@ export class Interpreter {
         if (colorType) {
           // Create a constructor function that creates new instances
           const colorManager = this.colorManager;
+          const colorTypeRef = colorType; // Capture the non-null reference
           class ColorConstructor extends BaseSymbolType {
-            type = colorType?.type;
+            type = colorTypeRef.type;
 
             constructor(value?: ISymbolType) {
               const instance = colorManager.initColorFormat(name, value);
@@ -98,7 +99,7 @@ export class Interpreter {
             }
 
             valid_value(value: any): boolean {
-              return colorType?.valid_value(value);
+              return colorTypeRef.valid_value(value);
             }
           }
 

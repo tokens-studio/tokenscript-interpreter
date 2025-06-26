@@ -188,7 +188,7 @@ export class Lexer {
       }
       if (
         /\d/.test(this.currentChar) ||
-        (this.currentChar === "." && this.peek() && /\d/.test(this.peek()))
+        (this.currentChar === "." && this.peek() && /\d/.test(this.peek() || ""))
       ) {
         return this.number();
       }

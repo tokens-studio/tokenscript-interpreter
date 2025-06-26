@@ -18,7 +18,11 @@
   "bin": {
     "tokenscript": "./dist/cli.js"
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "npm run build:lib",
     "build:lib": "tsc -p tsconfig.lib.json",
@@ -29,10 +33,13 @@
     "cli:interactive": "tsx cli.ts interactive",
     "cli:parse": "tsx cli.ts parse_tokenset",
     "cli:permutate": "tsx cli.ts permutate_tokenset",
-    "lint": "biome check .",
-    "lint:fix": "biome check --write .",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
     "format": "biome format --write .",
-    "check": "biome check --write .",
+    "format:check": "biome format .",
+    "check": "biome ci .",
+    "check:all": "npm run check && npm run test",
+    "fix": "biome check --write .",
     "prepublishOnly": "npm run test && npm run build:lib",
     "version": "npm run build:lib",
     "postversion": "git push && git push --tags",
@@ -47,16 +54,22 @@
     "yauzl": "^3.2.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
+    "@biomejs/biome": "^2.0.5",
     "@types/node": "^22.14.0",
     "@types/readline-sync": "^1.4.8",
     "@types/yauzl": "^2.10.3",
     "@vitest/coverage-v8": "^3.2.4",
     "tsx": "^4.20.3",
-    "typescript": "~5.7.2",
+    "typescript": "^5.8.3",
     "vitest": "^3.2.4"
   },
-  "keywords": ["tokenscript", "design-tokens", "design-system", "interpreter", "cli"],
+  "keywords": [
+    "tokenscript",
+    "design-tokens",
+    "design-system",
+    "interpreter",
+    "cli"
+  ],
   "author": "Marco Christian Krenn <marco.krenn@gmail.com>",
   "license": "MIT",
   "repository": {

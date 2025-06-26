@@ -8,14 +8,15 @@
   "files": {
     "ignoreUnknown": true,
     "maxSize": 10485760,
-    "ignore": [
-      "node_modules",
-      "dist",
-      "coverage",
-      "examples",
-      "tsconfig*.json",
-      "**/*.test.ts",
-      "**/*.test.tsx"
+    "includes": [
+      "**/*",
+      "!node_modules",
+      "!dist",
+      "!coverage",
+      "!examples",
+      "!tsconfig*.json",
+      "!**/*.test.ts",
+      "!**/*.test.tsx"
     ]
   },
   "formatter": {
@@ -35,17 +36,42 @@
       },
       "correctness": {
         "noUnusedVariables": "error",
+        "noUnusedPrivateClassMembers": "error",
+        "noUnusedImports": "error",
         "useExhaustiveDependencies": "warn"
       },
       "style": {
         "noNegationElse": "off",
+        "noNonNullAssertion": "error",
+        "useConst": "error",
         "useImportType": "error",
         "useExportType": "error",
         "useNodejsImportProtocol": "error"
       },
       "suspicious": {
-        "noExplicitAny": "off",
-        "noArrayIndexKey": "warn"
+        "noExplicitAny": "warn",
+        "noArrayIndexKey": "warn",
+        "noAssignInExpressions": "error",
+        "noAsyncPromiseExecutor": "error",
+        "noCatchAssign": "error",
+        "noClassAssign": "error",
+        "noCompareNegZero": "error",
+        "noControlCharactersInRegex": "error",
+        "noDebugger": "error",
+        "noDuplicateCase": "error",
+        "noDuplicateClassMembers": "error",
+        "noDuplicateObjectKeys": "error",
+        "noDuplicateParameters": "error",
+        "noEmptyBlockStatements": "error",
+        "noFallthroughSwitchClause": "error",
+        "noFunctionAssign": "error",
+        "noGlobalAssign": "error",
+        "noImportAssign": "error",
+        "noMisleadingCharacterClass": "error",
+        "noPrototypeBuiltins": "error",
+        "noRedeclare": "error",
+        "noShadowRestrictedNames": "error",
+        "noUnsafeNegation": "error"
       }
     }
   },
@@ -73,8 +99,5 @@
       "indentStyle": "space",
       "indentWidth": 2
     }
-  },
-  "organizeImports": {
-    "enabled": true
   }
 }
