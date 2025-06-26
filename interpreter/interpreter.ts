@@ -28,6 +28,7 @@ import {
   type VarDeclNode,
   type WhileNode,
 } from "./ast";
+import type { ColorManager } from "./colorManager";
 import { InterpreterError } from "./errors";
 import {
   COMPARISON_IMPLEMENTATIONS,
@@ -59,14 +60,14 @@ export class Interpreter {
   private references: Record<string, ISymbolType> = {}; // Processed references
   private ast: ASTNode | null = null;
   private languageOptions: LanguageOptions;
-  private colorManager: any = null; // Placeholder for future ColorManager integration
+  private colorManager: ColorManager | null = null; // ColorManager integration
 
   constructor(
     parserOrAst: Parser | ASTNode | null,
     references?: ReferenceRecord,
     symbolTable?: SymbolTable,
     languageOptions?: LanguageOptions,
-    colorManager?: any // For future use
+    colorManager?: ColorManager
   ) {
     if (parserOrAst instanceof Parser) {
       this.parser = parserOrAst;
@@ -77,6 +78,23 @@ export class Interpreter {
     this.symbolTable = symbolTable || new SymbolTable();
     this.languageOptions = { ...DEFAULT_LANGUAGE_OPTIONS, ...languageOptions };
     this.colorManager = colorManager; // Store if provided
+
+    // Register color types and functions if ColorManager is provided
+    if (this.colorManager) {
+      // Register color types in symbol table
+      for (const [name, formatId] of Object.entries(this.colorManager.names)) {
+        const colorType = this.colorManager.getColorType(name);
+        if (colorType) {
+          // Create a constructor function that creates new instances
+          const colorManager = this.colorManager;
+          function ColorConstructor(value?: ISymbolType) {
+            return colorManager.initColorFormat(name, value);
+          }
+
+          this.symbolTable.addColorSubType(name, ColorConstructor);
+        }
+      }
+    }
 
     if (references) {
       this.setReferences(references);
@@ -301,12 +319,10 @@ export class Interpreter {
     if (DEFAULT_FUNCTION_MAP[funcName]) {
       return DEFAULT_FUNCTION_MAP[funcName](...args);
     }
-    if (
-      this.colorManager &&
-      typeof this.colorManager.executeFunction === "function" &&
-      this.colorManager.hasFunction(funcName)
-    ) {
-      return this.colorManager.executeFunction(funcName, args, this);
+
+    // Check ColorManager for color functions
+    if (this.colorManager?.hasFunction(funcName)) {
+      return this.colorManager.executeFunction(funcName, args);
     }
 
     if (UNINTERPRETED_KEYWORDS.includes(funcName)) {

@@ -67,6 +67,24 @@ return result.upper();`,
   "brand.name": "acme"
 }`,
     },
+    advancedColors: {
+      title: "Advanced Color System",
+      code: `// Advanced RGB color manipulation
+variable primaryColor: Color.RGB = rgb(255, 64, 128);
+variable redComponent: Number = primaryColor.r;
+variable greenComponent: Number = primaryColor.g;
+variable blueComponent: Number = primaryColor.b;
+
+// Create variations
+variable darkerRed: Color.RGB = rgb(redComponent * 0.8, greenComponent, blueComponent);
+variable lighterGreen: Color.RGB = rgb(redComponent, greenComponent * 1.2, blueComponent);
+
+// Color calculations
+variable averageComponent: Number = (redComponent + greenComponent + blueComponent) / 3;
+
+return primaryColor;`,
+      references: `{}`,
+    },
   };
 
   return (
@@ -95,6 +113,7 @@ return result.upper();`,
           <div>• Basic Calculations</div>
           <div>• Variables & Types</div>
           <div>• Color Manipulation</div>
+          <div>• Advanced Color System</div>
           <div>• Conditional Logic</div>
           <div>• Mathematical Functions</div>
           <div>• String Operations</div>
@@ -155,6 +174,38 @@ return result.upper();`,
                 examples.colorManipulation.code,
                 examples.colorManipulation.references,
                 examples.colorManipulation.title
+              )
+            }
+            className={styles.exampleButton}
+          >
+            Try Example →
+          </button>
+        </div>
+      </section>
+
+      {/* Advanced Color System */}
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Advanced Color System</h2>
+        <p className={styles.sectionText}>
+          TokenScript features a powerful advanced color system that supports dynamic color types
+          like RGB with component access. You can create colors using functions like{" "}
+          <code className={styles.codeInline}>rgb()</code> and access individual color components
+          for sophisticated color manipulation and calculations.
+        </p>
+
+        <div className={styles.exampleCard}>
+          <h3 className={styles.exampleTitle}>RGB Color Manipulation</h3>
+          <p className={styles.exampleDescription}>
+            Create RGB colors, access individual components (r, g, b), and perform color
+            calculations for dynamic color variations and design system automation.
+          </p>
+          <button
+            type="button"
+            onClick={() =>
+              onLoadExample(
+                examples.advancedColors.code,
+                examples.advancedColors.references,
+                examples.advancedColors.title
               )
             }
             className={styles.exampleButton}

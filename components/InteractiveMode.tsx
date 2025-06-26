@@ -1,9 +1,11 @@
 import type React from "react";
 import { useCallback, useEffect, useId, useState } from "react";
+import { ColorManager } from "../interpreter/colorManager";
 import { InterpreterError, LexerError, ParserError } from "../interpreter/errors";
 import { Interpreter } from "../interpreter/interpreter";
 import { Lexer } from "../interpreter/lexer";
 import { Parser } from "../interpreter/parser";
+import rgbSpec from "../specifications/colors/rgb.json";
 import type { ASTNode, ISymbolType, ReferenceRecord, Token } from "../types";
 import { TokenType as LangTokenType } from "../types"; // Renamed TokenType to avoid conflict
 import styles from "./InteractiveMode.module.css";
@@ -90,7 +92,17 @@ export const InteractiveMode: React.FC<InteractiveModeProps> = ({
       setAst(parsedAst);
 
       if (parsedAst) {
-        const interpreter = new Interpreter(parsedAst, parsedReferences);
+        // Set up ColorManager with RGB support
+        const colorManager = new ColorManager();
+        colorManager.setupColorFormat(rgbSpec);
+
+        const interpreter = new Interpreter(
+          parsedAst,
+          parsedReferences,
+          undefined,
+          undefined,
+          colorManager
+        );
         const result = interpreter.interpret(); // Returns ISymbolType | string | null
 
         if (result === null) {
