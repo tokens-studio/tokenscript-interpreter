@@ -10,6 +10,7 @@ import { Lexer } from "./interpreter/lexer";
 import { Parser } from "./interpreter/parser";
 import {
   buildThemeTree,
+  interpretTokens,
   interpretTokensets,
   permutateTokensets,
   processThemes,
@@ -57,6 +58,16 @@ program
       options.permutateTo,
       options.output
     );
+  });
+
+// Parse JSON command - simple API for DTCG JSON blobs
+program
+  .command("parse_json")
+  .description("Parse and process a DTCG JSON file directly")
+  .requiredOption("--json <path>", "Path to the DTCG JSON file")
+  .option("--output <path>", "Output file path", "output.json")
+  .action(async (options) => {
+    await parseJsonFile(options.json, options.output);
   });
 
 // Interactive REPL mode
@@ -249,6 +260,27 @@ async function permutateTokenset(
     console.log(chalk.green("💾 Permutations written to: ") + chalk.yellow(outputPath));
   } catch (error: any) {
     console.error(chalk.red("❌ Error permutating tokenset: ") + chalk.redBright(error.message));
+    process.exit(1);
+  }
+}
+
+// Parse DTCG JSON file - simple unified API
+async function parseJsonFile(jsonPath: string, outputPath: string): Promise<void> {
+  console.log(chalk.cyan("📄 Parsing DTCG JSON from: ") + chalk.yellow(jsonPath));
+
+  try {
+    // Read JSON file
+    const jsonContent = await fs.promises.readFile(jsonPath, "utf8");
+    const dtcgJson = JSON.parse(jsonContent);
+
+    // Process the JSON blob using the simple API
+    const output = interpretTokens(dtcgJson);
+
+    // Write output
+    await fs.promises.writeFile(outputPath, JSON.stringify(output, null, 2), "utf8");
+    console.log(chalk.green("💾 Output written to: ") + chalk.yellow(outputPath));
+  } catch (error: any) {
+    console.error(chalk.red("❌ Error parsing JSON: ") + chalk.redBright(error.message));
     process.exit(1);
   }
 }

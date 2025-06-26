@@ -449,3 +449,166 @@ export function interpretTokensets(
 
   return output;
 }
+
+// Simple function to process any DTCG JSON blob - the main API users want
+// Pure in-memory processing - no file system operations
+export function interpretTokens(dtcgJson: Record<string, any>): Record<string, any> {
+  // Validate input
+  if (!dtcgJson || typeof dtcgJson !== "object") {
+    throw new Error("Invalid JSON input: Expected an object");
+  }
+
+  // Check if this is a complete DTCG file with themes
+  if (dtcgJson.$themes && Array.isArray(dtcgJson.$themes)) {
+    // This is a complete DTCG file with themes - process like a ZIP file
+    const themes = loadThemesFromJson(dtcgJson);
+    return processThemesSync(themes);
+  } else {
+    // Check if this looks like a flat token set (keys with dots) or DTCG structure
+    const hasNestedStructure = Object.keys(dtcgJson).some(
+      (key) =>
+        typeof dtcgJson[key] === "object" &&
+        dtcgJson[key] !== null &&
+        !Array.isArray(dtcgJson[key]) &&
+        !key.startsWith("$")
+    );
+
+    let tokensToProcess: Record<string, any>;
+
+    if (hasNestedStructure) {
+      // This is a DTCG structure without themes - flatten it
+      tokensToProcess = flattenTokenset(dtcgJson);
+    } else {
+      // This is already a flat token set
+      tokensToProcess = dtcgJson;
+    }
+
+    const tokenSet = new TokenSetResolver(tokensToProcess, {});
+    const resolvedTokens = tokenSet.resolve();
+
+    // Convert Symbol objects to strings
+    const stringifiedTokens: Record<string, any> = {};
+    for (const [key, value] of Object.entries(resolvedTokens)) {
+      if (value && typeof value === "object" && "toString" in value) {
+        stringifiedTokens[key] = value.toString();
+      } else {
+        stringifiedTokens[key] = value;
+      }
+    }
+
+    return stringifiedTokens;
+  }
+}
+
+// Keep the original functions for backward compatibility
+export function processTokensFromJson(dtcgJson: Record<string, any>): Record<string, any> {
+  return interpretTokens(dtcgJson);
+}
+
+export function processSingleTokenSet(tokens: Record<string, any>): Record<string, any> {
+  // Check if this looks like a flat token set or DTCG structure
+  const hasNestedStructure = Object.keys(tokens).some(
+    (key) =>
+      typeof tokens[key] === "object" &&
+      tokens[key] !== null &&
+      !Array.isArray(tokens[key]) &&
+      !key.startsWith("$")
+  );
+
+  let tokensToProcess: Record<string, any>;
+
+  if (hasNestedStructure) {
+    // This is a DTCG structure - flatten it
+    tokensToProcess = flattenTokenset(tokens);
+  } else {
+    // This is already a flat token set
+    tokensToProcess = tokens;
+  }
+
+  const tokenSet = new TokenSetResolver(tokensToProcess, {});
+  const resolvedTokens = tokenSet.resolve();
+
+  // Convert Symbol objects to strings
+  const stringifiedTokens: Record<string, any> = {};
+  for (const [key, value] of Object.entries(resolvedTokens)) {
+    if (value && typeof value === "object" && "toString" in value) {
+      stringifiedTokens[key] = value.toString();
+    } else {
+      stringifiedTokens[key] = value;
+    }
+  }
+
+  return stringifiedTokens;
+}
+
+// Load themes from DTCG JSON object (similar to loadThemes but for JSON input)
+function loadThemesFromJson(dtcgJson: Record<string, any>): Record<string, Record<string, any>> {
+  if (!dtcgJson.$themes) {
+    throw new Error("No themes found in the DTCG JSON.");
+  }
+
+  const themeTokens: Record<string, Record<string, any>> = {};
+  const themesData = dtcgJson.$themes;
+
+  for (const theme of themesData) {
+    const themeName = theme.name;
+    themeTokens[themeName] = {};
+
+    // Handle both old format (object) and new format (array)
+    const selectedTokenSets = theme.selectedTokenSets;
+
+    if (Array.isArray(selectedTokenSets)) {
+      // New format: array of objects with id and status
+      for (const tokenSetRef of selectedTokenSets) {
+        if (tokenSetRef.status === "enabled" || tokenSetRef.status === "source") {
+          const setId = tokenSetRef.id;
+          if (!(setId in dtcgJson)) {
+            console.warn(
+              chalk.yellow(`⚠️  Token set '${setId}' referenced in '${themeName}' not found.`)
+            );
+            continue;
+          }
+          Object.assign(themeTokens[themeName], flattenTokenset(dtcgJson[setId]));
+        }
+      }
+    } else {
+      // Old format: object with key-value pairs
+      for (const [setName, status] of Object.entries(selectedTokenSets)) {
+        if (status === "enabled" || status === "source") {
+          if (!(setName in dtcgJson)) {
+            throw new Error(`Token set '${setName}' referenced in '${themeName}' not found.`);
+          }
+          Object.assign(themeTokens[themeName], flattenTokenset(dtcgJson[setName]));
+        }
+      }
+    }
+  }
+
+  return themeTokens;
+}
+
+// Synchronous version of processThemes for in-memory processing
+function processThemesSync(themes: Record<string, Record<string, any>>): Record<string, any> {
+  const outputTokens: Record<string, any> = {};
+  const globalTokensCache: Record<string, any> = {};
+
+  for (const [themeName, themeTokens] of Object.entries(themes)) {
+    const tokenSet = new TokenSetResolver(themeTokens, {});
+    const resolvedTokens = tokenSet.resolve();
+
+    // Convert Symbol objects to strings
+    const stringifiedTokens: Record<string, any> = {};
+    for (const [key, value] of Object.entries(resolvedTokens)) {
+      if (value && typeof value === "object" && "toString" in value) {
+        stringifiedTokens[key] = value.toString();
+      } else {
+        stringifiedTokens[key] = value;
+      }
+    }
+
+    outputTokens[themeName] = stringifiedTokens;
+    Object.assign(globalTokensCache, stringifiedTokens);
+  }
+
+  return outputTokens;
+}

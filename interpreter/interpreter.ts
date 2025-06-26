@@ -38,7 +38,6 @@ import {
   OPERATION_IMPLEMENTATIONS,
 } from "./operations";
 import { Parser } from "./parser";
-import { SymbolTable } from "./symbolTable";
 import {
   BaseSymbolType,
   BooleanSymbol,
@@ -48,6 +47,7 @@ import {
   NumberWithUnitSymbol,
   StringSymbol,
 } from "./symbols";
+import { SymbolTable } from "./symbolTable";
 
 class ReturnSignal {
   constructor(public value: ISymbolType | null) {}

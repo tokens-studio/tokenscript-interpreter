@@ -126,11 +126,107 @@ console.log(result); // "32px"
 #### Processing Token Sets
 
 ```typescript
-import { interpretTokensets, processThemes } from 'tokenscript-interpreter';
+import { interpretTokensets, processThemes, interpretTokens } from 'tokenscript-interpreter';
 
-// Process a tokenset from a ZIP file
+// Process a tokenset from a ZIP file (file system based)
 const result = await interpretTokensets('path/to/tokens.zip', 'output.json');
 console.log('Processed tokens:', result);
+
+// Process DTCG JSON blob directly (pure in-memory, no file system)
+const dtcgJson = {
+  "color": {
+    "primary": {
+      "$type": "color",
+      "$value": "#0066cc"
+    },
+    "secondary": {
+      "$type": "color",
+      "$value": "{color.primary}"
+    }
+  }
+};
+const result = interpretTokens(dtcgJson); // Synchronous, returns resolved tokens
+console.log('Processed tokens:', result);
+
+// Process a flat token set directly (pure in-memory)
+const tokens = {
+  "spacing.small": "8px",
+  "spacing.medium": "{spacing.small} * 2",
+  "spacing.large": "{spacing.medium} * 1.5"
+};
+const resolved = interpretTokens(tokens); // Works with any token structure
+console.log('Resolved tokens:', resolved);
+```
+
+#### JSON Blob Integration
+
+For users who want to integrate the interpreter in their workflow without using ZIP files or the file system, you can pass JSON blobs directly:
+
+```typescript
+import { interpretTokens } from 'tokenscript-interpreter';
+
+// Process a complete DTCG JSON with themes
+const dtcgData = {
+  "color": {
+    "primary": { "$type": "color", "$value": "#0066cc" },
+    "secondary": { "$type": "color", "$value": "{color.primary}" }
+  },
+  "$themes": [
+    {
+      "name": "light",
+      "selectedTokenSets": [{"id": "color", "status": "enabled"}]
+    }
+  ]
+};
+
+const result = interpretTokens(dtcgData); // Synchronous, pure in-memory
+// Returns: { "light": { "primary": "#0066cc", "secondary": "#0066cc" } }
+
+// Or process a flat token set directly
+const flatTokens = {
+  "spacing.small": "8px",
+  "spacing.medium": "{spacing.small} * 2",
+  "color.primary": "#0066cc",
+  "color.secondary": "{color.primary}"
+};
+
+const resolved = interpretTokens(flatTokens); // Same function handles both formats
+// Returns: { "spacing.small": "8px", "spacing.medium": "16px", "color.primary": "#0066cc", "color.secondary": "#0066cc" }
+```
+
+**Key Benefits:**
+- ✅ **No file system operations** - Pure in-memory processing
+- ✅ **Synchronous** - No async/await needed
+- ✅ **Flexible input** - Handles both DTCG format with themes and flat token sets
+- ✅ **Direct integration** - Perfect for build tools, APIs, and web applications
+- ✅ **Automatic format detection** - Intelligently processes different token formats
+- ✅ **String output** - Returns resolved values as strings, not internal Symbol objects
+
+**Common Use Cases:**
+```typescript
+// Build tool integration
+import { interpretTokens } from 'tokenscript-interpreter';
+
+// In your build script
+const designTokens = JSON.parse(fs.readFileSync('tokens.json', 'utf8'));
+const resolvedTokens = interpretTokens(designTokens);
+// Use resolvedTokens to generate CSS, SCSS, etc.
+
+// API endpoint
+app.post('/api/resolve-tokens', (req, res) => {
+  try {
+    const resolved = interpretTokens(req.body.tokens);
+    res.json({ success: true, tokens: resolved });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+// React/Vue component
+const MyComponent = ({ tokenData }) => {
+  const resolvedTokens = useMemo(() => interpretTokens(tokenData), [tokenData]);
+  // Use resolvedTokens in your component
+};
 ```
 
 ### 2. Command Line Interface (CLI)
@@ -141,8 +237,14 @@ Use the CLI for processing design token files and interactive development:
 # Interactive mode
 tokenscript interactive
 
-# Process token files
+# Process token files from ZIP
 tokenscript parse_tokenset --tokenset tokens.zip --output resolved.json
+
+# Process DTCG JSON blob directly
+tokenscript parse_json --json tokens.json --output resolved.json
+
+# Process single token set
+tokenscript parse_tokens --tokens tokenset.json --output resolved.json
 
 # Generate theme permutations
 tokenscript permutate_tokenset --tokenset tokens.zip --permutate-on Brand Mode --permutate-to Components --output themes.json
@@ -298,7 +400,96 @@ This command will:
 - Process themes and token sets
 - Output fully resolved tokens to JSON
 
-##### 3. Permutate Tokenset
+##### 3. Parse DTCG JSON
+Process design tokens directly from a DTCG JSON blob without requiring ZIP files:
+
+```bash
+# If installed globally
+tokenscript parse_json --json tokens.json --output resolved.json
+
+# If installed locally
+npx tokenscript parse_json --json tokens.json --output resolved.json
+
+# Or using npm scripts (for development)
+npm run cli:parse-json -- --json tokens.json --output resolved.json
+```
+
+**Options:**
+- `--json <path>`: Path to the DTCG JSON file (required)
+- `--output <path>`: Output file path (default: "output.json")
+
+**Example:**
+```bash
+npm run cli:parse-json -- --json ./design-tokens.json --output ./output/resolved.json
+```
+
+This command will:
+- Parse the DTCG JSON file directly
+- Detect if it contains themes or is a flat token set
+- Resolve token dependencies and references
+- Output fully resolved tokens to JSON
+
+**DTCG JSON Format Examples:**
+
+Complete DTCG file with themes:
+```json
+{
+  "color": {
+    "primary": {
+      "$type": "color",
+      "$value": "#0066cc"
+    }
+  },
+  "$themes": [
+    {
+      "name": "light",
+      "selectedTokenSets": [
+        {"id": "color", "status": "enabled"}
+      ]
+    }
+  ]
+}
+```
+
+Flat token set:
+```json
+{
+  "color.primary": "#0066cc",
+  "color.secondary": "{color.primary}",
+  "spacing.small": "8px",
+  "spacing.medium": "{spacing.small} * 2"
+}
+```
+
+##### 4. Parse Single Token Set
+Process a single token set from JSON without themes:
+
+```bash
+# If installed globally
+tokenscript parse_tokens --tokens tokenset.json --output resolved.json
+
+# If installed locally
+npx tokenscript parse_tokens --tokens tokenset.json --output resolved.json
+
+# Or using npm scripts (for development)
+npm run cli:parse-tokens -- --tokens tokenset.json --output resolved.json
+```
+
+**Options:**
+- `--tokens <path>`: Path to the token set JSON file (required)
+- `--output <path>`: Output file path (default: "output.json")
+
+**Example:**
+```bash
+npm run cli:parse-tokens -- --tokens ./spacing-tokens.json --output ./output/spacing-resolved.json
+```
+
+This command will:
+- Parse the token set JSON file
+- Resolve token dependencies and references
+- Output fully resolved tokens to JSON
+
+##### 5. Permutate Tokenset
 Generate theme permutations for design system variations:
 
 ```bash
@@ -409,6 +600,81 @@ Process and resolve design token files from ZIP archives.
 import { interpretTokensets } from 'tokenscript-interpreter';
 
 const result = await interpretTokensets('./tokens.zip', './output.json');
+```
+
+#### `interpretTokens(dtcgJson: Record<string, any>): Record<string, any>`
+
+**Main API for JSON blob integration** - Process and resolve design tokens directly from a DTCG JSON object without file system operations.
+
+**Parameters:**
+- `dtcgJson`: A JavaScript object containing design tokens in any supported format
+
+**Returns:**
+- `Record<string, any>`: Resolved tokens as key-value pairs with string values
+- For inputs with themes: `{ themeName: { tokenName: resolvedValue } }`
+- For inputs without themes: `{ tokenName: resolvedValue }`
+
+**Throws:**
+- `Error`: If input is not a valid object
+
+```typescript
+import { interpretTokens } from 'tokenscript-interpreter';
+
+// Example 1: Flat token sets (most common use case)
+const flatTokens = {
+  "spacing.small": "8px",
+  "spacing.medium": "{spacing.small} * 2",
+  "spacing.large": "{spacing.medium} * 1.5",
+  "color.primary": "#0066cc",
+  "color.secondary": "{color.primary}"
+};
+
+const resolved = interpretTokens(flatTokens);
+// Returns: {
+//   "spacing.small": "8px",
+//   "spacing.medium": "16px",
+//   "spacing.large": "24px",
+//   "color.primary": "#0066cc",
+//   "color.secondary": "#0066cc"
+// }
+
+// Example 2: DTCG format without themes
+const dtcgTokens = {
+  "spacing": {
+    "small": { "$type": "dimension", "$value": "8px" },
+    "medium": { "$type": "dimension", "$value": "{spacing.small} * 2" }
+  },
+  "color": {
+    "primary": { "$type": "color", "$value": "#0066cc" }
+  }
+};
+
+const dtcgResolved = interpretTokens(dtcgTokens);
+// Returns: {
+//   "spacing.small": "8px",
+//   "spacing.medium": "16px",
+//   "color.primary": "#0066cc"
+// }
+
+// Example 3: DTCG format with themes
+const dtcgWithThemes = {
+  "color": {
+    "primary": { "$type": "color", "$value": "#0066cc" }
+  },
+  "$themes": [
+    {
+      "name": "light",
+      "selectedTokenSets": [{"id": "color", "status": "enabled"}]
+    }
+  ]
+};
+
+const themedResult = interpretTokens(dtcgWithThemes);
+// Returns: {
+//   "light": {
+//     "primary": "#0066cc"
+//   }
+// }
 ```
 
 #### `permutateTokensets(tokensetPath: string, permutateOn: string[], permutateTo: string, outputPath: string): Promise<any>`
