@@ -659,7 +659,7 @@ class Parser {
 
 #### `TokenSetResolver`
 
-Core library class for resolving token references and dependencies. Returns structured results with warnings and errors instead of logging directly to console.
+**Core library class for resolving token references and dependencies.** The TokenSetResolver follows a **Core vs. Adapters** architecture pattern, where the core engine is completely format-agnostic and works only with flat string tokens, while DTCG format handling is separated into dedicated adapter modules.
 
 ```typescript
 interface TokenSetResolverResult {
@@ -669,23 +669,30 @@ interface TokenSetResolverResult {
 }
 
 class TokenSetResolver {
-  constructor(tokens: Record<string, any>, globalTokens?: Record<string, any>)
+  constructor(tokens: Record<string, string>, globalTokens?: Record<string, any>)
 
   resolve(): TokenSetResolverResult
 }
 ```
 
+**Architecture Benefits:**
+- 🏗️ **Clean separation** - Core engine has zero knowledge of DTCG format
+- ⚡ **High performance** - Optimized iterative dependency resolution (no recursion)
+- 🔧 **Extensible** - New token formats only require new adapters, core unchanged
+- 🧪 **Testable** - Core can be tested with simple flat objects
+
 **Example:**
 ```typescript
 import { TokenSetResolver } from 'tokenscript-interpreter';
 
-const tokens = {
+// Note: TokenSetResolver now requires flat string tokens
+const flatTokens = {
   'base.spacing': '8px',
   'component.padding': '{base.spacing} * 2',
   'invalid.token': '{nonexistent.reference}'
 };
 
-const resolver = new TokenSetResolver(tokens);
+const resolver = new TokenSetResolver(flatTokens);
 const result = resolver.resolve();
 
 console.log('Resolved tokens:', result.resolvedTokens);
@@ -707,6 +714,8 @@ if (result.warnings.length > 0) {
 - ✅ **Pure function** - No side effects or console logging
 - ✅ **Structured output** - Warnings and errors as arrays for programmatic access
 - ✅ **Build tool friendly** - Consumers control when and how to display messages
+- ✅ **Format-agnostic core** - Works with any token format via adapters
+- ✅ **Performance optimized** - Iterative dependency resolution prevents stack overflow
 
 ### Utility Functions
 
@@ -720,12 +729,17 @@ import { interpretTokensets } from 'tokenscript-interpreter';
 const result = await interpretTokensets('./tokens.zip', './output.json');
 ```
 
-#### `interpretTokens(dtcgJson: Record<string, any>): Record<string, any>`
+#### `interpretTokens(tokenInput: Record<string, any>): Record<string, any>`
 
-**Main API for JSON blob integration** - Process and resolve design tokens directly from a DTCG JSON object without file system operations.
+**Main API for JSON blob integration** - Process and resolve design tokens directly from any supported format without file system operations. **Uses the new Core vs. Adapters architecture** for maximum performance and reliability.
+
+**Architecture Flow:**
+1. **🔄 ADAPT (Input)** - Automatically detects format and converts to flat tokens
+2. **⚡ CORE** - High-performance resolution using optimized TokenSetResolver
+3. **📤 OUTPUT** - Clean string values ready for consumption
 
 **Parameters:**
-- `dtcgJson`: A JavaScript object containing design tokens in any supported format
+- `tokenInput`: A JavaScript object containing design tokens in any supported format
 
 **Returns:**
 - `Record<string, any>`: Resolved tokens as key-value pairs with string values
@@ -794,6 +808,47 @@ const themedResult = interpretTokens(dtcgWithThemes);
 //   }
 // }
 ```
+
+#### DTCG Adapter Utilities
+
+**New in the latest version** - Direct access to the adapter functions for advanced use cases:
+
+```typescript
+import {
+  flattenTokens,
+  collectTokenMetadata,
+  rehydrateToDTCG,
+  extractThemeTokens,
+  hasNestedDTCGStructure,
+  flatTokensToDTCG
+} from 'tokenscript-interpreter/utils/dtcg-adapter';
+
+// Convert DTCG to flat format
+const dtcgTokens = {
+  "color": { "red": { "$value": "#FF0000", "$type": "color" } }
+};
+const flatTokens = flattenTokens(dtcgTokens);
+// Result: { "color.red": "#FF0000" }
+
+// Collect metadata for re-hydration
+const metadata = collectTokenMetadata(dtcgTokens);
+// Result: { "color.red": { "$value": "#FF0000", "$type": "color" } }
+
+// Re-hydrate resolved tokens back to DTCG
+const resolvedFlat = { "color.red": "#FF0000" };
+const dtcgOutput = rehydrateToDTCG(resolvedFlat, metadata);
+// Result: { "color.red": { "$value": "#FF0000", "$type": "color" } }
+
+// Detect format automatically
+const isNested = hasNestedDTCGStructure(dtcgTokens); // true
+const isFlat = hasNestedDTCGStructure({ "color.red": "#FF0000" }); // false
+```
+
+**Use Cases:**
+- 🔧 **Custom integrations** - Build your own token processing pipeline
+- 🎯 **Performance optimization** - Skip unnecessary conversions when you know the format
+- 🧪 **Testing** - Test individual adapter functions in isolation
+- 📊 **Analytics** - Analyze token structure before processing
 
 #### `permutateTokensets(tokensetPath: string, permutateOn: string[], permutateTo: string, outputPath: string): Promise<any>`
 
@@ -903,20 +958,72 @@ This TypeScript implementation provides the same CLI capabilities as the origina
 | Permutate Tokenset | `python3 main.py permutate_tokenset --tokenset file.zip --permutate-on themes --permutate-to target` | `npm run cli:permutate -- --tokenset file.zip --permutate-on themes --permutate-to target` | Generate theme permutations |
 
 ### Key Improvements in TypeScript Version:
-- **Better Error Handling**: More descriptive error messages and stack traces
-- **Type Safety**: Full TypeScript support with comprehensive type definitions
-- **Modern Tooling**: Uses modern Node.js ecosystem and tools
-- **Cross-Platform**: Better compatibility across different operating systems
-- **Web + CLI**: Single codebase supports both web interface and CLI
+- **🏗️ Core vs. Adapters Architecture**: Clean separation between format-agnostic core and DTCG adapters
+- **⚡ Performance Optimized**: Iterative dependency resolution, efficient caching, optimized string conversions
+- **🔧 Better Error Handling**: More descriptive error messages and structured error objects
+- **🛡️ Type Safety**: Full TypeScript support with comprehensive type definitions
+- **🔄 Modern Tooling**: Uses modern Node.js ecosystem and tools
+- **🌐 Cross-Platform**: Better compatibility across different operating systems
+- **📱 Web + CLI**: Single codebase supports both web interface and CLI
+- **🧪 Highly Testable**: Core engine can be tested independently of format concerns
+- **🚀 Extensible**: New token formats require only new adapters, core unchanged
+
+## Architecture
+
+### Core vs. Adapters Pattern
+
+TokenScript Interpreter follows a **Core vs. Adapters** architectural pattern that provides maximum clarity, performance, and extensibility:
+
+#### **The Core (`TokenSetResolver`)**
+- **Pure, high-performance engine** that works only with flat `key: value` string maps
+- **Zero knowledge of DTCG format** - no `$` prefixes, no `$value` keys
+- **Iterative dependency resolution** using queue-based topological sort (prevents stack overflow)
+- **Optimized reference caching** for maximum performance
+- **Single responsibility** - token resolution only
+
+#### **The Adapters (`utils/dtcg-adapter.ts`)**
+- **Input Adapter** - Converts DTCG format to flat format for the core
+- **Output Adapter** - Re-hydrates flat resolved tokens back to DTCG structure
+- **Theme Extraction** - Handles complex theme-based token selection
+- **Format Detection** - Automatically detects DTCG vs flat token formats
+
+#### **Benefits of This Architecture**
+
+1. **🎯 Clarity & Simplicity** - Core has single, clear responsibility
+2. **🧪 Testability** - Core tested with simple objects, adapters tested separately
+3. **🚀 Extensibility** - New formats need only new adapters, core unchanged
+4. **🔧 Maintainability** - DTCG spec changes only affect adapter module
+5. **⚡ Performance** - Eliminates redundant conversions and recursive calls
+
+#### **Example: How It Works**
+
+```typescript
+// 1. ADAPT: Input (DTCG → Flat)
+const dtcgTokens = {
+  "color": { "red": { "$value": "{color.base}", "$type": "color" } }
+};
+const flatTokens = flattenTokens(dtcgTokens);
+// Result: { "color.red": "{color.base}" }
+
+// 2. CORE: Resolve (Flat → Flat)
+const resolver = new TokenSetResolver(flatTokens);
+const result = resolver.resolve();
+// Result: { "color.red": "#FF0000" }
+
+// 3. ADAPT: Output (Flat → DTCG)
+const finalDtcg = rehydrateToDTCG(result.resolvedTokens, originalMetadata);
+// Result: { "color.red": { "$value": "#FF0000", "$type": "color" } }
+```
 
 ## Project Structure
 
 - `/interpreter/` - Core TokenScript interpreter implementation
 - `/lib/` - Library entry point and exports
+- `/utils/dtcg-adapter.ts` - **NEW**: DTCG format adapters (input/output conversion)
 - `/tests/` - Test suite
 - `/types.ts` - TypeScript type definitions
 - `/cli.ts` - Command-line interface entry point
-- `/tokenset-processor.ts` - Tokenset processing utilities
+- `/tokenset-processor.ts` - **REFACTORED**: Core token processing with adapter orchestration
 
 ## Advanced CLI Usage
 
@@ -1031,16 +1138,27 @@ npm run release:minor   # New features
 npm run release:major   # Breaking changes
 ```
 
-## CLI Implementation Status
+## Implementation Status
 
-✅ **Complete** - The TypeScript CLI now has full feature parity with the Python version:
+✅ **Complete with Architectural Improvements** - The TypeScript implementation now exceeds the Python version with a superior architecture:
 
+### **Core Features (Full Parity)**
 - **Interactive Mode**: REPL for testing expressions and setting variables
 - **Tokenset Parsing**: Process ZIP files and resolve token dependencies
 - **Theme Processing**: Handle both named and UUID-based token sets
 - **Permutation Generation**: Create theme combinations (when multiple theme groups exist)
 - **Error Handling**: Graceful handling of parsing errors with detailed warnings
 - **Type Safety**: Full TypeScript support with comprehensive type definitions
+
+### **Architectural Improvements (Beyond Python Version)**
+- **🏗️ Core vs. Adapters Pattern**: Clean separation of concerns for maximum maintainability
+- **⚡ Performance Optimizations**:
+  - Iterative dependency resolution (prevents stack overflow)
+  - Efficient reference caching with incremental updates
+  - String conversion moved to adapters (out of hot path)
+- **🔧 Format Extensibility**: New token formats require only new adapters
+- **🧪 Enhanced Testability**: Core engine completely isolated from format concerns
+- **📊 Structured Error Handling**: Libraries return data instead of console logging
 
 ### Tested With Real Data
 The CLI has been successfully tested with real-world design token files:
