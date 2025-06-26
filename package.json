@@ -71,7 +71,7 @@
     "cli"
   ],
   "author": "Marco Christian Krenn <marco.krenn@gmail.com>",
-  "license": "MIT",
+  "license": "MPL-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/tokens-studio/tokenscript-interpreter.git"
