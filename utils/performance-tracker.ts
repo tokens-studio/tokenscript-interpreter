@@ -192,15 +192,15 @@ export class PerformanceTracker {
    */
   public saveToFile(filePath: string): void {
     const summary = this.getSummary();
-    const fs = require('fs');
-    const path = require('path');
-    
+    const fs = require("node:fs");
+    const path = require("node:path");
+
     // Ensure directory exists
     const dir = path.dirname(filePath);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
-    
+
     // Write to file
     fs.writeFileSync(filePath, JSON.stringify(summary, null, 2));
     console.log(chalk.green(`✅ Performance data saved to ${filePath}`));

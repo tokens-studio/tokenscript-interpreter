@@ -106,7 +106,10 @@ export class TokenSetResolver {
     if (!this.resolvedTokens.has(tokenName)) {
       const ast = this.parsers.get(tokenName);
       if (!ast) {
-        this.resolvedTokens.set(tokenName, this.tokens.get(tokenName)!);
+        const tokenValue = this.tokens.get(tokenName);
+        if (tokenValue !== undefined) {
+          this.resolvedTokens.set(tokenName, tokenValue);
+        }
         return;
       }
 
@@ -124,7 +127,10 @@ export class TokenSetResolver {
         this.warnings.push(
           `Error interpreting token '${tokenName}': ${error.message} (value: ${this.tokens.get(tokenName)})`
         );
-        this.resolvedTokens.set(tokenName, this.tokens.get(tokenName)!);
+        const tokenValue = this.tokens.get(tokenName);
+        if (tokenValue !== undefined) {
+          this.resolvedTokens.set(tokenName, tokenValue);
+        }
       }
     }
   }

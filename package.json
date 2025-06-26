@@ -45,10 +45,7 @@
     "postversion": "git push && git push --tags",
     "release:patch": "npm version patch && npm publish",
     "release:minor": "npm version minor && npm publish",
-    "release:major": "npm version major && npm publish",
-    "benchmark": "tsx benchmark/cli.ts",
-    "benchmark:generate": "tsx benchmark/cli.ts generate",
-    "benchmark:browser": "esbuild benchmark/browser-benchmark.ts --bundle --outfile=benchmark/browser-benchmark.js --format=esm && open benchmark/browser-demo.html"
+    "release:major": "npm version major && npm publish"
   },
   "dependencies": {
     "chalk": "^5.4.1",
