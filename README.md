@@ -17,7 +17,7 @@ TokenScript is a powerful expression language specifically designed for design s
 - 🎨 **Color manipulation** - Work with hex colors, RGB, and other color formats
 - 📐 **Unit-aware calculations** - Perform math operations with CSS units
 - 🔗 **Token references** - Reference external design tokens using `{token.name}` syntax
-- 🧮 **Mathematical functions** - Built-in functions like `min()`, `max()`, `sqrt()`, etc.
+- 🧮 **Mathematical functions** - Built-in functions like `min()`, `max()`, `sqrt()`, `roundTo()`, etc.
 - 🔄 **Control structures** - Variables, conditionals, and loops for complex logic
 - 🎯 **Type system** - Strong typing with support for Numbers, Strings, Colors, Lists, and more
 
@@ -200,7 +200,7 @@ TokenScript supports a rich set of features for design token manipulation:
 ### Basic Syntax
 - **Variables:** `variable name: Type = value;`
 - **References:** `{token.name}` for external tokens
-- **Functions:** `min(a, b, c)`, `max(a, b)`, `sqrt(x)`
+- **Functions:** `min(a, b, c)`, `max(a, b)`, `sqrt(x)`, `roundTo(value, precision?)`
 - **Control flow:** `if(condition) [...] else [...]`
 - **Loops:** `while(condition) [...]`
 - **Types:** `Number`, `String`, `Color`, `List`, `Boolean`, `NumberWithUnit`
@@ -336,7 +336,7 @@ The CLI has been successfully tested with real-world design token files:
 Some advanced token types are not yet fully supported:
 - URLs in token values (contain colons that conflict with lexer)
 - 8-digit hex colors with alpha channels
-- CSS functions like `rgba()`, `linear-gradient()`, `roundTo()`
+- CSS functions like `rgba()`, `linear-gradient()`
 
 These limitations match the current interpreter capabilities and can be addressed in future updates.
 

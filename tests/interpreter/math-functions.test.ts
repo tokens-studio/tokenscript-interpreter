@@ -148,6 +148,130 @@ describe('Math Functions - Rounding', () => {
   });
 });
 
+describe('Math Functions - RoundTo', () => {
+  it('should handle roundTo function with default precision', () => {
+    const text = `
+    variable result1: Number = roundTo(3.14159);
+    variable result2: Number = roundTo(2.71828);
+    variable result3: Number = roundTo(1.41421);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser, {});
+    interpreter.interpret();
+
+    const result1 = interpreter.symbolTable.get("result1");
+    const result2 = interpreter.symbolTable.get("result2");
+    const result3 = interpreter.symbolTable.get("result3");
+
+    expect(result1?.value).toBe(3); // Default rounds to nearest integer
+    expect(result2?.value).toBe(3);
+    expect(result3?.value).toBe(1);
+  });
+
+  it('should handle roundTo function with specified precision', () => {
+    const text = `
+    variable result1: Number = roundTo(3.14159, 2);
+    variable result2: Number = roundTo(2.71828, 3);
+    variable result3: Number = roundTo(1.41421, 1);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser, {});
+    interpreter.interpret();
+
+    const result1 = interpreter.symbolTable.get("result1");
+    const result2 = interpreter.symbolTable.get("result2");
+    const result3 = interpreter.symbolTable.get("result3");
+
+    expect(result1?.value).toBe(3.14);
+    expect(result2?.value).toBe(2.718);
+    expect(result3?.value).toBe(1.4);
+  });
+
+  it('should handle roundTo function with zero precision', () => {
+    const text = `
+    variable result1: Number = roundTo(3.7, 0);
+    variable result2: Number = roundTo(2.3, 0);
+    variable result3: Number = roundTo(1.5, 0);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser, {});
+    interpreter.interpret();
+
+    const result1 = interpreter.symbolTable.get("result1");
+    const result2 = interpreter.symbolTable.get("result2");
+    const result3 = interpreter.symbolTable.get("result3");
+
+    expect(result1?.value).toBe(4);
+    expect(result2?.value).toBe(2);
+    expect(result3?.value).toBe(2); // 1.5 rounds to 2 (JavaScript's round half up)
+  });
+
+  it('should handle roundTo function with font size calculations', () => {
+    const text = `
+    variable base: Number = 16;
+    variable ratio: Number = 1.25;
+    variable h1: Number = roundTo(base * (ratio^5));
+    variable h2: Number = roundTo(base * (ratio^4));
+    variable h3: Number = roundTo(base * (ratio^3));
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser, {});
+    interpreter.interpret();
+
+    const h1 = interpreter.symbolTable.get("h1");
+    const h2 = interpreter.symbolTable.get("h2");
+    const h3 = interpreter.symbolTable.get("h3");
+
+    // 16 * 1.25^5 = 16 * 3.0517578125 = 48.828125 -> 49
+    expect(h1?.value).toBe(49);
+    // 16 * 1.25^4 = 16 * 2.44140625 = 39.0625 -> 39
+    expect(h2?.value).toBe(39);
+    // 16 * 1.25^3 = 16 * 1.953125 = 31.25 -> 31
+    expect(h3?.value).toBe(31);
+  });
+
+  it('should handle roundTo function with negative numbers', () => {
+    const text = `
+    variable result1: Number = roundTo(-3.7);
+    variable result2: Number = roundTo(-2.3);
+    variable result3: Number = roundTo(-1.5);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser, {});
+    interpreter.interpret();
+
+    const result1 = interpreter.symbolTable.get("result1");
+    const result2 = interpreter.symbolTable.get("result2");
+    const result3 = interpreter.symbolTable.get("result3");
+
+    expect(result1?.value).toBe(-4);
+    expect(result2?.value).toBe(-2);
+    expect(result3?.value).toBe(-1); // -1.5 rounds to -1 (JavaScript's round half up)
+  });
+
+  it('should handle roundTo function with precision and negative numbers', () => {
+    const text = `
+    variable result1: Number = roundTo(-3.14159, 2);
+    variable result2: Number = roundTo(-2.71828, 3);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser, {});
+    interpreter.interpret();
+
+    const result1 = interpreter.symbolTable.get("result1");
+    const result2 = interpreter.symbolTable.get("result2");
+
+    expect(result1?.value).toBe(-3.14);
+    expect(result2?.value).toBe(-2.718);
+  });
+});
+
 describe('Math Functions - Complex Expressions', () => {
   it('should handle complex math expressions with functions', () => {
     const text = `
@@ -158,10 +282,10 @@ describe('Math Functions - Complex Expressions', () => {
     const parser = new Parser(lexer);
     const interpreter = new Interpreter(parser, {});
     interpreter.interpret();
-    
+
     const complex = interpreter.symbolTable.get("complex");
     const nested = interpreter.symbolTable.get("nested");
-    
+
     expect(complex?.value).toBe(5); // sqrt(9 + 16) = sqrt(25) = 5
     expect(nested?.value).toBe(100); // sin(π/2) = 1, * 100 = 100
   });
@@ -177,11 +301,37 @@ describe('Math Functions - Complex Expressions', () => {
     const parser = new Parser(lexer);
     const interpreter = new Interpreter(parser, {});
     interpreter.interpret();
-    
+
     const linear = interpreter.symbolTable.get("linear");
     const rounded = interpreter.symbolTable.get("rounded");
-    
+
     expect(linear?.value).toBeCloseTo(0.214, 3);
     expect(rounded?.value).toBeCloseTo(0.214, 3);
+  });
+
+  it('should handle complex expressions with roundTo', () => {
+    const text = `
+    variable base: Number = 14;
+    variable growthRatio: Number = 1.2;
+    variable shrinkRatio: Number = 0.9;
+    variable bodyL: Number = roundTo(base * (growthRatio^1));
+    variable bodyS: Number = roundTo(base * (shrinkRatio^-1));
+    variable headlineXL: Number = roundTo(base * (growthRatio^2));
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser, {});
+    interpreter.interpret();
+
+    const bodyL = interpreter.symbolTable.get("bodyL");
+    const bodyS = interpreter.symbolTable.get("bodyS");
+    const headlineXL = interpreter.symbolTable.get("headlineXL");
+
+    // 14 * 1.2 = 16.8 -> 17
+    expect(bodyL?.value).toBe(17);
+    // 14 * (0.9^-1) = 14 * 1.111... = 15.555... -> 16
+    expect(bodyS?.value).toBe(16);
+    // 14 * 1.2^2 = 14 * 1.44 = 20.16 -> 20
+    expect(headlineXL?.value).toBe(20);
   });
 });

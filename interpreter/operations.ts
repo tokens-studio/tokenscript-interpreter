@@ -197,6 +197,28 @@ export const DEFAULT_FUNCTION_MAP: Record<string, (...args: ISymbolType[]) => IS
     return new NumberSymbol(Math.ceil(arg.value as number));
   },
 
+  // Advanced rounding function with precision
+  "roundto": (value: ISymbolType, precision?: ISymbolType): NumberSymbol => {
+    if (!(value instanceof NumberSymbol)) throw new InterpreterError("roundTo() expects a number as first argument.");
+
+    let precisionValue = 0; // Default to integer rounding
+    if (precision !== undefined) {
+      if (!(precision instanceof NumberSymbol)) throw new InterpreterError("roundTo() expects a number as second argument.");
+      precisionValue = precision.value as number;
+    }
+
+    const numValue = value.value as number;
+
+    if (precisionValue === 0) {
+      // Round to nearest integer
+      return new NumberSymbol(Math.round(numValue));
+    } else {
+      // Round to specified decimal places
+      const factor = Math.pow(10, precisionValue);
+      return new NumberSymbol(Math.round(numValue * factor) / factor);
+    }
+  },
+
   // Placeholder for non-mathematical functions that return strings
   "linear-gradient": (...args: ISymbolType[]): StringSymbol => {
     const stringArgs = args.map(arg => arg.toString()).join(', ');
