@@ -197,7 +197,7 @@ async function parseTokenset(tokensetPath: string, outputPath: string): Promise<
     console.log(chalk.blue("🎨 Loaded themes: ") + chalk.magenta(Object.keys(themes).join(", ")));
 
     // Process themes
-    const output = await processThemes(themes);
+    const output = await processThemes(themes, { enablePerformanceTracking: true });
 
     // Write output
     await fs.promises.writeFile(outputPath, JSON.stringify(output, null, 2), "utf8");

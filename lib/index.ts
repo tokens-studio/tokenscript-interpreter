@@ -10,7 +10,6 @@ export * from "../interpreter/operations";
 export { Parser } from "../interpreter/parser";
 export * from "../interpreter/symbols";
 export * from "../interpreter/symbolTable";
-// Export tokenset processor types
 export type { TokenSetResolverOptions } from "../tokenset-processor";
 // Tokenset processing utilities
 export {
@@ -24,17 +23,8 @@ export {
   processTokensFromJson, // Backward compatibility
 } from "../tokenset-processor";
 
-// Re-export common types for convenience
-export type {
-  ASTNode,
-  InterpreterValue,
-  ISymbolType,
-  LanguageOptions,
-  Operations,
-  ReferenceRecord,
-  SupportedFormats,
-  Token,
-  TokenType,
-} from "../types";
 // Type definitions
 export * from "../types";
+export type { PerformanceData, PerformanceSummary } from "../utils/performance-tracker";
+// Performance tracking utilities
+export { PerformanceTracker, trackPerformance } from "../utils/performance-tracker";

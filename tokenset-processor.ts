@@ -4,6 +4,7 @@ import { Interpreter } from "./interpreter/interpreter";
 import { Lexer } from "./interpreter/lexer";
 import { Parser } from "./interpreter/parser";
 import { UNINTERPRETED_KEYWORDS } from "./types";
+import { PerformanceTracker } from "./utils/performance-tracker";
 
 export interface TokenSetResolverOptions {
   maxIterations?: number;
@@ -177,20 +178,14 @@ export class TokenSetResolver {
 
 // Process themes and resolve tokens
 export async function processThemes(
-  themes: Record<string, Record<string, any>>
+  themes: Record<string, Record<string, any>>,
+  options?: { enablePerformanceTracking?: boolean }
 ): Promise<Record<string, any>> {
-  let sumTokens = 0;
   const outputTokens: Record<string, any> = {};
   const globalTokensCache: Record<string, any> = {};
-  const timingData: Array<{
-    name: string;
-    inputTokens: number;
-    outputTokens: number;
-    duration: number;
-    tokensPerSecond: number;
-  }> = [];
+  const performanceTracker = options?.enablePerformanceTracking ? new PerformanceTracker() : null;
 
-  const overallStartTime = Date.now();
+  performanceTracker?.startTracking();
 
   for (const [themeName, themeTokens] of Object.entries(themes)) {
     console.log(
@@ -214,118 +209,17 @@ export async function processThemes(
 
     const resolvedTokens = result.resolvedTokens;
 
-    const duration = (endTime - startTime) / 1000;
     const inputCount = Object.keys(themeTokens).length;
     const outputCount = Object.keys(resolvedTokens).length;
-    const tokensPerSecond = outputCount / Math.max(duration, 0.001); // Avoid division by zero
 
-    timingData.push({
-      name: themeName,
-      inputTokens: inputCount,
-      outputTokens: outputCount,
-      duration,
-      tokensPerSecond,
-    });
+    performanceTracker?.addEntry(themeName, inputCount, outputCount, startTime, endTime);
 
-    sumTokens += outputCount;
     outputTokens[themeName] = resolvedTokens;
     Object.assign(globalTokensCache, resolvedTokens);
   }
 
-  const overallEndTime = Date.now();
-  const totalDuration = (overallEndTime - overallStartTime) / 1000;
-
   // Display performance summary
-  console.log(`\n${chalk.cyan("=".repeat(80))}`);
-  console.log(chalk.cyan.bold("🚀 PERFORMANCE SUMMARY"));
-  console.log(chalk.cyan("=".repeat(80)));
-
-  // Table header
-  console.log(
-    chalk.bold(
-      "Theme".padEnd(30) +
-        "Input".padStart(12) +
-        "Output".padStart(12) +
-        "Time (s)".padStart(12) +
-        "Tokens/s".padStart(14)
-    )
-  );
-  console.log(chalk.gray("-".repeat(80)));
-
-  // Table rows
-  for (const data of timingData) {
-    const name = data.name.length > 29 ? `${data.name.substring(0, 26)}...` : data.name;
-    const tokensPerSec =
-      data.tokensPerSecond > 999999 ? "∞" : Math.round(data.tokensPerSecond).toLocaleString();
-
-    // Color code based on performance
-    const speedColor =
-      data.tokensPerSecond > 20000
-        ? chalk.green
-        : data.tokensPerSecond > 10000
-          ? chalk.yellow
-          : chalk.red;
-
-    console.log(
-      chalk.cyan(name.padEnd(30)) +
-        chalk.blue(data.inputTokens.toLocaleString().padStart(12)) +
-        chalk.green(data.outputTokens.toLocaleString().padStart(12)) +
-        chalk.yellow(data.duration.toFixed(3).padStart(12)) +
-        speedColor(tokensPerSec.padStart(14))
-    );
-  }
-
-  console.log(chalk.gray("-".repeat(80)));
-
-  // Summary statistics
-  const avgTokensPerSecond = sumTokens / Math.max(totalDuration, 0.001);
-  const totalSpeedColor =
-    avgTokensPerSecond > 15000 ? chalk.green : avgTokensPerSecond > 8000 ? chalk.yellow : chalk.red;
-
-  console.log(
-    chalk.bold("TOTAL".padEnd(30)) +
-      chalk.blue(
-        timingData
-          .reduce((sum, d) => sum + d.inputTokens, 0)
-          .toLocaleString()
-          .padStart(12)
-      ) +
-      chalk.green(sumTokens.toLocaleString().padStart(12)) +
-      chalk.yellow(totalDuration.toFixed(3).padStart(12)) +
-      totalSpeedColor(Math.round(avgTokensPerSecond).toLocaleString().padStart(14))
-  );
-
-  console.log(chalk.cyan("\n📊 Summary:"));
-  console.log(chalk.white("   • Total themes processed: ") + chalk.cyan(timingData.length));
-  console.log(
-    chalk.white("   • Total tokens resolved: ") + chalk.green(sumTokens.toLocaleString())
-  );
-  console.log(
-    chalk.white("   • Total processing time: ") + chalk.yellow(`${totalDuration.toFixed(3)}s`)
-  );
-  console.log(
-    chalk.white("   • Average throughput: ") +
-      totalSpeedColor(`${Math.round(avgTokensPerSecond).toLocaleString()} tokens/second`)
-  );
-
-  const fastestTheme = timingData.reduce((fastest, current) =>
-    current.tokensPerSecond > fastest.tokensPerSecond ? current : fastest
-  );
-  const slowestTheme = timingData.reduce((slowest, current) =>
-    current.tokensPerSecond < slowest.tokensPerSecond ? current : slowest
-  );
-
-  console.log(
-    chalk.white("   • Fastest theme: ") +
-      chalk.green(fastestTheme.name) +
-      chalk.gray(` (${Math.round(fastestTheme.tokensPerSecond).toLocaleString()} tokens/s)`)
-  );
-  console.log(
-    chalk.white("   • Slowest theme: ") +
-      chalk.red(slowestTheme.name) +
-      chalk.gray(` (${Math.round(slowestTheme.tokensPerSecond).toLocaleString()} tokens/s)`)
-  );
-  console.log(chalk.cyan("=".repeat(80)));
+  performanceTracker?.displaySummary();
 
   return outputTokens;
 }
