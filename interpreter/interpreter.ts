@@ -394,9 +394,11 @@ export class Interpreter {
         hasType && currentAssignmentValue.type.toLowerCase() !== targetType.toLowerCase();
 
       if (!isCorrectType && typeMismatch) {
-        const originalTypeForErrorMessage = currentAssignmentValue.type;
+        // Type assertion to help TypeScript understand that currentAssignmentValue is ISymbolType
+        const assignmentValue = currentAssignmentValue as ISymbolType;
+        const originalTypeForErrorMessage = assignmentValue.type;
         try {
-          let rawValueForCoercion = currentAssignmentValue.value;
+          let rawValueForCoercion = assignmentValue.value;
 
           if (SymbolConstructor === (ListSymbol as any) && Array.isArray(rawValueForCoercion)) {
             rawValueForCoercion = (rawValueForCoercion as any[]).map((v) =>
@@ -416,15 +418,15 @@ export class Interpreter {
 
           // Let's pass 'currentAssignmentValue' itself if target is same type, or its .value for coercion
           let valueForConstructor: any;
-          if (currentAssignmentValue instanceof SymbolConstructor) {
-            valueForConstructor = currentAssignmentValue; // Pass instance if it's already the target type
+          if (assignmentValue instanceof SymbolConstructor) {
+            valueForConstructor = assignmentValue; // Pass instance if it's already the target type
           } else {
             // Special handling for coercing to String - use toString() method
             if (SymbolConstructor === StringSymbol) {
-              valueForConstructor = currentAssignmentValue.toString();
+              valueForConstructor = (assignmentValue as ISymbolType).toString();
             } else {
-              // Prepare rawValueForCoercion from currentAssignmentValue.value
-              let preparedRawValue = currentAssignmentValue.value;
+              // Prepare rawValueForCoercion from assignmentValue.value
+              let preparedRawValue = (assignmentValue as ISymbolType).value;
               if (SymbolConstructor === ListSymbol && Array.isArray(preparedRawValue)) {
                 preparedRawValue = preparedRawValue.map((v) => this.importReferenceValue(v));
               }

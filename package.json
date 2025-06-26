@@ -56,13 +56,7 @@
     "typescript": "~5.7.2",
     "vitest": "^3.2.4"
   },
-  "keywords": [
-    "tokenscript",
-    "design-tokens",
-    "design-system",
-    "interpreter",
-    "cli"
-  ],
+  "keywords": ["tokenscript", "design-tokens", "design-system", "interpreter", "cli"],
   "author": "Marco Christian Krenn <marco.krenn@gmail.com>",
   "license": "MIT",
   "repository": {

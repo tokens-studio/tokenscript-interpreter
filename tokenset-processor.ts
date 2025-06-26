@@ -218,18 +218,18 @@ export async function processThemes(
   // Table header
   console.log(
     chalk.bold(
-      "Theme".padEnd(20) +
-        "Input".padStart(8) +
-        "Output".padStart(8) +
-        "Time (s)".padStart(10) +
-        "Tokens/s".padStart(12)
+      "Theme".padEnd(30) +
+        "Input".padStart(12) +
+        "Output".padStart(12) +
+        "Time (s)".padStart(12) +
+        "Tokens/s".padStart(14)
     )
   );
-  console.log(chalk.gray("-".repeat(58)));
+  console.log(chalk.gray("-".repeat(80)));
 
   // Table rows
   for (const data of timingData) {
-    const name = data.name.length > 19 ? `${data.name.substring(0, 16)}...` : data.name;
+    const name = data.name.length > 29 ? `${data.name.substring(0, 26)}...` : data.name;
     const tokensPerSec =
       data.tokensPerSecond > 999999 ? "∞" : Math.round(data.tokensPerSecond).toLocaleString();
 
@@ -242,15 +242,15 @@ export async function processThemes(
           : chalk.red;
 
     console.log(
-      chalk.cyan(name.padEnd(20)) +
-        chalk.blue(data.inputTokens.toLocaleString().padStart(8)) +
-        chalk.green(data.outputTokens.toLocaleString().padStart(8)) +
-        chalk.yellow(data.duration.toFixed(3).padStart(10)) +
-        speedColor(tokensPerSec.padStart(12))
+      chalk.cyan(name.padEnd(30)) +
+        chalk.blue(data.inputTokens.toLocaleString().padStart(12)) +
+        chalk.green(data.outputTokens.toLocaleString().padStart(12)) +
+        chalk.yellow(data.duration.toFixed(3).padStart(12)) +
+        speedColor(tokensPerSec.padStart(14))
     );
   }
 
-  console.log(chalk.gray("-".repeat(58)));
+  console.log(chalk.gray("-".repeat(80)));
 
   // Summary statistics
   const avgTokensPerSecond = sumTokens / Math.max(totalDuration, 0.001);
@@ -258,16 +258,16 @@ export async function processThemes(
     avgTokensPerSecond > 15000 ? chalk.green : avgTokensPerSecond > 8000 ? chalk.yellow : chalk.red;
 
   console.log(
-    chalk.bold("TOTAL".padEnd(20)) +
+    chalk.bold("TOTAL".padEnd(30)) +
       chalk.blue(
         timingData
           .reduce((sum, d) => sum + d.inputTokens, 0)
           .toLocaleString()
-          .padStart(8)
+          .padStart(12)
       ) +
-      chalk.green(sumTokens.toLocaleString().padStart(8)) +
-      chalk.yellow(totalDuration.toFixed(3).padStart(10)) +
-      totalSpeedColor(Math.round(avgTokensPerSecond).toLocaleString().padStart(12))
+      chalk.green(sumTokens.toLocaleString().padStart(12)) +
+      chalk.yellow(totalDuration.toFixed(3).padStart(12)) +
+      totalSpeedColor(Math.round(avgTokensPerSecond).toLocaleString().padStart(14))
   );
 
   console.log(chalk.cyan("\n📊 Summary:"));
