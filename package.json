@@ -12,7 +12,11 @@
     "cli": "tsx cli.ts",
     "cli:interactive": "tsx cli.ts interactive",
     "cli:parse": "tsx cli.ts parse_tokenset",
-    "cli:permutate": "tsx cli.ts permutate_tokenset"
+    "cli:permutate": "tsx cli.ts permutate_tokenset",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "check": "biome check --write ."
   },
   "bin": {
     "tokenscript": "./cli.ts"
