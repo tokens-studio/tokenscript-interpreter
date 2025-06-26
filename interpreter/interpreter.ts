@@ -5,7 +5,7 @@ import {
   Operations,
   type ReferenceRecord,
   UNINTERPRETED_KEYWORDS,
-} from "../types";
+} from "../types.js";
 import {
   type AttributeAccessNode,
   type AttributeAssignNode,
@@ -28,16 +28,16 @@ import {
   type UnaryOpNode,
   type VarDeclNode,
   type WhileNode,
-} from "./ast";
-import type { ColorManager } from "./colorManager";
-import { InterpreterError } from "./errors";
+} from "./ast.js";
+import type { ColorManager } from "./colorManager.js";
+import { InterpreterError } from "./errors.js";
 import {
   COMPARISON_IMPLEMENTATIONS,
   DEFAULT_FUNCTION_MAP,
   LANGUAGE_OPTIONS as DEFAULT_LANGUAGE_OPTIONS,
   OPERATION_IMPLEMENTATIONS,
-} from "./operations";
-import { Parser } from "./parser";
+} from "./operations.js";
+import { Parser } from "./parser.js";
 import {
   BaseSymbolType,
   BooleanSymbol,
@@ -46,8 +46,8 @@ import {
   NumberSymbol,
   NumberWithUnitSymbol,
   StringSymbol,
-} from "./symbols";
-import { SymbolTable } from "./symbolTable";
+} from "./symbols.js";
+import { SymbolTable } from "./symbolTable.js";
 
 class ReturnSignal {
   constructor(public value: ISymbolType | null) {}

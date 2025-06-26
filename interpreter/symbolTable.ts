@@ -1,5 +1,5 @@
-import type { ISymbolType } from "../types";
-import { InterpreterError } from "./errors";
+import type { ISymbolType } from "../types.js";
+import { InterpreterError } from "./errors.js";
 import {
   BooleanSymbol,
   ColorSymbol,
@@ -7,7 +7,7 @@ import {
   NumberSymbol,
   NumberWithUnitSymbol,
   StringSymbol,
-} from "./symbols";
+} from "./symbols.js";
 
 export class SymbolTable {
   private symbols: Record<string, ISymbolType>;

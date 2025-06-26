@@ -1,5 +1,5 @@
-import { Operations, ReservedKeyword, SupportedFormats, type Token, TokenType } from "../types";
-import { LexerError } from "./errors";
+import { Operations, ReservedKeyword, SupportedFormats, type Token, TokenType } from "../types.js";
+import { LexerError } from "./errors.js";
 
 const _OPERATION_CHAR_TO_ENUM: Record<string, Operations> = {
   "+": Operations.ADD,

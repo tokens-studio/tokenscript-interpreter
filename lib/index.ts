@@ -1,17 +1,17 @@
 // Core interpreter exports
 
 // AST and symbol exports
-export * from "../interpreter/ast";
-export { ColorManager } from "../interpreter/colorManager";
-export * from "../interpreter/errors";
-export { Interpreter } from "../interpreter/interpreter";
-export { Lexer } from "../interpreter/lexer";
-export * from "../interpreter/operations";
-export { Parser } from "../interpreter/parser";
-export * from "../interpreter/symbols";
-export * from "../interpreter/symbolTable";
+export * from "../interpreter/ast.js";
+export { ColorManager } from "../interpreter/colorManager.js";
+export * from "../interpreter/errors.js";
+export { Interpreter } from "../interpreter/interpreter.js";
+export { Lexer } from "../interpreter/lexer.js";
+export * from "../interpreter/operations.js";
+export { Parser } from "../interpreter/parser.js";
+export * from "../interpreter/symbols.js";
+export * from "../interpreter/symbolTable.js";
 // Export tokenset processor types
-export type { TokenSetResolverOptions } from "../tokenset-processor";
+export type { TokenSetResolverOptions } from "../tokenset-processor.js";
 // Tokenset processing utilities
 export {
   buildThemeTree,
@@ -22,7 +22,7 @@ export {
   processSingleTokenSet, // Backward compatibility
   processThemes,
   processTokensFromJson, // Backward compatibility
-} from "../tokenset-processor";
+} from "../tokenset-processor.js";
 
 // Re-export common types for convenience
 export type {
@@ -35,6 +35,6 @@ export type {
   SupportedFormats,
   Token,
   TokenType,
-} from "../types";
+} from "../types.js";
 // Type definitions
-export * from "../types";
+export * from "../types.js";

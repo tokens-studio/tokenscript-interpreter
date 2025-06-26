@@ -1,4 +1,4 @@
-import { type ASTNode, Operations, ReservedKeyword, type Token, TokenType } from "../types";
+import { type ASTNode, Operations, ReservedKeyword, type Token, TokenType } from "../types.js";
 import {
   AttributeAccessNode,
   AttributeAssignNode,
@@ -22,9 +22,9 @@ import {
   UnaryOpNode,
   VarDeclNode,
   WhileNode,
-} from "./ast";
-import { ParserError } from "./errors";
-import type { Lexer } from "./lexer";
+} from "./ast.js";
+import { ParserError } from "./errors.js";
+import type { Lexer } from "./lexer.js";
 
 export class Parser {
   private lexer: Lexer;

@@ -1,9 +1,10 @@
 import chalk from "chalk";
-import type { ASTNode } from "./interpreter/ast";
-import { Interpreter } from "./interpreter/interpreter";
-import { Lexer } from "./interpreter/lexer";
-import { Parser } from "./interpreter/parser";
-import { UNINTERPRETED_KEYWORDS } from "./types";
+import type { ASTNode } from "./interpreter/ast.js";
+import { TokenResolutionError } from "./interpreter/errors.js";
+import { Interpreter } from "./interpreter/interpreter.js";
+import { Lexer } from "./interpreter/lexer.js";
+import { Parser } from "./interpreter/parser.js";
+import { UNINTERPRETED_KEYWORDS } from "./types.js";
 
 export interface TokenSetResolverOptions {
   maxIterations?: number;
@@ -16,6 +17,7 @@ export class TokenSetResolver {
   private requiresTokens: Record<string, Set<string>> = {};
   private parsers: Record<string, ASTNode> = {};
   private referenceCache: Interpreter;
+  private resolutionStatus: Record<string, { resolved: boolean; error?: TokenResolutionError }> = {};
 
   constructor(tokens: Record<string, any>, globalTokens: Record<string, any> = {}) {
     this.tokens = tokens;
@@ -91,6 +93,7 @@ export class TokenSetResolver {
       const ast = this.parsers[tokenName];
       if (!ast) {
         this.resolvedTokens[tokenName] = this.tokens[tokenName];
+        this.resolutionStatus[tokenName] = { resolved: true };
         return;
       }
 
@@ -101,13 +104,22 @@ export class TokenSetResolver {
 
         const result = interpreter.interpret();
         this.resolvedTokens[tokenName] = result;
+        this.resolutionStatus[tokenName] = { resolved: true };
       } catch (error: any) {
+        const resolutionError = new TokenResolutionError({
+          tokenName,
+          originalValue: this.tokens[tokenName],
+          errorType: 'interpretation_error',
+          details: error.message,
+        });
+
         console.warn(
           chalk.yellow(
-            `⚠️  Error interpreting token '${tokenName}': ${error.message} (value: ${this.tokens[tokenName]})`
+            `⚠️  ${resolutionError.message} (value: ${this.tokens[tokenName]})`
           )
         );
         this.resolvedTokens[tokenName] = this.tokens[tokenName];
+        this.resolutionStatus[tokenName] = { resolved: false, error: resolutionError };
       }
     }
 
@@ -149,14 +161,35 @@ export class TokenSetResolver {
     );
 
     if (unresolvedTokens.length > 0) {
+      const unresolvedMessage = `Not all tokens could be resolved. Remaining tokens: ${unresolvedTokens.map((token) => `${token}: ${this.tokens[token]}`).join(", ")}`;
       console.warn(
         chalk.yellow(
-          `⚠️  Not all tokens could be resolved. Remaining tokens: ${unresolvedTokens.map((token) => `${token}: ${this.tokens[token]}`).join(", ")}`
+          `⚠️  ${unresolvedMessage}`
         )
       );
+
+      // Mark unresolved tokens with error status
+      for (const tokenName of unresolvedTokens) {
+        const resolutionError = new TokenResolutionError({
+          tokenName,
+          originalValue: this.tokens[tokenName],
+          errorType: 'circular_dependency',
+          details: 'Token could not be resolved due to circular dependencies or missing references',
+        });
+
+        this.resolvedTokens[tokenName] = this.tokens[tokenName];
+        this.resolutionStatus[tokenName] = {
+          resolved: false,
+          error: resolutionError
+        };
+      }
     }
 
     return this.resolvedTokens;
+  }
+
+  public getResolutionStatus(): Record<string, { resolved: boolean; error?: TokenResolutionError }> {
+    return this.resolutionStatus;
   }
 }
 
@@ -558,20 +591,31 @@ export function interpretTokensWithMetadata(dtcgJson: Record<string, any>): Reco
       // Resolve token references
       const tokenSet = new TokenSetResolver(themeTokensFlat, {});
       const resolvedTokens = tokenSet.resolve();
+      const resolutionStatus = tokenSet.getResolutionStatus();
 
       // Create DTCG output with interpreted values
       const dtcgTokens: Record<string, any> = {};
       for (const [tokenName, tokenMetadata] of Object.entries(themeTokensWithMetadata)) {
-        const resolvedValue = resolvedTokens[tokenName];
+        // Extract the flat token name by removing the token set prefix
+        const flatTokenName = tokenName.includes('.') ? tokenName.split('.').slice(1).join('.') : tokenName;
+        const resolvedValue = resolvedTokens[flatTokenName];
+        const status = resolutionStatus[flatTokenName];
 
         // Preserve all metadata and update $value with interpreted result
-        dtcgTokens[tokenName] = {
+        const tokenOutput: any = {
           ...tokenMetadata,
           $value:
             resolvedValue && typeof resolvedValue === "object" && "toString" in resolvedValue
               ? resolvedValue.toString()
               : resolvedValue || (tokenMetadata as any).$value,
         };
+
+        // Add structured error data if resolution failed
+        if (status && !status.resolved && status.error) {
+          tokenOutput.$error = status.error.data;
+        }
+
+        dtcgTokens[tokenName] = tokenOutput;
       }
 
       outputTokens[themeName] = dtcgTokens;
@@ -600,20 +644,29 @@ export function interpretTokensWithMetadata(dtcgJson: Record<string, any>): Reco
       // Resolve token references
       const tokenSet = new TokenSetResolver(tokensToResolve, {});
       const resolvedTokens = tokenSet.resolve();
+      const resolutionStatus = tokenSet.getResolutionStatus();
 
       // Create DTCG output with interpreted values
       const dtcgTokens: Record<string, any> = {};
       for (const [tokenName, tokenMetadata] of Object.entries(tokensWithMetadata)) {
         const resolvedValue = resolvedTokens[tokenName];
+        const status = resolutionStatus[tokenName];
 
         // Preserve all metadata and update $value with interpreted result
-        dtcgTokens[tokenName] = {
+        const tokenOutput: any = {
           ...tokenMetadata,
           $value:
             resolvedValue && typeof resolvedValue === "object" && "toString" in resolvedValue
               ? resolvedValue.toString()
               : resolvedValue || tokenMetadata.$value,
         };
+
+        // Add structured error data if resolution failed
+        if (status && !status.resolved && status.error) {
+          tokenOutput.$error = status.error.data;
+        }
+
+        dtcgTokens[tokenName] = tokenOutput;
       }
 
       return dtcgTokens;
@@ -621,16 +674,25 @@ export function interpretTokensWithMetadata(dtcgJson: Record<string, any>): Reco
       // This is already a flat token set - convert to DTCG format
       const tokenSet = new TokenSetResolver(dtcgJson, {});
       const resolvedTokens = tokenSet.resolve();
+      const resolutionStatus = tokenSet.getResolutionStatus();
 
       // Convert to DTCG format
       const dtcgTokens: Record<string, any> = {};
       for (const [key, value] of Object.entries(resolvedTokens)) {
         const resolvedValue =
           value && typeof value === "object" && "toString" in value ? value.toString() : value;
+        const status = resolutionStatus[key];
 
-        dtcgTokens[key] = {
+        const tokenOutput: any = {
           $value: resolvedValue,
         };
+
+        // Add structured error data if resolution failed
+        if (status && !status.resolved && status.error) {
+          tokenOutput.$error = status.error.data;
+        }
+
+        dtcgTokens[key] = tokenOutput;
       }
 
       return dtcgTokens;

@@ -1,5 +1,5 @@
-import { type ISymbolType, SupportedFormats } from "../types";
-import { InterpreterError } from "./errors";
+import { type ISymbolType, SupportedFormats } from "../types.js";
+import { InterpreterError } from "./errors.js";
 
 // Base class for all symbols
 export abstract class BaseSymbolType implements ISymbolType {

@@ -5,9 +5,9 @@ import chalk from "chalk";
 import { Command } from "commander";
 import * as readlineSync from "readline-sync";
 import * as yauzl from "yauzl";
-import { Interpreter } from "./interpreter/interpreter";
-import { Lexer } from "./interpreter/lexer";
-import { Parser } from "./interpreter/parser";
+import { Interpreter } from "./interpreter/interpreter.js";
+import { Lexer } from "./interpreter/lexer.js";
+import { Parser } from "./interpreter/parser.js";
 import {
   buildThemeTree,
   interpretTokens,
@@ -15,8 +15,8 @@ import {
   interpretTokensWithMetadata,
   permutateTokensets,
   processThemes,
-} from "./tokenset-processor";
-import type { ReferenceRecord } from "./types";
+} from "./tokenset-processor.js";
+import type { ReferenceRecord } from "./types.js";
 
 const program = new Command();
 

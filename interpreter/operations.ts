@@ -1,12 +1,12 @@
-import { type ISymbolType, Operations, type SupportedFormats } from "../types";
-import { InterpreterError } from "./errors";
+import { type ISymbolType, Operations, type SupportedFormats } from "../types.js";
+import { InterpreterError } from "./errors.js";
 import {
   type BaseSymbolType,
   BooleanSymbol,
   NumberSymbol,
   NumberWithUnitSymbol,
   StringSymbol,
-} from "./symbols";
+} from "./symbols.js";
 
 type MathOperand = NumberSymbol | NumberWithUnitSymbol;
 type OperationFunction = (a: MathOperand, b: MathOperand) => MathOperand;
