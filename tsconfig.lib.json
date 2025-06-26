@@ -40,7 +40,8 @@
     "tokenset-processor.ts",
     "types.ts",
     "lib/**/*",
-    "types/**/*"
+    "types/**/*",
+    "benchmark/**/*"
   ],
   "exclude": [
     "node_modules",
