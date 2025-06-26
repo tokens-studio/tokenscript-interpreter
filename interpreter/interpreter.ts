@@ -119,6 +119,25 @@ export class Interpreter {
     }
   }
 
+  public updateReferences(newReferences: ReferenceRecord): void {
+    // Optimized method to add only new/changed references
+    for (const key in newReferences) {
+      if (!(key in this.references) || this.references[key] !== newReferences[key]) {
+        this.references[key] = this.importReferenceValue(newReferences[key]);
+      }
+    }
+  }
+
+  public addReference(key: string, value: any): void {
+    // Optimized method to add a single reference
+    this.references[key] = this.importReferenceValue(value);
+  }
+
+  public setAst(ast: ASTNode | null): void {
+    this.ast = ast;
+    this.parser = null; // Clear parser since we're using pre-parsed AST
+  }
+
   private importReferenceValue(value: any): ISymbolType {
     if (value instanceof BaseSymbolType) return value;
     if (typeof value === "number") return new NumberSymbol(value);

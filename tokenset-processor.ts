@@ -24,11 +24,13 @@ export class TokenSetResolver {
   private referenceCache: Interpreter;
   private warnings: string[] = [];
   private errors: string[] = [];
+  private lastReferencesSync: number = 0; // Track when we last synced all references
 
   constructor(tokens: Record<string, any>, globalTokens: Record<string, any> = {}) {
     this.tokens = tokens;
     this.resolvedTokens = { ...globalTokens };
     this.referenceCache = new Interpreter(null, this.resolvedTokens);
+    this.lastReferencesSync = Object.keys(this.resolvedTokens).length;
   }
 
   private buildRequirementsGraph(): void {
@@ -78,7 +80,9 @@ export class TokenSetResolver {
           this.resolvedTokens[tokenName] = tokenData;
         }
       } catch (error: any) {
-        this.warnings.push(`Error parsing token '${tokenName}': ${error.message} (value: ${tokenData})`);
+        this.warnings.push(
+          `Error parsing token '${tokenName}': ${error.message} (value: ${tokenData})`
+        );
         this.resolvedTokens[tokenName] = tokenData;
       }
     }
@@ -97,14 +101,25 @@ export class TokenSetResolver {
       }
 
       try {
-        const interpreter = new Interpreter(ast, {});
-        // Share reference cache
-        interpreter.setReferences(this.resolvedTokens);
+        // Reuse the existing interpreter instance with the cached AST
+        this.referenceCache.setAst(ast);
 
-        const result = interpreter.interpret();
+        // Efficiently sync references: only update if we have new resolved tokens
+        const currentResolvedCount = Object.keys(this.resolvedTokens).length;
+        if (currentResolvedCount > this.lastReferencesSync) {
+          this.referenceCache.updateReferences(this.resolvedTokens);
+          this.lastReferencesSync = currentResolvedCount;
+        }
+
+        const result = this.referenceCache.interpret();
         this.resolvedTokens[tokenName] = result;
+
+        // Add the newly resolved token directly to avoid full sync next time
+        this.referenceCache.addReference(tokenName, result);
       } catch (error: any) {
-        this.warnings.push(`Error interpreting token '${tokenName}': ${error.message} (value: ${this.tokens[tokenName]})`);
+        this.warnings.push(
+          `Error interpreting token '${tokenName}': ${error.message} (value: ${this.tokens[tokenName]})`
+        );
         this.resolvedTokens[tokenName] = this.tokens[tokenName];
       }
     }
@@ -155,7 +170,7 @@ export class TokenSetResolver {
     return {
       resolvedTokens: this.resolvedTokens,
       warnings: this.warnings,
-      errors: this.errors
+      errors: this.errors,
     };
   }
 }
