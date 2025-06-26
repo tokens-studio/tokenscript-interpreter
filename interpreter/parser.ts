@@ -18,6 +18,10 @@ export class Parser {
     this.currentToken = this.lexer.getNextToken();
   }
 
+  public getRequiredReferences(): string[] {
+    return Array.from(this.requiredReferences);
+  }
+
   private error(message: string = "Invalid syntax"): never {
     throw new ParserError(message, this.currentToken?.line, this.currentToken);
   }

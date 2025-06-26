@@ -249,4 +249,18 @@ export class Lexer {
 
     return nextToken.type === TokenType.EOF ? null : nextToken;
   }
+
+  public isEOF(): boolean {
+    // Check if we're at the end of input or only have whitespace remaining
+    let tempPos = this.pos;
+    let tempChar = this.currentChar;
+
+    // Skip whitespace
+    while (tempChar !== null && /\s/.test(tempChar)) {
+      tempPos++;
+      tempChar = tempPos < this.text.length ? this.text[tempPos] : null;
+    }
+
+    return tempChar === null;
+  }
 }
