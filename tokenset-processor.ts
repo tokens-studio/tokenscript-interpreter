@@ -25,28 +25,29 @@ export interface TokenSetResolverResult {
 }
 
 export class TokenSetResolver {
-  private tokens: Record<string, string>;
-  private resolvedTokens: Record<string, any>;
+  private tokens: Map<string, string>;
+  private resolvedTokens: Map<string, any>;
   private requiredByTokens: Record<string, Set<string>> = {};
   private requiresTokens: Record<string, Set<string>> = {};
-  private parsers: Record<string, ASTNode> = {};
+  private parsers: Map<string, ASTNode> = new Map();
   private referenceCache: Interpreter;
   private warnings: string[] = [];
   private errors: string[] = [];
-  private lastReferencesSync: number = 0; // Track when we last synced all references
 
   constructor(tokens: Record<string, string>, globalTokens: Record<string, any> = {}) {
-    this.tokens = tokens;
-    this.resolvedTokens = { ...globalTokens };
+    this.tokens = new Map(Object.entries(tokens));
+    this.resolvedTokens = new Map(Object.entries(globalTokens));
+
+    // CRITICAL: Pass the resolvedTokens Map directly to the Interpreter.
+    // The interpreter now holds a LIVE REFERENCE to this map.
     this.referenceCache = new Interpreter(null, this.resolvedTokens);
-    this.lastReferencesSync = Object.keys(this.resolvedTokens).length;
   }
 
   private buildRequirementsGraph(): void {
-    for (const [tokenName, tokenData] of Object.entries(this.tokens)) {
+    for (const [tokenName, tokenData] of this.tokens.entries()) {
       // Skip uninterpreted keywords
       if (UNINTERPRETED_KEYWORDS.includes(tokenData)) {
-        this.resolvedTokens[tokenName] = tokenData;
+        this.resolvedTokens.set(tokenName, tokenData);
         continue;
       }
 
@@ -55,7 +56,7 @@ export class TokenSetResolver {
 
         // Check if lexer is at EOF (empty or whitespace-only input)
         if (lexer.isEOF()) {
-          this.resolvedTokens[tokenName] = tokenData;
+          this.resolvedTokens.set(tokenName, tokenData);
           continue;
         }
 
@@ -63,7 +64,7 @@ export class TokenSetResolver {
         const ast = parser.parse();
 
         if (ast) {
-          this.parsers[tokenName] = ast;
+          this.parsers.set(tokenName, ast);
 
           // Extract required references from parser
           const requiredRefs = parser.getRequiredReferences();
@@ -86,55 +87,46 @@ export class TokenSetResolver {
             this.requiresTokens[tokenName].add(refToken);
           }
         } else {
-          this.resolvedTokens[tokenName] = tokenData;
+          this.resolvedTokens.set(tokenName, tokenData);
         }
       } catch (error: any) {
         this.warnings.push(
           `Error parsing token '${tokenName}': ${error.message} (value: ${tokenData})`
         );
-        this.resolvedTokens[tokenName] = tokenData;
+        this.resolvedTokens.set(tokenName, tokenData);
       }
     }
   }
 
   private resolveTokenIteratively(tokenName: string): void {
-    if (!(tokenName in this.tokens)) {
+    if (!this.tokens.has(tokenName)) {
       throw new Error(`Token '${tokenName}' not found.`);
     }
 
-    if (!(tokenName in this.resolvedTokens)) {
-      const ast = this.parsers[tokenName];
+    if (!this.resolvedTokens.has(tokenName)) {
+      const ast = this.parsers.get(tokenName);
       if (!ast) {
-        this.resolvedTokens[tokenName] = this.tokens[tokenName];
+        this.resolvedTokens.set(tokenName, this.tokens.get(tokenName)!);
         return;
       }
 
       try {
-        // Reuse the existing interpreter instance with the cached AST
+        // CRITICAL: The referenceCache interpreter ALREADY has a live reference
+        // to resolvedTokens via its references property. No updates are needed.
         this.referenceCache.setAst(ast);
-
-        // Efficiently sync references: only update if we have new resolved tokens
-        const currentResolvedCount = Object.keys(this.resolvedTokens).length;
-        if (currentResolvedCount > this.lastReferencesSync) {
-          this.referenceCache.updateReferences(this.resolvedTokens);
-          this.lastReferencesSync = currentResolvedCount;
-        }
-
         const result = this.referenceCache.interpret();
-        this.resolvedTokens[tokenName] = result;
 
-        // Add the newly resolved token directly to avoid full sync next time
-        this.referenceCache.addReference(tokenName, result);
+        // CRITICAL: We now write the result DIRECTLY to the shared map.
+        // The interpreter will see this new value on the next call to interpret()
+        // automatically, because it holds a reference to the same map.
+        this.resolvedTokens.set(tokenName, result);
       } catch (error: any) {
         this.warnings.push(
-          `Error interpreting token '${tokenName}': ${error.message} (value: ${this.tokens[tokenName]})`
+          `Error interpreting token '${tokenName}': ${error.message} (value: ${this.tokens.get(tokenName)})`
         );
-        this.resolvedTokens[tokenName] = this.tokens[tokenName];
+        this.resolvedTokens.set(tokenName, this.tokens.get(tokenName)!);
       }
     }
-
-    // Update reference cache
-    this.referenceCache.setReferences({ [tokenName]: this.resolvedTokens[tokenName] });
   }
 
   public resolve(): TokenSetResolverResult {
@@ -142,7 +134,7 @@ export class TokenSetResolver {
 
     // Iterative topological sort resolution
     // 1. Find all tokens with zero dependencies and add them to the queue
-    const queue: string[] = Object.keys(this.tokens).filter(
+    const queue: string[] = Array.from(this.tokens.keys()).filter(
       (tokenName) => !(tokenName in this.requiresTokens)
     );
 
@@ -170,18 +162,18 @@ export class TokenSetResolver {
     }
 
     // Check for unresolved tokens (circular dependencies or missing references)
-    const unresolvedTokens = Object.keys(this.tokens).filter(
-      (tokenName) => !(tokenName in this.resolvedTokens)
+    const unresolvedTokens = Array.from(this.tokens.keys()).filter(
+      (tokenName) => !this.resolvedTokens.has(tokenName)
     );
 
     if (unresolvedTokens.length > 0) {
       this.warnings.push(
-        `Not all tokens could be resolved. Remaining tokens: ${unresolvedTokens.map((token) => `${token}: ${this.tokens[token]}`).join(", ")}`
+        `Not all tokens could be resolved. Remaining tokens: ${unresolvedTokens.map((token) => `${token}: ${this.tokens.get(token)}`).join(", ")}`
       );
     }
 
     return {
-      resolvedTokens: this.resolvedTokens,
+      resolvedTokens: Object.fromEntries(this.resolvedTokens.entries()),
       warnings: this.warnings,
       errors: this.errors,
     };

@@ -58,14 +58,14 @@ type MathOperand = NumberSymbol | NumberWithUnitSymbol;
 export class Interpreter {
   private parser: Parser | null; // Null if created with pre-parsed AST
   private symbolTable: SymbolTable;
-  private references: Record<string, ISymbolType> = {}; // Processed references
+  private references: Map<string, ISymbolType> | Record<string, ISymbolType>; // Support both Map and Record
   private ast: ASTNode | null = null;
   private languageOptions: LanguageOptions;
   private colorManager: ColorManager | null = null; // ColorManager integration
 
   constructor(
     parserOrAst: Parser | ASTNode | null,
-    references?: ReferenceRecord,
+    references?: ReferenceRecord | Map<string, any>,
     symbolTable?: SymbolTable,
     languageOptions?: LanguageOptions,
     colorManager?: ColorManager
@@ -79,6 +79,16 @@ export class Interpreter {
     this.symbolTable = symbolTable || new SymbolTable();
     this.languageOptions = { ...DEFAULT_LANGUAGE_OPTIONS, ...languageOptions };
     this.colorManager = colorManager || null; // Store if provided
+
+    // CRITICAL: Store the reference directly for shared reference model
+    if (references instanceof Map) {
+      this.references = references; // Direct reference to the shared Map
+    } else {
+      this.references = {}; // Create new Record for backward compatibility
+      if (references) {
+        this.setReferences(references);
+      }
+    }
 
     // Register color types and functions if ColorManager is provided
     if (this.colorManager) {
@@ -107,30 +117,48 @@ export class Interpreter {
         }
       }
     }
-
-    if (references) {
-      this.setReferences(references);
-    }
   }
 
   public setReferences(references: ReferenceRecord): void {
-    for (const key in references) {
-      this.references[key] = this.importReferenceValue(references[key]);
+    if (this.references instanceof Map) {
+      // For Map-based references (shared reference model)
+      for (const key in references) {
+        this.references.set(key, this.importReferenceValue(references[key]));
+      }
+    } else {
+      // For Record-based references (backward compatibility)
+      for (const key in references) {
+        this.references[key] = this.importReferenceValue(references[key]);
+      }
     }
   }
 
   public updateReferences(newReferences: ReferenceRecord): void {
-    // Optimized method to add only new/changed references
-    for (const key in newReferences) {
-      if (!(key in this.references) || this.references[key] !== newReferences[key]) {
-        this.references[key] = this.importReferenceValue(newReferences[key]);
+    // NOTE: This method is now deprecated in the shared reference model
+    // but kept for backward compatibility
+    if (this.references instanceof Map) {
+      for (const key in newReferences) {
+        if (!this.references.has(key) || this.references.get(key) !== newReferences[key]) {
+          this.references.set(key, this.importReferenceValue(newReferences[key]));
+        }
+      }
+    } else {
+      for (const key in newReferences) {
+        if (!(key in this.references) || this.references[key] !== newReferences[key]) {
+          this.references[key] = this.importReferenceValue(newReferences[key]);
+        }
       }
     }
   }
 
   public addReference(key: string, value: any): void {
-    // Optimized method to add a single reference
-    this.references[key] = this.importReferenceValue(value);
+    // NOTE: This method is now deprecated in the shared reference model
+    // but kept for backward compatibility
+    if (this.references instanceof Map) {
+      this.references.set(key, this.importReferenceValue(value));
+    } else {
+      this.references[key] = this.importReferenceValue(value);
+    }
   }
 
   public setAst(ast: ASTNode | null): void {
@@ -298,7 +326,14 @@ export class Interpreter {
   }
 
   private visitReferenceNode(node: ReferenceNode): ISymbolType {
-    const value = this.references[node.value];
+    let value: ISymbolType | undefined;
+
+    if (this.references instanceof Map) {
+      value = this.references.get(node.value);
+    } else {
+      value = this.references[node.value];
+    }
+
     if (value === undefined) {
       // References specifically uses undefined for not found
       throw new InterpreterError(

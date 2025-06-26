@@ -26,17 +26,18 @@ describe('AST Caching Performance', () => {
     expect(result.resolvedTokens['layout.spacing']?.toString()).toBe('18');
 
     // Verify that ASTs are cached for all tokens that get parsed
-    // All tokens get parsed and cached as ASTs (even literals like '16')
-    expect(parsersCache['base.size']).toBeDefined(); // Even literals get parsed
-    expect(parsersCache['component.padding']).toBeDefined(); // Has AST
-    expect(parsersCache['component.margin']).toBeDefined(); // Has AST
-    expect(parsersCache['layout.spacing']).toBeDefined(); // Has AST
+    // Only tokens with expressions get parsed and cached as ASTs
+    expect(parsersCache.get('component.padding')).toBeDefined(); // Has AST
+    expect(parsersCache.get('component.margin')).toBeDefined(); // Has AST
+    expect(parsersCache.get('layout.spacing')).toBeDefined(); // Has AST
 
     // Verify the ASTs are actual AST nodes with nodeType property
-    expect(parsersCache['base.size']).toHaveProperty('nodeType');
-    expect(parsersCache['component.padding']).toHaveProperty('nodeType');
-    expect(parsersCache['component.margin']).toHaveProperty('nodeType');
-    expect(parsersCache['layout.spacing']).toHaveProperty('nodeType');
+    expect(parsersCache.get('component.padding')).toHaveProperty('nodeType');
+    expect(parsersCache.get('component.margin')).toHaveProperty('nodeType');
+    expect(parsersCache.get('layout.spacing')).toHaveProperty('nodeType');
+
+    // Literals like '16' don't get parsed into ASTs in the optimized version
+    expect(parsersCache.get('base.size')).toBeUndefined();
   });
 
   it('should reuse interpreter instance for multiple token resolutions', () => {
@@ -69,15 +70,17 @@ describe('AST Caching Performance', () => {
     // Verify the interpreter instance was reused
     // setAst should be called for each token that has an AST (not literals)
     expect(setAstSpy).toHaveBeenCalled();
-    expect(setReferencesSpy).toHaveBeenCalled();
     expect(interpretSpy).toHaveBeenCalled();
 
-    // The number of setAst calls should equal the number of tokens that have ASTs
-    // All tokens except literals that don't need interpretation get parsed
-    // color.primary and spacing.small are literals but still get parsed
-    // So we expect 6 calls: all tokens get parsed and cached
-    const allTokens = ['color.primary', 'color.secondary', 'color.tertiary', 'spacing.small', 'spacing.medium', 'spacing.large'];
-    expect(setAstSpy).toHaveBeenCalledTimes(allTokens.length);
+    // In the shared reference model, setReferences is no longer called during resolution
+    // because the interpreter holds a direct reference to the shared resolvedTokens Map
+    // This is the key performance optimization that eliminates O(N²) complexity
+
+    // The number of setAst calls should equal the number of tokens that have expressions
+    // Literals like 'color.primary' ('#ff0000') and 'spacing.small' ('8') don't get ASTs
+    // Only tokens with expressions: color.secondary, color.tertiary, spacing.medium, spacing.large
+    const tokensWithExpressions = ['color.secondary', 'color.tertiary', 'spacing.medium', 'spacing.large'];
+    expect(setAstSpy).toHaveBeenCalledTimes(tokensWithExpressions.length);
 
     setAstSpy.mockRestore();
     setReferencesSpy.mockRestore();
