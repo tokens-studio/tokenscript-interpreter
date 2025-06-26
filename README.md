@@ -243,6 +243,9 @@ tokenscript parse_tokenset --tokenset tokens.zip --output resolved.json
 # Process DTCG JSON blob directly
 tokenscript parse_json --json tokens.json --output resolved.json
 
+# Process with DTCG format output (preserves $value structure)
+tokenscript parse_json --json tokens.json --output resolved.json --format dtcg
+
 # Process single token set
 tokenscript parse_tokens --tokens tokenset.json --output resolved.json
 
@@ -428,6 +431,37 @@ This command will:
 - Detect if it contains themes or is a flat token set
 - Resolve token dependencies and references
 - Output fully resolved tokens to JSON
+
+**Output Format Options:**
+
+Use the `--format` option to control the output structure:
+
+- `--format flat` (default): Simple key-value pairs
+  ```json
+  {
+    "spacing.small": "8px",
+    "spacing.medium": "16px",
+    "color.primary": "#0066cc"
+  }
+  ```
+
+- `--format dtcg`: Preserves DTCG metadata structure
+  ```json
+  {
+    "spacing.small": {
+      "$type": "dimension",
+      "$value": "8px"
+    },
+    "spacing.medium": {
+      "$type": "dimension",
+      "$value": "16px"
+    },
+    "color.primary": {
+      "$type": "color",
+      "$value": "#0066cc"
+    }
+  }
+  ```
 
 **DTCG JSON Format Examples:**
 

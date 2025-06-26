@@ -1,6 +1,5 @@
 // Core interpreter exports
 
-
 // AST and symbol exports
 export * from "../interpreter/ast";
 export { ColorManager } from "../interpreter/colorManager";
@@ -18,6 +17,7 @@ export {
   buildThemeTree,
   interpretTokens, // Main API for JSON blob input
   interpretTokensets,
+  interpretTokensWithMetadata, // API for DTCG format with $value structure
   permutateTokensets,
   processSingleTokenSet, // Backward compatibility
   processThemes,

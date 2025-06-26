@@ -12,6 +12,7 @@ import {
   buildThemeTree,
   interpretTokens,
   interpretTokensets,
+  interpretTokensWithMetadata,
   permutateTokensets,
   processThemes,
 } from "./tokenset-processor";
@@ -66,8 +67,13 @@ program
   .description("Parse and process a DTCG JSON file directly")
   .requiredOption("--json <path>", "Path to the DTCG JSON file")
   .option("--output <path>", "Output file path", "output.json")
+  .option(
+    "--format <format>",
+    "Output format: 'flat' (name: value) or 'dtcg' (name: {$value: value})",
+    "flat"
+  )
   .action(async (options) => {
-    await parseJsonFile(options.json, options.output);
+    await parseJsonFile(options.json, options.output, options.format);
   });
 
 // Interactive REPL mode
@@ -265,16 +271,28 @@ async function permutateTokenset(
 }
 
 // Parse DTCG JSON file - simple unified API
-async function parseJsonFile(jsonPath: string, outputPath: string): Promise<void> {
+async function parseJsonFile(
+  jsonPath: string,
+  outputPath: string,
+  format: string = "flat"
+): Promise<void> {
   console.log(chalk.cyan("📄 Parsing DTCG JSON from: ") + chalk.yellow(jsonPath));
+  console.log(chalk.blue("🔧 Output format: ") + chalk.magenta(format));
 
   try {
     // Read JSON file
     const jsonContent = await fs.promises.readFile(jsonPath, "utf8");
     const dtcgJson = JSON.parse(jsonContent);
 
-    // Process the JSON blob using the simple API
-    const output = interpretTokens(dtcgJson);
+    // Process the JSON blob using the appropriate API based on format
+    let output: Record<string, any>;
+    if (format === "dtcg") {
+      output = interpretTokensWithMetadata(dtcgJson);
+    } else if (format === "flat") {
+      output = interpretTokens(dtcgJson);
+    } else {
+      throw new Error(`Invalid format '${format}'. Use 'flat' or 'dtcg'.`);
+    }
 
     // Write output
     await fs.promises.writeFile(outputPath, JSON.stringify(output, null, 2), "utf8");

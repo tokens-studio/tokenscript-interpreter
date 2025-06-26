@@ -500,6 +500,165 @@ export function interpretTokens(dtcgJson: Record<string, any>): Record<string, a
   }
 }
 
+// Function to process DTCG JSON and preserve metadata structure with $value
+export function interpretTokensWithMetadata(dtcgJson: Record<string, any>): Record<string, any> {
+  // Validate input
+  if (!dtcgJson || typeof dtcgJson !== "object") {
+    throw new Error("Invalid JSON input: Expected an object");
+  }
+
+  // Check if this is a complete DTCG file with themes
+  if (dtcgJson.$themes && Array.isArray(dtcgJson.$themes)) {
+    // This is a complete DTCG file with themes - process each theme
+    const outputTokens: Record<string, Record<string, any>> = {};
+    const themesData = dtcgJson.$themes;
+
+    for (const theme of themesData) {
+      const themeName = theme.name;
+      const themeTokensWithMetadata: Record<string, any> = {};
+      const themeTokensFlat: Record<string, any> = {};
+
+      // Handle both old format (object) and new format (array)
+      const selectedTokenSets = theme.selectedTokenSets;
+
+      if (Array.isArray(selectedTokenSets)) {
+        // New format: array of objects with id and status
+        for (const tokenSetRef of selectedTokenSets) {
+          if (tokenSetRef.status === "enabled" || tokenSetRef.status === "source") {
+            const setId = tokenSetRef.id;
+            if (!(setId in dtcgJson)) {
+              console.warn(
+                chalk.yellow(`⚠️  Token set '${setId}' referenced in '${themeName}' not found.`)
+              );
+              continue;
+            }
+
+            // Collect metadata and flatten for resolution
+            const setData = dtcgJson[setId];
+            collectTokenMetadata(setData, themeTokensWithMetadata, setId);
+            Object.assign(themeTokensFlat, flattenTokenset(setData));
+          }
+        }
+      } else {
+        // Old format: object with key-value pairs
+        for (const [setName, status] of Object.entries(selectedTokenSets)) {
+          if (status === "enabled" || status === "source") {
+            if (!(setName in dtcgJson)) {
+              throw new Error(`Token set '${setName}' referenced in '${themeName}' not found.`);
+            }
+
+            // Collect metadata and flatten for resolution
+            const setData = dtcgJson[setName];
+            collectTokenMetadata(setData, themeTokensWithMetadata, setName);
+            Object.assign(themeTokensFlat, flattenTokenset(setData));
+          }
+        }
+      }
+
+      // Resolve token references
+      const tokenSet = new TokenSetResolver(themeTokensFlat, {});
+      const resolvedTokens = tokenSet.resolve();
+
+      // Create DTCG output with interpreted values
+      const dtcgTokens: Record<string, any> = {};
+      for (const [tokenName, tokenMetadata] of Object.entries(themeTokensWithMetadata)) {
+        const resolvedValue = resolvedTokens[tokenName];
+
+        // Preserve all metadata and update $value with interpreted result
+        dtcgTokens[tokenName] = {
+          ...tokenMetadata,
+          $value:
+            resolvedValue && typeof resolvedValue === "object" && "toString" in resolvedValue
+              ? resolvedValue.toString()
+              : resolvedValue || (tokenMetadata as any).$value,
+        };
+      }
+
+      outputTokens[themeName] = dtcgTokens;
+    }
+
+    return outputTokens;
+  } else {
+    // Check if this looks like a flat token set or DTCG structure
+    const hasNestedStructure = Object.keys(dtcgJson).some(
+      (key) =>
+        typeof dtcgJson[key] === "object" &&
+        dtcgJson[key] !== null &&
+        !Array.isArray(dtcgJson[key]) &&
+        !key.startsWith("$")
+    );
+
+    if (hasNestedStructure) {
+      // This is a DTCG structure without themes
+      const tokensWithMetadata: Record<string, any> = {};
+      const tokensToResolve: Record<string, any> = {};
+
+      // Collect metadata and flatten for resolution
+      collectTokenMetadata(dtcgJson, tokensWithMetadata);
+      Object.assign(tokensToResolve, flattenTokenset(dtcgJson));
+
+      // Resolve token references
+      const tokenSet = new TokenSetResolver(tokensToResolve, {});
+      const resolvedTokens = tokenSet.resolve();
+
+      // Create DTCG output with interpreted values
+      const dtcgTokens: Record<string, any> = {};
+      for (const [tokenName, tokenMetadata] of Object.entries(tokensWithMetadata)) {
+        const resolvedValue = resolvedTokens[tokenName];
+
+        // Preserve all metadata and update $value with interpreted result
+        dtcgTokens[tokenName] = {
+          ...tokenMetadata,
+          $value:
+            resolvedValue && typeof resolvedValue === "object" && "toString" in resolvedValue
+              ? resolvedValue.toString()
+              : resolvedValue || tokenMetadata.$value,
+        };
+      }
+
+      return dtcgTokens;
+    } else {
+      // This is already a flat token set - convert to DTCG format
+      const tokenSet = new TokenSetResolver(dtcgJson, {});
+      const resolvedTokens = tokenSet.resolve();
+
+      // Convert to DTCG format
+      const dtcgTokens: Record<string, any> = {};
+      for (const [key, value] of Object.entries(resolvedTokens)) {
+        const resolvedValue =
+          value && typeof value === "object" && "toString" in value ? value.toString() : value;
+
+        dtcgTokens[key] = {
+          $value: resolvedValue,
+        };
+      }
+
+      return dtcgTokens;
+    }
+  }
+}
+
+// Helper function to collect token metadata recursively
+function collectTokenMetadata(tokenset: any, metadata: Record<string, any>, prefix = ""): void {
+  for (const [key, value] of Object.entries(tokenset)) {
+    if (key.startsWith("$")) {
+      continue; // Skip metadata keys at this level
+    }
+
+    if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+      if ((value as any).$value !== undefined) {
+        // This is a token with metadata
+        const tokenName = prefix ? `${prefix}.${key}` : key;
+        metadata[tokenName] = { ...value };
+      } else {
+        // This is a nested group
+        const newPrefix = prefix ? `${prefix}.${key}` : key;
+        collectTokenMetadata(value, metadata, newPrefix);
+      }
+    }
+  }
+}
+
 // Keep the original functions for backward compatibility
 export function processTokensFromJson(dtcgJson: Record<string, any>): Record<string, any> {
   return interpretTokens(dtcgJson);
