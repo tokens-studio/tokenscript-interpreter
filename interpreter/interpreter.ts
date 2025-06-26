@@ -83,13 +83,13 @@ export class Interpreter {
     // Register color types and functions if ColorManager is provided
     if (this.colorManager) {
       // Register color types in symbol table
-      for (const [name, formatId] of Object.entries(this.colorManager.names)) {
+      for (const [name, _formatId] of Object.entries(this.colorManager.names)) {
         const colorType = this.colorManager.getColorType(name);
         if (colorType) {
           // Create a constructor function that creates new instances
           const colorManager = this.colorManager;
           class ColorConstructor extends BaseSymbolType {
-            type = colorType!.type;
+            type = colorType?.type;
 
             constructor(value?: ISymbolType) {
               const instance = colorManager.initColorFormat(name, value);
@@ -98,7 +98,7 @@ export class Interpreter {
             }
 
             valid_value(value: any): boolean {
-              return colorType!.valid_value(value);
+              return colorType?.valid_value(value);
             }
           }
 
@@ -539,7 +539,7 @@ export class Interpreter {
     if (valueToAssignVisit == null) {
       // Check for null or undefined
       throw new InterpreterError(
-        `Value for attribute assignment is null or undefined.`,
+        "Value for attribute assignment is null or undefined.",
         (node.value as any).token?.line
       );
     }
@@ -552,7 +552,13 @@ export class Interpreter {
           node.objectIdentifier.token.line
         );
       }
-      const currentVar = this.symbolTable.get(node.objectIdentifier.name)!;
+      const currentVar = this.symbolTable.get(node.objectIdentifier.name);
+      if (!currentVar) {
+        throw new InterpreterError(
+          `Variable '${node.objectIdentifier.name}' not found in symbol table.`,
+          node.objectIdentifier.token.line
+        );
+      }
       if (currentVar.constructor !== valueToAssign.constructor) {
         try {
           const coerced = new (currentVar.constructor as any)(valueToAssign.value);
@@ -631,7 +637,8 @@ export class Interpreter {
         );
       }
       return attributeValue; // attributeValue is ISymbolType
-    } else if (node.right instanceof FunctionNode) {
+    }
+    if (node.right instanceof FunctionNode) {
       if (typeof leftValue.callMethod !== "function" || typeof leftValue.hasMethod !== "function") {
         throw new InterpreterError(
           `Type ${leftValue.type} does not support method calls.`,
@@ -744,7 +751,8 @@ export class Interpreter {
 
     if (conditionValue.value) {
       return this.visit(node.ifBody);
-    } else if (node.elseBody) {
+    }
+    if (node.elseBody) {
       return this.visit(node.elseBody);
     }
     return; // void if no branch taken

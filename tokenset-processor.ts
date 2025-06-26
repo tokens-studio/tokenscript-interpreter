@@ -271,15 +271,15 @@ export async function processThemes(
   );
 
   console.log(chalk.cyan("\n📊 Summary:"));
-  console.log(chalk.white(`   • Total themes processed: `) + chalk.cyan(timingData.length));
+  console.log(chalk.white("   • Total themes processed: ") + chalk.cyan(timingData.length));
   console.log(
-    chalk.white(`   • Total tokens resolved: `) + chalk.green(sumTokens.toLocaleString())
+    chalk.white("   • Total tokens resolved: ") + chalk.green(sumTokens.toLocaleString())
   );
   console.log(
-    chalk.white(`   • Total processing time: `) + chalk.yellow(`${totalDuration.toFixed(3)}s`)
+    chalk.white("   • Total processing time: ") + chalk.yellow(`${totalDuration.toFixed(3)}s`)
   );
   console.log(
-    chalk.white(`   • Average throughput: `) +
+    chalk.white("   • Average throughput: ") +
       totalSpeedColor(`${Math.round(avgTokensPerSecond).toLocaleString()} tokens/second`)
   );
 
@@ -291,12 +291,12 @@ export async function processThemes(
   );
 
   console.log(
-    chalk.white(`   • Fastest theme: `) +
+    chalk.white("   • Fastest theme: ") +
       chalk.green(fastestTheme.name) +
       chalk.gray(` (${Math.round(fastestTheme.tokensPerSecond).toLocaleString()} tokens/s)`)
   );
   console.log(
-    chalk.white(`   • Slowest theme: `) +
+    chalk.white("   • Slowest theme: ") +
       chalk.red(slowestTheme.name) +
       chalk.gray(` (${Math.round(slowestTheme.tokensPerSecond).toLocaleString()} tokens/s)`)
   );
@@ -401,7 +401,10 @@ export function permutateTokensets(
   }
 
   const output: any = {};
-  const currentPermutation = permutateOn.shift()!;
+  const currentPermutation = permutateOn.shift();
+  if (!currentPermutation) {
+    throw new Error("No permutation available to process");
+  }
 
   console.log(chalk.blue("🔄 Permutating on: ") + chalk.magenta(currentPermutation));
 

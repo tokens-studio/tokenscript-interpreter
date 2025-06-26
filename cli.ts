@@ -154,11 +154,11 @@ async function interpretExpression(code: string, references: ReferenceRecord): P
 
     if (result === null) {
       return "null";
-    } else if (typeof result === "string") {
-      return result;
-    } else {
-      return result.toString();
     }
+    if (typeof result === "string") {
+      return result;
+    }
+    return result.toString();
   } catch (error: any) {
     throw new Error(`Interpretation failed: ${error.message}`);
   }

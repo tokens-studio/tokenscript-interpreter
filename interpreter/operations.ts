@@ -240,11 +240,10 @@ export const DEFAULT_FUNCTION_MAP: Record<string, (...args: ISymbolType[]) => IS
     if (precisionValue === 0) {
       // Round to nearest integer
       return new NumberSymbol(Math.round(numValue));
-    } else {
-      // Round to specified decimal places
-      const factor = 10 ** precisionValue;
-      return new NumberSymbol(Math.round(numValue * factor) / factor);
     }
+    // Round to specified decimal places
+    const factor = 10 ** precisionValue;
+    return new NumberSymbol(Math.round(numValue * factor) / factor);
   },
 
   // Placeholder for non-mathematical functions that return strings

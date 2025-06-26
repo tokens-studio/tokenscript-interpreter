@@ -101,7 +101,8 @@ export class SymbolTable {
       return typeEntry as new (
         ...args: any[]
       ) => ISymbolType;
-    } else if (typeof typeEntry === "object" && typeEntry !== null) {
+    }
+    if (typeof typeEntry === "object" && typeEntry !== null) {
       // It's a category with subtypes (e.g., Color)
       const lowerSubType = subTypeName ? subTypeName.toLowerCase() : "default";
       const subTypeEntry = (typeEntry as Record<string, new (...args: any[]) => ISymbolType>)[

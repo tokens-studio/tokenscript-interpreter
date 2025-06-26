@@ -12,14 +12,14 @@ const _OPERATION_CHAR_TO_ENUM: Record<string, Operations> = {
 
 // Correctly map lowercase string to enum member (which is also the lowercase string for these string enums)
 const SUPPORTED_FORMAT_STRINGS: Record<string, SupportedFormats> = {};
-(Object.values(SupportedFormats) as string[]).forEach((val) => {
+for (const val of Object.values(SupportedFormats) as string[]) {
   SUPPORTED_FORMAT_STRINGS[val.toLowerCase()] = val as SupportedFormats;
-});
+}
 
 const RESERVED_KEYWORD_STRINGS: Record<string, ReservedKeyword> = {};
-(Object.values(ReservedKeyword) as string[]).forEach((val) => {
+for (const val of Object.values(ReservedKeyword) as string[]) {
   RESERVED_KEYWORD_STRINGS[val.toLowerCase()] = val as ReservedKeyword;
-});
+}
 
 export class Lexer {
   private text: string;
@@ -186,7 +186,10 @@ export class Lexer {
         // Start of identifier or keyword or format
         return this.identifierOrKeyword();
       }
-      if (/\d/.test(this.currentChar) || (this.currentChar === "." && /\d/.test(this.peek()!))) {
+      if (
+        /\d/.test(this.currentChar) ||
+        (this.currentChar === "." && this.peek() && /\d/.test(this.peek()))
+      ) {
         return this.number();
       }
       if (this.currentChar === "{") {

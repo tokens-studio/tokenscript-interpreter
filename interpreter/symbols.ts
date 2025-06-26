@@ -344,10 +344,9 @@ export class ListSymbol extends BaseSymbolType {
       }
 
       return result;
-    } else {
-      // Comma separation for explicit lists
-      return this.elements.map((e) => e.toString()).join(", ");
     }
+    // Comma separation for explicit lists
+    return this.elements.map((e) => e.toString()).join(", ");
   }
 
   append(item: ISymbolType): ListSymbol {
