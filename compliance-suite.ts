@@ -29,8 +29,11 @@ interface ComplianceReport {
 function getType(value: any): string {
   if (value === null) return "Null";
   if (Array.isArray(value)) return "Array";
-  return typeof value === "object" ? "Object" :
-    value.constructor && value.constructor.name ? value.constructor.name : typeof value;
+  return typeof value === "object"
+    ? "Object"
+    : value.constructor && value.constructor.name
+      ? value.constructor.name
+      : typeof value;
 }
 
 function readJsonFilesRecursively(dir: string): string[] {
@@ -73,20 +76,19 @@ export async function evaluateStandardCompliance(testDir: string, outputFile: st
         const ast = parser.parse(true);
         const interpreter = new Interpreter(ast, test.context || {});
         let result = interpreter.interpret();
-        console.log(result);
         // Always deeply normalize output for report and comparison
-        function normalize(val: any): { value: any, type: string } {
+        function normalize(val: any): { value: any; type: string } {
           // Handle TokenScript symbol class instances
-          if (val && typeof val === 'object') {
-            if ('$value' in val) {
+          if (val && typeof val === "object") {
+            if ("$value" in val) {
               return {
                 value: val.$value,
-                type: val.$type ? capitalizeFirst(val.$type) : getType(val.$value)
+                type: val.$type ? capitalizeFirst(val.$type) : getType(val.$value),
               };
-            } else if ('value' in val && 'type' in val && typeof val.type === 'string') {
+            } else if ("value" in val && "type" in val && typeof val.type === "string") {
               return {
                 value: val.value,
-                type: capitalizeFirst(val.type)
+                type: capitalizeFirst(val.type),
               };
             }
           }

@@ -17,7 +17,7 @@ import {
   processThemes,
 } from "./tokenset-processor";
 import type { ReferenceRecord } from "./types";
-import {evaluateStandardCompliance} from './compliance-suite';
+import { evaluateStandardCompliance } from "./compliance-suite";
 
 const program = new Command();
 
