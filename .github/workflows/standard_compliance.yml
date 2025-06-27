@@ -17,11 +17,12 @@ jobs:
         with:
           repository: tokens-studio/tokenscript-compliance-suite
           path: tokenscript-compliance-suite
+          token: ${{ secrets.GH_PAT_STANDARD_COMPLIANCE }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20  
+          node-version: 20
 
       - name: Install dependencies
         run: npm install
