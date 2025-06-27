@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const fetch = require('node-fetch');
 
 const REPORT_PATH = path.resolve(__dirname, '../compliance-report.json');
 
@@ -54,4 +53,3 @@ function main() {
 }
 
 main();
-
