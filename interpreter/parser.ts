@@ -96,19 +96,22 @@ export class Parser {
     const statements: ASTNode[] = [];
     const firstToken = this.currentToken;
 
-    statements.push(this.statement());
-
-    while (this.currentToken.type === TokenType.SEMICOLON) {
-      this.eat(TokenType.SEMICOLON);
-      // After eat(SEMICOLON), currentToken is updated. So this check is valid.
-      // Type checkers might flag this if they only consider the state at the start of the while loop.
-      if (
-        (this.currentToken.type as TokenType) === TokenType.EOF ||
-        (this.currentToken.type as TokenType) === TokenType.RBLOCK
-      ) {
-        break;
-      }
+    while (
+      this.currentToken.type !== TokenType.EOF &&
+      this.currentToken.type !== TokenType.RBLOCK
+    ) {
       statements.push(this.statement());
+      if (this.currentToken.type === TokenType.SEMICOLON) {
+        this.eat(TokenType.SEMICOLON);
+      } else {
+        // If not a semicolon, break only if next is EOF or RBLOCK
+        if (
+          this.currentToken.type === TokenType.EOF ||
+          this.currentToken.type === TokenType.RBLOCK
+        ) {
+          break;
+        }
+      }
     }
     return new StatementListNode(statements, firstToken);
   }
