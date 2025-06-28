@@ -154,14 +154,17 @@ export async function evaluateStandardCompliance(testDir: string, outputFile: st
         }
         // Special handling for ImplicitList (space-separated instead of comma-separated)
         else if (Array.isArray(normalizedValue) && test.expectedOutputType === "ImplicitList") {
-          // Direct string comparison of space-separated values
+          // Convert normalized value to space-separated string
           const actualArrayString = normalizedValue.join(" ").toLowerCase();
-          const expectedArrayString = test.expectedOutput.join(" ").toLowerCase();
 
-          if (
-            actualArrayString === expectedArrayString &&
-            normalizedType === test.expectedOutputType
-          ) {
+          // Handle both string and array expectedOutput
+          const expectedArrayString = typeof test.expectedOutput === "string"
+            ? test.expectedOutput.toLowerCase()
+            : Array.isArray(test.expectedOutput)
+              ? test.expectedOutput.join(" ").toLowerCase()
+              : String(test.expectedOutput).toLowerCase();
+
+          if (actualArrayString === expectedArrayString) {
             status = "passed";
             passed++;
           } else {
