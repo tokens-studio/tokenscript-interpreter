@@ -1,0 +1,98 @@
+{
+  "passed": 8,
+  "failed": 2,
+  "results": [
+    {
+      "status": "passed",
+      "path": "../tokenscript-compliance-suite/tests/basic/boolean_from_context.json",
+      "name": "Return Boolean from context",
+      "actualOutput": true,
+      "actualOutputType": "Boolean",
+      "expectedOutput": "true",
+      "expectedOutputType": "Boolean"
+    },
+    {
+      "status": "passed",
+      "path": "../tokenscript-compliance-suite/tests/basic/hex_color_variable.json",
+      "name": "hex color variable",
+      "actualOutput": "#ff0000",
+      "actualOutputType": "Color",
+      "expectedOutput": "#ff0000",
+      "expectedOutputType": "Color"
+    },
+    {
+      "status": "passed",
+      "path": "../tokenscript-compliance-suite/tests/basic/return_boolean.json",
+      "name": "Return Boolean",
+      "actualOutput": true,
+      "actualOutputType": "Boolean",
+      "expectedOutput": "true",
+      "expectedOutputType": "Boolean"
+    },
+    {
+      "status": "failed",
+      "path": "../tokenscript-compliance-suite/tests/basic/while_loop.json",
+      "name": "while loop",
+      "actualOutput": null,
+      "actualOutputType": "Unknown",
+      "expectedOutput": "10",
+      "expectedOutputType": "Number",
+      "error": "Line 5: Unexpected token at the end of input.\nNear token: return"
+    },
+    {
+      "status": "failed",
+      "path": "../tokenscript-compliance-suite/tests/logic/simple_boolean_if_condition.json",
+      "name": "simple boolean if condition",
+      "actualOutput": null,
+      "actualOutputType": "Unknown",
+      "expectedOutput": "true",
+      "expectedOutputType": "Boolean",
+      "error": "Line 8: Unexpected token at the end of input.\nNear token: return"
+    },
+    {
+      "status": "passed",
+      "path": "../tokenscript-compliance-suite/tests/math/addition_with_reference.json",
+      "name": "test addition with reference",
+      "actualOutput": 7,
+      "actualOutputType": "Number",
+      "expectedOutput": "7",
+      "expectedOutputType": "Number"
+    },
+    {
+      "status": "passed",
+      "path": "../tokenscript-compliance-suite/tests/math/factoring_out_negative_numbers_fractions.json",
+      "name": "factoring out negative numbers and fractions",
+      "actualOutput": 2.333333333333333,
+      "actualOutputType": "Number",
+      "expectedOutput": "2.333333333333333",
+      "expectedOutputType": "Number"
+    },
+    {
+      "status": "passed",
+      "path": "../tokenscript-compliance-suite/tests/math/mixed_float_int.json",
+      "name": "math with mixed float and integer",
+      "actualOutput": 7,
+      "actualOutputType": "Number",
+      "expectedOutput": "7",
+      "expectedOutputType": "Number"
+    },
+    {
+      "status": "passed",
+      "path": "../tokenscript-compliance-suite/tests/math/mutliplication_before_addition.json",
+      "name": "multiplication and division before addition and subtraction",
+      "actualOutput": 9,
+      "actualOutputType": "Number",
+      "expectedOutput": "9",
+      "expectedOutputType": "Number"
+    },
+    {
+      "status": "passed",
+      "path": "../tokenscript-compliance-suite/tests/math/negative_numbers.json",
+      "name": "addition and subtraction with negative numbers",
+      "actualOutput": 6,
+      "actualOutputType": "Number",
+      "expectedOutput": "6",
+      "expectedOutputType": "Number"
+    }
+  ]
+}

@@ -8,7 +8,8 @@ interface TestCase {
   name: string;
   input: string;
   expectedOutput: any;
-  expectedOutputType: string; // Changed from exceptedOutputType to expectedOutputType
+  expectedOutputType: string;
+  inline: boolean;
   context?: Record<string, any>;
 }
 
@@ -77,7 +78,7 @@ export async function evaluateStandardCompliance(testDir: string, outputFile: st
       try {
         const lexer = new Lexer(test.input);
         const parser = new Parser(lexer);
-        const ast = parser.parse(true);
+        const ast = parser.parse(test.inline);
         const interpreter = new Interpreter(ast, test.context || {});
         let result = interpreter.interpret();
         // Always deeply normalize output for report and comparison
