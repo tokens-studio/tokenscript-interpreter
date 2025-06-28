@@ -1,14 +1,6 @@
 import { Operations, ReservedKeyword, SupportedFormats, type Token, TokenType } from "../types";
 import { LexerError } from "./errors";
 
-const _OPERATION_CHAR_TO_ENUM: Record<string, Operations> = {
-  "+": Operations.ADD,
-  "-": Operations.SUBTRACT,
-  "*": Operations.MULTIPLY,
-  "/": Operations.DIVIDE,
-  "^": Operations.POWER,
-  "!": Operations.LOGIC_NOT, // Note: also part of '!='
-};
 
 // Correctly map lowercase string to enum member (which is also the lowercase string for these string enums)
 const SUPPORTED_FORMAT_STRINGS: Record<string, SupportedFormats> = {};
@@ -95,10 +87,57 @@ export class Lexer {
     return { type: TokenType.NUMBER, value: result, line: this.line };
   }
 
+  private isAlpha(char: string | null): boolean {
+    // Check if character is a letter (a-z, A-Z) or underscore
+    if (char === null) return false;
+    const cp = char.codePointAt(0)!;
+    return (cp >= 65 && cp <= 90) || // A-Z
+           (cp >= 97 && cp <= 122) || // a-z
+           cp === 95; // underscore (_)
+  }
+
+  private isDigit(char: string | null): boolean {
+    // Check if character is a digit (0-9)
+    if (char === null) return false;
+    const cp = char.codePointAt(0)!;
+    return cp >= 48 && cp <= 57; // 0-9
+  }
+
+  private isAlphaNumeric(char: string | null): boolean {
+    // Check if character is alphanumeric or underscore
+    return this.isAlpha(char) || this.isDigit(char);
+  }
+
+  private isValidIdentifierStart(char: string | null): boolean {
+    // Valid first character: letters, underscore, or any Unicode character > 127
+    if (char === null) return false;
+    const cp = char.codePointAt(0)!;
+    return this.isAlpha(char) || cp > 127;
+  }
+
+  private isValidIdentifierPart(char: string | null): boolean {
+    // Valid subsequent character: alphanumeric, underscore, hyphen, or any Unicode character > 127
+    if (char === null) return false;
+    const cp = char.codePointAt(0)!;
+    return this.isAlphaNumeric(char) || cp === 45 /* hyphen */ || cp > 127;
+  }
+
   private identifierOrKeyword(): Token {
     let result = "";
-    while (this.currentChar !== null && (/\w/.test(this.currentChar) || this.currentChar === "-")) {
-      // Allow hyphen in identifiers
+
+    // First character validation
+    if (!this.isValidIdentifierStart(this.currentChar)) {
+      throw new LexerError(`Invalid identifier starting character: '${this.currentChar}'`, this.line);
+    }
+
+    // Add first character
+    if (this.currentChar !== null) {
+      result += this.currentChar;
+      this.advance();
+    }
+
+    // Then continue with all valid chars
+    while (this.currentChar !== null && this.isValidIdentifierPart(this.currentChar)) {
       result += this.currentChar;
       this.advance();
     }
@@ -182,14 +221,13 @@ export class Lexer {
         continue;
       }
 
-      if (/[a-zA-Z_]/.test(this.currentChar)) {
-        // Start of identifier or keyword or format
+      if (this.isValidIdentifierStart(this.currentChar)) {
+        // Start of identifier or keyword or format (including Unicode/emoji)
         return this.identifierOrKeyword();
       }
-      if (
-        /\d/.test(this.currentChar) ||
-        (this.currentChar === "." && this.peek() && /\d/.test(this.peek() || ""))
-      ) {
+
+      if (this.isDigit(this.currentChar) ||
+          (this.currentChar === "." && this.peek() && this.isDigit(this.peek()))) {
         return this.number();
       }
       if (this.currentChar === "{") {
