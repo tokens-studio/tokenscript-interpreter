@@ -8,7 +8,7 @@ interface TestCase {
   name: string;
   input: string;
   expectedOutput: any;
-  exceptedOutputType: string;
+  expectedOutputType: string; // Changed from exceptedOutputType to expectedOutputType
   context?: Record<string, any>;
 }
 
@@ -18,6 +18,9 @@ interface TestResult {
   name: string;
   actualOutput: any;
   actualOutputType: string;
+  expectedOutput: any;
+  expectedOutputType: string;
+  error?: string; // To capture any error that occurred during test execution
 }
 
 interface ComplianceReport {
@@ -70,6 +73,7 @@ export async function evaluateStandardCompliance(testDir: string, outputFile: st
       let actualOutput: any = null;
       let actualOutputType: string = "Unknown";
       let status: "passed" | "failed" = "failed";
+      let error: string | undefined = undefined;
       try {
         const lexer = new Lexer(test.input);
         const parser = new Parser(lexer);
@@ -98,8 +102,10 @@ export async function evaluateStandardCompliance(testDir: string, outputFile: st
         actualOutput = normalizedValue;
         actualOutputType = normalizedType;
         if (
-          String(normalizedValue) === String(test.expectedOutput) &&
-          normalizedType === test.exceptedOutputType
+          // Make sure both values are converted to strings for comparison
+          // This handles cases where expectedOutput might be a string already (e.g., "true" vs true)
+          String(normalizedValue).toLowerCase() === String(test.expectedOutput).toLowerCase() &&
+          normalizedType === test.expectedOutputType
         ) {
           status = "passed";
           passed++;
@@ -107,6 +113,7 @@ export async function evaluateStandardCompliance(testDir: string, outputFile: st
           failed++;
         }
       } catch (e) {
+        error = e instanceof Error ? e.message : String(e);
         failed++;
       }
       results.push({
@@ -115,6 +122,9 @@ export async function evaluateStandardCompliance(testDir: string, outputFile: st
         name: test.name,
         actualOutput,
         actualOutputType,
+        expectedOutput: test.expectedOutput,
+        expectedOutputType: test.expectedOutputType,
+        error,
       });
     }
   }

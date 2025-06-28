@@ -9,7 +9,27 @@ function getFailingTests(results) {
 
 function formatFailingTests(failing) {
   if (failing.length === 0) return "✅ All tests passed!";
-  return failing.map((f) => `- **${f.name}** (${f.path})`).join("\n");
+
+  return failing.map((f) => {
+    // Extract filename from path for cleaner display
+    const fileName = path.basename(f.path);
+
+    // Format comparison details
+    let details = '';
+    if (f.error) {
+      // If the test failed due to an error/exception
+      details = `
+    - Expected: \`${JSON.stringify(f.expectedOutput)}\` (${f.expectedOutputType})
+    - Error: \`${f.error}\``;
+    } else if (f.actualOutput !== undefined) {
+      // If the test failed due to incorrect output
+      details = `
+    - Expected: \`${JSON.stringify(f.expectedOutput)}\` (${f.expectedOutputType})
+    - Actual: \`${JSON.stringify(f.actualOutput)}\` (${f.actualOutputType})`;
+    }
+
+    return `- **${f.name}** (${fileName})${details}`;
+  }).join("\n\n");
 }
 
 async function postComment(body) {
