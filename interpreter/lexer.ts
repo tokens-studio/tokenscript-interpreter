@@ -1,7 +1,6 @@
 import { Operations, ReservedKeyword, SupportedFormats, type Token, TokenType } from "../types";
 import { LexerError } from "./errors";
 
-
 // Correctly map lowercase string to enum member (which is also the lowercase string for these string enums)
 const SUPPORTED_FORMAT_STRINGS: Record<string, SupportedFormats> = {};
 for (const val of Object.values(SupportedFormats) as string[]) {
@@ -91,9 +90,11 @@ export class Lexer {
     // Check if character is a letter (a-z, A-Z) or underscore
     if (char === null) return false;
     const cp = char.codePointAt(0)!;
-    return (cp >= 65 && cp <= 90) || // A-Z
-           (cp >= 97 && cp <= 122) || // a-z
-           cp === 95; // underscore (_)
+    return (
+      (cp >= 65 && cp <= 90) || // A-Z
+      (cp >= 97 && cp <= 122) || // a-z
+      cp === 95
+    ); // underscore (_)
   }
 
   private isDigit(char: string | null): boolean {
@@ -127,7 +128,10 @@ export class Lexer {
 
     // First character validation
     if (!this.isValidIdentifierStart(this.currentChar)) {
-      throw new LexerError(`Invalid identifier starting character: '${this.currentChar}'`, this.line);
+      throw new LexerError(
+        `Invalid identifier starting character: '${this.currentChar}'`,
+        this.line
+      );
     }
 
     // Add first character
@@ -226,8 +230,10 @@ export class Lexer {
         return this.identifierOrKeyword();
       }
 
-      if (this.isDigit(this.currentChar) ||
-          (this.currentChar === "." && this.peek() && this.isDigit(this.peek()))) {
+      if (
+        this.isDigit(this.currentChar) ||
+        (this.currentChar === "." && this.peek() && this.isDigit(this.peek()))
+      ) {
         return this.number();
       }
       if (this.currentChar === "{") {

@@ -74,13 +74,13 @@ export async function evaluateStandardCompliance(testDir: string, outputFile: st
       let actualOutput: any = null;
       let actualOutputType: string = "Unknown";
       let status: "passed" | "failed" = "failed";
-      let error: string | undefined = undefined;
+      let error: string | undefined;
       try {
         const lexer = new Lexer(test.input);
         const parser = new Parser(lexer);
         const ast = parser.parse(test.inline);
         const interpreter = new Interpreter(ast, test.context || {});
-        let result = interpreter.interpret();
+        const result = interpreter.interpret();
         // Always deeply normalize output for report and comparison
         function normalize(val: any): { value: any; type: string } {
           // Handle TokenScript symbol class instances and NumberWithUnit
@@ -93,7 +93,10 @@ export async function evaluateStandardCompliance(testDir: string, outputFile: st
             }
             // Handle NumberWithUnitSymbol or similar
             if (
-              (val.type === "NumberWithUnit" || val.$type === "NumberWithUnit" || val.type === "dimension" || val.$type === "dimension") &&
+              (val.type === "NumberWithUnit" ||
+                val.$type === "NumberWithUnit" ||
+                val.type === "dimension" ||
+                val.$type === "dimension") &&
               (typeof val.value === "number" || typeof val.$value === "number") &&
               (typeof val.unit === "string" || typeof val.$unit === "string")
             ) {
@@ -105,7 +108,10 @@ export async function evaluateStandardCompliance(testDir: string, outputFile: st
             if ("$value" in val) {
               // Recursively normalize $value
               const norm = normalize(val.$value);
-              return { value: norm.value, type: val.$type ? capitalizeFirst(val.$type) : getType(val.$value) };
+              return {
+                value: norm.value,
+                type: val.$type ? capitalizeFirst(val.$type) : getType(val.$value),
+              };
             }
             // Handle objects with value/type (TokenScript output)
             if ("value" in val && "type" in val && typeof val.type === "string") {
@@ -129,17 +135,20 @@ export async function evaluateStandardCompliance(testDir: string, outputFile: st
         else if (Array.isArray(normalizedValue) && test.expectedOutputType === "List") {
           // Handle case where expectedOutput is already a string but the normalizedValue is an array
           const actualArrayString = normalizedValue.join(", ").toLowerCase();
-          const expectedOutputLower = typeof test.expectedOutput === 'string'
-            ? test.expectedOutput.toLowerCase()
-            : Array.isArray(test.expectedOutput)
-              ? test.expectedOutput.join(", ").toLowerCase()
-              : String(test.expectedOutput).toLowerCase();
+          const expectedOutputLower =
+            typeof test.expectedOutput === "string"
+              ? test.expectedOutput.toLowerCase()
+              : Array.isArray(test.expectedOutput)
+                ? test.expectedOutput.join(", ").toLowerCase()
+                : String(test.expectedOutput).toLowerCase();
 
           if (actualArrayString === expectedOutputLower) {
             status = "passed";
             passed++;
           } else {
-            console.log(`List comparison failed: "${actualArrayString}" !== "${expectedOutputLower}"`);
+            console.log(
+              `List comparison failed: "${actualArrayString}" !== "${expectedOutputLower}"`
+            );
             failed++;
           }
         }
@@ -149,7 +158,10 @@ export async function evaluateStandardCompliance(testDir: string, outputFile: st
           const actualArrayString = normalizedValue.join(" ").toLowerCase();
           const expectedArrayString = test.expectedOutput.join(" ").toLowerCase();
 
-          if (actualArrayString === expectedArrayString && normalizedType === test.expectedOutputType) {
+          if (
+            actualArrayString === expectedArrayString &&
+            normalizedType === test.expectedOutputType
+          ) {
             status = "passed";
             passed++;
           } else {
@@ -158,7 +170,8 @@ export async function evaluateStandardCompliance(testDir: string, outputFile: st
         }
         // Use toUnitString for non-array values
         else if (
-          toUnitString(normalizedValue).toLowerCase() === toUnitString(test.expectedOutput).toLowerCase() &&
+          toUnitString(normalizedValue).toLowerCase() ===
+            toUnitString(test.expectedOutput).toLowerCase() &&
           normalizedType === test.expectedOutputType
         ) {
           status = "passed";
@@ -189,14 +202,18 @@ export async function evaluateStandardCompliance(testDir: string, outputFile: st
         status,
         path: file,
         name: test.name,
-        actualOutput: Array.isArray(actualOutput) ? actualOutput.join(
-          // Use test.expectedOutputType as fallback if normalizedType is not in scope
-          (typeof normalizedType !== 'undefined' && normalizedType === "ImplicitList") ? " " : ", "
-        ) : actualOutput,
+        actualOutput: Array.isArray(actualOutput)
+          ? actualOutput.join(
+              // Use test.expectedOutputType as fallback if normalizedType is not in scope
+              typeof normalizedType !== "undefined" && normalizedType === "ImplicitList"
+                ? " "
+                : ", "
+            )
+          : actualOutput,
         actualOutputType,
-        expectedOutput: Array.isArray(test.expectedOutput) ? test.expectedOutput.join(
-          test.expectedOutputType === "ImplicitList" ? " " : ", "
-        ) : test.expectedOutput,
+        expectedOutput: Array.isArray(test.expectedOutput)
+          ? test.expectedOutput.join(test.expectedOutputType === "ImplicitList" ? " " : ", ")
+          : test.expectedOutput,
         expectedOutputType: test.expectedOutputType,
         error,
       });

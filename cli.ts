@@ -5,6 +5,7 @@ import chalk from "chalk";
 import { Command } from "commander";
 import * as readlineSync from "readline-sync";
 import * as yauzl from "yauzl";
+import { evaluateStandardCompliance } from "./compliance-suite";
 import { Interpreter } from "./interpreter/interpreter";
 import { Lexer } from "./interpreter/lexer";
 import { Parser } from "./interpreter/parser";
@@ -17,7 +18,6 @@ import {
   processThemes,
 } from "./tokenset-processor";
 import type { ReferenceRecord } from "./types";
-import { evaluateStandardCompliance } from "./compliance-suite";
 
 const program = new Command();
 

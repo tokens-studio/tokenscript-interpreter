@@ -153,7 +153,7 @@ export class NumberSymbol extends BaseSymbolType {
     if (this.isFloat) {
       // Ensure at least one decimal place for float numbers, even if they're whole numbers (like 1.0)
       const str = String(this.value);
-      return str.includes('.') ? str : `${str}.0`;
+      return str.includes(".") ? str : `${str}.0`;
     }
     // For actual integers, return without decimal places
     return String(Math.trunc(this.value));
