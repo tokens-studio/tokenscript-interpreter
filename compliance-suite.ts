@@ -83,18 +83,35 @@ export async function evaluateStandardCompliance(testDir: string, outputFile: st
         let result = interpreter.interpret();
         // Always deeply normalize output for report and comparison
         function normalize(val: any): { value: any; type: string } {
-          // Handle TokenScript symbol class instances
+          // Handle TokenScript symbol class instances and NumberWithUnit
           if (val && typeof val === "object") {
+            // Handle ListSymbol or arrays
+            if (Array.isArray(val)) {
+              // Recursively normalize each element
+              const normList = val.map((v) => normalize(v).value);
+              return { value: normList, type: "List" };
+            }
+            // Handle NumberWithUnitSymbol or similar
+            if (
+              (val.type === "NumberWithUnit" || val.$type === "NumberWithUnit" || val.type === "dimension" || val.$type === "dimension") &&
+              (typeof val.value === "number" || typeof val.$value === "number") &&
+              (typeof val.unit === "string" || typeof val.$unit === "string")
+            ) {
+              const number = val.value ?? val.$value;
+              const unit = val.unit ?? val.$unit;
+              return { value: `${number}${unit}`, type: "NumberWithUnit" };
+            }
+            // Handle objects with $value/$type (TokenScript output)
             if ("$value" in val) {
-              return {
-                value: val.$value,
-                type: val.$type ? capitalizeFirst(val.$type) : getType(val.$value),
-              };
-            } else if ("value" in val && "type" in val && typeof val.type === "string") {
-              return {
-                value: val.value,
-                type: capitalizeFirst(val.type),
-              };
+              // Recursively normalize $value
+              const norm = normalize(val.$value);
+              return { value: norm.value, type: val.$type ? capitalizeFirst(val.$type) : getType(val.$value) };
+            }
+            // Handle objects with value/type (TokenScript output)
+            if ("value" in val && "type" in val && typeof val.type === "string") {
+              // Recursively normalize value
+              const norm = normalize(val.value);
+              return { value: norm.value, type: capitalizeFirst(val.type) };
             }
           }
           return { value: val, type: getType(val) };
@@ -102,10 +119,46 @@ export async function evaluateStandardCompliance(testDir: string, outputFile: st
         const { value: normalizedValue, type: normalizedType } = normalize(result);
         actualOutput = normalizedValue;
         actualOutputType = normalizedType;
-        if (
-          // Make sure both values are converted to strings for comparison
-          // This handles cases where expectedOutput might be a string already (e.g., "true" vs true)
-          String(normalizedValue).toLowerCase() === String(test.expectedOutput).toLowerCase() &&
+
+        // Special case for expected errors
+        if (test.expectedOutputType === "Error") {
+          // We expected an error but got a result instead
+          failed++;
+        }
+        // Simply stringify arrays and compare as strings, regardless of format
+        else if (Array.isArray(normalizedValue) && test.expectedOutputType === "List") {
+          // Handle case where expectedOutput is already a string but the normalizedValue is an array
+          const actualArrayString = normalizedValue.join(", ").toLowerCase();
+          const expectedOutputLower = typeof test.expectedOutput === 'string'
+            ? test.expectedOutput.toLowerCase()
+            : Array.isArray(test.expectedOutput)
+              ? test.expectedOutput.join(", ").toLowerCase()
+              : String(test.expectedOutput).toLowerCase();
+
+          if (actualArrayString === expectedOutputLower) {
+            status = "passed";
+            passed++;
+          } else {
+            console.log(`List comparison failed: "${actualArrayString}" !== "${expectedOutputLower}"`);
+            failed++;
+          }
+        }
+        // Special handling for ImplicitList (space-separated instead of comma-separated)
+        else if (Array.isArray(normalizedValue) && test.expectedOutputType === "ImplicitList") {
+          // Direct string comparison of space-separated values
+          const actualArrayString = normalizedValue.join(" ").toLowerCase();
+          const expectedArrayString = test.expectedOutput.join(" ").toLowerCase();
+
+          if (actualArrayString === expectedArrayString && normalizedType === test.expectedOutputType) {
+            status = "passed";
+            passed++;
+          } else {
+            failed++;
+          }
+        }
+        // Use toUnitString for non-array values
+        else if (
+          toUnitString(normalizedValue).toLowerCase() === toUnitString(test.expectedOutput).toLowerCase() &&
           normalizedType === test.expectedOutputType
         ) {
           status = "passed";
@@ -115,15 +168,35 @@ export async function evaluateStandardCompliance(testDir: string, outputFile: st
         }
       } catch (e) {
         error = e instanceof Error ? e.message : String(e);
-        failed++;
+
+        // Check if this was an expected error
+        if (test.expectedOutputType === "Error") {
+          // We expected an error, and got one - check if the error message contains the expected text
+          const errorMsg = e instanceof Error ? e.message : String(e);
+          if (errorMsg.includes(test.expectedOutput)) {
+            status = "passed";
+            passed++;
+          } else {
+            // Error message doesn't match what was expected
+            failed++;
+          }
+        } else {
+          // We didn't expect an error
+          failed++;
+        }
       }
       results.push({
         status,
         path: file,
         name: test.name,
-        actualOutput,
+        actualOutput: Array.isArray(actualOutput) ? actualOutput.join(
+          // Use test.expectedOutputType as fallback if normalizedType is not in scope
+          (typeof normalizedType !== 'undefined' && normalizedType === "ImplicitList") ? " " : ", "
+        ) : actualOutput,
         actualOutputType,
-        expectedOutput: test.expectedOutput,
+        expectedOutput: Array.isArray(test.expectedOutput) ? test.expectedOutput.join(
+          test.expectedOutputType === "ImplicitList" ? " " : ", "
+        ) : test.expectedOutput,
         expectedOutputType: test.expectedOutputType,
         error,
       });
@@ -138,4 +211,20 @@ export async function evaluateStandardCompliance(testDir: string, outputFile: st
 function capitalizeFirst(str: string) {
   if (!str) return str;
   return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function toUnitString(val: any): string {
+  // Handles NumberWithUnit objects from interpreter output or test expectations
+  if (
+    val &&
+    typeof val === "object" &&
+    (val.type === "NumberWithUnit" || val.$type === "NumberWithUnit") &&
+    (typeof val.value === "number" || typeof val.$value === "number") &&
+    (typeof val.unit === "string" || typeof val.$unit === "string")
+  ) {
+    const number = val.value ?? val.$value;
+    const unit = val.unit ?? val.$unit;
+    return `${number}${unit}`;
+  }
+  return String(val);
 }

@@ -153,6 +153,24 @@ export const DEFAULT_FUNCTION_MAP: Record<string, (...args: ISymbolType[]) => IS
     }, 0);
     return new NumberSymbol(sum);
   },
+  mod: (a: ISymbolType, b: ISymbolType): NumberSymbol => {
+    let aVal: number, bVal: number;
+
+    if (a instanceof NumberSymbol) aVal = a.value as number;
+    else if (a instanceof NumberWithUnitSymbol) aVal = a.value as number;
+    else if (typeof a.value === "number") aVal = a.value as number;
+    else throw new InterpreterError("mod() expects number arguments.");
+
+    if (b instanceof NumberSymbol) bVal = b.value as number;
+    else if (b instanceof NumberWithUnitSymbol) bVal = b.value as number;
+    else if (typeof b.value === "number") bVal = b.value as number;
+    else throw new InterpreterError("mod() expects number arguments.");
+
+    if (bVal === 0) throw new InterpreterError("mod() division by zero.");
+
+    // Use JavaScript's remainder operator for modulo
+    return new NumberSymbol(((aVal % bVal) + bVal) % bVal);
+  },
   average: (...args: ISymbolType[]): NumberSymbol => {
     if (args.length === 0) throw new InterpreterError("average() requires at least one argument.");
     const sum = args.reduce((acc, arg) => {

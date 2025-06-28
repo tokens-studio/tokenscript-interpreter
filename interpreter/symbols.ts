@@ -149,10 +149,14 @@ export class NumberSymbol extends BaseSymbolType {
   }
 
   toString(): string {
-    if (!this.isFloat && Number.isInteger(this.value)) {
-      return String(Math.trunc(this.value));
+    // If explicitly marked as float, or is actually a float value, preserve the decimal format
+    if (this.isFloat) {
+      // Ensure at least one decimal place for float numbers, even if they're whole numbers (like 1.0)
+      const str = String(this.value);
+      return str.includes('.') ? str : `${str}.0`;
     }
-    return String(this.value);
+    // For actual integers, return without decimal places
+    return String(Math.trunc(this.value));
   }
 
   to_string(): StringSymbol {
