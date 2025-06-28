@@ -1,6 +1,6 @@
 {
-  "passed": 46,
-  "failed": 6,
+  "passed": 47,
+  "failed": 5,
   "results": [
     {
       "status": "passed",
@@ -101,7 +101,7 @@
       "actualOutputType": "Unknown",
       "expectedOutput": "6rem",
       "expectedOutputType": "NumberWithUnit",
-      "error": "Line 1: Arithmetic operator * requires Number or NumberWithUnit operands, got String and String.\nNear token: *"
+      "error": "Invalid reference value type: object"
     },
     {
       "status": "passed",
@@ -359,10 +359,10 @@
       "expectedOutputType": "Number"
     },
     {
-      "status": "failed",
+      "status": "passed",
       "path": "../tokenscript-compliance-suite/tests/math-functions/round_down_0_5.json",
       "name": "round down on .5 to even number",
-      "actualOutput": 3,
+      "actualOutput": 2,
       "actualOutputType": "Number",
       "expectedOutput": "2",
       "expectedOutputType": "Number"

@@ -183,7 +183,19 @@ export const DEFAULT_FUNCTION_MAP: Record<string, (...args: ISymbolType[]) => IS
   round: (arg: ISymbolType): NumberSymbol => {
     if (!(arg instanceof NumberSymbol))
       throw new InterpreterError("round() expects a number argument.");
-    return new NumberSymbol(Math.round(arg.value as number));
+    const value = arg.value as number;
+
+    // Implement banker's rounding (round to nearest even) for .5 cases
+    const intPart = Math.floor(value);
+    const fraction = value - intPart;
+
+    if (fraction === 0.5) {
+      // For .5, round to the nearest even integer
+      return new NumberSymbol(intPart % 2 === 0 ? intPart : intPart + 1);
+    }
+
+    // Use regular Math.round for all other cases
+    return new NumberSymbol(Math.round(value));
   },
   abs: (arg: ISymbolType): NumberSymbol => {
     if (!(arg instanceof NumberSymbol))
