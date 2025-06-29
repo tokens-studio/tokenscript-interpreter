@@ -186,6 +186,10 @@ async function parseTokenset(tokensetPath: string, outputPath: string): Promise<
   console.log(chalk.cyan("📦 Parsing tokenset from: ") + chalk.yellow(tokensetPath));
 
   try {
+    // Clear any existing caches for fresh processing
+    const { clearFlatteningCaches } = await import("./utils/dtcg-adapter");
+    clearFlatteningCaches();
+
     // Load ZIP file contents
     const filesContent = await loadZipToMemory(tokensetPath);
 
@@ -434,38 +438,54 @@ function loadThemes(tokensets: Record<string, any>): Record<string, Record<strin
   const themeTokens: Record<string, Record<string, any>> = {};
   const themesData = tokensets.$themes;
 
+  // Pre-flatten all token sets once to avoid redundant processing
+  const flattenedTokenSetsCache = new Map<string, Record<string, any>>();
+  for (const [setName, setData] of Object.entries(tokensets)) {
+    if (setName === '$themes') continue; // Skip themes metadata
+    flattenedTokenSetsCache.set(setName, flattenTokenset(setData));
+  }
+
   for (const theme of themesData) {
     const themeName = theme.name;
-    themeTokens[themeName] = {};
-
-    // Handle both old format (object) and new format (array)
     const selectedTokenSets = theme.selectedTokenSets;
+
+    // Collect token sets for this theme
+    const tokenSetRefs: Record<string, any>[] = [];
 
     if (Array.isArray(selectedTokenSets)) {
       // New format: array of objects with id and status
       for (const tokenSetRef of selectedTokenSets) {
         if (tokenSetRef.status === "enabled" || tokenSetRef.status === "source") {
           const setId = tokenSetRef.id;
-          if (!(setId in tokensets)) {
+          if (!flattenedTokenSetsCache.has(setId)) {
             console.warn(
               chalk.yellow(`⚠️  Token set '${setId}' referenced in '${themeName}' not found.`)
             );
             continue;
           }
-          Object.assign(themeTokens[themeName], flattenTokenset(tokensets[setId]));
+          tokenSetRefs.push(flattenedTokenSetsCache.get(setId)!);
         }
       }
     } else {
       // Old format: object with key-value pairs
       for (const [setName, status] of Object.entries(selectedTokenSets)) {
         if (status === "enabled" || status === "source") {
-          if (!(setName in tokensets)) {
+          if (!flattenedTokenSetsCache.has(setName)) {
             throw new Error(`Token set '${setName}' referenced in '${themeName}' not found.`);
           }
-          Object.assign(themeTokens[themeName], flattenTokenset(tokensets[setName]));
+          tokenSetRefs.push(flattenedTokenSetsCache.get(setName)!);
         }
       }
     }
+
+    // Merge all token sets for this theme
+    const mergedTokens: Record<string, any> = {};
+    for (const tokenSet of tokenSetRefs) {
+      for (const [key, value] of Object.entries(tokenSet)) {
+        mergedTokens[key] = value;
+      }
+    }
+    themeTokens[themeName] = mergedTokens;
   }
 
   return themeTokens;

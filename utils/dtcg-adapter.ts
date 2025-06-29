@@ -112,8 +112,22 @@ export function rehydrateToDTCG(
   return dtcgTokens;
 }
 
+// Cache for flattened tokens and metadata to avoid redundant processing
+const flattenedTokensCache = new Map<string, Record<string, string>>();
+const metadataCache = new Map<string, Record<string, any>>();
+
+/**
+ * Clears the flattening caches. Call this when processing a new set of token files
+ * to prevent memory leaks and ensure fresh processing.
+ */
+export function clearFlatteningCaches(): void {
+  flattenedTokensCache.clear();
+  metadataCache.clear();
+}
+
 /**
  * Handles theme-based DTCG processing by extracting tokens from selected token sets.
+ * Uses caching to avoid redundant processing when multiple themes share token sets.
  *
  * @param dtcgJson - Complete DTCG JSON with themes
  * @param theme - Theme object with selectedTokenSets
@@ -134,8 +148,27 @@ export function extractThemeTokens(
         const setId = tokenSetRef.id;
         if (setId in dtcgJson) {
           const setData = dtcgJson[setId];
-          Object.assign(flatTokens, flattenTokens(setData));
-          Object.assign(metadata, collectTokenMetadata(setData));
+
+          // Check cache first, flatten only if not cached
+          let cachedFlatTokens = flattenedTokensCache.get(setId);
+          if (!cachedFlatTokens) {
+            cachedFlatTokens = flattenTokens(setData);
+            flattenedTokensCache.set(setId, cachedFlatTokens);
+          }
+
+          let cachedMetadata = metadataCache.get(setId);
+          if (!cachedMetadata) {
+            cachedMetadata = collectTokenMetadata(setData);
+            metadataCache.set(setId, cachedMetadata);
+          }
+
+          // Merge cached results into theme tokens
+          for (const [tokenName, tokenValue] of Object.entries(cachedFlatTokens)) {
+            flatTokens[tokenName] = tokenValue;
+          }
+          for (const [metaName, metaValue] of Object.entries(cachedMetadata)) {
+            metadata[metaName] = metaValue;
+          }
         }
       }
     }
@@ -145,8 +178,27 @@ export function extractThemeTokens(
       if (status === "enabled" || status === "source") {
         if (setName in dtcgJson) {
           const setData = dtcgJson[setName];
-          Object.assign(flatTokens, flattenTokens(setData));
-          Object.assign(metadata, collectTokenMetadata(setData));
+
+          // Check cache first, flatten only if not cached
+          let cachedFlatTokens = flattenedTokensCache.get(setName);
+          if (!cachedFlatTokens) {
+            cachedFlatTokens = flattenTokens(setData);
+            flattenedTokensCache.set(setName, cachedFlatTokens);
+          }
+
+          let cachedMetadata = metadataCache.get(setName);
+          if (!cachedMetadata) {
+            cachedMetadata = collectTokenMetadata(setData);
+            metadataCache.set(setName, cachedMetadata);
+          }
+
+          // Merge cached results into theme tokens
+          for (const [tokenName, tokenValue] of Object.entries(cachedFlatTokens)) {
+            flatTokens[tokenName] = tokenValue;
+          }
+          for (const [metaName, metaValue] of Object.entries(cachedMetadata)) {
+            metadata[metaName] = metaValue;
+          }
         }
       }
     }
