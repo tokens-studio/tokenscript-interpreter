@@ -194,7 +194,7 @@ async function parseTokenset(tokensetPath: string, outputPath: string): Promise<
     const filesContent = await loadZipToMemory(tokensetPath);
 
     // Debug: show what files were loaded
-    console.log(chalk.blue("📁 Loaded files: ") + chalk.gray(Object.keys(filesContent).join(", ")));
+    console.log(chalk.blue(`📁 ${Object.keys(filesContent).length} Files loaded`));
 
     // Load themes
     const themes = loadThemes(filesContent);
