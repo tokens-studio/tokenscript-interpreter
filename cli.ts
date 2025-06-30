@@ -5,6 +5,7 @@ import chalk from "chalk";
 import { Command } from "commander";
 import * as readlineSync from "readline-sync";
 import * as yauzl from "yauzl";
+import { evaluateStandardCompliance } from "./compliance-suite";
 import { Interpreter } from "./interpreter/interpreter";
 import { Lexer } from "./interpreter/lexer";
 import { Parser } from "./interpreter/parser";
@@ -74,6 +75,18 @@ program
   )
   .action(async (options) => {
     await parseJsonFile(options.json, options.output, options.format);
+  });
+
+// Evaluate standard compliance command
+program
+  .command("evaluate_standard_compliance")
+  .description("Run the TokenScript compliance suite on a directory of tests")
+  .requiredOption("--test-dir <path>", "Path to the directory containing compliance tests")
+  .option("--output <path>", "Output file path", "compliance-report.json")
+  .action(async (options) => {
+    const report = await evaluateStandardCompliance(options.testDir, options.output);
+    console.log(`Compliance suite finished. Passed: ${report.passed}, Failed: ${report.failed}`);
+    console.log(`Full report written to ${options.output}`);
   });
 
 // Interactive REPL mode
