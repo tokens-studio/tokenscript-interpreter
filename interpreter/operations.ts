@@ -153,6 +153,24 @@ export const DEFAULT_FUNCTION_MAP: Record<string, (...args: ISymbolType[]) => IS
     }, 0);
     return new NumberSymbol(sum);
   },
+  mod: (a: ISymbolType, b: ISymbolType): NumberSymbol => {
+    let aVal: number, bVal: number;
+
+    if (a instanceof NumberSymbol) aVal = a.value as number;
+    else if (a instanceof NumberWithUnitSymbol) aVal = a.value as number;
+    else if (typeof a.value === "number") aVal = a.value as number;
+    else throw new InterpreterError("mod() expects number arguments.");
+
+    if (b instanceof NumberSymbol) bVal = b.value as number;
+    else if (b instanceof NumberWithUnitSymbol) bVal = b.value as number;
+    else if (typeof b.value === "number") bVal = b.value as number;
+    else throw new InterpreterError("mod() expects number arguments.");
+
+    if (bVal === 0) throw new InterpreterError("mod() division by zero.");
+
+    // Use JavaScript's remainder operator for modulo
+    return new NumberSymbol(((aVal % bVal) + bVal) % bVal);
+  },
   average: (...args: ISymbolType[]): NumberSymbol => {
     if (args.length === 0) throw new InterpreterError("average() requires at least one argument.");
     const sum = args.reduce((acc, arg) => {
@@ -165,7 +183,19 @@ export const DEFAULT_FUNCTION_MAP: Record<string, (...args: ISymbolType[]) => IS
   round: (arg: ISymbolType): NumberSymbol => {
     if (!(arg instanceof NumberSymbol))
       throw new InterpreterError("round() expects a number argument.");
-    return new NumberSymbol(Math.round(arg.value as number));
+    const value = arg.value as number;
+
+    // Implement banker's rounding (round to nearest even) for .5 cases
+    const intPart = Math.floor(value);
+    const fraction = value - intPart;
+
+    if (fraction === 0.5) {
+      // For .5, round to the nearest even integer
+      return new NumberSymbol(intPart % 2 === 0 ? intPart : intPart + 1);
+    }
+
+    // Use regular Math.round for all other cases
+    return new NumberSymbol(Math.round(value));
   },
   abs: (arg: ISymbolType): NumberSymbol => {
     if (!(arg instanceof NumberSymbol))

@@ -1,0 +1,39 @@
+name: Compliance Suite
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+jobs:
+  compliance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v4
+
+      - name: Checkout compliance suite
+        uses: actions/checkout@v4
+        with:
+          repository: tokens-studio/tokenscript-compliance-suite
+          path: tokenscript-compliance-suite
+          token: ${{ secrets.GH_PAT_STANDARD_COMPLIANCE }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run compliance suite
+        run: npm run cli -- evaluate_standard_compliance --test-dir ./tokenscript-compliance-suite/tests/ --output compliance-report.json
+
+      - name: Report compliance results
+        run: node scripts/report-compliance.cjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
+
