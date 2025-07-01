@@ -208,10 +208,8 @@ export async function evaluateStandardCompliance(testDir: string, outputFile: st
         name: test.name,
         actualOutput: Array.isArray(actualOutput)
           ? actualOutput.join(
-              // Use test.expectedOutputType as fallback if normalizedType is not in scope
-              typeof normalizedType !== "undefined" && normalizedType === "ImplicitList"
-                ? " "
-                : ", "
+              // Use test.expectedOutputType as fallback since normalizedType is not in scope here
+              test.expectedOutputType === "ImplicitList" ? " " : ", "
             )
           : actualOutput,
         actualOutputType,

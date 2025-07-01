@@ -269,16 +269,14 @@ export const DEFAULT_FUNCTION_MAP: Record<string, (...args: ISymbolType[]) => IS
     if (!(arg instanceof NumberSymbol))
       throw new InterpreterError("log() expects a number argument.");
     const value = arg.value as number;
-    if (value <= 0)
-      throw new InterpreterError("log() argument must be positive.");
+    if (value <= 0) throw new InterpreterError("log() argument must be positive.");
 
     if (base === undefined) {
       // Natural logarithm (base e)
       return new NumberSymbol(Math.log(value));
     }
 
-    if (!(base instanceof NumberSymbol))
-      throw new InterpreterError("log() base must be a number.");
+    if (!(base instanceof NumberSymbol)) throw new InterpreterError("log() base must be a number.");
     const baseValue = base.value as number;
     if (baseValue <= 0 || baseValue === 1)
       throw new InterpreterError("log() base must be positive and not equal to 1.");

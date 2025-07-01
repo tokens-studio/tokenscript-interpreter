@@ -453,23 +453,25 @@ function loadThemes(tokensets: Record<string, any>): Record<string, Record<strin
       for (const tokenSetRef of selectedTokenSets) {
         if (tokenSetRef.status === "enabled" || tokenSetRef.status === "source") {
           const setId = tokenSetRef.id;
-          if (!flattenedTokenSetsCache.has(setId)) {
+          const tokenSet = flattenedTokenSetsCache.get(setId);
+          if (!tokenSet) {
             console.warn(
               chalk.yellow(`⚠️  Token set '${setId}' referenced in '${themeName}' not found.`)
             );
             continue;
           }
-          tokenSetRefs.push(flattenedTokenSetsCache.get(setId)!);
+          tokenSetRefs.push(tokenSet);
         }
       }
     } else {
       // Old format: object with key-value pairs
       for (const [setName, status] of Object.entries(selectedTokenSets)) {
         if (status === "enabled" || status === "source") {
-          if (!flattenedTokenSetsCache.has(setName)) {
+          const tokenSet = flattenedTokenSetsCache.get(setName);
+          if (!tokenSet) {
             throw new Error(`Token set '${setName}' referenced in '${themeName}' not found.`);
           }
-          tokenSetRefs.push(flattenedTokenSetsCache.get(setName)!);
+          tokenSetRefs.push(tokenSet);
         }
       }
     }

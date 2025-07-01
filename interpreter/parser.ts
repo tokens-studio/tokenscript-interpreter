@@ -105,9 +105,11 @@ export class Parser {
         this.eat(TokenType.SEMICOLON);
       } else {
         // If not a semicolon, break only if next is EOF or RBLOCK
+        // Type assertion needed because TypeScript doesn't understand that currentToken.type
+        // can change after calling this.statement() above
         if (
-          this.currentToken.type === TokenType.EOF ||
-          this.currentToken.type === TokenType.RBLOCK
+          (this.currentToken.type as TokenType) === TokenType.EOF ||
+          (this.currentToken.type as TokenType) === TokenType.RBLOCK
         ) {
           break;
         }
