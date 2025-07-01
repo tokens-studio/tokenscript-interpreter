@@ -4,14 +4,7 @@ import { Interpreter } from "./interpreter/interpreter";
 import { Lexer } from "./interpreter/lexer";
 import { Parser } from "./interpreter/parser";
 import { UNINTERPRETED_KEYWORDS } from "./types";
-import {
-  collectTokenMetadata as collectDTCGMetadata,
-  extractThemeTokens,
-  flatTokensToDTCG,
-  flattenTokens as flattenDTCGTokens,
-  hasNestedDTCGStructure,
-  rehydrateToDTCG,
-} from "./utils/dtcg-adapter";
+import { flattenTokens as flattenDTCGTokens, hasNestedDTCGStructure } from "./utils/dtcg-adapter";
 import { PerformanceTracker } from "./utils/performance-tracker";
 
 export interface TokenSetResolverOptions {
@@ -395,69 +388,6 @@ export function interpretTokens(tokenInput: Record<string, any>): Record<string,
     }
 
     return stringifiedTokens;
-  }
-}
-
-// Function to process DTCG JSON and preserve metadata structure with $value
-export function interpretTokensWithMetadata(dtcgJson: Record<string, any>): Record<string, any> {
-  if (!dtcgJson || typeof dtcgJson !== "object") {
-    throw new Error("Invalid JSON input: Expected an object");
-  }
-
-  // Check if this is a complete DTCG file with themes
-  if (dtcgJson.$themes && Array.isArray(dtcgJson.$themes)) {
-    // This is a complete DTCG file with themes - process each theme
-    const outputTokens: Record<string, Record<string, any>> = {};
-    const themesData = dtcgJson.$themes;
-
-    for (const theme of themesData) {
-      const themeName = theme.name;
-
-      // 1. ADAPT (Input): Extract tokens and metadata for this theme
-      const { flatTokens, metadata } = extractThemeTokens(dtcgJson, theme);
-
-      // 2. CORE: Resolve the flat tokens
-      const resolver = new TokenSetResolver(flatTokens);
-      const result = resolver.resolve();
-
-      // 3. ADAPT (Output): Re-hydrate the resolved values back into DTCG structure
-      const dtcgTokens = rehydrateToDTCG(result.resolvedTokens, metadata);
-
-      outputTokens[themeName] = dtcgTokens;
-    }
-
-    return outputTokens;
-  } else {
-    // --- No-Theme Path ---
-    if (hasNestedDTCGStructure(dtcgJson)) {
-      // This is a DTCG structure without themes
-      // 1. ADAPT (Input): Get both flat tokens for the resolver and metadata for later
-      const tokensToResolve = flattenDTCGTokens(dtcgJson);
-      const originalMetadata = collectDTCGMetadata(dtcgJson);
-
-      // 2. CORE: Resolve the flat tokens
-      const resolver = new TokenSetResolver(tokensToResolve);
-      const result = resolver.resolve();
-
-      // 3. ADAPT (Output): Re-hydrate the resolved values back into the DTCG structure
-      const finalDtcg = rehydrateToDTCG(result.resolvedTokens, originalMetadata);
-
-      return finalDtcg;
-    } else {
-      // This is already a flat token set - convert to DTCG format
-      // 1. ADAPT: Ensure all values are strings
-      const flatTokens: Record<string, string> = {};
-      for (const [key, value] of Object.entries(dtcgJson)) {
-        flatTokens[key] = String(value);
-      }
-
-      // 2. CORE: Resolve the flat tokens
-      const resolver = new TokenSetResolver(flatTokens);
-      const result = resolver.resolve();
-
-      // 3. ADAPT: Convert to DTCG format
-      return flatTokensToDTCG(result.resolvedTokens);
-    }
   }
 }
 

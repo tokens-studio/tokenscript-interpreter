@@ -1,5 +1,5 @@
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 import { Interpreter } from "./interpreter/interpreter";
 import { Lexer } from "./interpreter/lexer";
 import { Parser } from "./interpreter/parser";
@@ -67,7 +67,7 @@ export async function evaluateStandardCompliance(testDir: string, outputFile: st
     try {
       testCases = JSON.parse(content);
       if (!Array.isArray(testCases)) testCases = [testCases];
-    } catch (e) {
+    } catch (_e) {
       continue;
     }
     for (const test of testCases) {
@@ -158,11 +158,12 @@ export async function evaluateStandardCompliance(testDir: string, outputFile: st
           const actualArrayString = normalizedValue.join(" ").toLowerCase();
 
           // Handle both string and array expectedOutput
-          const expectedArrayString = typeof test.expectedOutput === "string"
-            ? test.expectedOutput.toLowerCase()
-            : Array.isArray(test.expectedOutput)
-              ? test.expectedOutput.join(" ").toLowerCase()
-              : String(test.expectedOutput).toLowerCase();
+          const expectedArrayString =
+            typeof test.expectedOutput === "string"
+              ? test.expectedOutput.toLowerCase()
+              : Array.isArray(test.expectedOutput)
+                ? test.expectedOutput.join(" ").toLowerCase()
+                : String(test.expectedOutput).toLowerCase();
 
           if (actualArrayString === expectedArrayString) {
             status = "passed";

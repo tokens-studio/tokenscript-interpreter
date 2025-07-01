@@ -89,7 +89,7 @@ export class Lexer {
   private isAlpha(char: string | null): boolean {
     // Check if character is a letter (a-z, A-Z) or underscore
     if (char === null) return false;
-    const cp = char.codePointAt(0)!;
+    const cp = char.codePointAt(0) ?? 0;
     return (
       (cp >= 65 && cp <= 90) || // A-Z
       (cp >= 97 && cp <= 122) || // a-z
@@ -100,7 +100,7 @@ export class Lexer {
   private isDigit(char: string | null): boolean {
     // Check if character is a digit (0-9)
     if (char === null) return false;
-    const cp = char.codePointAt(0)!;
+    const cp = char.codePointAt(0) ?? 0;
     return cp >= 48 && cp <= 57; // 0-9
   }
 
@@ -112,14 +112,14 @@ export class Lexer {
   private isValidIdentifierStart(char: string | null): boolean {
     // Valid first character: letters, underscore, or any Unicode character > 127
     if (char === null) return false;
-    const cp = char.codePointAt(0)!;
+    const cp = char.codePointAt(0) ?? 0;
     return this.isAlpha(char) || cp > 127;
   }
 
   private isValidIdentifierPart(char: string | null): boolean {
     // Valid subsequent character: alphanumeric, underscore, hyphen, or any Unicode character > 127
     if (char === null) return false;
-    const cp = char.codePointAt(0)!;
+    const cp = char.codePointAt(0) ?? 0;
     return this.isAlphaNumeric(char) || cp === 45 /* hyphen */ || cp > 127;
   }
 

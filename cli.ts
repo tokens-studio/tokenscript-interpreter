@@ -13,7 +13,6 @@ import {
   buildThemeTree,
   interpretTokens,
   interpretTokensets,
-  interpretTokensWithMetadata,
   permutateTokensets,
   processThemes,
 } from "./tokenset-processor";
@@ -68,13 +67,9 @@ program
   .description("Parse and process a DTCG JSON file directly")
   .requiredOption("--json <path>", "Path to the DTCG JSON file")
   .option("--output <path>", "Output file path", "output.json")
-  .option(
-    "--format <format>",
-    "Output format: 'flat' (name: value) or 'dtcg' (name: {$value: value})",
-    "flat"
-  )
+
   .action(async (options) => {
-    await parseJsonFile(options.json, options.output, options.format);
+    await parseJsonFile(options.json, options.output);
   });
 
 // Evaluate standard compliance command
@@ -288,28 +283,16 @@ async function permutateTokenset(
 }
 
 // Parse DTCG JSON file - simple unified API
-async function parseJsonFile(
-  jsonPath: string,
-  outputPath: string,
-  format: string = "flat"
-): Promise<void> {
-  console.log(chalk.cyan("📄 Parsing DTCG JSON from: ") + chalk.yellow(jsonPath));
-  console.log(chalk.blue("🔧 Output format: ") + chalk.magenta(format));
+async function parseJsonFile(jsonPath: string, outputPath: string): Promise<void> {
+  console.log(chalk.cyan("📄 Parsing JSON from: ") + chalk.yellow(jsonPath));
 
   try {
     // Read JSON file
     const jsonContent = await fs.promises.readFile(jsonPath, "utf8");
     const dtcgJson = JSON.parse(jsonContent);
 
-    // Process the JSON blob using the appropriate API based on format
-    let output: Record<string, any>;
-    if (format === "dtcg") {
-      output = interpretTokensWithMetadata(dtcgJson);
-    } else if (format === "flat") {
-      output = interpretTokens(dtcgJson);
-    } else {
-      throw new Error(`Invalid format '${format}'. Use 'flat' or 'dtcg'.`);
-    }
+    // Process the JSON blob - returns flat tokens (aligned with Python implementation)
+    const output = interpretTokens(dtcgJson);
 
     // Write output
     await fs.promises.writeFile(outputPath, JSON.stringify(output, null, 2), "utf8");
@@ -454,7 +437,7 @@ function loadThemes(tokensets: Record<string, any>): Record<string, Record<strin
   // Pre-flatten all token sets once to avoid redundant processing
   const flattenedTokenSetsCache = new Map<string, Record<string, any>>();
   for (const [setName, setData] of Object.entries(tokensets)) {
-    if (setName === '$themes') continue; // Skip themes metadata
+    if (setName === "$themes") continue; // Skip themes metadata
     flattenedTokenSetsCache.set(setName, flattenTokenset(setData));
   }
 

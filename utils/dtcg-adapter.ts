@@ -43,78 +43,8 @@ export function flattenTokens(tokenset: any, prefix = ""): Record<string, string
   return flattenedTokens;
 }
 
-/**
- * Collects the full DTCG metadata for each token, keyed by its flat name.
- * Used for re-hydrating the output back to DTCG format.
- *
- * @param tokenset - The DTCG tokens object to collect metadata from
- * @param prefix - Internal parameter for recursion (dot-separated path)
- * @returns A Record mapping flat token names to their complete DTCG metadata
- *
- * @example
- * Input:  { "color": { "red": { "$value": "#FF0000", "$type": "color" } } }
- * Output: { "color.red": { "$value": "#FF0000", "$type": "color" } }
- */
-export function collectTokenMetadata(tokenset: any, prefix = ""): Record<string, any> {
-  const metadata: Record<string, any> = {};
-
-  for (const [key, node] of Object.entries(tokenset)) {
-    // Skip DTCG metadata keys
-    if (key.startsWith("$")) continue;
-
-    if (typeof node === "object" && node !== null && !Array.isArray(node)) {
-      const name = prefix ? `${prefix}.${key}` : key;
-      if ("$value" in node) {
-        // This is a token - store its complete metadata
-        metadata[name] = { ...node };
-      } else {
-        // This is a nested group - recurse
-        const nested = collectTokenMetadata(node, name);
-        Object.assign(metadata, nested);
-      }
-    }
-  }
-
-  return metadata;
-}
-
-/**
- * Re-hydrates a flat map of resolved tokens back into a DTCG structure,
- * using the original metadata.
- *
- * @param resolvedTokens - Flat map of resolved token values from TokenSetResolver
- * @param originalMetadata - Original DTCG metadata collected during input processing
- * @returns A DTCG-formatted object with resolved values and preserved metadata
- *
- * @example
- * resolvedTokens: { "color.red": "#FF0000" }
- * originalMetadata: { "color.red": { "$value": "{color.base}", "$type": "color" } }
- * Output: { "color.red": { "$value": "#FF0000", "$type": "color" } }
- */
-export function rehydrateToDTCG(
-  resolvedTokens: Record<string, any>,
-  originalMetadata: Record<string, any>
-): Record<string, any> {
-  const dtcgTokens: Record<string, any> = {};
-
-  for (const [tokenName, metadata] of Object.entries(originalMetadata)) {
-    const resolvedValue = resolvedTokens[tokenName];
-
-    dtcgTokens[tokenName] = {
-      ...metadata,
-      $value:
-        resolvedValue && typeof resolvedValue === "object" && "toString" in resolvedValue
-          ? resolvedValue.toString()
-          : (resolvedValue ?? metadata.$value),
-    };
-  }
-
-  return dtcgTokens;
-}
-
 // Cache for flattened tokens and metadata to avoid redundant processing
 const flattenedTokensCache = new Map<string, Record<string, string>>();
-const metadataCache = new Map<string, Record<string, any>>();
 
 /**
  * Clears the flattening caches. Call this when processing a new set of token files
@@ -122,7 +52,6 @@ const metadataCache = new Map<string, Record<string, any>>();
  */
 export function clearFlatteningCaches(): void {
   flattenedTokensCache.clear();
-  metadataCache.clear();
 }
 
 /**
@@ -131,14 +60,13 @@ export function clearFlatteningCaches(): void {
  *
  * @param dtcgJson - Complete DTCG JSON with themes
  * @param theme - Theme object with selectedTokenSets
- * @returns Object with flat tokens and metadata for the theme
+ * @returns Object with flat tokens only (metadata removed to align with Python implementation)
  */
 export function extractThemeTokens(
   dtcgJson: Record<string, any>,
   theme: any
-): { flatTokens: Record<string, string>; metadata: Record<string, any> } {
+): { flatTokens: Record<string, string> } {
   const flatTokens: Record<string, string> = {};
-  const metadata: Record<string, any> = {};
   const selectedTokenSets = theme.selectedTokenSets;
 
   if (Array.isArray(selectedTokenSets)) {
@@ -156,18 +84,9 @@ export function extractThemeTokens(
             flattenedTokensCache.set(setId, cachedFlatTokens);
           }
 
-          let cachedMetadata = metadataCache.get(setId);
-          if (!cachedMetadata) {
-            cachedMetadata = collectTokenMetadata(setData);
-            metadataCache.set(setId, cachedMetadata);
-          }
-
           // Merge cached results into theme tokens
           for (const [tokenName, tokenValue] of Object.entries(cachedFlatTokens)) {
             flatTokens[tokenName] = tokenValue;
-          }
-          for (const [metaName, metaValue] of Object.entries(cachedMetadata)) {
-            metadata[metaName] = metaValue;
           }
         }
       }
@@ -186,25 +105,16 @@ export function extractThemeTokens(
             flattenedTokensCache.set(setName, cachedFlatTokens);
           }
 
-          let cachedMetadata = metadataCache.get(setName);
-          if (!cachedMetadata) {
-            cachedMetadata = collectTokenMetadata(setData);
-            metadataCache.set(setName, cachedMetadata);
-          }
-
           // Merge cached results into theme tokens
           for (const [tokenName, tokenValue] of Object.entries(cachedFlatTokens)) {
             flatTokens[tokenName] = tokenValue;
-          }
-          for (const [metaName, metaValue] of Object.entries(cachedMetadata)) {
-            metadata[metaName] = metaValue;
           }
         }
       }
     }
   }
 
-  return { flatTokens, metadata };
+  return { flatTokens };
 }
 
 /**
@@ -221,25 +131,4 @@ export function hasNestedDTCGStructure(json: Record<string, any>): boolean {
       !Array.isArray(json[key]) &&
       !key.startsWith("$")
   );
-}
-
-/**
- * Converts flat tokens to DTCG format (for cases where input was already flat).
- *
- * @param flatTokens - Flat token map
- * @returns DTCG-formatted tokens with $value properties
- */
-export function flatTokensToDTCG(flatTokens: Record<string, any>): Record<string, any> {
-  const dtcgTokens: Record<string, any> = {};
-
-  for (const [key, value] of Object.entries(flatTokens)) {
-    const resolvedValue =
-      value && typeof value === "object" && "toString" in value ? value.toString() : value;
-
-    dtcgTokens[key] = {
-      $value: resolvedValue,
-    };
-  }
-
-  return dtcgTokens;
 }

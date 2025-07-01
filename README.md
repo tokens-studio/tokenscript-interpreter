@@ -90,12 +90,14 @@ npx @tokens-studio/tokenscript-interpreter parse_json --json tokens.json --outpu
 npx @tokens-studio/tokenscript-interpreter permutate_tokenset --tokenset tokens.zip --permutate-on theme1 theme2 --permutate-to target --output permutations.json
 ```
 
-### DTCG Format Support
+### Input Format Support
+
+The interpreter accepts both flat and DTCG input formats but always returns flat tokens (aligned with Python implementation):
 
 ```typescript
-import { interpretTokensWithMetadata } from '@tokens-studio/tokenscript-interpreter';
+import { interpretTokens } from '@tokens-studio/tokenscript-interpreter';
 
-// Process DTCG format with metadata preservation
+// DTCG input format (automatically flattened)
 const dtcgTokens = {
   "spacing": {
     "small": {
@@ -110,8 +112,8 @@ const dtcgTokens = {
   }
 };
 
-const resolved = interpretTokensWithMetadata(dtcgTokens);
-// Preserves DTCG structure with resolved $value properties
+const resolved = interpretTokens(dtcgTokens);
+// Returns flat format: { "spacing.small": "8px", "spacing.medium": "16px" }
 ```
 
 ## Language Syntax
@@ -152,8 +154,7 @@ return primary;  // #3B82F6
 
 ### Utility Functions
 
-- `interpretTokens(tokenInput)` - Process any token format (flat or DTCG)
-- `interpretTokensWithMetadata(dtcgJson)` - Process DTCG format preserving metadata structure
+- `interpretTokens(tokenInput)` - Process any token format (flat or DTCG) and return flat tokens
 - `processThemes(themes, options?)` - Process multiple themes with performance tracking
 - `permutateTokensets(...)` - Generate theme permutations
 - `buildThemeTree(...)` - Build theme hierarchy from tokensets
