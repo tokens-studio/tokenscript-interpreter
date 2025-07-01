@@ -146,6 +146,29 @@ describe("Math Functions - Rounding", () => {
     expect(floorResult?.value).toBe(3);
     expect(ceilResult?.value).toBe(4);
   });
+
+  it("should implement banker's rounding (round half to even)", () => {
+    const text = `
+    variable round_2_5: Number = round(2.5);
+    variable round_3_5: Number = round(3.5);
+    variable round_4_5: Number = round(4.5);
+    variable round_5_5: Number = round(5.5);
+    variable round_neg_2_5: Number = round(-2.5);
+    variable round_neg_3_5: Number = round(-3.5);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser, {});
+    interpreter.interpret();
+
+    // Banker's rounding: .5 rounds to nearest even number
+    expect(interpreter.symbolTable.get("round_2_5")?.value).toBe(2); // 2.5 -> 2 (even)
+    expect(interpreter.symbolTable.get("round_3_5")?.value).toBe(4); // 3.5 -> 4 (even)
+    expect(interpreter.symbolTable.get("round_4_5")?.value).toBe(4); // 4.5 -> 4 (even)
+    expect(interpreter.symbolTable.get("round_5_5")?.value).toBe(6); // 5.5 -> 6 (even)
+    expect(interpreter.symbolTable.get("round_neg_2_5")?.value).toBe(-2); // -2.5 -> -2 (even)
+    expect(interpreter.symbolTable.get("round_neg_3_5")?.value).toBe(-4); // -3.5 -> -4 (even)
+  });
 });
 
 describe("Math Functions - RoundTo", () => {
@@ -251,7 +274,7 @@ describe("Math Functions - RoundTo", () => {
 
     expect(result1?.value).toBe(-4);
     expect(result2?.value).toBe(-2);
-    expect(result3?.value).toBe(-1); // -1.5 rounds to -1 (JavaScript's round half up)
+    expect(result3?.value).toBe(-2); // -1.5 rounds to -2 (banker's rounding to nearest even)
   });
 
   it("should handle roundTo function with precision and negative numbers", () => {
@@ -333,5 +356,184 @@ describe("Math Functions - Complex Expressions", () => {
     expect(bodyS?.value).toBe(16);
     // 14 * 1.2^2 = 14 * 1.44 = 20.16 -> 20
     expect(headlineXL?.value).toBe(20);
+  });
+});
+
+describe("Math Functions - Inverse Trigonometric", () => {
+  it("should handle asin function", () => {
+    const text = `
+    variable asin_0: Number = asin(0);
+    variable asin_half: Number = asin(0.5);
+    variable asin_one: Number = asin(1);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser, {});
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("asin_0")?.value).toBeCloseTo(0, 5);
+    expect(interpreter.symbolTable.get("asin_half")?.value).toBeCloseTo(Math.PI / 6, 5);
+    expect(interpreter.symbolTable.get("asin_one")?.value).toBeCloseTo(Math.PI / 2, 5);
+  });
+
+  it("should handle acos function", () => {
+    const text = `
+    variable acos_0: Number = acos(0);
+    variable acos_half: Number = acos(0.5);
+    variable acos_one: Number = acos(1);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser, {});
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("acos_0")?.value).toBeCloseTo(Math.PI / 2, 5);
+    expect(interpreter.symbolTable.get("acos_half")?.value).toBeCloseTo(Math.PI / 3, 5);
+    expect(interpreter.symbolTable.get("acos_one")?.value).toBeCloseTo(0, 5);
+  });
+
+  it("should handle atan function", () => {
+    const text = `
+    variable atan_0: Number = atan(0);
+    variable atan_1: Number = atan(1);
+    variable atan_neg1: Number = atan(-1);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser, {});
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("atan_0")?.value).toBeCloseTo(0, 5);
+    expect(interpreter.symbolTable.get("atan_1")?.value).toBeCloseTo(Math.PI / 4, 5);
+    expect(interpreter.symbolTable.get("atan_neg1")?.value).toBeCloseTo(-Math.PI / 4, 5);
+  });
+
+  it("should throw error for asin/acos with invalid range", () => {
+    const text = `variable invalid: Number = asin(2);`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser, {});
+
+    expect(() => interpreter.interpret()).toThrow("asin() argument must be between -1 and 1");
+  });
+});
+
+describe("Math Functions - Logarithmic", () => {
+  it("should handle natural logarithm", () => {
+    const text = `
+    variable log_e: Number = log(2.718281828);
+    variable log_1: Number = log(1);
+    variable log_10: Number = log(10);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser, {});
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("log_e")?.value).toBeCloseTo(1, 5);
+    expect(interpreter.symbolTable.get("log_1")?.value).toBeCloseTo(0, 5);
+    expect(interpreter.symbolTable.get("log_10")?.value).toBeCloseTo(Math.log(10), 5);
+  });
+
+  it("should handle logarithm with custom base", () => {
+    const text = `
+    variable log_base_10: Number = log(100, 10);
+    variable log_base_2: Number = log(8, 2);
+    variable log_base_e: Number = log(2.718281828, 2.718281828);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser, {});
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("log_base_10")?.value).toBeCloseTo(2, 5);
+    expect(interpreter.symbolTable.get("log_base_2")?.value).toBeCloseTo(3, 5);
+    expect(interpreter.symbolTable.get("log_base_e")?.value).toBeCloseTo(1, 5);
+  });
+
+  it("should throw error for invalid logarithm arguments", () => {
+    const text1 = `variable invalid: Number = log(0);`;
+    const text2 = `variable invalid: Number = log(-1);`;
+    const text3 = `variable invalid: Number = log(10, 1);`;
+
+    expect(() => {
+      const lexer = new Lexer(text1);
+      const parser = new Parser(lexer);
+      const interpreter = new Interpreter(parser, {});
+      interpreter.interpret();
+    }).toThrow("log() argument must be positive");
+
+    expect(() => {
+      const lexer = new Lexer(text2);
+      const parser = new Parser(lexer);
+      const interpreter = new Interpreter(parser, {});
+      interpreter.interpret();
+    }).toThrow("log() argument must be positive");
+
+    expect(() => {
+      const lexer = new Lexer(text3);
+      const parser = new Parser(lexer);
+      const interpreter = new Interpreter(parser, {});
+      interpreter.interpret();
+    }).toThrow("log() base must be positive and not equal to 1");
+  });
+});
+
+describe("Math Functions - String Functions", () => {
+  it("should handle rgba function", () => {
+    const text = `
+    variable red: Number = 255;
+    variable green: Number = 128;
+    variable blue: Number = 0;
+    variable alpha: Number = 0.5;
+    variable color: String = rgba(red, green, blue, alpha);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser, {});
+    interpreter.interpret();
+
+    const color = interpreter.symbolTable.get("color");
+    expect(color?.value).toBe("rgba(255, 128, 0, 0.5)");
+  });
+});
+
+describe("Math Functions - Enhanced RoundTo with Banker's Rounding", () => {
+  it("should use banker's rounding for precision cases", () => {
+    const text = `
+    variable round_2_25: Number = roundTo(2.25, 1);
+    variable round_2_35: Number = roundTo(2.35, 1);
+    variable round_2_45: Number = roundTo(2.45, 1);
+    variable round_2_55: Number = roundTo(2.55, 1);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser, {});
+    interpreter.interpret();
+
+    // Banker's rounding: .5 rounds to nearest even number
+    expect(interpreter.symbolTable.get("round_2_25")?.value).toBe(2.2); // 2.25 -> 2.2 (even)
+    expect(interpreter.symbolTable.get("round_2_35")?.value).toBe(2.4); // 2.35 -> 2.4 (even)
+    expect(interpreter.symbolTable.get("round_2_45")?.value).toBe(2.4); // 2.45 -> 2.4 (even)
+    expect(interpreter.symbolTable.get("round_2_55")?.value).toBe(2.6); // 2.55 -> 2.6 (even)
+  });
+
+  it("should use banker's rounding for integer precision", () => {
+    const text = `
+    variable round_12_5: Number = roundTo(12.5, 0);
+    variable round_13_5: Number = roundTo(13.5, 0);
+    variable round_14_5: Number = roundTo(14.5, 0);
+    variable round_15_5: Number = roundTo(15.5, 0);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser, {});
+    interpreter.interpret();
+
+    // Banker's rounding: .5 rounds to nearest even number
+    expect(interpreter.symbolTable.get("round_12_5")?.value).toBe(12); // 12.5 -> 12 (even)
+    expect(interpreter.symbolTable.get("round_13_5")?.value).toBe(14); // 13.5 -> 14 (even)
+    expect(interpreter.symbolTable.get("round_14_5")?.value).toBe(14); // 14.5 -> 14 (even)
+    expect(interpreter.symbolTable.get("round_15_5")?.value).toBe(16); // 15.5 -> 16 (even)
   });
 });

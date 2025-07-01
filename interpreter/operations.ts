@@ -241,6 +241,52 @@ export const DEFAULT_FUNCTION_MAP: Record<string, (...args: ISymbolType[]) => IS
     return new NumberSymbol(Math.tan(arg.value as number));
   },
 
+  // Inverse trigonometric functions
+  asin: (arg: ISymbolType): NumberSymbol => {
+    if (!(arg instanceof NumberSymbol))
+      throw new InterpreterError("asin() expects a number argument.");
+    const value = arg.value as number;
+    if (value < -1 || value > 1)
+      throw new InterpreterError("asin() argument must be between -1 and 1.");
+    return new NumberSymbol(Math.asin(value));
+  },
+  acos: (arg: ISymbolType): NumberSymbol => {
+    if (!(arg instanceof NumberSymbol))
+      throw new InterpreterError("acos() expects a number argument.");
+    const value = arg.value as number;
+    if (value < -1 || value > 1)
+      throw new InterpreterError("acos() argument must be between -1 and 1.");
+    return new NumberSymbol(Math.acos(value));
+  },
+  atan: (arg: ISymbolType): NumberSymbol => {
+    if (!(arg instanceof NumberSymbol))
+      throw new InterpreterError("atan() expects a number argument.");
+    return new NumberSymbol(Math.atan(arg.value as number));
+  },
+
+  // Logarithmic functions
+  log: (arg: ISymbolType, base?: ISymbolType): NumberSymbol => {
+    if (!(arg instanceof NumberSymbol))
+      throw new InterpreterError("log() expects a number argument.");
+    const value = arg.value as number;
+    if (value <= 0)
+      throw new InterpreterError("log() argument must be positive.");
+
+    if (base === undefined) {
+      // Natural logarithm (base e)
+      return new NumberSymbol(Math.log(value));
+    }
+
+    if (!(base instanceof NumberSymbol))
+      throw new InterpreterError("log() base must be a number.");
+    const baseValue = base.value as number;
+    if (baseValue <= 0 || baseValue === 1)
+      throw new InterpreterError("log() base must be positive and not equal to 1.");
+
+    // Change of base formula: log_base(x) = ln(x) / ln(base)
+    return new NumberSymbol(Math.log(value) / Math.log(baseValue));
+  },
+
   // Additional rounding functions
   floor: (arg: ISymbolType): NumberSymbol => {
     if (!(arg instanceof NumberSymbol))
@@ -253,7 +299,7 @@ export const DEFAULT_FUNCTION_MAP: Record<string, (...args: ISymbolType[]) => IS
     return new NumberSymbol(Math.ceil(arg.value as number));
   },
 
-  // Advanced rounding function with precision
+  // Advanced rounding function with precision using banker's rounding
   roundto: (value: ISymbolType, precision?: ISymbolType): NumberSymbol => {
     if (!(value instanceof NumberSymbol))
       throw new InterpreterError("roundTo() expects a number as first argument.");
@@ -268,18 +314,45 @@ export const DEFAULT_FUNCTION_MAP: Record<string, (...args: ISymbolType[]) => IS
     const numValue = value.value as number;
 
     if (precisionValue === 0) {
-      // Round to nearest integer
+      // Round to nearest integer using banker's rounding
+      const intPart = Math.floor(numValue);
+      const fraction = numValue - intPart;
+
+      if (fraction === 0.5) {
+        // For .5, round to the nearest even integer
+        return new NumberSymbol(intPart % 2 === 0 ? intPart : intPart + 1);
+      }
+
+      // Use regular Math.round for all other cases
       return new NumberSymbol(Math.round(numValue));
     }
-    // Round to specified decimal places
+
+    // Round to specified decimal places using banker's rounding
     const factor = 10 ** precisionValue;
-    return new NumberSymbol(Math.round(numValue * factor) / factor);
+    const scaledValue = numValue * factor;
+    const intPart = Math.floor(scaledValue);
+    const fraction = scaledValue - intPart;
+
+    let roundedScaled: number;
+    if (fraction === 0.5) {
+      // For .5, round to the nearest even integer
+      roundedScaled = intPart % 2 === 0 ? intPart : intPart + 1;
+    } else {
+      // Use regular Math.round for all other cases
+      roundedScaled = Math.round(scaledValue);
+    }
+
+    return new NumberSymbol(roundedScaled / factor);
   },
 
   // Placeholder for non-mathematical functions that return strings
   "linear-gradient": (...args: ISymbolType[]): StringSymbol => {
     const stringArgs = args.map((arg) => arg.toString()).join(", ");
     return new StringSymbol(`linear-gradient(${stringArgs})`);
+  },
+  rgba: (...args: ISymbolType[]): StringSymbol => {
+    const stringArgs = args.map((arg) => arg.toString()).join(", ");
+    return new StringSymbol(`rgba(${stringArgs})`);
   },
   pi: (): NumberSymbol => new NumberSymbol(Math.PI),
 };
