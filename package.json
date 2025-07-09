@@ -26,6 +26,7 @@
   "scripts": {
     "build": "npm run build:lib",
     "build:lib": "tsc -p tsconfig.lib.json",
+    "build:watch": "tsc -p tsconfig.lib.json --watch",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
