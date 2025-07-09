@@ -54,23 +54,6 @@ export class Parser {
     return eatenToken;
   }
 
-  private peekTokens(n = 1): Token[] {
-    // Simplified peek, only gets next token
-    // This is tricky without a lexer that supports peeking arbitrary tokens.
-    // For robust peeking, lexer would need a buffer or ability to backtrack.
-    // For this implementation, we'll assume we only need to peek one token ahead,
-    // or the lexer needs to be enhanced. For now, this is a placeholder.
-    // A true peek would involve saving lexer state, getting tokens, then restoring.
-    // This is simplified. For actual multi-token lookahead, lexer needs a `peekTokens` method.
-    if (n === 1 && (this.lexer as any).lookaheadToken) {
-      // Fictional lookahead property
-      return [(this.lexer as any).lookaheadToken];
-    }
-    // This is not a true peek for multiple tokens without lexer support.
-    // console.warn("Parser.peekTokens is simplified and may not work for n > 1 without lexer enhancement.");
-    return [this.currentToken]; // Fallback, not a real peek
-  }
-
   public parse(inlineMode = false): ASTNode | null {
     if (this.currentToken.type === TokenType.EOF) return null;
 
@@ -95,9 +78,6 @@ export class Parser {
       if (this.currentToken.type === TokenType.SEMICOLON) {
         this.eat(TokenType.SEMICOLON);
       } else {
-        // If not a semicolon, break only if next is EOF or RBLOCK
-        // Type assertion needed because TypeScript doesn't understand that currentToken.type
-        // can change after calling this.statement() above
         if (
           (this.currentToken.type as TokenType) === TokenType.EOF ||
           (this.currentToken.type as TokenType) === TokenType.RBLOCK
