@@ -60,7 +60,7 @@ export class Parser {
     if (inlineMode) return this.listExpr();
 
     const node = this.statementList();
-    if (this.currentToken.type as TokenType !== TokenType.EOF) {
+    if ((this.currentToken.type as TokenType) !== TokenType.EOF) {
       this.error("Unexpected token at the end of input.");
     }
     return node;
@@ -103,9 +103,7 @@ export class Parser {
       }
     }
 
-    // Check for variable reassignment: IDENTIFIER = ListExpr
     if (this.currentToken.type === TokenType.STRING) {
-      // Look ahead to see if this is a reassignment
       const nextToken = this.lexer.peekNextToken();
       if (nextToken && nextToken.type === TokenType.ASSIGN) {
         return this.reassignStatement();
@@ -113,7 +111,7 @@ export class Parser {
       // TODO: Handle attribute assignment (ident.ident = ...)
     }
 
-    return this.listExpr(); // Default to list_expr, includes simple expressions.
+    return this.listExpr();
   }
 
   private varDeclaration(): VarDeclNode {
