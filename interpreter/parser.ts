@@ -71,25 +71,16 @@ export class Parser {
     return [this.currentToken]; // Fallback, not a real peek
   }
 
-  // Program entry point
   public parse(inlineMode = false): ASTNode | null {
-    if (this.currentToken.type === TokenType.EOF) {
-      return null;
-    }
-    const node = inlineMode ? this.listExpr() : this.program();
-    // The comparison `(this.currentToken.type as TokenType) !== TokenType.EOF` is potentially flagged by strict type checkers
-    // if the union of possible token types before this check doesn't obviously exclude EOF.
-    // However, the logic is sound: if parsing is done and it's not EOF (and not inline mode), it's an error.
-    if ((this.currentToken.type as TokenType) !== TokenType.EOF && !inlineMode) {
+    if (this.currentToken.type === TokenType.EOF) return null;
+
+    if (inlineMode) return this.listExpr();
+
+    const node = this.statementList();
+    if (this.currentToken.type as TokenType !== TokenType.EOF) {
       this.error("Unexpected token at the end of input.");
     }
     return node;
-  }
-
-  private program(): ASTNode {
-    // Program = StatementList | InlineExpr
-    // For simplicity, assuming full script mode (StatementList)
-    return this.statementList();
   }
 
   private statementList(): StatementListNode {
