@@ -401,22 +401,12 @@ export class Interpreter {
 
   private visitVarDeclNode(node: VarDeclNode): void {
     const varName = node.varName.name;
-    let valueToAssign: ISymbolType | null = null; // Initialize as null
+    let valueToAssign: ISymbolType | null = null;
 
     if (node.assignmentExpr) {
-      const visitedValue = this.visit(node.assignmentExpr); // Can be ISymbolType | null | void
-      if (visitedValue === undefined) {
-        // Explicitly check for void/undefined
-        valueToAssign = null;
-      } else if (visitedValue === null) {
-        // Explicitly check for null
-        valueToAssign = null;
-      } else {
-        // visitedValue is ISymbolType
-        valueToAssign = visitedValue;
-      }
+      const visitedValue = this.visit(node.assignmentExpr);
+      valueToAssign = visitedValue || null
     }
-    // At this point, valueToAssign is ISymbolType | null.
 
     const typeName = node.typeDecl.baseType.name.toLowerCase();
     const subTypeName =
