@@ -200,6 +200,10 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
         if (test.expectedOutputType === "Error") {
           // We expected an error, and got one - check if the error message contains the expected text
           const errorMsg = e instanceof Error ? e.message : String(e);
+          console.log("ERR",
+            errorMsg,
+            test.expectedOutput
+          );
           if (errorMsg.includes(test.expectedOutput)) {
             status = "passed";
             passed++;
