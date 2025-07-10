@@ -58,10 +58,10 @@ type MathOperand = NumberSymbol | NumberWithUnitSymbol;
 export class Interpreter {
   private parser: Parser | null; // Null if created with pre-parsed AST
   private symbolTable: SymbolTable;
-  private references: Map<string, ISymbolType> | Record<string, ISymbolType>; // Support both Map and Record
+  private references: Map<string, ISymbolType> | Record<string, ISymbolType>;
   private ast: ASTNode | null = null;
   private languageOptions: LanguageOptions;
-  private colorManager: ColorManager | null = null; // ColorManager integration
+  private colorManager: ColorManager | null = null;
 
   constructor(
     parserOrAst: Parser | ASTNode | null,
