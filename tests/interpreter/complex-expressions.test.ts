@@ -95,6 +95,18 @@ describe("Complex Expressions - Variable References", () => {
     expect(result?.toString()).toBe("20px");
   });
 
+  it("should handle variable with unit inline mixed math", () => {
+    const text = "{x} * {x} + {x}rem";
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser, {
+      x: 2,
+    });
+    const result = interpreter.interpret();
+    expect(result).not.toBeNull();
+    expect(result?.toString()).toBe("6rem");
+  });
+
   it("should handle variable references in function calls", () => {
     const text = "max({a}, {b}, {c}) + min({d}, {e})";
     const lexer = new Lexer(text);
