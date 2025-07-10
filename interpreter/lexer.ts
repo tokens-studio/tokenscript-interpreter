@@ -110,17 +110,14 @@ export class Lexer {
   }
 
   private isValidIdentifierStart(char: string | null): boolean {
-    // Valid first character: letters, underscore, or any Unicode character > 127
-    if (char === null) return false;
-    const cp = char.codePointAt(0) ?? 0;
-    return this.isAlpha(char) || cp > 127;
+    if (!char) return false;
+    return this.isAlpha(char);
   }
 
   private isValidIdentifierPart(char: string | null): boolean {
-    // Valid subsequent character: alphanumeric, underscore, hyphen, or any Unicode character > 127
     if (char === null) return false;
     const cp = char.codePointAt(0) ?? 0;
-    return this.isAlphaNumeric(char) || cp === 45 /* hyphen */ || cp > 127;
+    return this.isAlphaNumeric(char) || cp === 45 /* hyphen */;
   }
 
   private identifierOrKeyword(): Token {
@@ -355,7 +352,7 @@ export class Lexer {
       }
 
       if (this.currentChar === null) break; // End of processing after whitespace
-      throw new LexerError(`Unexpected character: ${this.currentChar}`, this.line);
+      throw new LexerError(`Invalid character: '${this.currentChar}'`, this.line);
     }
     return { type: TokenType.EOF, value: null, line: this.line };
   }

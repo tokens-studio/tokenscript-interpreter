@@ -108,6 +108,15 @@ describe("Complex Expressions - Variable References", () => {
     expect(result?.toString()).toBe("6rem");
   });
 
+  it("should throw error for unsupported inline op", () => {
+    const text = "{a} * {a} + {a} \u00b4 2";
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+
+    expect(() => parser.parse(true)).toThrow("Invalid character: '´'");
+  });
+
+
   it("should handle variable references in function calls", () => {
     const text = "max({a}, {b}, {c}) + min({d}, {e})";
     const lexer = new Lexer(text);
