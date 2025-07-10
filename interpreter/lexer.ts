@@ -352,7 +352,7 @@ export class Lexer {
       }
 
       if (this.currentChar === null) break; // End of processing after whitespace
-      throw new LexerError(`Invalid character: '${this.currentChar}'`, this.line);
+      throw new LexerError(`Invalid character '${this.currentChar}'`, this.line);
     }
     return { type: TokenType.EOF, value: null, line: this.line };
   }
