@@ -98,14 +98,12 @@ export class Lexer {
   }
 
   private isDigit(char: string | null): boolean {
-    // Check if character is a digit (0-9)
     if (char === null) return false;
     const cp = char.codePointAt(0) ?? 0;
     return cp >= 48 && cp <= 57; // 0-9
   }
 
   private isAlphaNumeric(char: string | null): boolean {
-    // Check if character is alphanumeric or underscore
     return this.isAlpha(char) || this.isDigit(char);
   }
 
