@@ -434,23 +434,22 @@ export class Interpreter {
       );
     }
 
-    if (valueToAssign !== null && valueToAssign !== undefined) {
-      // Checks for both null and undefined. After above logic, effectively checks for not null.
-      // valueToAssign is confirmed ISymbolType here.
-      const currentAssignmentValue: ISymbolType = valueToAssign;
+    if (valueToAssign) {
+      const assignedValue: ISymbolType = valueToAssign;
 
       // Get the target type by creating a temporary instance
       const tempInstance = new SymbolConstructor(null);
       const targetType = tempInstance.type;
+      console.log("targetType", tempInstance);
 
-      const isCorrectType = currentAssignmentValue instanceof SymbolConstructor;
-      const hasType = currentAssignmentValue.type;
+      const isCorrectType = assignedValue instanceof SymbolConstructor;
+      const hasType = assignedValue.type;
       const typeMismatch =
-        hasType && currentAssignmentValue.type.toLowerCase() !== targetType.toLowerCase();
+        hasType && assignedValue.type.toLowerCase() !== targetType.toLowerCase();
 
       if (!isCorrectType && typeMismatch) {
         // Type assertion to help TypeScript understand that currentAssignmentValue is ISymbolType
-        const assignmentValue = currentAssignmentValue as ISymbolType;
+        const assignmentValue = assignedValue as ISymbolType;
         const originalTypeForErrorMessage = assignmentValue.type;
         try {
           let rawValueForCoercion = assignmentValue.value;
@@ -514,7 +513,6 @@ export class Interpreter {
       }
       // If no coercion needed, valueToAssign (which is currentAssignmentValue) is already correct.
     } else {
-      // valueToAssign is null (or was undefined and became null)
       try {
         if (
           SymbolConstructor === (NumberWithUnitSymbol as any) &&
