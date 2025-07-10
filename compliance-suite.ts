@@ -55,8 +55,16 @@ function readJsonFilesRecursively(dir: string): string[] {
   return results;
 }
 
-export async function evaluateStandardCompliance(testDir: string, outputFile: string) {
-  const files = readJsonFilesRecursively(testDir);
+interface ComplianceConfig {
+  dir?: string;
+  file?: string;
+  output: string;
+}
+
+export async function evaluateStandardCompliance(config: ComplianceConfig) {
+  const files = config.file
+    ? [config.file]
+    : readJsonFilesRecursively(config.dir);
   const results: TestResult[] = [];
   let passed = 0;
   let failed = 0;
@@ -97,7 +105,8 @@ export async function evaluateStandardCompliance(testDir: string, outputFile: st
                 val.$type === "NumberWithUnit" ||
                 val.type === "dimension" ||
                 val.$type === "dimension") &&
-              (typeof val.value === "number" || typeof val.$value === "number") &&
+              (typeof val.value === "number" ||
+                typeof val.$value === "number") &&
               (typeof val.unit === "string" || typeof val.$unit === "string")
             ) {
               const number = val.value ?? val.$value;
@@ -110,11 +119,17 @@ export async function evaluateStandardCompliance(testDir: string, outputFile: st
               const norm = normalize(val.$value);
               return {
                 value: norm.value,
-                type: val.$type ? capitalizeFirst(val.$type) : getType(val.$value),
+                type: val.$type
+                  ? capitalizeFirst(val.$type)
+                  : getType(val.$value),
               };
             }
             // Handle objects with value/type (TokenScript output)
-            if ("value" in val && "type" in val && typeof val.type === "string") {
+            if (
+              "value" in val &&
+              "type" in val &&
+              typeof val.type === "string"
+            ) {
               // Recursively normalize value
               const norm = normalize(val.value);
               return { value: norm.value, type: capitalizeFirst(val.type) };
@@ -122,7 +137,8 @@ export async function evaluateStandardCompliance(testDir: string, outputFile: st
           }
           return { value: val, type: getType(val) };
         }
-        const { value: normalizedValue, type: normalizedType } = normalize(result);
+        const { value: normalizedValue, type: normalizedType } =
+          normalize(result);
         actualOutput = normalizedValue;
         actualOutputType = normalizedType;
 
@@ -132,7 +148,10 @@ export async function evaluateStandardCompliance(testDir: string, outputFile: st
           failed++;
         }
         // Simply stringify arrays and compare as strings, regardless of format
-        else if (Array.isArray(normalizedValue) && test.expectedOutputType === "List") {
+        else if (
+          Array.isArray(normalizedValue) &&
+          test.expectedOutputType === "List"
+        ) {
           // Handle case where expectedOutput is already a string but the normalizedValue is an array
           const actualArrayString = normalizedValue.join(", ").toLowerCase();
           const expectedOutputLower =
@@ -147,13 +166,16 @@ export async function evaluateStandardCompliance(testDir: string, outputFile: st
             passed++;
           } else {
             console.log(
-              `List comparison failed: "${actualArrayString}" !== "${expectedOutputLower}"`
+              `List comparison failed: "${actualArrayString}" !== "${expectedOutputLower}"`,
             );
             failed++;
           }
         }
         // Special handling for ImplicitList (space-separated instead of comma-separated)
-        else if (Array.isArray(normalizedValue) && test.expectedOutputType === "ImplicitList") {
+        else if (
+          Array.isArray(normalizedValue) &&
+          test.expectedOutputType === "ImplicitList"
+        ) {
           // Convert normalized value to space-separated string
           const actualArrayString = normalizedValue.join(" ").toLowerCase();
 
@@ -209,12 +231,14 @@ export async function evaluateStandardCompliance(testDir: string, outputFile: st
         actualOutput: Array.isArray(actualOutput)
           ? actualOutput.join(
               // Use test.expectedOutputType as fallback since normalizedType is not in scope here
-              test.expectedOutputType === "ImplicitList" ? " " : ", "
+              test.expectedOutputType === "ImplicitList" ? " " : ", ",
             )
           : actualOutput,
         actualOutputType,
         expectedOutput: Array.isArray(test.expectedOutput)
-          ? test.expectedOutput.join(test.expectedOutputType === "ImplicitList" ? " " : ", ")
+          ? test.expectedOutput.join(
+              test.expectedOutputType === "ImplicitList" ? " " : ", ",
+            )
           : test.expectedOutput,
         expectedOutputType: test.expectedOutputType,
         error,
@@ -223,7 +247,7 @@ export async function evaluateStandardCompliance(testDir: string, outputFile: st
   }
 
   const report: ComplianceReport = { passed, failed, results };
-  fs.writeFileSync(outputFile, JSON.stringify(report, null, 2), "utf-8");
+  fs.writeFileSync(config.output, JSON.stringify(report, null, 2), "utf-8");
   return report;
 }
 

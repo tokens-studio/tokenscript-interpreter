@@ -76,10 +76,16 @@ program
 program
   .command("evaluate_standard_compliance")
   .description("Run the TokenScript compliance suite on a directory of tests")
-  .requiredOption("--test-dir <path>", "Path to the directory containing compliance tests")
+  .option("--test-dir <path>", "Path to the directory containing compliance tests")
+  .option("--test-file <path>", "Path to a specific test file to run")
   .option("--output <path>", "Output file path", "compliance-report.json")
   .action(async (options) => {
-    const report = await evaluateStandardCompliance(options.testDir, options.output);
+    const config = {
+      dir: options.testDir,
+      file: options.testFile,
+      output: options.output
+    };
+    const report = await evaluateStandardCompliance(config);
     console.log(`Compliance suite finished. Passed: ${report.passed}, Failed: ${report.failed}`);
     console.log(`Full report written to ${options.output}`);
   });
