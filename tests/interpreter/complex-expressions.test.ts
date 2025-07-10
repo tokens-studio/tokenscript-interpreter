@@ -99,11 +99,12 @@ describe("Complex Expressions - Variable References", () => {
     const text = "{x} * {x} + {x}rem";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {
-      x: 2,
+    const ast = parser.parse(true);
+    const interpreter = new Interpreter(ast, {
+      // @ts-ignore
+      x: { value: 2, unit: "rem", type: "NumberWithUnit" },
     });
     const result = interpreter.interpret();
-    expect(result).not.toBeNull();
     expect(result?.toString()).toBe("6rem");
   });
 

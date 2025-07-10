@@ -176,6 +176,10 @@ export class Interpreter {
     if (typeof value === "boolean") return new BooleanSymbol(value);
     if (Array.isArray(value)) return new ListSymbol(value.map((v) => this.importReferenceValue(v)));
 
+    if (value instanceof NumberWithUnitSymbol) return value;
+    const numberWithUnit = NumberWithUnitSymbol.fromRecord(value);
+    if (numberWithUnit) return numberWithUnit
+
     throw new InterpreterError(`Invalid reference value type: ${typeof value}`);
   }
 
@@ -355,6 +359,9 @@ export class Interpreter {
 
   private visitElementWithUnitNode(node: ElementWithUnitNode): NumberWithUnitSymbol {
     const valNodeVisit = this.visit(node.astNode);
+
+    if (valNodeVisit instanceof NumberWithUnitSymbol) return valNodeVisit as NumberWithUnitSymbol;
+
     if (!(valNodeVisit instanceof NumberSymbol)) {
       const typeStr = valNodeVisit
         ? (valNodeVisit as ISymbolType).type
