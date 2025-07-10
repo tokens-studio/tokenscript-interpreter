@@ -64,7 +64,9 @@ interface ComplianceConfig {
 export async function evaluateStandardCompliance(config: ComplianceConfig) {
   const files = config.file
     ? [config.file]
-    : readJsonFilesRecursively(config.dir);
+    : config.dir
+      ? readJsonFilesRecursively(config.dir)
+      : [];
   const results: TestResult[] = [];
   let passed = 0;
   let failed = 0;
