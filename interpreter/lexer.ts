@@ -110,14 +110,23 @@ export class Lexer {
   }
 
   private isValidIdentifierStart(char: string | null): boolean {
-    if (!char) return false;
-    return this.isAlpha(char);
+    if (char === null) return false;
+    const cp = char.codePointAt(0) ?? 0;
+
+    if (this.isAlpha(char)) return true
+    // Emoji Support
+    if (cp <= 127) return false;
+
+    if (cp === 180) return false; // Forwardtick
+    if (cp === 96) return false; // BackwardTick
+
+    return true;
   }
 
   private isValidIdentifierPart(char: string | null): boolean {
     if (char === null) return false;
     const cp = char.codePointAt(0) ?? 0;
-    return this.isAlphaNumeric(char) || cp === 45 /* hyphen */;
+    return this.isAlphaNumeric(char) || cp === 45 /* hyphen */ || cp > 127;
   }
 
   private identifierOrKeyword(): Token {
