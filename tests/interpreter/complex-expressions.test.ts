@@ -113,7 +113,7 @@ describe("Complex Expressions - Variable References", () => {
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
 
-    expect(() => parser.parse(true)).toThrow("Invalid character: '´'");
+    expect(() => parser.parse(true)).toThrow("Invalid character '´'");
   });
 
 

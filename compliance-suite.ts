@@ -199,11 +199,10 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
         // Check if this was an expected error
         if (test.expectedOutputType === "Error") {
           // We expected an error, and got one - check if the error message contains the expected text
-          const errorMsg = e instanceof Error ? e.message : String(e);
-          console.log("ERR",
-            errorMsg,
-            test.expectedOutput
-          );
+          let errorMsg = e instanceof Error ? e.message : String(e);
+          // Strip "at position X." from error messages
+          errorMsg = errorMsg.replace(/ at position \d+\.$/, '');
+          
           if (errorMsg.includes(test.expectedOutput)) {
             status = "passed";
             passed++;
