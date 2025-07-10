@@ -137,8 +137,8 @@ export class ElementWithUnitNode implements ASTNode {
   }
 }
 
-export class VarDeclNode implements ASTNode {
-  nodeType = "VarDeclNode";
+export class AssignNode implements ASTNode {
+  nodeType = "AssignNode";
   constructor(
     public varName: IdentifierNode,
     public typeDecl: TypeDeclNode, // Represents the full type string like 'Color.RGB' or 'String'

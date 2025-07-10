@@ -26,7 +26,7 @@ import {
   type StatementListNode,
   type StringNode,
   type UnaryOpNode,
-  type VarDeclNode,
+  type AssignNode,
   type WhileNode,
 } from "./ast";
 import type { ColorManager } from "./colorManager";
@@ -399,7 +399,7 @@ export class Interpreter {
     throw new InterpreterError(`Function '${node.name}' not found.`, node.token?.line, node.token);
   }
 
-  private visitVarDeclNode(node: VarDeclNode): void {
+  private visitAssignNode(node: AssignNode): void {
     const varName = node.varName.name;
     let valueToAssign: ISymbolType | null = null;
 
@@ -430,7 +430,6 @@ export class Interpreter {
       // Get the target type by creating a temporary instance
       const tempInstance = new SymbolConstructor(null);
       const targetType = tempInstance.type;
-      console.log("targetType", tempInstance);
 
       const isCorrectType = assignedValue instanceof SymbolConstructor;
       const hasType = assignedValue.type;

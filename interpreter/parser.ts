@@ -20,7 +20,7 @@ import {
   StringNode,
   TypeDeclNode,
   UnaryOpNode,
-  VarDeclNode,
+  AssignNode,
   WhileNode,
 } from "./ast";
 import { ParserError } from "./errors";
@@ -93,7 +93,7 @@ export class Parser {
     if (this.currentToken.type === TokenType.RESERVED_KEYWORD) {
       switch (this.currentToken.value) {
         case ReservedKeyword.VARIABLE:
-          return this.varDeclaration();
+          return this.assignDeclaration();
         case ReservedKeyword.RETURN:
           return this.returnStatement();
         case ReservedKeyword.WHILE:
@@ -114,7 +114,7 @@ export class Parser {
     return this.listExpr();
   }
 
-  private varDeclaration(): VarDeclNode {
+  private assignDeclaration(): AssignNode {
     const varToken = this.eat(TokenType.RESERVED_KEYWORD); // 'variable'
     const varNameToken = this.eat(TokenType.STRING);
     const varName = new IdentifierNode(varNameToken);
@@ -127,7 +127,7 @@ export class Parser {
       this.eat(TokenType.ASSIGN);
       assignmentExpr = this.listExpr();
     }
-    return new VarDeclNode(varName, typeDecl, assignmentExpr, varToken);
+    return new AssignNode(varName, typeDecl, assignmentExpr, varToken);
   }
 
   private reassignStatement(): ReassignNode {
