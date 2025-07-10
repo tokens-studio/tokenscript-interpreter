@@ -416,7 +416,7 @@ export class Interpreter {
     const SymbolConstructor: new (...args: any[]) => ISymbolType =
       this.symbolTable.getSymbolConstructor(typeName, subTypeName);
 
-    if (this.symbolTable.exists(varName) && this.symbolTable.isRoot()) {
+    if (this.symbolTable.exists(varName)) {
       throw new InterpreterError(
         `Variable '${varName}' already declared.`,
         node.varName.token.line,
