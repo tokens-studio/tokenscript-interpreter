@@ -21,7 +21,7 @@ export class Lexer {
 
   constructor(text: string) {
     this.text = text;
-    this.currentChar = this.text.length > 0 ? this.text[this.pos] : null;
+    this.currentChar = this.text[this.pos];
   }
 
   private advance(): void {
