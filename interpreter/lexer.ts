@@ -14,8 +14,8 @@ for (const val of Object.values(ReservedKeyword) as string[]) {
 
 export class Lexer {
   private text: string;
-  private pos = 0;
   private currentChar: string | null;
+  private pos = 0;
   private line = 1;
   private column = 1;
 
