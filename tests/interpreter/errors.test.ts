@@ -9,9 +9,9 @@ describe("Error Handling - Lexer Errors", () => {
     const text = '"unterminated string';
     const lexer = new Lexer(text);
     expect(() => {
-      let token = lexer.getNextToken();
+      let token = lexer.nextToken();
       while (token.type !== "EOF") {
-        token = lexer.getNextToken();
+        token = lexer.nextToken();
       }
     }).toThrow();
   });
@@ -19,16 +19,16 @@ describe("Error Handling - Lexer Errors", () => {
   it("should throw error for invalid character", () => {
     const text = "@invalid";
     const lexer = new Lexer(text);
-    expect(() => lexer.getNextToken()).toThrow();
+    expect(() => lexer.nextToken()).toThrow();
   });
 
   it("should throw error for unterminated reference", () => {
     const text = "{unterminated";
     const lexer = new Lexer(text);
     expect(() => {
-      let token = lexer.getNextToken();
+      let token = lexer.nextToken();
       while (token.type !== "EOF") {
-        token = lexer.getNextToken();
+        token = lexer.nextToken();
       }
     }).toThrow();
   });

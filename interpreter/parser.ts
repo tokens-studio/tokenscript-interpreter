@@ -33,7 +33,7 @@ export class Parser {
 
   constructor(lexer: Lexer) {
     this.lexer = lexer;
-    this.currentToken = this.lexer.getNextToken();
+    this.currentToken = this.lexer.nextToken();
   }
 
   public getRequiredReferences(): string[] {
@@ -47,7 +47,7 @@ export class Parser {
   private eat(tokenType: TokenType): Token {
     const eatenToken = this.currentToken;
     if (this.currentToken.type === tokenType) {
-      this.currentToken = this.lexer.getNextToken();
+      this.currentToken = this.lexer.nextToken();
     } else {
       this.error(`Expected token type ${tokenType} but got ${this.currentToken.type}`);
     }

@@ -217,7 +217,7 @@ export class Lexer {
     return { type: TokenType.HEX_COLOR, value: result, line: this.line };
   }
 
-  public getNextToken(): Token {
+  public nextToken(): Token {
     while (this.currentChar !== null) {
       this.skipWhitespace();
       if (this.currentChar === null) break;
@@ -231,7 +231,6 @@ export class Lexer {
       }
 
       if (this.isValidIdentifierStart(this.currentChar)) {
-        // Start of identifier or keyword or format (including Unicode/emoji)
         return this.identifierOrKeyword();
       }
 
@@ -373,7 +372,7 @@ export class Lexer {
     const savedColumn = this.column;
 
     // Get next token
-    const nextToken = this.getNextToken();
+    const nextToken = this.nextToken();
 
     // Restore state
     this.pos = savedPos;
