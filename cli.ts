@@ -83,7 +83,7 @@ program
     const config = {
       dir: options.testDir,
       file: options.testFile,
-      output: options.output
+      output: options.output,
     };
     const report = await evaluateStandardCompliance(config);
     console.log(`Compliance suite finished. Passed: ${report.passed}, Failed: ${report.failed}`);

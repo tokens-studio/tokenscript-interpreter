@@ -427,13 +427,17 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
     return val instanceof NumberWithUnitSymbol;
   }
 
-  static fromRecord(record: { value: number | string, unit: string, type?: string }): NumberWithUnitSymbol | undefined {
-    if (record === null || typeof record !== 'object') return;
+  static fromRecord(record: {
+    value: number | string;
+    unit: string;
+    type?: string;
+  }): NumberWithUnitSymbol | undefined {
+    if (record === null || typeof record !== "object") return;
     if (record.type !== "NumberWithUnit") return;
     if (!record.value && !record.unit) return;
     if (typeof record.value !== "number") return;
 
-    return new NumberWithUnitSymbol(record.value, record.unit)
+    return new NumberWithUnitSymbol(record.value, record.unit);
   }
 
   toString(): string {

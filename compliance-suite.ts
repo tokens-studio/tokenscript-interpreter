@@ -201,8 +201,8 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
           // We expected an error, and got one - check if the error message contains the expected text
           const errorMsg = e instanceof Error ? e.message : String(e);
 
-          const normalizedError = errorMsg.replace(/^Line \d+: /, '')
-          const normalizedOutputError = test.expectedOutput.replace(/ at position \d+\.$/, '');
+          const normalizedError = errorMsg.replace(/^Line \d+: /, "");
+          const normalizedOutputError = test.expectedOutput.replace(/ at position \d+\.$/, "");
 
           if (normalizedError.includes(normalizedOutputError)) {
             status = "passed";

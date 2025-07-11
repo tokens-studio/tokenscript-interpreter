@@ -111,7 +111,7 @@ export class Lexer {
     if (char === null) return false;
     const cp = char.codePointAt(0) ?? 0;
 
-    if (this.isAlpha(char)) return true
+    if (this.isAlpha(char)) return true;
     // Emoji Support
     if (cp <= 127) return false;
 

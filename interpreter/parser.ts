@@ -1,5 +1,6 @@
 import { type ASTNode, Operations, ReservedKeyword, type Token, TokenType } from "../types";
 import {
+  AssignNode,
   AttributeAccessNode,
   AttributeAssignNode,
   BinOpNode,
@@ -20,7 +21,6 @@ import {
   StringNode,
   TypeDeclNode,
   UnaryOpNode,
-  AssignNode,
   WhileNode,
 } from "./ast";
 import { ParserError } from "./errors";

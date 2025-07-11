@@ -7,6 +7,7 @@ import {
   UNINTERPRETED_KEYWORDS,
 } from "../types";
 import {
+  type AssignNode,
   type AttributeAccessNode,
   type AttributeAssignNode,
   type BinOpNode,
@@ -26,7 +27,6 @@ import {
   type StatementListNode,
   type StringNode,
   type UnaryOpNode,
-  type AssignNode,
   type WhileNode,
 } from "./ast";
 import type { ColorManager } from "./colorManager";
@@ -178,7 +178,7 @@ export class Interpreter {
 
     if (value instanceof NumberWithUnitSymbol) return value;
     const numberWithUnit = NumberWithUnitSymbol.fromRecord(value);
-    if (numberWithUnit) return numberWithUnit
+    if (numberWithUnit) return numberWithUnit;
 
     throw new InterpreterError(`Invalid reference value type: ${typeof value}`);
   }
@@ -412,7 +412,7 @@ export class Interpreter {
 
     if (node.assignmentExpr) {
       const visitedValue = this.visit(node.assignmentExpr);
-      valueToAssign = visitedValue || null
+      valueToAssign = visitedValue || null;
     }
 
     const typeName = node.typeDecl.baseType.name.toLowerCase();
@@ -440,8 +440,7 @@ export class Interpreter {
 
       const isCorrectType = assignedValue instanceof SymbolConstructor;
       const hasType = assignedValue.type;
-      const typeMismatch =
-        hasType && assignedValue.type.toLowerCase() !== targetType.toLowerCase();
+      const typeMismatch = hasType && assignedValue.type.toLowerCase() !== targetType.toLowerCase();
 
       if (!isCorrectType && typeMismatch) {
         // Type assertion to help TypeScript understand that currentAssignmentValue is ISymbolType
