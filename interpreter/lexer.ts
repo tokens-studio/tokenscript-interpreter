@@ -109,9 +109,9 @@ export class Lexer {
 
   private isValidIdentifierStart(char: string | null): boolean {
     if (char === null) return false;
-    const cp = char.codePointAt(0) ?? 0;
-
     if (this.isAlpha(char)) return true;
+
+    const cp = char.codePointAt(0) ?? 0;
     // Emoji Support
     if (cp <= 127) return false;
 
