@@ -222,6 +222,7 @@ export class Lexer {
       this.skipWhitespace();
       if (this.currentChar === null) break;
 
+      // Skip comment
       if (this.currentChar === "/" && this.peek() === "/") {
         this.advance();
         this.advance();
