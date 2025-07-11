@@ -45,7 +45,7 @@ export class Lexer {
     }
   }
 
-  private skipComment(): void {
+  private skipLine(): void {
     while (this.currentChar !== null && this.currentChar !== "\n") {
       this.advance();
     }
@@ -225,7 +225,7 @@ export class Lexer {
       if (this.currentChar === "/" && this.peek() === "/") {
         this.advance();
         this.advance();
-        this.skipComment();
+        this.skipLine();
         continue;
       }
 
