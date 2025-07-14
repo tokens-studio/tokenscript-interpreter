@@ -93,12 +93,20 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
         const result = interpreter.interpret();
         // Always deeply normalize output for report and comparison
         function normalize(val: any): { value: any; type: string } {
-          // Handle TokenScript symbol class instances and NumberWithUnit
           if (val && typeof val === "object") {
             // Handle ListSymbol or arrays
             if (Array.isArray(val)) {
-              // Recursively normalize each element
-              const normList = val.map((v) => normalize(v).value);
+              const isUniformTypeList = val.every((v) => v.type === val[0].type);
+
+              const normList = val.map((v) => {
+                const normItem = normalize(v);
+
+                if (isUniformTypeList) return normItem.value;
+
+                // Wrap strings in list of mixed types in quotes
+                return normItem.type === "String" ? `"${normItem.value}"` : normItem.value;
+              });
+
               return { value: normList, type: "List" };
             }
             // Handle NumberWithUnitSymbol or similar
