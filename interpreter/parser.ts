@@ -1,4 +1,10 @@
-import { type ASTNode, Operations, ReservedKeyword, type Token, TokenType } from "../types";
+import {
+  type ASTNode,
+  Operations,
+  ReservedKeyword,
+  type Token,
+  TokenType,
+} from "../types";
 import {
   AssignNode,
   AttributeAccessNode,
@@ -49,7 +55,9 @@ export class Parser {
     if (this.currentToken.type === tokenType) {
       this.currentToken = this.lexer.nextToken();
     } else {
-      this.error(`Expected token type ${tokenType} but got ${this.currentToken.type}`);
+      this.error(
+        `Expected token type ${tokenType} but got ${this.currentToken.type}`,
+      );
     }
     return eatenToken;
   }
@@ -92,14 +100,14 @@ export class Parser {
   private statement(): ASTNode {
     if (this.currentToken.type === TokenType.RESERVED_KEYWORD) {
       switch (this.currentToken.value) {
-        case ReservedKeyword.VARIABLE:
-          return this.assignDeclaration();
         case ReservedKeyword.RETURN:
           return this.returnStatement();
         case ReservedKeyword.WHILE:
           return this.whileStatement();
         case ReservedKeyword.IF:
           return this.ifStatement();
+        case ReservedKeyword.VARIABLE:
+          return this.assignDeclaration();
       }
     }
 
@@ -110,7 +118,7 @@ export class Parser {
         pos: this.lexer["pos"],
         currentChar: this.lexer["currentChar"],
         line: this.lexer["line"],
-        column: this.lexer["column"]
+        column: this.lexer["column"],
       };
       let lookaheadOk = false;
       let idx = 0;
@@ -209,7 +217,12 @@ export class Parser {
     }
     this.eat(TokenType.ASSIGN);
     const value = this.listExpr();
-    return new AttributeAssignNode(objectIdentifier, attributes, value, objectIdentifierToken);
+    return new AttributeAssignNode(
+      objectIdentifier,
+      attributes,
+      value,
+      objectIdentifierToken,
+    );
   }
 
   private returnStatement(): ReturnNode {
@@ -225,7 +238,11 @@ export class Parser {
     const condition = this.expr();
     this.eat(TokenType.RPAREN);
     const body = this.block();
-    return new WhileNode(condition, body.statements as StatementListNode, whileToken);
+    return new WhileNode(
+      condition,
+      body.statements as StatementListNode,
+      whileToken,
+    );
   }
 
   private ifStatement(): IfNode {
@@ -432,12 +449,15 @@ export class Parser {
     }
     if (
       token.type === TokenType.RESERVED_KEYWORD &&
-      (token.value === ReservedKeyword.TRUE || token.value === ReservedKeyword.FALSE)
+      (token.value === ReservedKeyword.TRUE ||
+        token.value === ReservedKeyword.FALSE)
     ) {
       this.eat(TokenType.RESERVED_KEYWORD);
       return new BooleanNode(token.value === ReservedKeyword.TRUE, token);
     }
-    this.error(`Unexpected token in factor: ${token.type} (${String(token.value)})`);
+    this.error(
+      `Unexpected token in factor: ${token.type} (${String(token.value)})`,
+    );
     return new StringNode({ type: TokenType.STRING, value: "dummy", line: 0 }); // Should be unreachable
   }
 

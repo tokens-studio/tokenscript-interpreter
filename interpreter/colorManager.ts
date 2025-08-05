@@ -73,21 +73,6 @@ export class DynamicColorSymbol extends BaseSymbolType {
   }
 
   toString(): string {
-    // If a stringify script is available, use it (for RGB, etc.)
-    if ((this as any)._stringifyScript) {
-      try {
-        // Only support the default RGB format for now
-        if (this._typeName.toLowerCase() === "rgb") {
-          const r = this._values["r"]?.toString() ?? "0";
-          const g = this._values["g"]?.toString() ?? "0";
-          const b = this._values["b"]?.toString() ?? "0";
-          return `rgb(${r}, ${g}, ${b})`;
-        }
-      } catch {
-        // fallback below
-      }
-    }
-    // fallback: generic
     const properties = this._availableAttributes?.properties || {};
     const parts: string[] = [];
     for (const [key, _] of Object.entries(properties)) {
