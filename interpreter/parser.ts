@@ -103,14 +103,60 @@ export class Parser {
       }
     }
 
+    // Only do attribute assignment lookahead if the next tokens match the pattern
     if (this.currentToken.type === TokenType.STRING) {
+      // Save lexer state
+      const savedState = {
+        pos: this.lexer["pos"],
+        currentChar: this.lexer["currentChar"],
+        line: this.lexer["line"],
+        column: this.lexer["column"]
+      };
+      let lookaheadOk = false;
+      let idx = 0;
+      let token = this.lexer.peekNextToken();
+      // At least one .STRING
+      if (token?.type === TokenType.DOT) {
+        token = this.lexer.nextToken(); // DOT
+        token = this.lexer.nextToken(); // STRING
+        if (token?.type === TokenType.STRING) {
+          idx = 2;
+          // More .STRING pairs
+          while (true) {
+            const dotToken = this.lexer.peekNextToken();
+            if (dotToken?.type === TokenType.DOT) {
+              this.lexer.nextToken(); // DOT
+              const strToken = this.lexer.nextToken(); // STRING
+              if (strToken?.type === TokenType.STRING) {
+                idx += 2;
+                continue;
+              }
+            }
+            break;
+          }
+          // After .STRING pairs, check for ASSIGN
+          const assignToken = this.lexer.peekNextToken();
+          if (assignToken?.type === TokenType.ASSIGN) {
+            lookaheadOk = true;
+          }
+        }
+      }
+      // Restore lexer state
+      this.lexer["pos"] = savedState.pos;
+      this.lexer["currentChar"] = savedState.currentChar;
+      this.lexer["line"] = savedState.line;
+      this.lexer["column"] = savedState.column;
+      if (lookaheadOk) {
+        return this.attributeAssignment();
+      }
+      // Fallback: simple reassignment
       const nextToken = this.lexer.peekNextToken();
       if (nextToken && nextToken.type === TokenType.ASSIGN) {
         return this.reassignStatement();
       }
-      // TODO: Handle attribute assignment (ident.ident = ...)
     }
 
+    // Default: parse as expression (function call, list, etc.)
     return this.listExpr();
   }
 
@@ -151,35 +197,19 @@ export class Parser {
   }
 
   private attributeAssignment(): AttributeAssignNode {
-    // Grammar: ident ("." ident)* "=" ListExpr
-    // This is simplified due to lack of multi-token lookahead.
-    // A full implementation requires parsing the identifier chain first.
-    const objectIdentifierToken = this.eat(TokenType.STRING); // Assuming STRING is for ident
+    // Grammar: ident ("." ident)+ "=" ListExpr
+    const objectIdentifierToken = this.eat(TokenType.STRING);
     const objectIdentifier = new IdentifierNode(objectIdentifierToken);
-    const _attributes: IdentifierNode[] = [];
-
-    // This part is tricky without proper lookahead.
-    // We're currently in statement() which calls listExpr(), which might consume attributes.
-    // This needs a more robust parsing strategy for assignments.
-    // For now, this is a placeholder for the structure.
-    this.error(
-      "Attribute assignment parsing is complex and not fully implemented with current lookahead."
-    );
-    // Pseudocode for what should happen:
-    // while (this.currentToken.type === TokenType.DOT) {
-    //   this.eat(TokenType.DOT);
-    //   const attrToken = this.eat(TokenType.STRING);
-    //   attributes.push(new IdentifierNode(attrToken));
-    // }
-    // this.eat(TokenType.ASSIGN);
-    // const value = this.listExpr();
-    // return new AttributeAssignNode(objectIdentifier, attributes, value, objectIdentifierToken);
-    return new AttributeAssignNode(
-      objectIdentifier,
-      [],
-      new StringNode({ type: TokenType.STRING, value: "dummy", line: 0 }),
-      objectIdentifierToken
-    ); // Placeholder
+    const attributes: IdentifierNode[] = [];
+    // At least one .ident
+    while (this.currentToken.type === TokenType.DOT) {
+      this.eat(TokenType.DOT);
+      const attrToken = this.eat(TokenType.STRING);
+      attributes.push(new IdentifierNode(attrToken));
+    }
+    this.eat(TokenType.ASSIGN);
+    const value = this.listExpr();
+    return new AttributeAssignNode(objectIdentifier, attributes, value, objectIdentifierToken);
   }
 
   private returnStatement(): ReturnNode {

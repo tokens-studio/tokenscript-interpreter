@@ -47,13 +47,14 @@ interface ColorConversion {
   };
 }
 
-// Dynamic color symbol that can have custom attributes
 export class DynamicColorSymbol extends BaseSymbolType {
-  public type: string; // Implement the abstract property
+  public type: string;
   public _typeName: string;
   public _id: string;
   public _availableAttributes: any;
-  public _values: Record<string, ISymbolType> = {};
+  public _values: Record<string, ISymbolType | null> = {};
+  public _dataTypes: Record<string, any> = {};
+  public _to?: ColorConversionProxy;
 
   constructor(typeName: string, id: string, availableAttributes: any) {
     super({});
@@ -61,6 +62,10 @@ export class DynamicColorSymbol extends BaseSymbolType {
     this._id = id;
     this._availableAttributes = availableAttributes;
     this.type = `Color.${typeName.toUpperCase()}`;
+    for (const attr in availableAttributes.properties) {
+      this._values[attr] = null;
+      this._dataTypes[attr] = availableAttributes.properties[attr].type;
+    }
   }
 
   valid_value(value: any): boolean {
@@ -68,28 +73,40 @@ export class DynamicColorSymbol extends BaseSymbolType {
   }
 
   toString(): string {
-    // Use stringify script if available, otherwise default format
-    const properties = this._availableAttributes?.properties || {};
-    const parts: string[] = [];
-
-    for (const [key, _] of Object.entries(properties)) {
-      if (this._values[key]) {
-        parts.push(this._values[key].toString());
+    // If a stringify script is available, use it (for RGB, etc.)
+    if ((this as any)._stringifyScript) {
+      try {
+        // Only support the default RGB format for now
+        if (this._typeName.toLowerCase() === "rgb") {
+          const r = this._values["r"]?.toString() ?? "0";
+          const g = this._values["g"]?.toString() ?? "0";
+          const b = this._values["b"]?.toString() ?? "0";
+          return `rgb(${r}, ${g}, ${b})`;
+        }
+      } catch {
+        // fallback below
       }
     }
-
+    // fallback: generic
+    const properties = this._availableAttributes?.properties || {};
+    const parts: string[] = [];
+    for (const [key, _] of Object.entries(properties)) {
+      if (this._values[key] !== null && this._values[key] !== undefined) {
+        parts.push(this._values[key]?.toString());
+      }
+    }
     return `${this._typeName.toLowerCase()}(${parts.join(", ")})`;
   }
 
-  // Attribute access for color properties (r, g, b, etc.)
   hasAttribute(attributeName: string): boolean {
     return this._availableAttributes?.properties?.[attributeName] !== undefined;
   }
 
   getAttribute(attributeName: string): ISymbolType | null {
+    if (attributeName === "to" && this._to) return this._to as any;
     if (!this.hasAttribute(attributeName)) {
       throw new InterpreterError(
-        `Color type ${this._typeName} does not have attribute '${attributeName}'`
+        `Color type ${this._typeName} does not have attribute '${attributeName}'`,
       );
     }
     return this._values[attributeName] || null;
@@ -98,7 +115,7 @@ export class DynamicColorSymbol extends BaseSymbolType {
   setAttribute(attributeName: string, value: ISymbolType): void {
     if (!this.hasAttribute(attributeName)) {
       throw new InterpreterError(
-        `Color type ${this._typeName} does not have attribute '${attributeName}'`
+        `Color type ${this._typeName} does not have attribute '${attributeName}'`,
       );
     }
     this._values[attributeName] = value;
@@ -111,13 +128,71 @@ export class ColorConversionProxy {
   private sourceId: string;
   public sourceColor: DynamicColorSymbol | null = null;
 
-  constructor(colorTransforms: Record<string, Record<string, ASTNode>>, sourceId: string) {
+  constructor(
+    colorTransforms: Record<string, Record<string, ASTNode>>,
+    sourceId: string,
+  ) {
     this.colorTransforms = colorTransforms;
     this.sourceId = sourceId;
   }
 
-  // This would be called when accessing .to.rgb() etc.
-  // For now, we'll implement basic structure
+  // Dynamically create conversion methods (e.g., .to.rgb())
+  public get(target: string): (() => DynamicColorSymbol) | undefined {
+    return (this as any)[target];
+  }
+
+  public get [Symbol.toStringTag]() {
+    return "ColorConversionProxy";
+  }
+
+  public getProxy(): any {
+    return new Proxy(this, {
+      get: (target, prop: string) => {
+        if (typeof prop !== "string") return undefined;
+        return () => target.convertTo(prop);
+      },
+    });
+  }
+
+  private findConversionPath(source: string, target: string): string[] {
+    if (source === target) return [source];
+    const visited = new Set<string>([source]);
+    const queue: Array<[string, string[]]> = [[source, [source]]];
+    while (queue.length > 0) {
+      const [current, path] = queue.shift()!;
+      for (const next of Object.keys(this.colorTransforms[current] || {})) {
+        if (next === target) return [...path, target];
+        if (!visited.has(next)) {
+          visited.add(next);
+          queue.push([next, [...path, next]]);
+        }
+      }
+    }
+    return [];
+  }
+
+  private convertTo(targetName: string): DynamicColorSymbol {
+    // Target type id
+    const targetType = `https://schemas.tokens.studio/tokens/foundations/types/${targetName}.json`;
+    const path = this.findConversionPath(this.sourceId, targetType);
+    if (!path.length) {
+      throw new InterpreterError(
+        `No conversion path found from ${this.sourceId} to ${targetType}`,
+      );
+    }
+    const result = this.sourceColor;
+    for (let i = 0; i < path.length - 1; i++) {
+      const src = path[i];
+      const tgt = path[i + 1];
+      const fn = this.colorTransforms[src]?.[tgt];
+      if (!fn)
+        throw new InterpreterError(`No conversion from ${src} to ${tgt}`);
+      // TODO: Actually interpret the AST (fn) with the current color as input
+      // For now, just throw to indicate this is where conversion would happen
+      throw new InterpreterError("Color conversion execution not implemented");
+    }
+    return result!;
+  }
 }
 
 export class ColorManager {
@@ -147,11 +222,17 @@ export class ColorManager {
     this.names[name] = formatId;
 
     // Register the color type
-    this.colorTypes[formatId] = new DynamicColorSymbol(name, formatId, formatSpec.schema);
+    this.colorTypes[formatId] = new DynamicColorSymbol(
+      name,
+      formatId,
+      formatSpec.schema,
+    );
 
     // Register initializer functions
     if (!formatSpec.initializers) {
-      throw new InterpreterError("Color format specification must have initializers");
+      throw new InterpreterError(
+        "Color format specification must have initializers",
+      );
     }
 
     for (const initializer of formatSpec.initializers) {
@@ -165,7 +246,9 @@ export class ColorManager {
       }
 
       if (keyword in this.functions) {
-        throw new InterpreterError(`Initializer function ${keyword} already registered`);
+        throw new InterpreterError(
+          `Initializer function ${keyword} already registered`,
+        );
       }
 
       this.functions[keyword] = this.parseFunction(initializer.script);
@@ -185,10 +268,14 @@ export class ColorManager {
       }
 
       if (this.colorTransforms[source][target]) {
-        throw new InterpreterError(`Conversion from ${source} to ${target} already registered`);
+        throw new InterpreterError(
+          `Conversion from ${source} to ${target} already registered`,
+        );
       }
 
-      this.colorTransforms[source][target] = this.parseFunction(conversion.script);
+      this.colorTransforms[source][target] = this.parseFunction(
+        conversion.script,
+      );
     }
   }
 
@@ -221,30 +308,53 @@ export class ColorManager {
     if (!(lowerName in this.names)) {
       throw new InterpreterError(`Color format ${name} not found`);
     }
-
     const formatId = this.names[lowerName];
     if (!(formatId in this.colorTypes)) {
       throw new InterpreterError(`Color format ${formatId} not found`);
     }
-
     // Create a new instance of the color type
     const colorType = this.colorTypes[formatId];
     const colorInstance = new DynamicColorSymbol(
       colorType._typeName,
       colorType._id,
-      colorType._availableAttributes
+      colorType._availableAttributes,
     );
-
     // If input is provided, initialize the color values
     if (input && input instanceof ListSymbol) {
-      // For RGB colors, set r, g, b values directly
-      if (lowerName === "rgb" && input.elements.length >= 3) {
-        colorInstance.setAttribute("r", input.elements[0]);
-        colorInstance.setAttribute("g", input.elements[1]);
-        colorInstance.setAttribute("b", input.elements[2]);
+      // Use initializer function if available
+      const initializerFn = this.functions[lowerName];
+      if (initializerFn) {
+        // TODO: Actually interpret the initializer AST with input
+        // For now, just assign values for RGB as a placeholder
+        if (lowerName === "rgb" && input.elements.length >= 3) {
+          colorInstance.setAttribute("r", input.elements[0]);
+          colorInstance.setAttribute("g", input.elements[1]);
+          colorInstance.setAttribute("b", input.elements[2]);
+        }
       }
     }
-
+    // Attach conversion proxy
+    colorInstance._to = new ColorConversionProxy(
+      this.colorTransforms,
+      colorType._id,
+    );
+    colorInstance._to.sourceColor = colorInstance;
+    // Attach .to as a proxy for dynamic conversion
+    (colorInstance as any).to = colorInstance._to.getProxy();
+    // Attach stringify script if available (for toString)
+    if ((colorType as any)._stringifyScript) {
+      (colorInstance as any)._stringifyScript = (
+        colorType as any
+      )._stringifyScript;
+    } else if ((this as any).stringify) {
+      (colorInstance as any)._stringifyScript = (this as any).stringify;
+    } else if ((colorType as any).stringify) {
+      (colorInstance as any)._stringifyScript = (colorType as any).stringify;
+    }
+    // If the formatSpec has a stringify script, attach it
+    if ((this as any).stringify) {
+      (colorInstance as any)._stringifyScript = (this as any).stringify;
+    }
     return colorInstance;
   }
 
@@ -277,6 +387,8 @@ export class ColorManager {
       return this.initColorFormat("rgb", rgbValues);
     }
 
-    throw new InterpreterError(`Color function ${name} execution not implemented`);
+    throw new InterpreterError(
+      `Color function ${name} execution not implemented`,
+    );
   }
 }

@@ -8,21 +8,15 @@
     "properties": {
       "r": {
         "$ref": "https://schemas.tokens.studio/tokens/foundations/types/rgb.json#r",
-        "type": "number",
-        "minimum": 0,
-        "maximum": 255
+        "type": "number"
       },
       "g": {
         "$ref": "https://schemas.tokens.studio/tokens/foundations/types/rgb.json#g",
-        "type": "number",
-        "minimum": 0,
-        "maximum": 255
+        "type": "number"
       },
       "b": {
         "$ref": "https://schemas.tokens.studio/tokens/foundations/types/rgb.json#b",
-        "type": "number",
-        "minimum": 0,
-        "maximum": 255
+        "type": "number"
       }
     },
     "required": ["r", "g", "b"],
@@ -30,13 +24,42 @@
   },
   "initializers": [
     {
+      "$type": "https://schemas.tokens.studio/tokens/foundations/types/color-initializer-object.json",
+      "title": "default",
+      "keyword": "rgb",
+      "description": "Creates a RGB color from r, g, b values",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "r": {
+            "$ref": "https://schemas.tokens.studio/tokens/foundations/types/rgb.json#r",
+            "type": "number"
+          },
+          "g": {
+            "$ref": "https://schemas.tokens.studio/tokens/foundations/types/rgb.json#g",
+            "type": "number"
+          },
+          "b": {
+            "$ref": "https://schemas.tokens.studio/tokens/foundations/types/rgb.json#b",
+            "type": "number"
+          }
+        },
+        "required": ["r", "g", "b"],
+        "additionalProperties": false
+      }
+    },
+    {
       "$type": "https://schemas.tokens.studio/tokens/foundations/types/color-initializer-function.json",
       "title": "function",
       "keyword": "rgb",
-      "description": "Creates a RGB color from r, g, b values",
+      "description": "Creates a RGB color from string",
+      "schema": {
+        "type": "string",
+        "pattern": "^rgb\\((\\d{1,3}),\\s*(\\d{1,3}),\\s*(\\d{1,3})\\)$"
+      },
       "script": {
         "type": "https://schemas.tokens.studio/tokens/foundations/tokens-script.json",
-        "script": "variable r: Number = {input}.get(0); variable g: Number = {input}.get(1); variable b: Number = {input}.get(2); return r, g, b;"
+        "script": "variable color_parts: List = {input}; \n variable output: Color.RGB;\n output.r = color_parts.get(0);\n output.g = color_parts.get(1);\n output.b = color_parts.get(2);\n return output;"
       }
     }
   ],
@@ -49,7 +72,7 @@
       "lossless": true,
       "script": {
         "type": "https://schemas.tokens.studio/tokens/foundations/tokens-script.json",
-        "script": "variable color_parts: List = {input}.split('#'); variable color: List = color_parts.get(1).split(); variable length: Number = color.length(); variable rgb: List = 0, 0, 0; if(length == 3) [ rgb.update(0, parse_int(color.get(0).concat(color.get(0)), 16)); rgb.update(1, parse_int(color.get(1).concat(color.get(1)), 16)); rgb.update(2, parse_int(color.get(2).concat(color.get(2)), 16)); ] else [ rgb.update(0, parse_int(color.get(0).concat(color.get(1)), 16)); rgb.update(1, parse_int(color.get(2).concat(color.get(3)), 16)); rgb.update(2, parse_int(color.get(4).concat(color.get(5)), 16)); ]; return rgb.get(0), rgb.get(1), rgb.get(2);"
+        "script": " variable color_parts: List = {input}.split('#'); \n variable color: List = color_parts.get(1).split(); \n variable length: Number = color.length(); \n variable rgb: List = 0, 0, 0; \n if(length == 3) [ \n rgb.update(0, parse_int(color.get(0).concat(color.get(0)), 16)); \n rgb.update(1, parse_int(color.get(1).concat(color.get(1)), 16)); \n rgb.update(2, parse_int(color.get(2).concat(color.get(2)), 16)); \n ] else [ \n rgb.update(0, parse_int(color.get(0).concat(color.get(1)), 16)); \n rgb.update(1, parse_int(color.get(2).concat(color.get(3)), 16)); \n rgb.update(2, parse_int(color.get(4).concat(color.get(5)), 16)); \n ]; \n \n variable output: Color.RGB; \n output.r = rgb.get(0); \n output.g = rgb.get(1); \n output.b = rgb.get(2); \n \n return output; \n"
       }
     },
     {
@@ -60,7 +83,7 @@
       "lossless": true,
       "script": {
         "type": "https://schemas.tokens.studio/tokens/foundations/tokens-script.json",
-        "script": "return '#'.concat({value}.r.to_string()).concat({value}.g.to_string()).concat({value}.b.to_string());"
+        "script": "return '#'.concat({value}.r.to_string(16)).concat({value}.g.to_string(16)).concat({value}.b.to_string(16));"
       }
     }
   ],

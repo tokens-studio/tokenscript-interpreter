@@ -543,3 +543,11 @@ export class ColorSymbol extends BaseSymbolType {
     throw new InterpreterError(`Cannot concatenate Color with ${typeof other}`);
   }
 }
+
+export class ColorHexSymbol extends ColorSymbol {
+  type = "Color.Hex";
+  constructor(value: string | null) {
+    super(value);
+    this.type = "Color.Hex";
+  }
+}
