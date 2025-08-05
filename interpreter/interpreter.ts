@@ -7,6 +7,7 @@ import {
   UNINTERPRETED_KEYWORDS,
 } from "../types";
 import {
+  type AssignNode,
   type AttributeAccessNode,
   type AttributeAssignNode,
   type BinOpNode,
@@ -26,7 +27,6 @@ import {
   type StatementListNode,
   type StringNode,
   type UnaryOpNode,
-  type VarDeclNode,
   type WhileNode,
 } from "./ast";
 import type { ColorManager } from "./colorManager";
@@ -58,10 +58,10 @@ type MathOperand = NumberSymbol | NumberWithUnitSymbol;
 export class Interpreter {
   private parser: Parser | null; // Null if created with pre-parsed AST
   private symbolTable: SymbolTable;
-  private references: Map<string, ISymbolType> | Record<string, ISymbolType>; // Support both Map and Record
+  private references: Map<string, ISymbolType> | Record<string, ISymbolType>;
   private ast: ASTNode | null = null;
   private languageOptions: LanguageOptions;
-  private colorManager: ColorManager | null = null; // ColorManager integration
+  private colorManager: ColorManager | null = null;
 
   constructor(
     parserOrAst: Parser | ASTNode | null,
@@ -175,6 +175,10 @@ export class Interpreter {
     }
     if (typeof value === "boolean") return new BooleanSymbol(value);
     if (Array.isArray(value)) return new ListSymbol(value.map((v) => this.importReferenceValue(v)));
+
+    if (value instanceof NumberWithUnitSymbol) return value;
+    const numberWithUnit = NumberWithUnitSymbol.fromRecord(value);
+    if (numberWithUnit) return numberWithUnit;
 
     throw new InterpreterError(`Invalid reference value type: ${typeof value}`);
   }
@@ -355,6 +359,9 @@ export class Interpreter {
 
   private visitElementWithUnitNode(node: ElementWithUnitNode): NumberWithUnitSymbol {
     const valNodeVisit = this.visit(node.astNode);
+
+    if (valNodeVisit instanceof NumberWithUnitSymbol) return valNodeVisit as NumberWithUnitSymbol;
+
     if (!(valNodeVisit instanceof NumberSymbol)) {
       const typeStr = valNodeVisit
         ? (valNodeVisit as ISymbolType).type
@@ -399,24 +406,14 @@ export class Interpreter {
     throw new InterpreterError(`Function '${node.name}' not found.`, node.token?.line, node.token);
   }
 
-  private visitVarDeclNode(node: VarDeclNode): void {
+  private visitAssignNode(node: AssignNode): void {
     const varName = node.varName.name;
-    let valueToAssign: ISymbolType | null = null; // Initialize as null
+    let valueToAssign: ISymbolType | null = null;
 
     if (node.assignmentExpr) {
-      const visitedValue = this.visit(node.assignmentExpr); // Can be ISymbolType | null | void
-      if (visitedValue === undefined) {
-        // Explicitly check for void/undefined
-        valueToAssign = null;
-      } else if (visitedValue === null) {
-        // Explicitly check for null
-        valueToAssign = null;
-      } else {
-        // visitedValue is ISymbolType
-        valueToAssign = visitedValue;
-      }
+      const visitedValue = this.visit(node.assignmentExpr);
+      valueToAssign = visitedValue || null;
     }
-    // At this point, valueToAssign is ISymbolType | null.
 
     const typeName = node.typeDecl.baseType.name.toLowerCase();
     const subTypeName =
@@ -426,7 +423,7 @@ export class Interpreter {
     const SymbolConstructor: new (...args: any[]) => ISymbolType =
       this.symbolTable.getSymbolConstructor(typeName, subTypeName);
 
-    if (this.symbolTable.exists(varName) && this.symbolTable.isRoot()) {
+    if (this.symbolTable.exists(varName)) {
       throw new InterpreterError(
         `Variable '${varName}' already declared.`,
         node.varName.token.line,
@@ -434,23 +431,20 @@ export class Interpreter {
       );
     }
 
-    if (valueToAssign !== null && valueToAssign !== undefined) {
-      // Checks for both null and undefined. After above logic, effectively checks for not null.
-      // valueToAssign is confirmed ISymbolType here.
-      const currentAssignmentValue: ISymbolType = valueToAssign;
+    if (valueToAssign) {
+      const assignedValue: ISymbolType = valueToAssign;
 
       // Get the target type by creating a temporary instance
       const tempInstance = new SymbolConstructor(null);
       const targetType = tempInstance.type;
 
-      const isCorrectType = currentAssignmentValue instanceof SymbolConstructor;
-      const hasType = currentAssignmentValue.type;
-      const typeMismatch =
-        hasType && currentAssignmentValue.type.toLowerCase() !== targetType.toLowerCase();
+      const isCorrectType = assignedValue instanceof SymbolConstructor;
+      const hasType = assignedValue.type;
+      const typeMismatch = hasType && assignedValue.type.toLowerCase() !== targetType.toLowerCase();
 
       if (!isCorrectType && typeMismatch) {
         // Type assertion to help TypeScript understand that currentAssignmentValue is ISymbolType
-        const assignmentValue = currentAssignmentValue as ISymbolType;
+        const assignmentValue = assignedValue as ISymbolType;
         const originalTypeForErrorMessage = assignmentValue.type;
         try {
           let rawValueForCoercion = assignmentValue.value;
@@ -514,7 +508,6 @@ export class Interpreter {
       }
       // If no coercion needed, valueToAssign (which is currentAssignmentValue) is already correct.
     } else {
-      // valueToAssign is null (or was undefined and became null)
       try {
         if (
           SymbolConstructor === (NumberWithUnitSymbol as any) &&

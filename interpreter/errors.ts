@@ -16,7 +16,7 @@ export class LanguageError extends Error {
   }
 
   private formatMessage(): string {
-    let base = this.message; // Original message passed to constructor
+    let base = this.message;
     if (this.line !== undefined) {
       base = `Line ${this.line}: ${base}`;
     }

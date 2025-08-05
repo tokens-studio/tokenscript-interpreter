@@ -26,9 +26,11 @@
   "scripts": {
     "build": "npm run build:lib",
     "build:lib": "tsc -p tsconfig.lib.json",
+    "build:watch": "tsc -p tsconfig.lib.json --watch",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "compliance_test": "tsx cli.ts evaluate_standard_compliance --test-dir ../tokenscript-compliance-suite/tests/ --output compliance-report.json",
     "cli": "tsx cli.ts",
     "cli:interactive": "tsx cli.ts interactive",
     "cli:parse": "tsx cli.ts parse_tokenset",

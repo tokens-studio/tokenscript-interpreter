@@ -1,5 +1,6 @@
 import { type ASTNode, Operations, ReservedKeyword, type Token, TokenType } from "../types";
 import {
+  AssignNode,
   AttributeAccessNode,
   AttributeAssignNode,
   BinOpNode,
@@ -20,7 +21,6 @@ import {
   StringNode,
   TypeDeclNode,
   UnaryOpNode,
-  VarDeclNode,
   WhileNode,
 } from "./ast";
 import { ParserError } from "./errors";
@@ -33,7 +33,7 @@ export class Parser {
 
   constructor(lexer: Lexer) {
     this.lexer = lexer;
-    this.currentToken = this.lexer.getNextToken();
+    this.currentToken = this.lexer.nextToken();
   }
 
   public getRequiredReferences(): string[] {
@@ -47,49 +47,23 @@ export class Parser {
   private eat(tokenType: TokenType): Token {
     const eatenToken = this.currentToken;
     if (this.currentToken.type === tokenType) {
-      this.currentToken = this.lexer.getNextToken();
+      this.currentToken = this.lexer.nextToken();
     } else {
       this.error(`Expected token type ${tokenType} but got ${this.currentToken.type}`);
     }
     return eatenToken;
   }
 
-  private peekTokens(n = 1): Token[] {
-    // Simplified peek, only gets next token
-    // This is tricky without a lexer that supports peeking arbitrary tokens.
-    // For robust peeking, lexer would need a buffer or ability to backtrack.
-    // For this implementation, we'll assume we only need to peek one token ahead,
-    // or the lexer needs to be enhanced. For now, this is a placeholder.
-    // A true peek would involve saving lexer state, getting tokens, then restoring.
-    // This is simplified. For actual multi-token lookahead, lexer needs a `peekTokens` method.
-    if (n === 1 && (this.lexer as any).lookaheadToken) {
-      // Fictional lookahead property
-      return [(this.lexer as any).lookaheadToken];
-    }
-    // This is not a true peek for multiple tokens without lexer support.
-    // console.warn("Parser.peekTokens is simplified and may not work for n > 1 without lexer enhancement.");
-    return [this.currentToken]; // Fallback, not a real peek
-  }
-
-  // Program entry point
   public parse(inlineMode = false): ASTNode | null {
-    if (this.currentToken.type === TokenType.EOF) {
-      return null;
-    }
-    const node = inlineMode ? this.listExpr() : this.program();
-    // The comparison `(this.currentToken.type as TokenType) !== TokenType.EOF` is potentially flagged by strict type checkers
-    // if the union of possible token types before this check doesn't obviously exclude EOF.
-    // However, the logic is sound: if parsing is done and it's not EOF (and not inline mode), it's an error.
-    if ((this.currentToken.type as TokenType) !== TokenType.EOF && !inlineMode) {
+    if (this.currentToken.type === TokenType.EOF) return null;
+
+    if (inlineMode) return this.listExpr();
+
+    const node = this.statementList();
+    if ((this.currentToken.type as TokenType) !== TokenType.EOF) {
       this.error("Unexpected token at the end of input.");
     }
     return node;
-  }
-
-  private program(): ASTNode {
-    // Program = StatementList | InlineExpr
-    // For simplicity, assuming full script mode (StatementList)
-    return this.statementList();
   }
 
   private statementList(): StatementListNode {
@@ -104,9 +78,6 @@ export class Parser {
       if (this.currentToken.type === TokenType.SEMICOLON) {
         this.eat(TokenType.SEMICOLON);
       } else {
-        // If not a semicolon, break only if next is EOF or RBLOCK
-        // Type assertion needed because TypeScript doesn't understand that currentToken.type
-        // can change after calling this.statement() above
         if (
           (this.currentToken.type as TokenType) === TokenType.EOF ||
           (this.currentToken.type as TokenType) === TokenType.RBLOCK
@@ -122,7 +93,7 @@ export class Parser {
     if (this.currentToken.type === TokenType.RESERVED_KEYWORD) {
       switch (this.currentToken.value) {
         case ReservedKeyword.VARIABLE:
-          return this.varDeclaration();
+          return this.assignDeclaration();
         case ReservedKeyword.RETURN:
           return this.returnStatement();
         case ReservedKeyword.WHILE:
@@ -132,9 +103,7 @@ export class Parser {
       }
     }
 
-    // Check for variable reassignment: IDENTIFIER = ListExpr
     if (this.currentToken.type === TokenType.STRING) {
-      // Look ahead to see if this is a reassignment
       const nextToken = this.lexer.peekNextToken();
       if (nextToken && nextToken.type === TokenType.ASSIGN) {
         return this.reassignStatement();
@@ -142,10 +111,10 @@ export class Parser {
       // TODO: Handle attribute assignment (ident.ident = ...)
     }
 
-    return this.listExpr(); // Default to list_expr, includes simple expressions.
+    return this.listExpr();
   }
 
-  private varDeclaration(): VarDeclNode {
+  private assignDeclaration(): AssignNode {
     const varToken = this.eat(TokenType.RESERVED_KEYWORD); // 'variable'
     const varNameToken = this.eat(TokenType.STRING);
     const varName = new IdentifierNode(varNameToken);
@@ -158,7 +127,7 @@ export class Parser {
       this.eat(TokenType.ASSIGN);
       assignmentExpr = this.listExpr();
     }
-    return new VarDeclNode(varName, typeDecl, assignmentExpr, varToken);
+    return new AssignNode(varName, typeDecl, assignmentExpr, varToken);
   }
 
   private reassignStatement(): ReassignNode {

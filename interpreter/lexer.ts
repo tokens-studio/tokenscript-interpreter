@@ -14,14 +14,14 @@ for (const val of Object.values(ReservedKeyword) as string[]) {
 
 export class Lexer {
   private text: string;
-  private pos = 0;
   private currentChar: string | null;
+  private pos = 0;
   private line = 1;
   private column = 1;
 
   constructor(text: string) {
     this.text = text;
-    this.currentChar = this.text.length > 0 ? this.text[this.pos] : null;
+    this.currentChar = this.text[this.pos];
   }
 
   private advance(): void {
@@ -45,7 +45,7 @@ export class Lexer {
     }
   }
 
-  private skipComment(): void {
+  private skipLine(): void {
     while (this.currentChar !== null && this.currentChar !== "\n") {
       this.advance();
     }
@@ -98,26 +98,30 @@ export class Lexer {
   }
 
   private isDigit(char: string | null): boolean {
-    // Check if character is a digit (0-9)
     if (char === null) return false;
     const cp = char.codePointAt(0) ?? 0;
     return cp >= 48 && cp <= 57; // 0-9
   }
 
   private isAlphaNumeric(char: string | null): boolean {
-    // Check if character is alphanumeric or underscore
     return this.isAlpha(char) || this.isDigit(char);
   }
 
   private isValidIdentifierStart(char: string | null): boolean {
-    // Valid first character: letters, underscore, or any Unicode character > 127
     if (char === null) return false;
+    if (this.isAlpha(char)) return true;
+
     const cp = char.codePointAt(0) ?? 0;
-    return this.isAlpha(char) || cp > 127;
+    // Emoji Support
+    if (cp <= 127) return false;
+
+    if (cp === 180) return false; // Forwardtick
+    if (cp === 96) return false; // BackwardTick
+
+    return true;
   }
 
   private isValidIdentifierPart(char: string | null): boolean {
-    // Valid subsequent character: alphanumeric, underscore, hyphen, or any Unicode character > 127
     if (char === null) return false;
     const cp = char.codePointAt(0) ?? 0;
     return this.isAlphaNumeric(char) || cp === 45 /* hyphen */ || cp > 127;
@@ -213,20 +217,20 @@ export class Lexer {
     return { type: TokenType.HEX_COLOR, value: result, line: this.line };
   }
 
-  public getNextToken(): Token {
+  public nextToken(): Token {
     while (this.currentChar !== null) {
       this.skipWhitespace();
       if (this.currentChar === null) break;
 
+      // Skip comment
       if (this.currentChar === "/" && this.peek() === "/") {
         this.advance();
         this.advance();
-        this.skipComment();
+        this.skipLine();
         continue;
       }
 
       if (this.isValidIdentifierStart(this.currentChar)) {
-        // Start of identifier or keyword or format (including Unicode/emoji)
         return this.identifierOrKeyword();
       }
 
@@ -355,7 +359,7 @@ export class Lexer {
       }
 
       if (this.currentChar === null) break; // End of processing after whitespace
-      throw new LexerError(`Unexpected character: ${this.currentChar}`, this.line);
+      throw new LexerError(`Invalid character '${this.currentChar}'`, this.line);
     }
     return { type: TokenType.EOF, value: null, line: this.line };
   }
@@ -368,7 +372,7 @@ export class Lexer {
     const savedColumn = this.column;
 
     // Get next token
-    const nextToken = this.getNextToken();
+    const nextToken = this.nextToken();
 
     // Restore state
     this.pos = savedPos;

@@ -95,6 +95,28 @@ describe("Complex Expressions - Variable References", () => {
     expect(result?.toString()).toBe("20px");
   });
 
+  it("should handle variable with unit inline mixed math", () => {
+    const text = "{x} * {x} + {x}rem";
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const ast = parser.parse(true);
+    const interpreter = new Interpreter(ast, {
+      // @ts-ignore
+      x: { value: 2, unit: "rem", type: "NumberWithUnit" },
+    });
+    const result = interpreter.interpret();
+    expect(result?.toString()).toBe("6rem");
+  });
+
+  it("should throw error for unsupported inline op", () => {
+    const text = "{a} * {a} + {a} \u00b4 2";
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+
+    expect(() => parser.parse(true)).toThrow("Invalid character '´'");
+  });
+
+
   it("should handle variable references in function calls", () => {
     const text = "max({a}, {b}, {c}) + min({d}, {e})";
     const lexer = new Lexer(text);
