@@ -24,3 +24,8 @@ export const isAlphaNumeric = function (char: string | null): boolean {
   if (char === null) return false;
   return isAlpha(char) || isNumber(char);
 };
+
+export const isSpace = function (char: string | null) {
+  if (char === null) return false;
+  return /\s/.test(char);
+};

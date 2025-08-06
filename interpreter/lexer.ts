@@ -66,7 +66,7 @@ export class Lexer {
   }
 
   private skipWhitespace(): void {
-    while (this.currentChar !== null && /\s/.test(this.currentChar)) {
+    while (isSpace(this.currentChar)) {
       this.advance();
     }
   }
