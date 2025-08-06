@@ -270,14 +270,11 @@ export class Lexer {
           };
           break;
         case "/":
-          if (this.peek() !== "/") {
-            // Avoid confusion with comments
-            token = {
-              type: TokenType.OPERATION,
-              value: Operations.DIVIDE,
-              line: this.line,
-            };
-          } // else it's a comment, handled above
+          token = {
+            type: TokenType.OPERATION,
+            value: Operations.DIVIDE,
+            line: this.line,
+          };
           break;
         case "^":
           token = {
