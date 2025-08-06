@@ -338,6 +338,21 @@ export class Parser {
     return node;
   }
 
+  private formatNode(node: ASTNode): ASTNode {
+    const formatToken = this.currentToken;
+    this.eat(TokenType.FORMAT);
+    return new ElementWithUnitNode(node, formatToken.value);
+  }
+
+  private numberNode(): ASTNode {
+    let node: ASTNode = new NumNode(this.currentToken);
+    this.eat(TokenType.NUMBER);
+    if (this.currentToken.type === TokenType.FORMAT) {
+      return this.formatNode(node);
+    }
+    return node;
+  }
+
   // Factor = UnaryOp | NumberLit | ParenExpr | Reference | Identifier | StringLit | HexColor | Boolean
   private factor(): ASTNode {
     const token = this.currentToken;
@@ -351,14 +366,18 @@ export class Parser {
       this.eat(TokenType.OPERATION);
       return new UnaryOpNode(token, this.factor());
     }
+
+    if (
+      token.type === TokenType.RESERVED_KEYWORD &&
+      (token.value === ReservedKeyword.TRUE ||
+        token.value === ReservedKeyword.FALSE)
+    ) {
+      this.eat(TokenType.RESERVED_KEYWORD);
+      return new BooleanNode(token.value === ReservedKeyword.TRUE, token);
+    }
+
     if (token.type === TokenType.NUMBER) {
-      this.eat(TokenType.NUMBER);
-      let node: ASTNode = new NumNode(token);
-      if (this.currentToken.type === TokenType.FORMAT) {
-        const formatToken = this.eat(TokenType.FORMAT);
-        node = new ElementWithUnitNode(node, formatToken.value);
-      }
-      return node;
+      return this.numberNode();
     }
     if (token.type === TokenType.LPAREN) {
       this.eat(TokenType.LPAREN);
@@ -409,14 +428,6 @@ export class Parser {
     if (token.type === TokenType.HEX_COLOR) {
       this.eat(TokenType.HEX_COLOR);
       return new HexColorNode(token);
-    }
-    if (
-      token.type === TokenType.RESERVED_KEYWORD &&
-      (token.value === ReservedKeyword.TRUE ||
-        token.value === ReservedKeyword.FALSE)
-    ) {
-      this.eat(TokenType.RESERVED_KEYWORD);
-      return new BooleanNode(token.value === ReservedKeyword.TRUE, token);
     }
     this.error(
       `Unexpected token in factor: ${token.type} (${String(token.value)})`,
