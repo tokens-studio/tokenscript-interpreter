@@ -79,12 +79,8 @@ export class Lexer {
     if (this.currentChar === "\n") this.advance(); // consume newline
   }
 
-  private skipsComment(): boolean {
-    if (this.currentChar === "/" && this.peek() === "/") {
-      this.skipLine();
-      return true;
-    }
-    return false;
+  private isComment(): boolean {
+    return this.currentChar === "/" && this.peek() === "/";
   }
 
   private number(): Token {
@@ -242,7 +238,8 @@ export class Lexer {
       this.skipWhitespace();
       if (this.currentChar === null) break;
 
-      if (this.skipsComment()) {
+      if (this.isComment()) {
+        this.skipLine();
         continue;
       }
 
