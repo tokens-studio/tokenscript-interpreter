@@ -422,7 +422,7 @@ export class Parser {
       // This comparison (this.currentToken.type as TokenType) === TokenType.LPAREN is valid.
       if ((this.currentToken.type as TokenType) === TokenType.LPAREN) {
         // Function call
-        node = this.functionCall(token);
+        node = this.functionNode(token);
       } else {
         // Identifier
         node = new IdentifierNode(token);
@@ -456,7 +456,7 @@ export class Parser {
       // This comparison (this.currentToken.type as TokenType) === TokenType.LPAREN is valid.
       if ((this.currentToken.type as TokenType) === TokenType.LPAREN) {
         // Method call
-        const methodNode = this.functionCall(attrNameToken);
+        const methodNode = this.functionNode(attrNameToken);
         node = new AttributeAccessNode(node, methodNode);
       } else {
         // Property access
@@ -466,19 +466,17 @@ export class Parser {
     return node;
   }
 
-  private functionCall(nameToken: Token): FunctionNode {
-    // LPAREN is already checked before calling this
+  private functionNode(functionName: Token): FunctionNode {
+    const token = this.currentToken;
     this.eat(TokenType.LPAREN);
     const args: ASTNode[] = [];
-    if (this.currentToken.type !== TokenType.RPAREN) {
-      // Parse comma-separated arguments
-      args.push(this.implicitList()); // First argument
-      while (this.currentToken.type === TokenType.COMMA) {
+    while (this.currentToken.type !== TokenType.RPAREN) {
+      if (this.currentToken.type === TokenType.COMMA) {
         this.eat(TokenType.COMMA);
-        args.push(this.implicitList()); // Additional arguments
       }
+      args.push(this.implicitList());
     }
     this.eat(TokenType.RPAREN);
-    return new FunctionNode(nameToken.value as string, args, nameToken);
+    return new FunctionNode(functionName.value as string, args, functionName);
   }
 }
