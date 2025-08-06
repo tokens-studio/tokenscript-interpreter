@@ -1,4 +1,10 @@
-import { Operations, ReservedKeyword, SupportedFormats, type Token, TokenType } from "../types";
+import {
+  Operations,
+  ReservedKeyword,
+  SupportedFormats,
+  type Token,
+  TokenType,
+} from "../types";
 import { LexerError } from "./errors";
 
 // Correctly map lowercase string to enum member (which is also the lowercase string for these string enums)
@@ -133,7 +139,7 @@ export class Lexer {
     if (!this.isValidIdentifierStart(this.currentChar)) {
       throw new LexerError(
         `Invalid identifier starting character: '${this.currentChar}'`,
-        this.line
+        this.line,
       );
     }
 
@@ -144,7 +150,10 @@ export class Lexer {
     }
 
     // Then continue with all valid chars
-    while (this.currentChar !== null && this.isValidIdentifierPart(this.currentChar)) {
+    while (
+      this.currentChar !== null &&
+      this.isValidIdentifierPart(this.currentChar)
+    ) {
       result += this.currentChar;
       this.advance();
     }
@@ -191,7 +200,10 @@ export class Lexer {
       this.advance();
     }
     if (this.currentChar === null)
-      throw new LexerError(`Unterminated string, missing '${quoteType}'.`, this.line);
+      throw new LexerError(
+        `Unterminated string, missing '${quoteType}'.`,
+        this.line,
+      );
     this.advance(); // Skip closing quote
     return { type: TokenType.EXPLICIT_STRING, value: result, line: this.line };
   }
@@ -210,7 +222,7 @@ export class Lexer {
       // #RGB or #RRGGBB
       throw new LexerError(
         `Invalid hex color format: ${result}. Length should be #RGB or #RRGGBB.`,
-        this.line
+        this.line,
       );
     }
     return { type: TokenType.HEX_COLOR, value: result, line: this.line };
@@ -253,22 +265,42 @@ export class Lexer {
       let token: Token | null = null;
       switch (this.currentChar) {
         case "+":
-          token = { type: TokenType.OPERATION, value: Operations.ADD, line: this.line };
+          token = {
+            type: TokenType.OPERATION,
+            value: Operations.ADD,
+            line: this.line,
+          };
           break;
         case "-":
-          token = { type: TokenType.OPERATION, value: Operations.SUBTRACT, line: this.line };
+          token = {
+            type: TokenType.OPERATION,
+            value: Operations.SUBTRACT,
+            line: this.line,
+          };
           break;
         case "*":
-          token = { type: TokenType.OPERATION, value: Operations.MULTIPLY, line: this.line };
+          token = {
+            type: TokenType.OPERATION,
+            value: Operations.MULTIPLY,
+            line: this.line,
+          };
           break;
         case "/":
           if (this.peek() !== "/") {
             // Avoid confusion with comments
-            token = { type: TokenType.OPERATION, value: Operations.DIVIDE, line: this.line };
+            token = {
+              type: TokenType.OPERATION,
+              value: Operations.DIVIDE,
+              line: this.line,
+            };
           } // else it's a comment, handled above
           break;
         case "^":
-          token = { type: TokenType.OPERATION, value: Operations.POWER, line: this.line };
+          token = {
+            type: TokenType.OPERATION,
+            value: Operations.POWER,
+            line: this.line,
+          };
           break;
         case "(":
           token = { type: TokenType.LPAREN, value: "(", line: this.line };
@@ -332,22 +364,30 @@ export class Lexer {
         case "&":
           if (this.peek() === "&") {
             this.advance();
-            token = { type: TokenType.LOGIC_AND, value: Operations.LOGIC_AND, line: this.line };
+            token = {
+              type: TokenType.LOGIC_AND,
+              value: Operations.LOGIC_AND,
+              line: this.line,
+            };
           } else {
             throw new LexerError(
               `Unexpected character: ${this.currentChar} without a following '&'`,
-              this.line
+              this.line,
             );
           }
           break;
         case "|":
           if (this.peek() === "|") {
             this.advance();
-            token = { type: TokenType.LOGIC_OR, value: Operations.LOGIC_OR, line: this.line };
+            token = {
+              type: TokenType.LOGIC_OR,
+              value: Operations.LOGIC_OR,
+              line: this.line,
+            };
           } else {
             throw new LexerError(
               `Unexpected character: ${this.currentChar} without a following '|'`,
-              this.line
+              this.line,
             );
           }
           break;
@@ -359,7 +399,10 @@ export class Lexer {
       }
 
       if (this.currentChar === null) break; // End of processing after whitespace
-      throw new LexerError(`Invalid character '${this.currentChar}'`, this.line);
+      throw new LexerError(
+        `Invalid character '${this.currentChar}'`,
+        this.line,
+      );
     }
     return { type: TokenType.EOF, value: null, line: this.line };
   }
