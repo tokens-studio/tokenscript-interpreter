@@ -97,14 +97,14 @@ export class Lexer {
     ); // underscore (_)
   }
 
-  private isDigit(char: string | null): boolean {
+  private isNumber(char: string | null): boolean {
     if (char === null) return false;
     const cp = char.codePointAt(0) ?? 0;
     return cp >= 48 && cp <= 57; // 0-9
   }
 
   private isAlphaNumeric(char: string | null): boolean {
-    return this.isAlpha(char) || this.isDigit(char);
+    return this.isAlpha(char) || this.isNumber(char);
   }
 
   private isValidIdentifierStart(char: string | null): boolean {
@@ -230,16 +230,17 @@ export class Lexer {
         continue;
       }
 
+      if (
+        this.isNumber(this.currentChar) ||
+        (this.currentChar === "." && this.isNumber(this.peek()))
+      ) {
+        return this.number();
+      }
+
       if (this.isValidIdentifierStart(this.currentChar)) {
         return this.identifierOrKeyword();
       }
 
-      if (
-        this.isDigit(this.currentChar) ||
-        (this.currentChar === "." && this.isDigit(this.peek()))
-      ) {
-        return this.number();
-      }
       if (this.currentChar === "{") {
         return this.reference();
       }
