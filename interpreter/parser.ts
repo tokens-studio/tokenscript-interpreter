@@ -335,7 +335,7 @@ export class Parser {
     return node;
   }
 
-  private referenceNode(): ASTNode {
+  private reference(): ASTNode {
     let node = new ReferenceNode(this.currentToken);
     this.eat(TokenType.REFERENCE);
     this.requiredReferences.add(node.value);
@@ -380,6 +380,7 @@ export class Parser {
     if (token.type === TokenType.NUMBER) {
       return this.numberNode();
     }
+
     if (token.type === TokenType.LPAREN) {
       this.eat(TokenType.LPAREN);
       let node = this.expr();
@@ -391,11 +392,17 @@ export class Parser {
     }
 
     if (token.type === TokenType.REFERENCE) {
-      let node = this.referenceNode();
+      let node = this.reference();
       // Handle attribute access like {ref}.property or {ref}.method()
-      node = this.parseAttributeAccess(node);
+      node = this.attributeAccess(node);
       return node;
     }
+
+    if (token.type === TokenType.HEX_COLOR) {
+      this.eat(TokenType.HEX_COLOR);
+      return new HexColorNode(token);
+    }
+
     if (token.type === TokenType.STRING) {
       // Identifier or function call
       this.eat(TokenType.STRING);
@@ -410,18 +417,14 @@ export class Parser {
         node = new IdentifierNode(token);
       }
       // Handle attribute access like ident.property or ident.method()
-      node = this.parseAttributeAccess(node);
+      node = this.attributeAccess(node);
       return node;
     }
     if (token.type === TokenType.EXPLICIT_STRING) {
       this.eat(TokenType.EXPLICIT_STRING);
       let node: ASTNode = new StringNode(token);
-      node = this.parseAttributeAccess(node); // For string methods like "hello".length()
+      node = this.attributeAccess(node); // For string methods like "hello".length()
       return node;
-    }
-    if (token.type === TokenType.HEX_COLOR) {
-      this.eat(TokenType.HEX_COLOR);
-      return new HexColorNode(token);
     }
     this.error(
       `Unexpected token in factor: ${token.type} (${String(token.value)})`,
@@ -429,7 +432,7 @@ export class Parser {
     return new StringNode({ type: TokenType.STRING, value: "dummy", line: 0 }); // Should be unreachable
   }
 
-  private parseAttributeAccess(leftNode: ASTNode): ASTNode {
+  private attributeAccess(leftNode: ASTNode): ASTNode {
     let node = leftNode;
     while (this.currentToken.type === TokenType.DOT) {
       this.eat(TokenType.DOT);
