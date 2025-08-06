@@ -247,14 +247,13 @@ export class Parser {
 
   // ImplicitList = Expr+
   private implicitListExprNode(): ASTNode {
-    const firstToken = this.currentToken;
+    const token = this.currentToken;
     const elements: ASTNode[] = [this.expr()];
     while (
       this.currentToken.type !== TokenType.COMMA &&
-      this.currentToken.type !== TokenType.RPAREN && // End of function args
-      this.currentToken.type !== TokenType.RBLOCK && // End of block
-      this.currentToken.type !== TokenType.SEMICOLON &&
-      this.currentToken.type !== TokenType.EOF
+      this.currentToken.type !== TokenType.RPAREN &&
+      this.currentToken.type !== TokenType.EOF &&
+      this.currentToken.type !== TokenType.SEMICOLON
     ) {
       // This condition ensures we only consume tokens that can be part of an implicit list element
       // e.g. `10px 5em` vs `10px, 5em`
@@ -264,7 +263,7 @@ export class Parser {
       elements.push(this.expr());
     }
     if (elements.length === 1) return elements[0];
-    return new ImplicitListNode(elements, firstToken);
+    return new ImplicitListNode(elements, token);
   }
 
   // Expr = LogicTerm (("&&" | "||") LogicTerm)*
