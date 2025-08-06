@@ -65,35 +65,16 @@ export class Lexer {
 
   private number(): Token {
     let result = "";
-    let hasDecimal = false;
+    // Prepend 0 to digits like ".5"
     if (this.currentChar === ".") {
-      // Handle numbers like .5
-      result += "0"; // Prepend 0
+      result += "0";
     }
 
-    while (
-      this.currentChar !== null &&
-      (/\d/.test(this.currentChar) || (!hasDecimal && this.currentChar === "."))
-    ) {
-      if (this.currentChar === ".") {
-        if (hasDecimal) break; // Only one decimal point allowed
-        hasDecimal = true;
-      }
+    while (isNumber(this.currentChar) || this.currentChar === ".") {
       result += this.currentChar;
       this.advance();
     }
-    // If result starts with "0." but is just "0", correct it.
-    if (result === "0" && this.currentChar !== "." && !hasDecimal) {
-      // This is just an integer 0
-    } else if (
-      result.startsWith("0") &&
-      result !== "0" &&
-      !result.startsWith("0.") &&
-      result.length > 1
-    ) {
-      // Invalid number like "0123" if not followed by decimal
-      // This case is complex, for now, we assume valid numbers or let parser handle it
-    }
+
     return { type: TokenType.NUMBER, value: result, line: this.line };
   }
 
