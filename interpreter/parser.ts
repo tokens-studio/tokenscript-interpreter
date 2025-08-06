@@ -46,10 +46,6 @@ export class Parser {
     throw new ParserError(message, this.currentToken?.line, this.currentToken);
   }
 
-  public getRequiredReferences(): string[] {
-    return Array.from(this.requiredReferences);
-  }
-
   private eat(tokenType: TokenType): Token {
     const eatenToken = this.currentToken;
     if (this.currentToken.type === tokenType) {
