@@ -6,6 +6,7 @@ import {
   TokenType,
 } from "../types";
 import { LexerError } from "./errors";
+import { CodePoint } from "./utils/codepoints";
 
 // Correctly map lowercase string to enum member (which is also the lowercase string for these string enums)
 const SUPPORTED_FORMAT_STRINGS: Record<string, SupportedFormats> = {};
@@ -97,9 +98,8 @@ export class Lexer {
     const cp = char.codePointAt(0) ?? 0;
     return (
       (cp >= 65 && cp <= 90) || // A-Z
-      (cp >= 97 && cp <= 122) || // a-z
-      cp === 95
-    ); // underscore (_)
+      (cp >= 97 && cp <= 122) // a-z
+    );
   }
 
   private isNumber(char: string | null): boolean {
@@ -129,7 +129,12 @@ export class Lexer {
   private isValidIdentifierPart(char: string | null): boolean {
     if (char === null) return false;
     const cp = char.codePointAt(0) ?? 0;
-    return this.isAlphaNumeric(char) || cp === 45 /* hyphen */ || cp > 127;
+    return (
+      this.isAlphaNumeric(char) ||
+      cp === CodePoint.HYPHEN ||
+      cp === CodePoint.UNDERSCORE ||
+      cp > 127
+    );
   }
 
   private identifierOrKeyword(): Token {
@@ -327,7 +332,11 @@ export class Lexer {
           token = { type: TokenType.RBLOCK, value: "]", line: this.line };
           break;
         case "%":
-          token = { type: TokenType.FORMAT, value: SupportedFormats.PERCENTAGE, line: this.line };
+          token = {
+            type: TokenType.FORMAT,
+            value: SupportedFormats.PERCENTAGE,
+            line: this.line,
+          };
           break;
         case "=":
           if (this.peek() === "=") {
@@ -342,7 +351,11 @@ export class Lexer {
             this.advance();
             token = { type: TokenType.IS_NOT_EQ, value: "!=", line: this.line };
           } else {
-            token = { type: TokenType.OPERATION, value: Operations.LOGIC_NOT, line: this.line };
+            token = {
+              type: TokenType.OPERATION,
+              value: Operations.LOGIC_NOT,
+              line: this.line,
+            };
           }
           break;
         case ">":
