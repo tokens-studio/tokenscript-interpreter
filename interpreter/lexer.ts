@@ -247,146 +247,122 @@ export class Lexer {
       if (this.currentChar === "{") {
         return this.reference();
       }
-
+      if (this.currentChar === "[") {
+        this.advance();
+        return { type: TokenType.LBLOCK, value: "[", line: this.line };
+      }
+      if (this.currentChar === "]") {
+        this.advance();
+        return { type: TokenType.RBLOCK, value: "]", line: this.line };
+      }
+      if (this.currentChar === "!" && this.peek() === "=") {
+        this.advance();
+        this.advance();
+        return { type: TokenType.IS_NOT_EQ, value: "!=", line: this.line };
+      }
+      if (this.currentChar === "+") {
+        const result = { type: TokenType.OPERATION, value: Operations.ADD, line: this.line };
+        this.advance();
+        return result;
+      }
+      if (this.currentChar === "-") {
+        const result = { type: TokenType.OPERATION, value: Operations.SUBTRACT, line: this.line };
+        this.advance();
+        return result;
+      }
+      if (this.currentChar === "*") {
+        const result = { type: TokenType.OPERATION, value: Operations.MULTIPLY, line: this.line };
+        this.advance();
+        return result;
+      }
+      if (this.currentChar === "/") {
+        const result = { type: TokenType.OPERATION, value: Operations.DIVIDE, line: this.line };
+        this.advance();
+        return result;
+      }
+      if (this.currentChar === "^") {
+        const result = { type: TokenType.OPERATION, value: Operations.POWER, line: this.line };
+        this.advance();
+        return result;
+      }
+      if (this.currentChar === "!") {
+        const result = { type: TokenType.OPERATION, value: Operations.LOGIC_NOT, line: this.line };
+        this.advance();
+        return result;
+      }
+      if (this.currentChar === "(") {
+        this.advance();
+        return { type: TokenType.LPAREN, value: "(", line: this.line };
+      }
+      if (this.currentChar === ")") {
+        this.advance();
+        return { type: TokenType.RPAREN, value: ")", line: this.line };
+      }
+      if (this.currentChar === ",") {
+        this.advance();
+        return { type: TokenType.COMMA, value: ",", line: this.line };
+      }
+      if (this.currentChar === ".") {
+        if (this.peek() !== null && isNumber(this.peek())) {
+          return this.number();
+        }
+        this.advance();
+        return { type: TokenType.DOT, value: ".", line: this.line };
+      }
       if (this.currentChar === "#") {
         return this.hexColor();
       }
-
-      let token: Token | null = null;
-      switch (this.currentChar) {
-        case "+":
-          token = {
-            type: TokenType.OPERATION,
-            value: Operations.ADD,
-            line: this.line,
-          };
-          break;
-        case "-":
-          token = {
-            type: TokenType.OPERATION,
-            value: Operations.SUBTRACT,
-            line: this.line,
-          };
-          break;
-        case "*":
-          token = {
-            type: TokenType.OPERATION,
-            value: Operations.MULTIPLY,
-            line: this.line,
-          };
-          break;
-        case "/":
-          token = {
-            type: TokenType.OPERATION,
-            value: Operations.DIVIDE,
-            line: this.line,
-          };
-          break;
-        case "^":
-          token = {
-            type: TokenType.OPERATION,
-            value: Operations.POWER,
-            line: this.line,
-          };
-          break;
-        case "(":
-          token = { type: TokenType.LPAREN, value: "(", line: this.line };
-          break;
-        case ")":
-          token = { type: TokenType.RPAREN, value: ")", line: this.line };
-          break;
-        case ",":
-          token = { type: TokenType.COMMA, value: ",", line: this.line };
-          break;
-        case ";":
-          token = { type: TokenType.SEMICOLON, value: ";", line: this.line };
-          break;
-        case ":":
-          token = { type: TokenType.COLON, value: ":", line: this.line };
-          break;
-        case ".":
-          token = { type: TokenType.DOT, value: ".", line: this.line };
-          break;
-        case "[":
-          token = { type: TokenType.LBLOCK, value: "[", line: this.line };
-          break;
-        case "]":
-          token = { type: TokenType.RBLOCK, value: "]", line: this.line };
-          break;
-        case "%":
-          token = {
-            type: TokenType.FORMAT,
-            value: SupportedFormats.PERCENTAGE,
-            line: this.line,
-          };
-          break;
-        case "=":
-          if (this.peek() === "=") {
-            this.advance();
-            token = { type: TokenType.IS_EQ, value: "==", line: this.line };
-          } else {
-            token = { type: TokenType.ASSIGN, value: "=", line: this.line };
-          }
-          break;
-        case "!":
-          if (this.peek() === "=") {
-            this.advance();
-            token = { type: TokenType.IS_NOT_EQ, value: "!=", line: this.line };
-          } else {
-            token = {
-              type: TokenType.OPERATION,
-              value: Operations.LOGIC_NOT,
-              line: this.line,
-            };
-          }
-          break;
-        case ">":
-          if (this.peek() === "=") {
-            this.advance();
-            token = { type: TokenType.IS_GT_EQ, value: ">=", line: this.line };
-          } else {
-            token = { type: TokenType.IS_GT, value: ">", line: this.line };
-          }
-          break;
-        case "<":
-          if (this.peek() === "=") {
-            this.advance();
-            token = { type: TokenType.IS_LT_EQ, value: "<=", line: this.line };
-          } else {
-            token = { type: TokenType.IS_LT, value: "<", line: this.line };
-          }
-          break;
-        case "&":
-          if (this.peek() === "&") {
-            this.advance();
-            token = {
-              type: TokenType.LOGIC_AND,
-              value: Operations.LOGIC_AND,
-              line: this.line,
-            };
-          } else {
-            this.error(`without a following '&'`);
-          }
-          break;
-        case "|":
-          if (this.peek() === "|") {
-            this.advance();
-            token = {
-              type: TokenType.LOGIC_OR,
-              value: Operations.LOGIC_OR,
-              line: this.line,
-            };
-          } else {
-            this.error(`without a following '|'`);
-          }
-          break;
-      }
-
-      if (token) {
+      if (this.currentChar === "%") {
         this.advance();
-        return token;
+        return { type: TokenType.FORMAT, value: SupportedFormats.PERCENTAGE, line: this.line };
+      }
+      if (this.currentChar === "=") {
+        if (this.peek() === "=") {
+          this.advance();
+          this.advance();
+          return { type: TokenType.IS_EQ, value: "==", line: this.line };
+        }
+        this.advance();
+        return { type: TokenType.ASSIGN, value: "=", line: this.line };
+      }
+      if (this.currentChar === ">") {
+        if (this.peek() === "=") {
+          this.advance();
+          this.advance();
+          return { type: TokenType.IS_GT_EQ, value: ">=", line: this.line };
+        }
+        this.advance();
+        return { type: TokenType.IS_GT, value: ">", line: this.line };
+      }
+      if (this.currentChar === "<") {
+        if (this.peek() === "=") {
+          this.advance();
+          this.advance();
+          return { type: TokenType.IS_LT_EQ, value: "<=", line: this.line };
+        }
+        this.advance();
+        return { type: TokenType.IS_LT, value: "<", line: this.line };
+      }
+      if (this.currentChar === ";") {
+        this.advance();
+        return { type: TokenType.SEMICOLON, value: ";", line: this.line };
+      }
+      if (this.currentChar === "&" && this.peek() === "&") {
+        this.advance();
+        this.advance();
+        return { type: TokenType.LOGIC_AND, value: Operations.LOGIC_AND, line: this.line };
+      }
+      if (this.currentChar === "|" && this.peek() === "|") {
+        this.advance();
+        this.advance();
+        return { type: TokenType.LOGIC_OR, value: Operations.LOGIC_OR, line: this.line };
+      }
+      if (this.currentChar === ":") {
+        this.advance();
+        return { type: TokenType.COLON, value: ":", line: this.line };
       }
 
+      // If we reach here, the character is not valid
       this.error();
     }
     return { type: TokenType.EOF, value: null, line: this.line };
