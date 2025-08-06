@@ -10,6 +10,7 @@ import {
   CodePoint,
   isAlpha,
   isNumber,
+  isSpace,
   isAlphaNumeric,
 } from "./utils/string";
 
