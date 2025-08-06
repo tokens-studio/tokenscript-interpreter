@@ -1,4 +1,10 @@
-import { type ASTNode, Operations, ReservedKeyword, type Token, TokenType } from "../types";
+import {
+  type ASTNode,
+  Operations,
+  ReservedKeyword,
+  type Token,
+  TokenType,
+} from "../types";
 import {
   AssignNode,
   AttributeAccessNode,
@@ -49,7 +55,9 @@ export class Parser {
     if (this.currentToken.type === tokenType) {
       this.currentToken = this.lexer.nextToken();
     } else {
-      this.error(`Expected token type ${tokenType} but got ${this.currentToken.type}`);
+      this.error(
+        `Expected token type ${tokenType} but got ${this.currentToken.type}`,
+      );
     }
     return eatenToken;
   }
@@ -68,7 +76,7 @@ export class Parser {
 
   private statementList(): StatementListNode {
     const statements: ASTNode[] = [];
-    const firstToken = this.currentToken;
+    const token = this.currentToken;
 
     while (
       this.currentToken.type !== TokenType.EOF &&
@@ -86,20 +94,20 @@ export class Parser {
         }
       }
     }
-    return new StatementListNode(statements, firstToken);
+    return new StatementListNode(statements, token);
   }
 
   private statement(): ASTNode {
     if (this.currentToken.type === TokenType.RESERVED_KEYWORD) {
       switch (this.currentToken.value) {
-        case ReservedKeyword.VARIABLE:
-          return this.assignDeclaration();
         case ReservedKeyword.RETURN:
           return this.returnStatement();
         case ReservedKeyword.WHILE:
           return this.whileStatement();
         case ReservedKeyword.IF:
           return this.ifStatement();
+        case ReservedKeyword.VARIABLE:
+          return this.assignDeclaration();
       }
     }
 
@@ -163,7 +171,7 @@ export class Parser {
     // This needs a more robust parsing strategy for assignments.
     // For now, this is a placeholder for the structure.
     this.error(
-      "Attribute assignment parsing is complex and not fully implemented with current lookahead."
+      "Attribute assignment parsing is complex and not fully implemented with current lookahead.",
     );
     // Pseudocode for what should happen:
     // while (this.currentToken.type === TokenType.DOT) {
@@ -178,7 +186,7 @@ export class Parser {
       objectIdentifier,
       [],
       new StringNode({ type: TokenType.STRING, value: "dummy", line: 0 }),
-      objectIdentifierToken
+      objectIdentifierToken,
     ); // Placeholder
   }
 
@@ -195,7 +203,11 @@ export class Parser {
     const condition = this.expr();
     this.eat(TokenType.RPAREN);
     const body = this.block();
-    return new WhileNode(condition, body.statements as StatementListNode, whileToken);
+    return new WhileNode(
+      condition,
+      body.statements as StatementListNode,
+      whileToken,
+    );
   }
 
   private ifStatement(): IfNode {
@@ -216,14 +228,12 @@ export class Parser {
   }
 
   private block(): BlockNode {
-    this.eat(TokenType.LBLOCK); // '['
-    const statements = this.statementList(); // StatementList handles multiple statements
-    this.eat(TokenType.RBLOCK); // ']'
+    this.eat(TokenType.LBLOCK);
+    const statements = this.statementList();
+    this.eat(TokenType.RBLOCK);
     return new BlockNode(statements);
   }
 
-  // Expression parsing ( siguiendo la precedencia de operadores )
-  // ListExpr = NonemptyListOf<ImplicitList, ",">
   private listExpr(): ASTNode {
     const firstToken = this.currentToken;
     const elements: ASTNode[] = [this.implicitList()];
@@ -402,12 +412,15 @@ export class Parser {
     }
     if (
       token.type === TokenType.RESERVED_KEYWORD &&
-      (token.value === ReservedKeyword.TRUE || token.value === ReservedKeyword.FALSE)
+      (token.value === ReservedKeyword.TRUE ||
+        token.value === ReservedKeyword.FALSE)
     ) {
       this.eat(TokenType.RESERVED_KEYWORD);
       return new BooleanNode(token.value === ReservedKeyword.TRUE, token);
     }
-    this.error(`Unexpected token in factor: ${token.type} (${String(token.value)})`);
+    this.error(
+      `Unexpected token in factor: ${token.type} (${String(token.value)})`,
+    );
     return new StringNode({ type: TokenType.STRING, value: "dummy", line: 0 }); // Should be unreachable
   }
 
