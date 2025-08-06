@@ -14,7 +14,6 @@ import {
   isAlphaNumeric,
 } from "./utils/string";
 
-// Correctly map lowercase string to enum member (which is also the lowercase string for these string enums)
 const SUPPORTED_FORMAT_STRINGS: Record<string, SupportedFormats> = {};
 for (const val of Object.values(SupportedFormats) as string[]) {
   SUPPORTED_FORMAT_STRINGS[val.toLowerCase()] = val as SupportedFormats;
@@ -137,41 +136,36 @@ export class Lexer {
   private identifierOrKeyword(): Token {
     let result = "";
 
-    if (!this.isValidIdentifierStart(this.currentChar)) {
-      this.error(`Invalid identifier starting character`);
-    }
-
-    // Add first character
-    if (this.currentChar !== null) {
+    while (this.isValidIdentifierPart(this.currentChar)) {
       result += this.currentChar;
       this.advance();
     }
 
-    // Then continue with all valid chars
-    while (
-      this.currentChar !== null &&
-      this.isValidIdentifierPart(this.currentChar)
-    ) {
-      result += this.currentChar;
-      this.advance();
-    }
+    const normalizedResult = result.toLowerCase();
 
-    const lowerResult = result.toLowerCase();
-    if (RESERVED_KEYWORD_STRINGS[lowerResult]) {
+    const keyword = RESERVED_KEYWORD_STRINGS[normalizedResult];
+    if (keyword) {
       return {
         type: TokenType.RESERVED_KEYWORD,
-        value: RESERVED_KEYWORD_STRINGS[lowerResult],
+        value: keyword,
         line: this.line,
       };
     }
-    if (SUPPORTED_FORMAT_STRINGS[lowerResult]) {
+
+    const format = SUPPORTED_FORMAT_STRINGS[normalizedResult];
+    if (format) {
       return {
         type: TokenType.FORMAT,
-        value: SUPPORTED_FORMAT_STRINGS[lowerResult],
+        value: format,
         line: this.line,
       };
     }
-    return { type: TokenType.STRING, value: result, line: this.line }; // Includes function names, variable names
+
+    return {
+      type: TokenType.STRING,
+      value: result,
+      line: this.line,
+    };
   }
 
   private reference(): Token {
