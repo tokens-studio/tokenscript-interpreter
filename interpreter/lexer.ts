@@ -63,6 +63,14 @@ export class Lexer {
     if (this.currentChar === "\n") this.advance(); // consume newline
   }
 
+  private skipsComment(): boolean {
+    if (this.currentChar === "/" && this.peek() === "/") {
+      this.skipLine();
+      return true;
+    }
+    return false;
+  }
+
   private number(): Token {
     let result = "";
     // Prepend 0 to digits like ".5"
@@ -214,11 +222,7 @@ export class Lexer {
       this.skipWhitespace();
       if (this.currentChar === null) break;
 
-      // Skip comment
-      if (this.currentChar === "/" && this.peek() === "/") {
-        this.advance();
-        this.advance();
-        this.skipLine();
+      if (this.skipsComment()) {
         continue;
       }
 
