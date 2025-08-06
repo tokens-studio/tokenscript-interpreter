@@ -42,12 +42,12 @@ export class Parser {
     this.currentToken = this.lexer.nextToken();
   }
 
-  public getRequiredReferences(): string[] {
-    return Array.from(this.requiredReferences);
-  }
-
   private error(message = "Invalid syntax"): never {
     throw new ParserError(message, this.currentToken?.line, this.currentToken);
+  }
+
+  public getRequiredReferences(): string[] {
+    return Array.from(this.requiredReferences);
   }
 
   private eat(tokenType: TokenType): Token {
