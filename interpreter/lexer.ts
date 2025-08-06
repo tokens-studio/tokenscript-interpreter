@@ -207,18 +207,19 @@ export class Lexer {
   }
 
   private hexColor(): Token {
-    let result = "#";
-    this.advance(); // Skip '#'
-    while (this.currentChar !== null && /[0-9a-fA-F]/.test(this.currentChar)) {
+    let result = "";
+    while (
+      isAlpha(this.currentChar) ||
+      this.isDigit() ||
+      this.currentChar === "#"
+    ) {
       result += this.currentChar;
       this.advance();
-      if (result.length > 7) break; // Max #RRGGBB or #RGB
     }
-    // After loop, this.currentChar is the first char NOT part of hex.
-    // Check if what we gathered is valid length
     if (result.length !== 4 && result.length !== 7) {
-      // #RGB or #RRGGBB
-      this.error(`Invalid hex color format: ${result}. Length should be #RGB or #RRGGBB.`);
+      this.error(
+        `Invalid hex color format: ${result}. Length should be #RGB or #RRGGBB.`,
+      );
     }
     return { type: TokenType.HEX_COLOR, value: result, line: this.line };
   }
@@ -261,32 +262,56 @@ export class Lexer {
         return { type: TokenType.IS_NOT_EQ, value: "!=", line: this.line };
       }
       if (this.currentChar === "+") {
-        const result = { type: TokenType.OPERATION, value: Operations.ADD, line: this.line };
+        const result = {
+          type: TokenType.OPERATION,
+          value: Operations.ADD,
+          line: this.line,
+        };
         this.advance();
         return result;
       }
       if (this.currentChar === "-") {
-        const result = { type: TokenType.OPERATION, value: Operations.SUBTRACT, line: this.line };
+        const result = {
+          type: TokenType.OPERATION,
+          value: Operations.SUBTRACT,
+          line: this.line,
+        };
         this.advance();
         return result;
       }
       if (this.currentChar === "*") {
-        const result = { type: TokenType.OPERATION, value: Operations.MULTIPLY, line: this.line };
+        const result = {
+          type: TokenType.OPERATION,
+          value: Operations.MULTIPLY,
+          line: this.line,
+        };
         this.advance();
         return result;
       }
       if (this.currentChar === "/") {
-        const result = { type: TokenType.OPERATION, value: Operations.DIVIDE, line: this.line };
+        const result = {
+          type: TokenType.OPERATION,
+          value: Operations.DIVIDE,
+          line: this.line,
+        };
         this.advance();
         return result;
       }
       if (this.currentChar === "^") {
-        const result = { type: TokenType.OPERATION, value: Operations.POWER, line: this.line };
+        const result = {
+          type: TokenType.OPERATION,
+          value: Operations.POWER,
+          line: this.line,
+        };
         this.advance();
         return result;
       }
       if (this.currentChar === "!") {
-        const result = { type: TokenType.OPERATION, value: Operations.LOGIC_NOT, line: this.line };
+        const result = {
+          type: TokenType.OPERATION,
+          value: Operations.LOGIC_NOT,
+          line: this.line,
+        };
         this.advance();
         return result;
       }
@@ -314,7 +339,11 @@ export class Lexer {
       }
       if (this.currentChar === "%") {
         this.advance();
-        return { type: TokenType.FORMAT, value: SupportedFormats.PERCENTAGE, line: this.line };
+        return {
+          type: TokenType.FORMAT,
+          value: SupportedFormats.PERCENTAGE,
+          line: this.line,
+        };
       }
       if (this.currentChar === "=") {
         if (this.peek() === "=") {
@@ -350,12 +379,20 @@ export class Lexer {
       if (this.currentChar === "&" && this.peek() === "&") {
         this.advance();
         this.advance();
-        return { type: TokenType.LOGIC_AND, value: Operations.LOGIC_AND, line: this.line };
+        return {
+          type: TokenType.LOGIC_AND,
+          value: Operations.LOGIC_AND,
+          line: this.line,
+        };
       }
       if (this.currentChar === "|" && this.peek() === "|") {
         this.advance();
         this.advance();
-        return { type: TokenType.LOGIC_OR, value: Operations.LOGIC_OR, line: this.line };
+        return {
+          type: TokenType.LOGIC_OR,
+          value: Operations.LOGIC_OR,
+          line: this.line,
+        };
       }
       if (this.currentChar === ":") {
         this.advance();
