@@ -230,6 +230,10 @@ export class Lexer {
         return this.number();
       }
 
+      if (this.currentChar === "'" || this.currentChar === '"') {
+        return this.explicitString(this.currentChar);
+      }
+
       if (this.isValidIdentifierStart(this.currentChar)) {
         return this.identifierOrKeyword();
       }
@@ -237,9 +241,7 @@ export class Lexer {
       if (this.currentChar === "{") {
         return this.reference();
       }
-      if (this.currentChar === "'" || this.currentChar === '"') {
-        return this.explicitString(this.currentChar);
-      }
+
       if (this.currentChar === "#") {
         return this.hexColor();
       }
