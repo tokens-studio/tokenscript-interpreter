@@ -97,6 +97,15 @@ export class Lexer {
     return { type: TokenType.NUMBER, value: result, line: this.line };
   }
 
+  // Python like isdigit, that allows numbers starting with '.'
+  private isDigit(): boolean {
+    if (this.currentChar === null) return false;
+    return (
+      isNumber(this.currentChar) ||
+      (this.currentChar === "." && isNumber(this.peek()))
+    );
+  }
+
   private isValidIdentifierStart(char: string | null): boolean {
     if (char === null) return false;
     if (isAlpha(char)) return true;
@@ -127,7 +136,6 @@ export class Lexer {
   private identifierOrKeyword(): Token {
     let result = "";
 
-    // First character validation
     if (!this.isValidIdentifierStart(this.currentChar)) {
       throw new LexerError(
         `Invalid identifier starting character: '${this.currentChar}'`,
@@ -233,10 +241,7 @@ export class Lexer {
         continue;
       }
 
-      if (
-        isNumber(this.currentChar) ||
-        (this.currentChar === "." && isNumber(this.peek()))
-      ) {
+      if (this.isDigit()) {
         return this.number();
       }
 
