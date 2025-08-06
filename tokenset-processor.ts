@@ -4,7 +4,10 @@ import { Interpreter } from "./interpreter/interpreter";
 import { Lexer } from "./interpreter/lexer";
 import { Parser } from "./interpreter/parser";
 import { UNINTERPRETED_KEYWORDS } from "./types";
-import { flattenTokens as flattenDTCGTokens, hasNestedDTCGStructure } from "./utils/dtcg-adapter";
+import {
+  flattenTokens as flattenDTCGTokens,
+  hasNestedDTCGStructure,
+} from "./utils/dtcg-adapter";
 import { PerformanceTracker } from "./utils/performance-tracker";
 
 export interface TokenSetResolverOptions {
@@ -27,7 +30,10 @@ export class TokenSetResolver {
   private warnings: string[] = [];
   private errors: string[] = [];
 
-  constructor(tokens: Record<string, string>, globalTokens: Record<string, any> = {}) {
+  constructor(
+    tokens: Record<string, string>,
+    globalTokens: Record<string, any> = {},
+  ) {
     this.tokens = new Map(Object.entries(tokens));
     this.resolvedTokens = new Map(Object.entries(globalTokens));
 
@@ -59,16 +65,15 @@ export class TokenSetResolver {
         if (ast) {
           this.parsers.set(tokenName, ast);
 
-          // Extract required references from parser
-          const requiredRefs = parser.getRequiredReferences();
-
           // Check for self-reference
-          if (requiredRefs.includes(tokenName)) {
-            this.warnings.push(`Token '${tokenName}' has a circular reference to itself.`);
+          if (parser.requiredReferences.has(tokenName)) {
+            this.warnings.push(
+              `Token '${tokenName}' has a circular reference to itself.`,
+            );
           }
 
           // Build dependency graph
-          for (const refToken of requiredRefs) {
+          for (const refToken of parser.requiredReferences) {
             if (!this.requiresTokens[tokenName]) {
               this.requiresTokens[tokenName] = new Set();
             }
@@ -84,7 +89,7 @@ export class TokenSetResolver {
         }
       } catch (error: any) {
         this.warnings.push(
-          `Error parsing token '${tokenName}': ${error.message} (value: ${tokenData})`
+          `Error parsing token '${tokenName}': ${error.message} (value: ${tokenData})`,
         );
         this.resolvedTokens.set(tokenName, tokenData);
       }
@@ -118,7 +123,7 @@ export class TokenSetResolver {
         this.resolvedTokens.set(tokenName, result);
       } catch (error: any) {
         this.warnings.push(
-          `Error interpreting token '${tokenName}': ${error.message} (value: ${this.tokens.get(tokenName)})`
+          `Error interpreting token '${tokenName}': ${error.message} (value: ${this.tokens.get(tokenName)})`,
         );
         const tokenValue = this.tokens.get(tokenName);
         if (tokenValue !== undefined) {
@@ -134,7 +139,7 @@ export class TokenSetResolver {
     // Iterative topological sort resolution
     // 1. Find all tokens with zero dependencies and add them to the queue
     const queue: string[] = Array.from(this.tokens.keys()).filter(
-      (tokenName) => !(tokenName in this.requiresTokens)
+      (tokenName) => !(tokenName in this.requiresTokens),
     );
 
     // 2. Process tokens iteratively
@@ -162,12 +167,12 @@ export class TokenSetResolver {
 
     // Check for unresolved tokens (circular dependencies or missing references)
     const unresolvedTokens = Array.from(this.tokens.keys()).filter(
-      (tokenName) => !this.resolvedTokens.has(tokenName)
+      (tokenName) => !this.resolvedTokens.has(tokenName),
     );
 
     if (unresolvedTokens.length > 0) {
       this.warnings.push(
-        `Not all tokens could be resolved. Remaining tokens: ${unresolvedTokens.map((token) => `${token}: ${this.tokens.get(token)}`).join(", ")}`
+        `Not all tokens could be resolved. Remaining tokens: ${unresolvedTokens.map((token) => `${token}: ${this.tokens.get(token)}`).join(", ")}`,
       );
     }
 
@@ -182,11 +187,13 @@ export class TokenSetResolver {
 // Process themes and resolve tokens
 export async function processThemes(
   themes: Record<string, Record<string, any>>,
-  options?: { enablePerformanceTracking?: boolean }
+  options?: { enablePerformanceTracking?: boolean },
 ): Promise<Record<string, any>> {
   const outputTokens: Record<string, any> = {};
   const globalTokensCache: Record<string, any> = {};
-  const performanceTracker = options?.enablePerformanceTracking ? new PerformanceTracker() : null;
+  const performanceTracker = options?.enablePerformanceTracking
+    ? new PerformanceTracker()
+    : null;
 
   performanceTracker?.startTracking();
 
@@ -194,7 +201,7 @@ export async function processThemes(
     console.log(
       chalk.blue("🔄 Processing theme: ") +
         chalk.cyan(themeName) +
-        chalk.gray(` (${Object.keys(themeTokens).length} tokens)`)
+        chalk.gray(` (${Object.keys(themeTokens).length} tokens)`),
     );
 
     const startTime = Date.now();
@@ -222,7 +229,13 @@ export async function processThemes(
     const inputCount = Object.keys(themeTokens).length;
     const outputCount = Object.keys(resolvedTokens).length;
 
-    performanceTracker?.addEntry(themeName, inputCount, outputCount, startTime, endTime);
+    performanceTracker?.addEntry(
+      themeName,
+      inputCount,
+      outputCount,
+      startTime,
+      endTime,
+    );
 
     outputTokens[themeName] = resolvedTokens;
     Object.assign(globalTokensCache, resolvedTokens);
@@ -236,7 +249,7 @@ export async function processThemes(
 
 // Build theme tree for permutations
 export function buildThemeTree(
-  tokensets: Record<string, any>
+  tokensets: Record<string, any>,
 ): Record<string, Record<string, Record<string, any>>> {
   const themesData = tokensets.$themes;
   const themeTree: Record<string, Record<string, Record<string, any>>> = {};
@@ -256,10 +269,15 @@ export function buildThemeTree(
     if (Array.isArray(selectedTokenSets)) {
       // New format: array of objects with id and status
       for (const tokenSetRef of selectedTokenSets) {
-        if (tokenSetRef.status === "enabled" || tokenSetRef.status === "source") {
+        if (
+          tokenSetRef.status === "enabled" ||
+          tokenSetRef.status === "source"
+        ) {
           const setId = tokenSetRef.id;
           if (!(setId in tokensets)) {
-            console.warn(`Token set '${setId}' referenced in '${themeName}' not found.`);
+            console.warn(
+              `Token set '${setId}' referenced in '${themeName}' not found.`,
+            );
             continue;
           }
           Object.assign(tokens, flattenDTCGTokens(tokensets[setId]));
@@ -270,7 +288,9 @@ export function buildThemeTree(
       for (const [setName, status] of Object.entries(selectedTokenSets)) {
         if (status === "enabled" || status === "source") {
           if (!(setName in tokensets)) {
-            throw new Error(`Token set '${setName}' referenced in '${themeName}' not found.`);
+            throw new Error(
+              `Token set '${setName}' referenced in '${themeName}' not found.`,
+            );
           }
           Object.assign(tokens, flattenDTCGTokens(tokensets[setName]));
         }
@@ -287,7 +307,7 @@ export function buildThemeTree(
 export function permutateTokensets(
   themeTree: Record<string, Record<string, Record<string, any>>>,
   permutateOn: string[],
-  tokens: Record<string, any> = {}
+  tokens: Record<string, any> = {},
 ): any {
   if (permutateOn.length === 0) {
     return tokens;
@@ -299,9 +319,13 @@ export function permutateTokensets(
     throw new Error("No permutation available to process");
   }
 
-  console.log(chalk.blue("🔄 Permutating on: ") + chalk.magenta(currentPermutation));
+  console.log(
+    chalk.blue("🔄 Permutating on: ") + chalk.magenta(currentPermutation),
+  );
 
-  for (const [themeName, themeTokens] of Object.entries(themeTree[currentPermutation])) {
+  for (const [themeName, themeTokens] of Object.entries(
+    themeTree[currentPermutation],
+  )) {
     if (!themeTokens) {
       continue;
     }
@@ -317,7 +341,7 @@ export function permutateTokensets(
 export function interpretTokensets(
   permutationTree: any,
   permutationDimensions: Array<{ name: string; options: string[] }>,
-  tokens: Record<string, any>
+  tokens: Record<string, any>,
 ): any {
   if (permutationDimensions.length === 0) {
     const relevantTokens = Object.keys(tokens);
@@ -344,7 +368,11 @@ export function interpretTokensets(
 
   const output: any = {};
   for (const theme of currentPermutation.options) {
-    output[theme] = interpretTokensets(permutationTree[theme], remainingDimensions, tokens);
+    output[theme] = interpretTokensets(
+      permutationTree[theme],
+      remainingDimensions,
+      tokens,
+    );
   }
 
   return output;
@@ -352,7 +380,9 @@ export function interpretTokensets(
 
 // Simple function to process any DTCG JSON blob - the main API users want
 // Pure in-memory processing - no file system operations
-export function interpretTokens(tokenInput: Record<string, any>): Record<string, any> {
+export function interpretTokens(
+  tokenInput: Record<string, any>,
+): Record<string, any> {
   if (!tokenInput || typeof tokenInput !== "object") {
     throw new Error("Invalid JSON input: Expected an object");
   }
@@ -392,17 +422,23 @@ export function interpretTokens(tokenInput: Record<string, any>): Record<string,
 }
 
 // Keep the original functions for backward compatibility
-export function processTokensFromJson(dtcgJson: Record<string, any>): Record<string, any> {
+export function processTokensFromJson(
+  dtcgJson: Record<string, any>,
+): Record<string, any> {
   return interpretTokens(dtcgJson);
 }
 
-export function processSingleTokenSet(tokens: Record<string, any>): Record<string, any> {
+export function processSingleTokenSet(
+  tokens: Record<string, any>,
+): Record<string, any> {
   // This function is now just a wrapper around interpretTokens for backward compatibility
   return interpretTokens(tokens);
 }
 
 // Load themes from DTCG JSON object (similar to loadThemes but for JSON input)
-function loadThemesFromJson(dtcgJson: Record<string, any>): Record<string, Record<string, any>> {
+function loadThemesFromJson(
+  dtcgJson: Record<string, any>,
+): Record<string, Record<string, any>> {
   if (!dtcgJson.$themes) {
     throw new Error("No themes found in the DTCG JSON.");
   }
@@ -420,15 +456,23 @@ function loadThemesFromJson(dtcgJson: Record<string, any>): Record<string, Recor
     if (Array.isArray(selectedTokenSets)) {
       // New format: array of objects with id and status
       for (const tokenSetRef of selectedTokenSets) {
-        if (tokenSetRef.status === "enabled" || tokenSetRef.status === "source") {
+        if (
+          tokenSetRef.status === "enabled" ||
+          tokenSetRef.status === "source"
+        ) {
           const setId = tokenSetRef.id;
           if (!(setId in dtcgJson)) {
             console.warn(
-              chalk.yellow(`⚠️  Token set '${setId}' referenced in '${themeName}' not found.`)
+              chalk.yellow(
+                `⚠️  Token set '${setId}' referenced in '${themeName}' not found.`,
+              ),
             );
             continue;
           }
-          Object.assign(themeTokens[themeName], flattenDTCGTokens(dtcgJson[setId]));
+          Object.assign(
+            themeTokens[themeName],
+            flattenDTCGTokens(dtcgJson[setId]),
+          );
         }
       }
     } else {
@@ -436,9 +480,14 @@ function loadThemesFromJson(dtcgJson: Record<string, any>): Record<string, Recor
       for (const [setName, status] of Object.entries(selectedTokenSets)) {
         if (status === "enabled" || status === "source") {
           if (!(setName in dtcgJson)) {
-            throw new Error(`Token set '${setName}' referenced in '${themeName}' not found.`);
+            throw new Error(
+              `Token set '${setName}' referenced in '${themeName}' not found.`,
+            );
           }
-          Object.assign(themeTokens[themeName], flattenDTCGTokens(dtcgJson[setName]));
+          Object.assign(
+            themeTokens[themeName],
+            flattenDTCGTokens(dtcgJson[setName]),
+          );
         }
       }
     }
@@ -448,7 +497,9 @@ function loadThemesFromJson(dtcgJson: Record<string, any>): Record<string, Recor
 }
 
 // Synchronous version of processThemes for in-memory processing
-function processThemesSync(themes: Record<string, Record<string, any>>): Record<string, any> {
+function processThemesSync(
+  themes: Record<string, Record<string, any>>,
+): Record<string, any> {
   const outputTokens: Record<string, any> = {};
 
   for (const [themeName, themeTokens] of Object.entries(themes)) {
