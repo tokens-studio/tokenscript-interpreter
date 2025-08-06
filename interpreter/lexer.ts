@@ -11,7 +11,7 @@ import {
   isAlpha,
   isNumber,
   isAlphaNumeric,
-} from "./utils/codepoints";
+} from "./utils/string";
 
 // Correctly map lowercase string to enum member (which is also the lowercase string for these string enums)
 const SUPPORTED_FORMAT_STRINGS: Record<string, SupportedFormats> = {};
