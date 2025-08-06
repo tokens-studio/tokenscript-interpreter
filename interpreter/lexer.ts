@@ -122,7 +122,7 @@ export class Lexer {
     return true;
   }
 
-  private isValidIdentifierPart(char: string | null): boolean {
+  private isValidStringElement(char: string | null): boolean {
     if (char === null) return false;
     const cp = char.codePointAt(0) ?? 0;
     return (
@@ -133,10 +133,10 @@ export class Lexer {
     );
   }
 
-  private identifierOrKeyword(): Token {
+  private stringElement(): Token {
     let result = "";
 
-    while (this.isValidIdentifierPart(this.currentChar)) {
+    while (this.isValidStringElement(this.currentChar)) {
       result += this.currentChar;
       this.advance();
     }
@@ -197,15 +197,20 @@ export class Lexer {
   }
 
   private explicitString(quoteType: string): Token {
-    this.advance(); // Skip opening quote
+    this.advance(); // Opening quote
+
     let result = "";
     while (this.currentChar !== null && this.currentChar !== quoteType) {
       result += this.currentChar;
       this.advance();
     }
-    if (this.currentChar === null)
+
+    if (this.currentChar === null) {
       this.error(`Unterminated string, missing '${quoteType}'.`);
-    this.advance(); // Skip closing quote
+    }
+
+    this.advance(); // Closing quote
+
     return { type: TokenType.EXPLICIT_STRING, value: result, line: this.line };
   }
 
@@ -246,7 +251,7 @@ export class Lexer {
       }
 
       if (this.isValidIdentifierStart(this.currentChar)) {
-        return this.identifierOrKeyword();
+        return this.stringElement();
       }
 
       if (this.currentChar === "{") {
