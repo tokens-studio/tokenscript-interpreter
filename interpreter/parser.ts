@@ -245,24 +245,22 @@ export class Parser {
     return new ListNode(elements, firstToken);
   }
 
-  // ImplicitList = Expr+
+  // implicit_list_expr : factor ((COMMA) factor)*
   private implicitListExprNode(): ASTNode {
     const token = this.currentToken;
     const elements: ASTNode[] = [this.expr()];
+
     while (
       this.currentToken.type !== TokenType.COMMA &&
       this.currentToken.type !== TokenType.RPAREN &&
       this.currentToken.type !== TokenType.EOF &&
       this.currentToken.type !== TokenType.SEMICOLON
     ) {
-      // This condition ensures we only consume tokens that can be part of an implicit list element
-      // e.g. `10px 5em` vs `10px, 5em`
-      // We need to ensure we don't accidentally consume operators that belong to the next Expr in a ListExpr
-      // A simple check: if it's not an operator that would start a new term, it's part of current implicit list.
-      // This is a simplification. A more robust check would consider operator precedence.
       elements.push(this.expr());
     }
+
     if (elements.length === 1) return elements[0];
+
     return new ImplicitListNode(elements, token);
   }
 
