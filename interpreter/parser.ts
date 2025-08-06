@@ -63,14 +63,14 @@ export class Parser {
 
     if (inlineMode) return this.listExpr();
 
-    const node = this.statementListNode();
+    const node = this.statementsList();
     if ((this.currentToken.type as TokenType) !== TokenType.EOF) {
       this.error("Unexpected token at the end of input.");
     }
     return node;
   }
 
-  private statementListNode(): StatementListNode {
+  private statementsList(): StatementListNode {
     const statements: ASTNode[] = [];
     const token = this.currentToken;
 
@@ -225,7 +225,7 @@ export class Parser {
 
   private block(): BlockNode {
     this.eat(TokenType.LBLOCK);
-    const statements = this.statementListNode();
+    const statements = this.statementsList();
     this.eat(TokenType.RBLOCK);
     return new BlockNode(statements);
   }
