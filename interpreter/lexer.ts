@@ -6,7 +6,12 @@ import {
   TokenType,
 } from "../types";
 import { LexerError } from "./errors";
-import { CodePoint } from "./utils/codepoints";
+import {
+  CodePoint,
+  isAlpha,
+  isNumber,
+  isAlphaNumeric,
+} from "./utils/codepoints";
 
 // Correctly map lowercase string to enum member (which is also the lowercase string for these string enums)
 const SUPPORTED_FORMAT_STRINGS: Record<string, SupportedFormats> = {};
@@ -92,36 +97,18 @@ export class Lexer {
     return { type: TokenType.NUMBER, value: result, line: this.line };
   }
 
-  private isAlpha(char: string | null): boolean {
-    // Check if character is a letter (a-z, A-Z) or underscore
-    if (char === null) return false;
-    const cp = char.codePointAt(0) ?? 0;
-    return (
-      (cp >= 65 && cp <= 90) || // A-Z
-      (cp >= 97 && cp <= 122) // a-z
-    );
-  }
-
-  private isNumber(char: string | null): boolean {
-    if (char === null) return false;
-    const cp = char.codePointAt(0) ?? 0;
-    return cp >= 48 && cp <= 57; // 0-9
-  }
-
-  private isAlphaNumeric(char: string | null): boolean {
-    return this.isAlpha(char) || this.isNumber(char);
-  }
-
   private isValidIdentifierStart(char: string | null): boolean {
     if (char === null) return false;
-    if (this.isAlpha(char)) return true;
+    if (isAlpha(char)) return true;
 
     const cp = char.codePointAt(0) ?? 0;
-    // Emoji Support
+
+    // Support emoji range
     if (cp <= 127) return false;
 
-    if (cp === 180) return false; // Forwardtick
-    if (cp === 96) return false; // BackwardTick
+    // Disallowed Characters
+    if (cp === CodePoint.FORWARD_TICK) return false;
+    if (cp === CodePoint.BACKWARD_TICK) return false;
 
     return true;
   }
@@ -130,10 +117,10 @@ export class Lexer {
     if (char === null) return false;
     const cp = char.codePointAt(0) ?? 0;
     return (
-      this.isAlphaNumeric(char) ||
+      isAlphaNumeric(char) ||
       cp === CodePoint.HYPHEN ||
       cp === CodePoint.UNDERSCORE ||
-      cp > 127
+      cp > 127 // Support emoji range
     );
   }
 
@@ -247,8 +234,8 @@ export class Lexer {
       }
 
       if (
-        this.isNumber(this.currentChar) ||
-        (this.currentChar === "." && this.isNumber(this.peek()))
+        isNumber(this.currentChar) ||
+        (this.currentChar === "." && isNumber(this.peek()))
       ) {
         return this.number();
       }
