@@ -345,8 +345,19 @@ export class Parser {
   }
 
   private numberNode(): ASTNode {
-    let node: ASTNode = new NumNode(this.currentToken);
+    let node = new NumNode(this.currentToken);
     this.eat(TokenType.NUMBER);
+    if (this.currentToken.type === TokenType.FORMAT) {
+      return this.formatNode(node);
+    }
+    return node;
+  }
+
+  private referenceNode(): ASTNode {
+    let node = new ReferenceNode(this.currentToken);
+    this.eat(TokenType.REFERENCE);
+    this.requiredReferences.add(node.value);
+
     if (this.currentToken.type === TokenType.FORMAT) {
       return this.formatNode(node);
     }
@@ -398,14 +409,7 @@ export class Parser {
     }
 
     if (token.type === TokenType.REFERENCE) {
-      this.eat(TokenType.REFERENCE);
-      this.requiredReferences.add(token.value as string);
-      let node: ASTNode = new ReferenceNode(token);
-      if (this.currentToken.type === TokenType.FORMAT) {
-        // e.g. {size}px
-        const formatToken = this.eat(TokenType.FORMAT);
-        node = new ElementWithUnitNode(node, formatToken.value);
-      }
+      let node = this.referenceNode();
       // Handle attribute access like {ref}.property or {ref}.method()
       node = this.parseAttributeAccess(node);
       return node;
