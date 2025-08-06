@@ -384,11 +384,11 @@ export class Parser {
       let node = this.expr();
       this.eat(TokenType.RPAREN);
       if (this.currentToken.type === TokenType.FORMAT) {
-        const formatToken = this.eat(TokenType.FORMAT);
-        node = new ElementWithUnitNode(node, formatToken.value);
+        return this.formatNode(node);
       }
       return node;
     }
+
     if (token.type === TokenType.REFERENCE) {
       this.eat(TokenType.REFERENCE);
       this.requiredReferences.add(token.value as string);
