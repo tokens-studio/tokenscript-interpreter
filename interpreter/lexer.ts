@@ -414,7 +414,7 @@ export class Lexer {
     return { type: TokenType.EOF, value: null, line: this.line };
   }
 
-  peekNextToken(): Token | null {
+  peekToken(): Token | null {
     // Save current state
     const savedPos = this.pos;
     const savedChar = this.currentChar;

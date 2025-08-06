@@ -112,7 +112,7 @@ export class Parser {
     }
 
     if (this.currentToken.type === TokenType.STRING) {
-      const nextToken = this.lexer.peekNextToken();
+      const nextToken = this.lexer.peekToken();
       if (nextToken && nextToken.type === TokenType.ASSIGN) {
         return this.reassignStatement();
       }
