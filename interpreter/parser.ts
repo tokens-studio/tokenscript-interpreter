@@ -74,29 +74,6 @@ export class Parser {
     return node;
   }
 
-  private statementList(): StatementListNode {
-    const statements: ASTNode[] = [];
-    const token = this.currentToken;
-
-    while (
-      this.currentToken.type !== TokenType.EOF &&
-      this.currentToken.type !== TokenType.RBLOCK
-    ) {
-      statements.push(this.statement());
-      if (this.currentToken.type === TokenType.SEMICOLON) {
-        this.eat(TokenType.SEMICOLON);
-      } else {
-        if (
-          (this.currentToken.type as TokenType) === TokenType.EOF ||
-          (this.currentToken.type as TokenType) === TokenType.RBLOCK
-        ) {
-          break;
-        }
-      }
-    }
-    return new StatementListNode(statements, token);
-  }
-
   private statement(): ASTNode {
     if (this.currentToken.type === TokenType.RESERVED_KEYWORD) {
       switch (this.currentToken.value) {
@@ -120,6 +97,29 @@ export class Parser {
     }
 
     return this.listExpr();
+  }
+
+  private statementList(): StatementListNode {
+    const statements: ASTNode[] = [];
+    const token = this.currentToken;
+
+    while (
+      this.currentToken.type !== TokenType.EOF &&
+      this.currentToken.type !== TokenType.RBLOCK
+    ) {
+      statements.push(this.statement());
+      if (this.currentToken.type === TokenType.SEMICOLON) {
+        this.eat(TokenType.SEMICOLON);
+      } else {
+        if (
+          (this.currentToken.type as TokenType) === TokenType.EOF ||
+          (this.currentToken.type as TokenType) === TokenType.RBLOCK
+        ) {
+          break;
+        }
+      }
+    }
+    return new StatementListNode(statements, token);
   }
 
   private assignDeclaration(): AssignNode {
