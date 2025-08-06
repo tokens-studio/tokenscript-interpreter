@@ -35,8 +35,7 @@ export class Lexer {
   }
 
   private peek(n = 1): string | null {
-    const peekPos = this.pos + n;
-    return peekPos < this.text.length ? this.text[peekPos] : null;
+    return this.text[this.pos + n];
   }
 
   private skipWhitespace(): void {
