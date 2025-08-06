@@ -353,7 +353,15 @@ export class Parser {
     return node;
   }
 
-  // Factor = UnaryOp | NumberLit | ParenExpr | Reference | Identifier | StringLit | HexColor | Boolean
+  // factor : PLUS factor
+  //        | MINUS factor
+  //        | NOT factor
+  //        | NUMBER (FORMAT)?
+  //        | LPAREN expr RPAREN (FORMAT)?
+  //        | REFERENCE (DOT (STRING | function))*
+  //        | STRING (LPAREN args RPAREN)? (DOT (STRING | function))*
+  //        | EXPLICIT_STRING (DOT (STRING | function))*
+  //        | HEX_COLOR
   private factor(): ASTNode {
     const token = this.currentToken;
 
