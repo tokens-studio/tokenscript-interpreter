@@ -236,7 +236,7 @@ export class Lexer {
 
       if (
         this.isDigit(this.currentChar) ||
-        (this.currentChar === "." && this.peek() && this.isDigit(this.peek()))
+        (this.currentChar === "." && this.isDigit(this.peek()))
       ) {
         return this.number();
       }
