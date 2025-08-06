@@ -63,11 +63,34 @@ export class Parser {
 
     if (inlineMode) return this.listExpr();
 
-    const node = this.statementList();
+    const node = this.statementListNode();
     if ((this.currentToken.type as TokenType) !== TokenType.EOF) {
       this.error("Unexpected token at the end of input.");
     }
     return node;
+  }
+
+  private statementListNode(): StatementListNode {
+    const statements: ASTNode[] = [];
+    const token = this.currentToken;
+
+    while (
+      this.currentToken.type !== TokenType.EOF &&
+      this.currentToken.type !== TokenType.RBLOCK
+    ) {
+      statements.push(this.statement());
+      if (this.currentToken.type === TokenType.SEMICOLON) {
+        this.eat(TokenType.SEMICOLON);
+      } else {
+        if (
+          (this.currentToken.type as TokenType) === TokenType.EOF ||
+          (this.currentToken.type as TokenType) === TokenType.RBLOCK
+        ) {
+          break;
+        }
+      }
+    }
+    return new StatementListNode(statements, token);
   }
 
   private statement(): ASTNode {
@@ -93,29 +116,6 @@ export class Parser {
     }
 
     return this.listExpr();
-  }
-
-  private statementList(): StatementListNode {
-    const statements: ASTNode[] = [];
-    const token = this.currentToken;
-
-    while (
-      this.currentToken.type !== TokenType.EOF &&
-      this.currentToken.type !== TokenType.RBLOCK
-    ) {
-      statements.push(this.statement());
-      if (this.currentToken.type === TokenType.SEMICOLON) {
-        this.eat(TokenType.SEMICOLON);
-      } else {
-        if (
-          (this.currentToken.type as TokenType) === TokenType.EOF ||
-          (this.currentToken.type as TokenType) === TokenType.RBLOCK
-        ) {
-          break;
-        }
-      }
-    }
-    return new StatementListNode(statements, token);
   }
 
   private assignDeclaration(): AssignNode {
@@ -225,7 +225,7 @@ export class Parser {
 
   private block(): BlockNode {
     this.eat(TokenType.LBLOCK);
-    const statements = this.statementList();
+    const statements = this.statementListNode();
     this.eat(TokenType.RBLOCK);
     return new BlockNode(statements);
   }
