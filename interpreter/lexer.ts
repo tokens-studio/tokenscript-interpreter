@@ -179,19 +179,31 @@ export class Lexer {
   }
 
   private reference(): Token {
-    // Handles {reference.name}
     this.advance(); // Skip '{'
+
     let result = "";
     while (this.currentChar !== null && this.currentChar !== "}") {
-      if (this.currentChar === "{")
-        this.error("Nested '{' in reference not allowed.");
+      if (this.currentChar === "{") {
+        this.error("Expected '}' to close variable.");
+      }
+      if (isSpace(this.currentChar)) {
+        this.advance();
+        continue;
+      }
       result += this.currentChar;
       this.advance();
     }
-    if (this.currentChar === null)
+
+    if (this.currentChar === null) {
       this.error("Unterminated reference, missing '}'.");
-    this.advance(); // Skip '}'
-    return { type: TokenType.REFERENCE, value: result.trim(), line: this.line };
+    }
+
+    if (result === "") {
+      this.error("Empty variable name.");
+    }
+
+    this.advance();
+    return { type: TokenType.REFERENCE, value: result, line: this.line };
   }
 
   private explicitString(quoteType: string): Token {
