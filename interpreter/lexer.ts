@@ -36,6 +36,21 @@ export class Lexer {
     this.currentChar = this.text[this.pos];
   }
 
+  private error(description = ""): never {
+    if (this.currentChar === null) {
+      throw new LexerError(
+        `Unexpected end of input at position ${this.pos}. ${description}`,
+        this.line,
+      );
+    }
+
+    throw new LexerError(
+      `Invalid character '${this.currentChar}' at position ${this.pos}. ${description}`,
+      this.line,
+      { type: TokenType.EOF, value: this.currentChar, line: this.line },
+    );
+  }
+
   private advance(): void {
     if (this.currentChar === "\n") {
       this.line++;
@@ -126,10 +141,7 @@ export class Lexer {
     let result = "";
 
     if (!this.isValidIdentifierStart(this.currentChar)) {
-      throw new LexerError(
-        `Invalid identifier starting character: '${this.currentChar}'`,
-        this.line,
-      );
+      this.error(`Invalid identifier starting character`);
     }
 
     // Add first character
@@ -171,12 +183,12 @@ export class Lexer {
     let result = "";
     while (this.currentChar !== null && this.currentChar !== "}") {
       if (this.currentChar === "{")
-        throw new LexerError("Nested '{' in reference not allowed.", this.line);
+        this.error("Nested '{' in reference not allowed.");
       result += this.currentChar;
       this.advance();
     }
     if (this.currentChar === null)
-      throw new LexerError("Unterminated reference, missing '}'.", this.line);
+      this.error("Unterminated reference, missing '}'.");
     this.advance(); // Skip '}'
     return { type: TokenType.REFERENCE, value: result.trim(), line: this.line };
   }
@@ -189,10 +201,7 @@ export class Lexer {
       this.advance();
     }
     if (this.currentChar === null)
-      throw new LexerError(
-        `Unterminated string, missing '${quoteType}'.`,
-        this.line,
-      );
+      this.error(`Unterminated string, missing '${quoteType}'.`);
     this.advance(); // Skip closing quote
     return { type: TokenType.EXPLICIT_STRING, value: result, line: this.line };
   }
@@ -209,10 +218,7 @@ export class Lexer {
     // Check if what we gathered is valid length
     if (result.length !== 4 && result.length !== 7) {
       // #RGB or #RRGGBB
-      throw new LexerError(
-        `Invalid hex color format: ${result}. Length should be #RGB or #RRGGBB.`,
-        this.line,
-      );
+      this.error(`Invalid hex color format: ${result}. Length should be #RGB or #RRGGBB.`);
     }
     return { type: TokenType.HEX_COLOR, value: result, line: this.line };
   }
@@ -359,10 +365,7 @@ export class Lexer {
               line: this.line,
             };
           } else {
-            throw new LexerError(
-              `Unexpected character: ${this.currentChar} without a following '&'`,
-              this.line,
-            );
+            this.error(`without a following '&'`);
           }
           break;
         case "|":
@@ -374,10 +377,7 @@ export class Lexer {
               line: this.line,
             };
           } else {
-            throw new LexerError(
-              `Unexpected character: ${this.currentChar} without a following '|'`,
-              this.line,
-            );
+            this.error(`without a following '|'`);
           }
           break;
       }
@@ -387,10 +387,7 @@ export class Lexer {
         return token;
       }
 
-      throw new LexerError(
-        `Invalid character '${this.currentChar}'`,
-        this.line,
-      );
+      this.error();
     }
     return { type: TokenType.EOF, value: null, line: this.line };
   }
