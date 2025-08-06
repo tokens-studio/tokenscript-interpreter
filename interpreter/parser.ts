@@ -96,7 +96,7 @@ export class Parser {
         case ReservedKeyword.IF:
           return this.ifStatement();
         case ReservedKeyword.VARIABLE:
-          return this.assignVariableNode();
+          return this.assignVariable();
       }
     }
 
@@ -111,7 +111,7 @@ export class Parser {
     return this.listExpr();
   }
 
-  private assignVariableNode(): AssignNode {
+  private assignVariable(): AssignNode {
     const token = this.eat(TokenType.RESERVED_KEYWORD);
     const varNameToken = this.eat(TokenType.STRING);
     const varName = new IdentifierNode(varNameToken);
