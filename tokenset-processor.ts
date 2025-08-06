@@ -53,7 +53,6 @@ export class TokenSetResolver {
       try {
         const lexer = new Lexer(tokenData);
 
-        // Check if lexer is at EOF (empty or whitespace-only input)
         if (lexer.isEOF()) {
           this.resolvedTokens.set(tokenName, tokenData);
           continue;
@@ -65,7 +64,6 @@ export class TokenSetResolver {
         if (ast) {
           this.parsers.set(tokenName, ast);
 
-          // Check for self-reference
           if (parser.requiredReferences.has(tokenName)) {
             this.warnings.push(
               `Token '${tokenName}' has a circular reference to itself.`,
