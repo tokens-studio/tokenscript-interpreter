@@ -1,4 +1,10 @@
-import type { ASTNode, Operations, SupportedFormats, Token, TokenType } from "../types";
+import type {
+  ASTNode,
+  Operations,
+  SupportedFormats,
+  Token,
+  TokenType,
+} from "../types";
 
 // Re-export ASTNode for external consumers
 export type { ASTNode } from "../types";
@@ -9,7 +15,7 @@ export class BinOpNode implements ASTNode {
     public left: ASTNode,
     public opToken: Token,
     public right: ASTNode,
-    public token?: Token
+    public token?: Token,
   ) {
     this.token = opToken;
   }
@@ -46,7 +52,7 @@ export class UnaryOpNode implements ASTNode {
   constructor(
     public opToken: Token,
     public expr: ASTNode,
-    public token?: Token
+    public token?: Token,
   ) {
     this.token = opToken;
   }
@@ -59,7 +65,7 @@ export class ListNode implements ASTNode {
   nodeType = "ListNode";
   constructor(
     public elements: ASTNode[],
-    public token?: Token
+    public token?: Token,
   ) {}
 }
 
@@ -68,7 +74,7 @@ export class ImplicitListNode extends ListNode {
   public isImplicit = true;
   constructor(
     public elements: ASTNode[],
-    public token?: Token
+    public token?: Token,
   ) {
     super(elements, token);
   }
@@ -80,7 +86,7 @@ export class FunctionNode implements ASTNode {
   constructor(
     nameTokenValue: string,
     public args: ASTNode[],
-    public token?: Token
+    public token?: Token,
   ) {
     this.name = nameTokenValue;
   }
@@ -121,7 +127,7 @@ export class BooleanNode implements ASTNode {
   nodeType = "BooleanNode";
   constructor(
     public value: boolean,
-    public token?: Token
+    public token?: Token,
   ) {}
 }
 
@@ -131,7 +137,7 @@ export class ElementWithUnitNode implements ASTNode {
   constructor(
     public astNode: ASTNode,
     unitTokenValue: SupportedFormats,
-    public token?: Token
+    public token?: Token,
   ) {
     this.unit = unitTokenValue;
   }
@@ -143,7 +149,7 @@ export class AssignNode implements ASTNode {
     public varName: IdentifierNode,
     public typeDecl: TypeDeclNode, // Represents the full type string like 'Color.RGB' or 'String'
     public assignmentExpr: ASTNode | null, // Null if no assignment
-    public token?: Token
+    public token?: Token,
   ) {}
 }
 
@@ -154,7 +160,7 @@ export class TypeDeclNode implements ASTNode {
   constructor(
     public baseType: IdentifierNode,
     public subTypes: IdentifierNode[],
-    public token?: Token
+    public token?: Token,
   ) {}
 
   toString(): string {
@@ -172,7 +178,7 @@ export class AttributeAssignNode implements ASTNode {
     public objectIdentifier: IdentifierNode,
     public attributes: IdentifierNode[],
     public value: ASTNode,
-    public token?: Token
+    public token?: Token,
   ) {}
 }
 
@@ -181,7 +187,7 @@ export class ReassignNode implements ASTNode {
   constructor(
     public identifier: IdentifierNode,
     public value: ASTNode,
-    public token?: Token
+    public token?: Token,
   ) {}
 }
 
@@ -189,7 +195,7 @@ export class ReturnNode implements ASTNode {
   nodeType = "ReturnNode";
   constructor(
     public expr: ASTNode,
-    public token?: Token
+    public token?: Token,
   ) {}
 }
 
@@ -198,7 +204,7 @@ export class WhileNode implements ASTNode {
   constructor(
     public condition: ASTNode,
     public body: StatementListNode,
-    public token?: Token
+    public token?: Token,
   ) {}
 }
 
@@ -208,7 +214,7 @@ export class IfNode implements ASTNode {
     public condition: ASTNode,
     public ifBody: StatementListNode,
     public elseBody: StatementListNode | null,
-    public token?: Token
+    public token?: Token,
   ) {}
 }
 
@@ -217,7 +223,7 @@ export class BlockNode implements ASTNode {
   nodeType = "BlockNode";
   constructor(
     public statements: StatementListNode,
-    public token?: Token
+    public token?: Token,
   ) {}
 }
 
@@ -225,7 +231,7 @@ export class StatementListNode implements ASTNode {
   nodeType = "StatementListNode";
   constructor(
     public statements: ASTNode[],
-    public token?: Token
+    public token?: Token,
   ) {}
 }
 
@@ -236,6 +242,6 @@ export class AttributeAccessNode implements ASTNode {
   constructor(
     public left: ASTNode,
     public right: IdentifierNode | FunctionNode,
-    public token?: Token
+    public token?: Token,
   ) {}
 }
