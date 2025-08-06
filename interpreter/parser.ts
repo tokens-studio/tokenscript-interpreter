@@ -403,15 +403,15 @@ export class Parser {
       return new HexColorNode(token);
     }
 
+    // Identifier or function call
     if (token.type === TokenType.STRING) {
-      // Identifier or function call
       this.eat(TokenType.STRING);
       let node: ASTNode;
       // After `eat(STRING)`, currentToken is updated.
       // This comparison (this.currentToken.type as TokenType) === TokenType.LPAREN is valid.
       if ((this.currentToken.type as TokenType) === TokenType.LPAREN) {
         // Function call
-        node = this.functionNode(token);
+        node = this.functionCall(token);
       } else {
         // Identifier
         node = new IdentifierNode(token);
@@ -440,8 +440,7 @@ export class Parser {
       // After `eat(STRING)`, currentToken is updated.
       // This comparison (this.currentToken.type as TokenType) === TokenType.LPAREN is valid.
       if ((this.currentToken.type as TokenType) === TokenType.LPAREN) {
-        // Method call
-        const methodNode = this.functionNode(attrNameToken);
+        const methodNode = this.functionCall(attrNameToken);
         node = new AttributeAccessNode(node, methodNode);
       } else {
         // Property access
@@ -451,7 +450,7 @@ export class Parser {
     return node;
   }
 
-  private functionNode(functionName: Token): FunctionNode {
+  private functionCall(functionName: Token): FunctionNode {
     const token = this.currentToken;
     this.eat(TokenType.LPAREN);
     const args: ASTNode[] = [];
