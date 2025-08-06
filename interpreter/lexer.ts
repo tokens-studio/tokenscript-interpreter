@@ -421,7 +421,6 @@ export class Lexer {
     const savedLine = this.line;
     const savedColumn = this.column;
 
-    // Get next token
     const nextToken = this.nextToken();
 
     // Restore state
