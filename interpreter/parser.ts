@@ -107,7 +107,7 @@ export class Parser {
   }
 
   private assignVariableNode(): AssignNode {
-    const varToken = this.eat(TokenType.RESERVED_KEYWORD); // 'variable'
+    const token = this.eat(TokenType.RESERVED_KEYWORD);
     const varNameToken = this.eat(TokenType.STRING);
     const varName = new IdentifierNode(varNameToken);
     this.eat(TokenType.COLON);
@@ -119,7 +119,7 @@ export class Parser {
       this.eat(TokenType.ASSIGN);
       assignmentExpr = this.listExpr();
     }
-    return new AssignNode(varName, typeDecl, assignmentExpr, varToken);
+    return new AssignNode(varName, typeDecl, assignmentExpr, token);
   }
 
   private reassignStatement(): ReassignNode {
@@ -133,6 +133,7 @@ export class Parser {
   private typeDeclaration(): TypeDeclNode {
     const baseTypeToken = this.eat(TokenType.STRING);
     const baseType = new IdentifierNode(baseTypeToken);
+
     const subTypes: IdentifierNode[] = [];
     while (this.currentToken.type === TokenType.DOT) {
       this.eat(TokenType.DOT);
