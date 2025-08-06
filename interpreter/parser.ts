@@ -58,18 +58,6 @@ export class Parser {
     return eatenToken;
   }
 
-  public parse(inlineMode = false): ASTNode | null {
-    if (this.currentToken.type === TokenType.EOF) return null;
-
-    if (inlineMode) return this.listExpr();
-
-    const node = this.statementsList();
-    if ((this.currentToken.type as TokenType) !== TokenType.EOF) {
-      this.error("Unexpected token at the end of input.");
-    }
-    return node;
-  }
-
   private statementsList(): StatementListNode {
     const statements: ASTNode[] = [];
     const token = this.currentToken;
@@ -471,5 +459,17 @@ export class Parser {
     }
     this.eat(TokenType.RPAREN);
     return new FunctionNode(functionName.value as string, args, functionName);
+  }
+
+  public parse(inlineMode = false): ASTNode | null {
+    if (this.currentToken.type === TokenType.EOF) return null;
+
+    if (inlineMode) return this.listExpr();
+
+    const node = this.statementsList();
+    if ((this.currentToken.type as TokenType) !== TokenType.EOF) {
+      this.error("Unexpected token at the end of input.");
+    }
+    return node;
   }
 }
