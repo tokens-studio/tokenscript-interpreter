@@ -236,17 +236,17 @@ export class Parser {
 
   private listExpr(): ASTNode {
     const firstToken = this.currentToken;
-    const elements: ASTNode[] = [this.implicitList()];
+    const elements: ASTNode[] = [this.implicitListExprNode()];
     while (this.currentToken.type === TokenType.COMMA) {
       this.eat(TokenType.COMMA);
-      elements.push(this.implicitList());
+      elements.push(this.implicitListExprNode());
     }
     if (elements.length === 1) return elements[0];
     return new ListNode(elements, firstToken);
   }
 
   // ImplicitList = Expr+
-  private implicitList(): ASTNode {
+  private implicitListExprNode(): ASTNode {
     const firstToken = this.currentToken;
     const elements: ASTNode[] = [this.expr()];
     while (
@@ -474,7 +474,7 @@ export class Parser {
       if (this.currentToken.type === TokenType.COMMA) {
         this.eat(TokenType.COMMA);
       }
-      args.push(this.implicitList());
+      args.push(this.implicitListExprNode());
     }
     this.eat(TokenType.RPAREN);
     return new FunctionNode(functionName.value as string, args, functionName);
