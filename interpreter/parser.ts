@@ -58,7 +58,7 @@ export class Parser {
     return eatenToken;
   }
 
-  private statementsList(): StatementListNode {
+  private statementsList(): ASTNode | StatementListNode {
     const statements: ASTNode[] = [];
     const token = this.currentToken;
 
@@ -78,6 +78,11 @@ export class Parser {
         }
       }
     }
+
+    if (statements.length === 1) {
+      return statements[0];
+    }
+
     return new StatementListNode(statements, token);
   }
 
@@ -214,7 +219,7 @@ export class Parser {
 
   private block(): BlockNode {
     this.eat(TokenType.LBLOCK);
-    const statements = this.statementsList();
+    const statements = this.statementsList() as StatementListNode;
     this.eat(TokenType.RBLOCK);
     return new BlockNode(statements);
   }
