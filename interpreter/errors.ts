@@ -20,7 +20,7 @@ export class LanguageError extends Error {
     if (this.line !== undefined) {
       base = `Line ${this.line}: ${base}`;
     }
-    if (this.token && this.token.value) {
+    if (this.token?.value) {
       base += `\nNear token: ${String(this.token.value)}`;
     }
     return base;

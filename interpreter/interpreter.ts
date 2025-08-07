@@ -894,5 +894,3 @@ export class Interpreter {
     return visitOutcome === null ? null : String(visitOutcome);
   }
 }
-
-console.log("lol");
