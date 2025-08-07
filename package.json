@@ -32,7 +32,7 @@
     "cli:interactive": "tsx cli.ts interactive",
     "cli:parse": "tsx cli.ts parse_tokenset",
     "cli:permutate": "tsx cli.ts permutate_tokenset",
-    "lint": "biome lint .",
+    "lint": "biome lint --max-diagnostics=none .",
     "lint:fix": "biome lint --write .",
     "format": "biome format --write .",
     "format:check": "biome format .",
