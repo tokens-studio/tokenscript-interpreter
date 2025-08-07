@@ -456,7 +456,7 @@ export class Parser {
   }
 
   private functionCall(functionName: Token): FunctionNode {
-    const token = this.currentToken;
+    const _token = this.currentToken;
     this.eat(TokenType.LPAREN);
     const args: ASTNode[] = [];
     while (this.currentToken.type !== TokenType.RPAREN) {
