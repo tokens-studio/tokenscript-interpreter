@@ -332,7 +332,7 @@ export class Parser {
   }
 
   private numberNode(): ASTNode {
-    let node = new NumNode(this.currentToken);
+    const node = new NumNode(this.currentToken);
     this.eat(TokenType.NUMBER);
     if (this.currentToken.type === TokenType.FORMAT) {
       return this.formatNode(node);
@@ -341,7 +341,7 @@ export class Parser {
   }
 
   private reference(): ASTNode {
-    let node = new ReferenceNode(this.currentToken);
+    const node = new ReferenceNode(this.currentToken);
     this.eat(TokenType.REFERENCE);
     this.requiredReferences.add(node.value);
 
@@ -388,7 +388,7 @@ export class Parser {
 
     if (token.type === TokenType.LPAREN) {
       this.eat(TokenType.LPAREN);
-      let node = this.expr();
+      const node = this.expr();
       this.eat(TokenType.RPAREN);
       if (this.currentToken.type === TokenType.FORMAT) {
         return this.formatNode(node);

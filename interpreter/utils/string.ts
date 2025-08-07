@@ -5,7 +5,7 @@ export enum CodePoint {
   BACKWARD_TICK = 96,
 }
 
-export const isAlpha = function (char: string | null): boolean {
+export const isAlpha = (char: string | null): boolean => {
   if (char === null) return false;
   const cp = char.codePointAt(0) ?? 0;
   return (
@@ -14,18 +14,18 @@ export const isAlpha = function (char: string | null): boolean {
   );
 };
 
-export const isNumber = function (char: string | null): boolean {
+export const isNumber = (char: string | null): boolean => {
   if (char === null) return false;
   const cp = char.codePointAt(0) ?? 0;
   return cp >= 48 && cp <= 57; // 0-9
 };
 
-export const isAlphaNumeric = function (char: string | null): boolean {
+export const isAlphaNumeric = (char: string | null): boolean => {
   if (char === null) return false;
   return isAlpha(char) || isNumber(char);
 };
 
-export const isSpace = function (char: string | null) {
+export const isSpace = (char: string | null) => {
   if (char === null) return false;
   return /\s/.test(char);
 };
