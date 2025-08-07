@@ -24,6 +24,12 @@ export {
 
 // Type definitions
 export * from "../types";
-export type { PerformanceData, PerformanceSummary } from "../utils/performance-tracker";
+export type {
+  PerformanceData,
+  PerformanceSummary,
+} from "../utils/performance-tracker";
 // Performance tracking utilities
-export { PerformanceTracker, trackPerformance } from "../utils/performance-tracker";
+export {
+  PerformanceTracker,
+  trackPerformance,
+} from "../utils/performance-tracker";
