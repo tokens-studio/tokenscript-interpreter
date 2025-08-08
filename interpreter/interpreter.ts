@@ -595,9 +595,9 @@ export class Interpreter {
     }
 
     const valueToAssignVisit = this.visit(node.value);
-    if (valueToAssignVisit === undefined) {
+    if (valueToAssignVisit === null) {
       throw new InterpreterError(
-        `Assignment value for '${varName}' is undefined.`,
+        `Assignment value for '${varName}' is null.`,
         (node.value as any).token?.line,
       );
     }
@@ -770,14 +770,14 @@ export class Interpreter {
 
   private visitStatementListNode(
     node: StatementListNode,
-  ): ISymbolType | null | undefined {
-    let result: ISymbolType | null | undefined;
+  ): ISymbolType | null {
+    let result: ISymbolType | null = null;
     for (const statement of node.statements) {
       const statementVisitResult = this.visit(statement);
       if (statementVisitResult instanceof ReturnSignal) {
         throw statementVisitResult;
       }
-      if (statementVisitResult !== undefined) {
+      if (statementVisitResult !== null) {
         result = statementVisitResult;
       }
     }
@@ -786,19 +786,19 @@ export class Interpreter {
 
   private visitReturnNode(node: ReturnNode): void {
     const returnValueVisit = this.visit(node.expr);
-    if (returnValueVisit === undefined) {
+    if (returnValueVisit === null) {
       throw new ReturnSignal(null);
     }
     throw new ReturnSignal(returnValueVisit); // returnValueVisit is ISymbolType | null
   }
 
-  private visitBlockNode(node: BlockNode): ISymbolType | null | undefined {
+  private visitBlockNode(node: BlockNode): ISymbolType | null {
     const oldSymbolTable = this.symbolTable;
     this.symbolTable = new SymbolTable(oldSymbolTable);
-    let result: ISymbolType | null | undefined;
+    let result: ISymbolType | null = null;
     try {
       const blockVisitResult = this.visit(node.statements);
-      if (blockVisitResult !== undefined) {
+      if (blockVisitResult !== null) {
         result = blockVisitResult;
       }
     } finally {
@@ -841,7 +841,7 @@ export class Interpreter {
     }
   }
 
-  private visitIfNode(node: IfNode): ISymbolType | null | undefined {
+  private visitIfNode(node: IfNode): ISymbolType | null {
     const conditionVisitResult = this.visit(node.condition);
     if (
       !conditionVisitResult ||
@@ -861,7 +861,7 @@ export class Interpreter {
     if (node.elseBody) {
       return this.visit(node.elseBody);
     }
-    return; // void if no branch taken
+    return null; // null if no branch taken
   }
 
   public interpret(): ISymbolType | string | null {
