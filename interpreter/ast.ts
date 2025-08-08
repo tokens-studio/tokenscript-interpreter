@@ -29,11 +29,11 @@ export class NumNode implements ASTNode {
   public value: number;
   public isFloat: boolean;
   constructor(public token: Token) {
-    if (String(this.token.value).includes(".")) {
-      this.value = Number.parseFloat(String(this.token.value));
+    if (this.token.value.includes(".")) {
+      this.value = Number.parseFloat(this.token.value);
       this.isFloat = true;
     } else {
-      this.value = Number.parseInt(String(this.token.value), 10);
+      this.value = Number.parseInt(this.token.value, 10);
       this.isFloat = false;
     }
   }
@@ -43,7 +43,7 @@ export class StringNode implements ASTNode {
   nodeType = "StringNode";
   public value: string;
   constructor(public token: Token) {
-    this.value = String(token.value);
+    this.value = token.value;
   }
 }
 
@@ -101,7 +101,7 @@ export class ReferenceNode implements ASTNode {
   nodeType = "ReferenceNode";
   public value: string;
   constructor(public token: Token) {
-    this.value = String(token.value);
+    this.value = token.value;
   }
 }
 
@@ -109,7 +109,7 @@ export class IdentifierNode implements ASTNode {
   nodeType = "IdentifierNode";
   public name: string;
   constructor(public token: Token) {
-    this.name = String(token.value);
+    this.name = token.value;
   }
 }
 
@@ -117,7 +117,7 @@ export class HexColorNode implements ASTNode {
   nodeType = "HexColorNode";
   public value: string;
   constructor(public token: Token) {
-    this.value = String(token.value);
+    this.value = token.value;
   }
 }
 

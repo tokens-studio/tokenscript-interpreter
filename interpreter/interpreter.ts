@@ -768,9 +768,7 @@ export class Interpreter {
     );
   }
 
-  private visitStatementListNode(
-    node: StatementListNode,
-  ): ISymbolType | null {
+  private visitStatementListNode(node: StatementListNode): ISymbolType | null {
     let result: ISymbolType | null = null;
     for (const statement of node.statements) {
       const statementVisitResult = this.visit(statement);
@@ -861,7 +859,7 @@ export class Interpreter {
     if (node.elseBody) {
       return this.visit(node.elseBody);
     }
-    return null; // null if no branch taken
+    return null; // no branch taken
   }
 
   public interpret(): ISymbolType | string | null {
