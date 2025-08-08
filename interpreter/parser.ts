@@ -112,19 +112,26 @@ export class Parser {
   }
 
   private assignVariable(): AssignNode {
+    // consume 'variable'
     const token = this.eat(TokenType.RESERVED_KEYWORD);
+
+    // get variable name
     const varNameToken = this.eat(TokenType.STRING);
     const varName = new IdentifierNode(varNameToken);
     this.eat(TokenType.COLON);
 
+    // get type declaration
     const typeDecl = this.typeDeclaration();
 
-    let assignmentExpr: ASTNode | null = null;
+    // handle assignment if present
     if (this.currentToken.type === TokenType.ASSIGN) {
       this.eat(TokenType.ASSIGN);
-      assignmentExpr = this.listExpr();
+      const assignmentExpr = this.listExpr();
+      return new AssignNode(varName, typeDecl, assignmentExpr, token);
     }
-    return new AssignNode(varName, typeDecl, assignmentExpr, token);
+
+    // No assignment, just declaration
+    return new AssignNode(varName, typeDecl, null, token);
   }
 
   private reassignVariable(): ReassignNode {
