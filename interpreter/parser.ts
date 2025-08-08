@@ -265,7 +265,11 @@ export class Parser {
       this.eat(TokenType.COMMA);
       elements.push(this.implicitListExprNode());
     }
-    if (elements.length === 1) return elements[0];
+
+    if (elements.length === 1) {
+      return elements[0];
+    }
+
     return new ListNode(elements, firstToken);
   }
 
@@ -333,7 +337,7 @@ export class Parser {
     return node;
   }
 
-  // Power = Factor ("^" Factor)*
+  // factor (POWER factor)*
   private power(): ASTNode {
     let node = this.factor();
     while (
@@ -352,7 +356,7 @@ export class Parser {
     return new ElementWithUnitNode(node, formatToken.value);
   }
 
-  private numberNode(): ASTNode {
+  private number(): ASTNode {
     const node = new NumNode(this.currentToken);
     this.eat(TokenType.NUMBER);
     if (this.currentToken.type === TokenType.FORMAT) {
@@ -393,7 +397,7 @@ export class Parser {
     }
 
     if (token.type === TokenType.NUMBER) {
-      return this.numberNode();
+      return this.number();
     }
 
     if (token.type === TokenType.LPAREN) {
