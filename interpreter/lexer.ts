@@ -61,6 +61,14 @@ export class Lexer {
     this.currentChar = this.pos < this.text.length ? this.text[this.pos] : null;
   }
 
+  private eat(char: string): void {
+    if (this.currentChar === char) {
+      this.advance();
+    } else {
+      this.error(`Expected character ${char} got ${this.currentChar}`);
+    }
+  }
+
   private peek(n = 1): string | null {
     return this.text[this.pos + n];
   }
@@ -169,7 +177,7 @@ export class Lexer {
   }
 
   private reference(): Token {
-    this.advance(); // Skip '{'
+    this.eat("{");
 
     let result = "";
     while (this.currentChar !== null && this.currentChar !== "}") {
@@ -192,7 +200,7 @@ export class Lexer {
       this.error("Empty variable name.");
     }
 
-    this.advance();
+    this.eat("}");
     return { type: TokenType.REFERENCE, value: result, line: this.line };
   }
 
