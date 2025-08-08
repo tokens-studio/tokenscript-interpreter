@@ -261,6 +261,7 @@ export class Parser {
   private listExpr(): ASTNode {
     const firstToken = this.currentToken;
     const elements: ASTNode[] = [this.implicitListExprNode()];
+
     while (this.currentToken.type === TokenType.COMMA) {
       this.eat(TokenType.COMMA);
       elements.push(this.implicitListExprNode());
