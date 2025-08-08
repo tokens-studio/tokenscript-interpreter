@@ -192,7 +192,7 @@ export class Interpreter {
     throw new InterpreterError(`Invalid reference value type: ${typeof value}`);
   }
 
-  private visit(node: ASTNode | null): ISymbolType | null | undefined {
+  private visit(node: ASTNode | null): ISymbolType | null {
     if (!node) return null;
 
     const visitorMethodName = `visit${node.nodeType}` as keyof this;
@@ -200,7 +200,8 @@ export class Interpreter {
       return (this as any)[visitorMethodName](node);
     }
     this.genericVisit(node);
-    return;
+
+    return null;
   }
 
   private genericVisit(node: ASTNode): void {
@@ -867,7 +868,7 @@ export class Interpreter {
     const tree = this.ast || (this.parser ? this.parser.parse() : null);
     if (!tree) return "";
 
-    let result: ISymbolType | null | undefined;
+    let result: ISymbolType | null;
     try {
       result = this.visit(tree);
     } catch (e) {
@@ -880,10 +881,6 @@ export class Interpreter {
           "An unknown error occurred during interpretation.",
         );
       }
-    }
-
-    if (result === undefined) {
-      return null;
     }
 
     if (result instanceof BaseSymbolType) {
