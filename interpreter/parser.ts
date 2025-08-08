@@ -169,6 +169,19 @@ export class Parser {
     return node;
   }
 
+  // logic_term ((AND | OR) logic_term)*
+  private expr(): ASTNode {
+    let node = this.logicTerm();
+    while (
+      this.currentToken.type === TokenType.LOGIC_AND ||
+      this.currentToken.type === TokenType.LOGIC_OR
+    ) {
+      const token = this.eat(this.currentToken.type);
+      node = new BinOpNode(node, token, this.logicTerm());
+    }
+    return node;
+  }
+
   private attributeAssignment(): AttributeAssignNode {
     // Grammar: ident ("." ident)* "=" ListExpr
     // This is simplified due to lack of multi-token lookahead.
@@ -273,19 +286,6 @@ export class Parser {
     if (elements.length === 1) return elements[0];
 
     return new ImplicitListNode(elements, token);
-  }
-
-  // Expr = LogicTerm (("&&" | "||") LogicTerm)*
-  private expr(): ASTNode {
-    let node = this.logicTerm();
-    while (
-      this.currentToken.type === TokenType.LOGIC_AND ||
-      this.currentToken.type === TokenType.LOGIC_OR
-    ) {
-      const token = this.eat(this.currentToken.type);
-      node = new BinOpNode(node, token, this.logicTerm());
-    }
-    return node;
   }
 
   // LogicTerm = Comparison (("+" | "-") Comparison)*
