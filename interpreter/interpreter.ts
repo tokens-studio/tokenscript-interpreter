@@ -199,12 +199,7 @@ export class Interpreter {
     if (typeof (this as any)[visitorMethodName] === "function") {
       return (this as any)[visitorMethodName](node);
     }
-    this.genericVisit(node);
 
-    return null;
-  }
-
-  private genericVisit(node: ASTNode): void {
     throw new InterpreterError(
       `No visit method for AST node type: ${node.nodeType}`,
       node.token?.line,
