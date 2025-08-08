@@ -135,6 +135,17 @@ export class Parser {
     return new ReassignNode(identifier, value, identifierToken);
   }
 
+  private reference(): ASTNode {
+    const node = new ReferenceNode(this.currentToken);
+    this.eat(TokenType.REFERENCE);
+    this.requiredReferences.add(node.value);
+
+    if (this.currentToken.type === TokenType.FORMAT) {
+      return this.formatNode(node);
+    }
+    return node;
+  }
+
   private typeDeclaration(): TypeDeclNode {
     const baseTypeToken = this.eat(TokenType.STRING);
     const baseType = new IdentifierNode(baseTypeToken);
@@ -334,17 +345,6 @@ export class Parser {
   private numberNode(): ASTNode {
     const node = new NumNode(this.currentToken);
     this.eat(TokenType.NUMBER);
-    if (this.currentToken.type === TokenType.FORMAT) {
-      return this.formatNode(node);
-    }
-    return node;
-  }
-
-  private reference(): ASTNode {
-    const node = new ReferenceNode(this.currentToken);
-    this.eat(TokenType.REFERENCE);
-    this.requiredReferences.add(node.value);
-
     if (this.currentToken.type === TokenType.FORMAT) {
       return this.formatNode(node);
     }
