@@ -10,7 +10,7 @@ export abstract class BaseSymbolType implements ISymbolType {
     this.value = value;
   }
 
-  abstract valid_value(value: any): boolean;
+  abstract validValue(value: any): boolean;
 
   toString(): string {
     return String(this.value);
@@ -29,10 +29,14 @@ export abstract class BaseSymbolType implements ISymbolType {
   }
 
   hasMethod?(methodName: string, args: ISymbolType[]): boolean {
-    const methodDefinition = (this as any)._SUPPORTED_METHODS?.[methodName.toLowerCase()];
+    const methodDefinition = (this as any)._SUPPORTED_METHODS?.[
+      methodName.toLowerCase()
+    ];
     if (!methodDefinition) return false;
 
-    const requiredArgs = methodDefinition.args.filter((arg: any) => !arg.optional);
+    const requiredArgs = methodDefinition.args.filter(
+      (arg: any) => !arg.optional,
+    );
     const hasUnpackArg = methodDefinition.args.some((arg: any) => arg.unpack);
 
     if (args.length < requiredArgs.length) {
@@ -48,18 +52,25 @@ export abstract class BaseSymbolType implements ISymbolType {
     return true;
   }
 
-  callMethod?(methodName: string, args: ISymbolType[]): ISymbolType | null | undefined {
-    const methodDefinition = (this as any)._SUPPORTED_METHODS?.[methodName.toLowerCase()];
+  callMethod?(
+    methodName: string,
+    args: ISymbolType[],
+  ): ISymbolType | null | undefined {
+    const methodDefinition = (this as any)._SUPPORTED_METHODS?.[
+      methodName.toLowerCase()
+    ];
     if (!methodDefinition || !this.hasMethod?.(methodName, args)) {
       throw new InterpreterError(
-        `Method '${methodName}' not found or invalid arguments on type '${this.type}'.`
+        `Method '${methodName}' not found or invalid arguments on type '${this.type}'.`,
       );
     }
 
     const processedArgs: any[] = [];
 
     // Handle unpack arguments - if any argument has unpack: true, pass all remaining args to that parameter
-    const unpackArgIndex = methodDefinition.args.findIndex((argDef: any) => argDef.unpack);
+    const unpackArgIndex = methodDefinition.args.findIndex(
+      (argDef: any) => argDef.unpack,
+    );
 
     if (unpackArgIndex !== -1) {
       // Add regular arguments before the unpack argument
@@ -68,7 +79,7 @@ export abstract class BaseSymbolType implements ISymbolType {
           processedArgs.push(args[i]);
         } else if (!methodDefinition.args[i].optional) {
           throw new InterpreterError(
-            `Missing required argument '${methodDefinition.args[i].name}' for method '${methodName}'.`
+            `Missing required argument '${methodDefinition.args[i].name}' for method '${methodName}'.`,
           );
         }
       }
@@ -81,7 +92,7 @@ export abstract class BaseSymbolType implements ISymbolType {
           processedArgs.push(args[index]);
         } else if (!argDef.optional) {
           throw new InterpreterError(
-            `Missing required argument '${argDef.name}' for method '${methodName}'.`
+            `Missing required argument '${argDef.name}' for method '${methodName}'.`,
           );
         }
       });
@@ -95,11 +106,15 @@ export abstract class BaseSymbolType implements ISymbolType {
   }
 
   getAttribute?(attributeName: string): ISymbolType | null {
-    throw new InterpreterError(`Attribute '${attributeName}' not found on type '${this.type}'.`);
+    throw new InterpreterError(
+      `Attribute '${attributeName}' not found on type '${this.type}'.`,
+    );
   }
 
   setAttribute?(attributeName: string, _value: ISymbolType): void {
-    throw new InterpreterError(`Cannot set attribute '${attributeName}' on type '${this.type}'.`);
+    throw new InterpreterError(
+      `Cannot set attribute '${attributeName}' on type '${this.type}'.`,
+    );
   }
 }
 
@@ -124,7 +139,10 @@ export class NumberSymbol extends BaseSymbolType {
 
   constructor(value: number | NumberSymbol | NumberWithUnitSymbol | null) {
     let numValue: number;
-    if (value instanceof NumberSymbol || value instanceof NumberWithUnitSymbol) {
+    if (
+      value instanceof NumberSymbol ||
+      value instanceof NumberWithUnitSymbol
+    ) {
       numValue = value.value as number;
     } else if (typeof value === "number") {
       numValue = value;
@@ -132,19 +150,23 @@ export class NumberSymbol extends BaseSymbolType {
       numValue = 0; // Default to 0 if value is null
     } else {
       throw new InterpreterError(
-        `Cannot create NumberSymbol from value of type ${typeof value}: ${value}`
+        `Cannot create NumberSymbol from value of type ${typeof value}: ${value}`,
       );
     }
     super(numValue);
     this.isFloat = !Number.isInteger(numValue);
     this._SUPPORTED_METHODS = {
-      to_string: { function: this.to_string, args: [], returnType: StringSymbol },
+      to_string: {
+        function: this.to_string,
+        args: [],
+        returnType: StringSymbol,
+      },
     };
   }
 
   _SUPPORTED_METHODS: Record<string, MethodDefinitionDef>;
 
-  valid_value(val: any): boolean {
+  validValue(val: any): boolean {
     return typeof val === "number" || val instanceof NumberSymbol;
   }
 
@@ -169,7 +191,9 @@ export class StringSymbol extends BaseSymbolType {
   _SUPPORTED_METHODS: Record<string, MethodDefinitionDef>;
 
   constructor(value: string | StringSymbol | null) {
-    super(value instanceof StringSymbol ? value.value : value === null ? "" : value);
+    super(
+      value instanceof StringSymbol ? value.value : value === null ? "" : value,
+    );
     this._SUPPORTED_METHODS = {
       upper: { function: this.upper, args: [], returnType: StringSymbol },
       lower: { function: this.lower, args: [], returnType: StringSymbol },
@@ -188,7 +212,7 @@ export class StringSymbol extends BaseSymbolType {
     };
   }
 
-  valid_value(val: any): boolean {
+  validValue(val: any): boolean {
     return typeof val === "string" || val instanceof StringSymbol;
   }
 
@@ -209,7 +233,9 @@ export class StringSymbol extends BaseSymbolType {
     if (other instanceof StringSymbol) {
       return new StringSymbol(this.value + other.value);
     }
-    throw new InterpreterError(`Cannot concatenate String with ${typeof other}`);
+    throw new InterpreterError(
+      `Cannot concatenate String with ${typeof other}`,
+    );
   }
 
   split(delimiter?: StringSymbol): ListSymbol {
@@ -227,9 +253,15 @@ export class StringSymbol extends BaseSymbolType {
 export class BooleanSymbol extends BaseSymbolType {
   type = "Boolean";
   constructor(value: boolean | BooleanSymbol | null) {
-    super(value instanceof BooleanSymbol ? value.value : value === null ? false : value);
+    super(
+      value instanceof BooleanSymbol
+        ? value.value
+        : value === null
+          ? false
+          : value,
+    );
   }
-  valid_value(val: any): boolean {
+  validValue(val: any): boolean {
     return typeof val === "boolean" || val instanceof BooleanSymbol;
   }
 }
@@ -290,14 +322,16 @@ export class ListSymbol extends BaseSymbolType {
     };
   }
 
-  valid_value(val: any): boolean {
+  validValue(val: any): boolean {
     return Array.isArray(val) || val instanceof ListSymbol;
   }
 
   // Custom JSON serialization for lists
   toJSON(): any {
     return {
-      $value: this.elements.map((element) => (element.toJSON ? element.toJSON() : element)),
+      $value: this.elements.map((element) =>
+        element.toJSON ? element.toJSON() : element,
+      ),
       $type: this.type.toLowerCase(),
     };
   }
@@ -306,7 +340,7 @@ export class ListSymbol extends BaseSymbolType {
     if (this.isImplicit) {
       // Check if any element is exactly a single space string - this indicates explicit spacing
       const hasExplicitSingleSpaces = this.elements.some(
-        (e) => e instanceof StringSymbol && e.value === " "
+        (e) => e instanceof StringSymbol && e.value === " ",
       );
 
       if (hasExplicitSingleSpaces) {
@@ -409,21 +443,36 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
   public unit: SupportedFormats;
   _SUPPORTED_METHODS: Record<string, MethodDefinitionDef>;
 
-  constructor(value: number | NumberSymbol | null, unit: SupportedFormats | string) {
-    const numValue = value instanceof NumberSymbol ? value.value : value === null ? 0 : value;
+  constructor(
+    value: number | NumberSymbol | null,
+    unit: SupportedFormats | string,
+  ) {
+    const numValue =
+      value instanceof NumberSymbol ? value.value : value === null ? 0 : value;
     super(numValue);
-    if (typeof unit === "string" && !(Object.values(SupportedFormats) as string[]).includes(unit)) {
+    if (
+      typeof unit === "string" &&
+      !(Object.values(SupportedFormats) as string[]).includes(unit)
+    ) {
       throw new InterpreterError(`Invalid unit: ${unit}`);
     }
     this.unit = typeof unit === "string" ? (unit as SupportedFormats) : unit;
 
     this._SUPPORTED_METHODS = {
-      to_string: { function: this.to_string, args: [], returnType: StringSymbol },
-      to_number: { function: this.to_number, args: [], returnType: NumberSymbol },
+      to_string: {
+        function: this.to_string,
+        args: [],
+        returnType: StringSymbol,
+      },
+      to_number: {
+        function: this.to_number,
+        args: [],
+        returnType: NumberSymbol,
+      },
     };
   }
 
-  valid_value(val: any): boolean {
+  validValue(val: any): boolean {
     return val instanceof NumberWithUnitSymbol;
   }
 
@@ -503,7 +552,7 @@ export class ColorSymbol extends BaseSymbolType {
     return true;
   }
 
-  valid_value(val: any): boolean {
+  validValue(val: any): boolean {
     // Accept other ColorSymbol instances
     if (val instanceof ColorSymbol) {
       return true;

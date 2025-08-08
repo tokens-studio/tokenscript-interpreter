@@ -107,8 +107,8 @@ export class Interpreter {
               Object.assign(this, instance);
             }
 
-            valid_value(value: any): boolean {
-              return colorType!.valid_value(value);
+            validValue(value: any): boolean {
+              return colorType!.validValue(value);
             }
           }
 
@@ -604,7 +604,7 @@ export class Interpreter {
     const valueToAssign = valueToAssignVisit as ISymbolType;
 
     // Type checking - ensure the new value is compatible with the existing variable type
-    if (!existingVar.valid_value(valueToAssign)) {
+    if (!existingVar.validValue(valueToAssign)) {
       throw new InterpreterError(
         `Cannot assign ${valueToAssign.type} to variable '${varName}' of type ${existingVar.type}.`,
         (node.value as any).token?.line,

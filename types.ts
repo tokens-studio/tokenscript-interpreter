@@ -87,7 +87,7 @@ export interface ISymbolType {
   type: string;
   value: any;
 
-  valid_value(value: any): boolean;
+  validValue(value: any): boolean;
   toString(): string; // JS equivalent of __repr__ or __str__
   equals(other: ISymbolType): boolean; // JS equivalent of __eq__
   toJSON?(): any; // Optional JSON serialization

@@ -63,7 +63,7 @@ export class DynamicColorSymbol extends BaseSymbolType {
     this.type = `Color.${typeName.toUpperCase()}`;
   }
 
-  valid_value(value: any): boolean {
+  validValue(value: any): boolean {
     return value instanceof DynamicColorSymbol;
   }
 
@@ -89,7 +89,7 @@ export class DynamicColorSymbol extends BaseSymbolType {
   getAttribute(attributeName: string): ISymbolType | null {
     if (!this.hasAttribute(attributeName)) {
       throw new InterpreterError(
-        `Color type ${this._typeName} does not have attribute '${attributeName}'`
+        `Color type ${this._typeName} does not have attribute '${attributeName}'`,
       );
     }
     return this._values[attributeName] || null;
@@ -98,7 +98,7 @@ export class DynamicColorSymbol extends BaseSymbolType {
   setAttribute(attributeName: string, value: ISymbolType): void {
     if (!this.hasAttribute(attributeName)) {
       throw new InterpreterError(
-        `Color type ${this._typeName} does not have attribute '${attributeName}'`
+        `Color type ${this._typeName} does not have attribute '${attributeName}'`,
       );
     }
     this._values[attributeName] = value;
@@ -111,7 +111,10 @@ export class ColorConversionProxy {
   private sourceId: string;
   public sourceColor: DynamicColorSymbol | null = null;
 
-  constructor(colorTransforms: Record<string, Record<string, ASTNode>>, sourceId: string) {
+  constructor(
+    colorTransforms: Record<string, Record<string, ASTNode>>,
+    sourceId: string,
+  ) {
     this.colorTransforms = colorTransforms;
     this.sourceId = sourceId;
   }
@@ -147,11 +150,17 @@ export class ColorManager {
     this.names[name] = formatId;
 
     // Register the color type
-    this.colorTypes[formatId] = new DynamicColorSymbol(name, formatId, formatSpec.schema);
+    this.colorTypes[formatId] = new DynamicColorSymbol(
+      name,
+      formatId,
+      formatSpec.schema,
+    );
 
     // Register initializer functions
     if (!formatSpec.initializers) {
-      throw new InterpreterError("Color format specification must have initializers");
+      throw new InterpreterError(
+        "Color format specification must have initializers",
+      );
     }
 
     for (const initializer of formatSpec.initializers) {
@@ -165,7 +174,9 @@ export class ColorManager {
       }
 
       if (keyword in this.functions) {
-        throw new InterpreterError(`Initializer function ${keyword} already registered`);
+        throw new InterpreterError(
+          `Initializer function ${keyword} already registered`,
+        );
       }
 
       this.functions[keyword] = this.parseFunction(initializer.script);
@@ -185,10 +196,14 @@ export class ColorManager {
       }
 
       if (this.colorTransforms[source][target]) {
-        throw new InterpreterError(`Conversion from ${source} to ${target} already registered`);
+        throw new InterpreterError(
+          `Conversion from ${source} to ${target} already registered`,
+        );
       }
 
-      this.colorTransforms[source][target] = this.parseFunction(conversion.script);
+      this.colorTransforms[source][target] = this.parseFunction(
+        conversion.script,
+      );
     }
   }
 
@@ -232,7 +247,7 @@ export class ColorManager {
     const colorInstance = new DynamicColorSymbol(
       colorType._typeName,
       colorType._id,
-      colorType._availableAttributes
+      colorType._availableAttributes,
     );
 
     // If input is provided, initialize the color values
@@ -277,6 +292,8 @@ export class ColorManager {
       return this.initColorFormat("rgb", rgbValues);
     }
 
-    throw new InterpreterError(`Color function ${name} execution not implemented`);
+    throw new InterpreterError(
+      `Color function ${name} execution not implemented`,
+    );
   }
 }
