@@ -93,7 +93,10 @@ export interface ISymbolType {
   toJSON?(): any; // Optional JSON serialization
 
   hasMethod?(methodName: string, args: ISymbolType[]): boolean;
-  callMethod?(methodName: string, args: ISymbolType[]): ISymbolType | null | undefined;
+  callMethod?(
+    methodName: string,
+    args: ISymbolType[],
+  ): ISymbolType | null | undefined;
   hasAttribute?(attributeName: string): boolean;
   getAttribute?(attributeName: string): ISymbolType | null;
   setAttribute?(attributeName: string, value: ISymbolType): void;
@@ -132,7 +135,6 @@ export const UNINTERPRETED_KEYWORDS: string[] = [
   "shadow",
 ];
 
-// For Interpreter references
 export type ReferenceRecord = Record<
   string,
   string | number | ISymbolType | Array<string | number | ISymbolType>
