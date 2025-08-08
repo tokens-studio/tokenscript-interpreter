@@ -47,7 +47,7 @@ export class Parser {
   }
 
   private eat(tokenType: TokenType): Token {
-    const eatenToken = this.currentToken;
+    const token = this.currentToken;
     if (this.currentToken.type === tokenType) {
       this.currentToken = this.lexer.nextToken();
     } else {
@@ -55,7 +55,7 @@ export class Parser {
         `Expected token type ${tokenType} but got ${this.currentToken.type}`,
       );
     }
-    return eatenToken;
+    return token;
   }
 
   private statementsList(): ASTNode | StatementListNode {
