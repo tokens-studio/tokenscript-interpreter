@@ -58,6 +58,19 @@ export class Parser {
     return token;
   }
 
+  private typeDeclaration(): TypeDeclNode {
+    const baseTypeToken = this.eat(TokenType.STRING);
+    const baseType = new IdentifierNode(baseTypeToken);
+
+    const subTypes: IdentifierNode[] = [];
+    while (this.currentToken.type === TokenType.DOT) {
+      this.eat(TokenType.DOT);
+      const subTypeToken = this.eat(TokenType.STRING);
+      subTypes.push(new IdentifierNode(subTypeToken));
+    }
+    return new TypeDeclNode(baseType, subTypes, baseTypeToken);
+  }
+
   private statementsList(): ASTNode | StatementListNode {
     const statements: ASTNode[] = [];
     const token = this.currentToken;
@@ -154,19 +167,6 @@ export class Parser {
       return this.format(node);
     }
     return node;
-  }
-
-  private typeDeclaration(): TypeDeclNode {
-    const baseTypeToken = this.eat(TokenType.STRING);
-    const baseType = new IdentifierNode(baseTypeToken);
-
-    const subTypes: IdentifierNode[] = [];
-    while (this.currentToken.type === TokenType.DOT) {
-      this.eat(TokenType.DOT);
-      const subTypeToken = this.eat(TokenType.STRING);
-      subTypes.push(new IdentifierNode(subTypeToken));
-    }
-    return new TypeDeclNode(baseType, subTypes, baseTypeToken);
   }
 
   private attributeAssignment(): AttributeAssignNode {
