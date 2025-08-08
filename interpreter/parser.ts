@@ -137,6 +137,7 @@ export class Parser {
   private reassignVariable(): ReassignNode {
     const varNameToken = this.eat(TokenType.STRING);
     const varName = new IdentifierNode(varNameToken);
+
     this.eat(TokenType.ASSIGN);
 
     const assignmentExpr = this.listExpr();
