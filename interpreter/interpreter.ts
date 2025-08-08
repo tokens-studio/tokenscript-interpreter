@@ -82,9 +82,11 @@ export class Interpreter {
 
     // CRITICAL: Store the reference directly for shared reference model
     if (references instanceof Map) {
-      this.references = references; // Direct reference to the shared Map
+      // Direct reference to the shared Map
+      this.references = references;
     } else {
-      this.references = {}; // Create new Record for backward compatibility
+      // New Record for backward compatibility
+      this.references = {};
       if (references) {
         this.setReferences(references);
       }
