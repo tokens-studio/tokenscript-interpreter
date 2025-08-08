@@ -185,7 +185,6 @@ export class Parser {
   private returnStatement(): ReturnNode {
     const token = this.eat(TokenType.RESERVED_KEYWORD); // 'return'
     const expr = this.listExpr();
-    // Semicolon is optional in the grammar, handled by statementList expecting SEMICOLON
     return new ReturnNode(expr, token);
   }
 
