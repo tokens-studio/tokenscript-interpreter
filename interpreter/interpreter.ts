@@ -78,7 +78,7 @@ export class Interpreter {
     }
     this.symbolTable = symbolTable || new SymbolTable();
     this.languageOptions = { ...DEFAULT_LANGUAGE_OPTIONS, ...languageOptions };
-    this.colorManager = colorManager || null; // Store if provided
+    this.colorManager = colorManager || null;
 
     // CRITICAL: Store the reference directly for shared reference model
     if (references instanceof Map) {
@@ -90,17 +90,14 @@ export class Interpreter {
       }
     }
 
-    // Register color types and functions if ColorManager is provided
     if (this.colorManager) {
-      // Register color types in symbol table
       for (const [name, _formatId] of Object.entries(this.colorManager.names)) {
         const colorType = this.colorManager.getColorType(name);
-        if (colorType) {
-          // Create a constructor function that creates new instances
+        if (!!colorType) {
           const colorManager = this.colorManager;
-          const colorTypeRef = colorType; // Capture the non-null reference
+
           class ColorConstructor extends BaseSymbolType {
-            type = colorTypeRef.type;
+            type = colorType!.type;
 
             constructor(value?: ISymbolType) {
               const instance = colorManager.initColorFormat(name, value);
@@ -109,7 +106,7 @@ export class Interpreter {
             }
 
             valid_value(value: any): boolean {
-              return colorTypeRef.valid_value(value);
+              return colorType!.valid_value(value);
             }
           }
 
