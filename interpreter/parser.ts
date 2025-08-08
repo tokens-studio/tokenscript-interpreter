@@ -258,24 +258,8 @@ export class Parser {
     return new BlockNode(statements);
   }
 
-  private listExpr(): ASTNode {
-    const firstToken = this.currentToken;
-    const elements: ASTNode[] = [this.implicitListExprNode()];
-
-    while (this.currentToken.type === TokenType.COMMA) {
-      this.eat(TokenType.COMMA);
-      elements.push(this.implicitListExprNode());
-    }
-
-    if (elements.length === 1) {
-      return elements[0];
-    }
-
-    return new ListNode(elements, firstToken);
-  }
-
   // implicit_list_expr : factor ((COMMA) factor)*
-  private implicitListExprNode(): ASTNode {
+  private implicitListExpr(): ASTNode {
     const token = this.currentToken;
     const elements: ASTNode[] = [this.expr()];
 
@@ -291,6 +275,23 @@ export class Parser {
     if (elements.length === 1) return elements[0];
 
     return new ImplicitListNode(elements, token);
+  }
+
+  // factor ((COMMA) factor)
+  private listExpr(): ASTNode {
+    const firstToken = this.currentToken;
+    const elements: ASTNode[] = [this.implicitListExpr()];
+
+    while (this.currentToken.type === TokenType.COMMA) {
+      this.eat(TokenType.COMMA);
+      elements.push(this.implicitListExpr());
+    }
+
+    if (elements.length === 1) {
+      return elements[0];
+    }
+
+    return new ListNode(elements, firstToken);
   }
 
   // term ((PLUS | MINUS) term)*
@@ -478,7 +479,7 @@ export class Parser {
       if (this.currentToken.type === TokenType.COMMA) {
         this.eat(TokenType.COMMA);
       }
-      args.push(this.implicitListExprNode());
+      args.push(this.implicitListExpr());
     }
     this.eat(TokenType.RPAREN);
     return new FunctionNode(functionName.value as string, args, functionName);
