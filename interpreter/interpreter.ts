@@ -95,7 +95,7 @@ export class Interpreter {
     if (this.colorManager) {
       for (const [name, _formatId] of Object.entries(this.colorManager.names)) {
         const colorType = this.colorManager.getColorType(name);
-        if (!!colorType) {
+        if (colorType) {
           const colorManager = this.colorManager;
 
           class ColorConstructor extends BaseSymbolType {
