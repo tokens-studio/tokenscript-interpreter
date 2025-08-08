@@ -182,38 +182,6 @@ export class Parser {
     return node;
   }
 
-  private attributeAssignment(): AttributeAssignNode {
-    // Grammar: ident ("." ident)* "=" ListExpr
-    // This is simplified due to lack of multi-token lookahead.
-    // A full implementation requires parsing the identifier chain first.
-    const objectIdentifierToken = this.eat(TokenType.STRING); // Assuming STRING is for ident
-    const objectIdentifier = new IdentifierNode(objectIdentifierToken);
-    const _attributes: IdentifierNode[] = [];
-
-    // This part is tricky without proper lookahead.
-    // We're currently in statement() which calls listExpr(), which might consume attributes.
-    // This needs a more robust parsing strategy for assignments.
-    // For now, this is a placeholder for the structure.
-    this.error(
-      "Attribute assignment parsing is complex and not fully implemented with current lookahead.",
-    );
-    // Pseudocode for what should happen:
-    // while (this.currentToken.type === TokenType.DOT) {
-    //   this.eat(TokenType.DOT);
-    //   const attrToken = this.eat(TokenType.STRING);
-    //   attributes.push(new IdentifierNode(attrToken));
-    // }
-    // this.eat(TokenType.ASSIGN);
-    // const value = this.listExpr();
-    // return new AttributeAssignNode(objectIdentifier, attributes, value, objectIdentifierToken);
-    return new AttributeAssignNode(
-      objectIdentifier,
-      [],
-      new StringNode({ type: TokenType.STRING, value: "dummy", line: 0 }),
-      objectIdentifierToken,
-    ); // Placeholder
-  }
-
   private returnStatement(): ReturnNode {
     const returnToken = this.eat(TokenType.RESERVED_KEYWORD); // 'return'
     const expr = this.listExpr(); // Changed from this.expr() to this.listExpr() to support implicit lists
