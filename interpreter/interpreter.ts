@@ -64,16 +64,16 @@ export class Interpreter {
   private colorManager: ColorManager | null = null;
 
   constructor(
-    parserOrAst: Parser | ASTNode | null,
+    input: Parser | ASTNode | null,
     references?: ReferenceRecord | Map<string, any>,
     symbolTable?: SymbolTable,
     languageOptions?: LanguageOptions,
     colorManager?: ColorManager,
   ) {
-    if (parserOrAst instanceof Parser) {
-      this.parser = parserOrAst;
+    if (input instanceof Parser) {
+      this.parser = input;
     } else {
-      this.ast = parserOrAst;
+      this.ast = input;
       this.parser = null;
     }
     this.symbolTable = symbolTable || new SymbolTable();
