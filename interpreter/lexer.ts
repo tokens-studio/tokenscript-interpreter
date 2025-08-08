@@ -83,7 +83,7 @@ export class Lexer {
     while (this.currentChar !== null && this.currentChar !== "\n") {
       this.advance();
     }
-    if (this.currentChar === "\n") this.advance(); // consume newline
+    this.eat("\n");
   }
 
   private isComment(): boolean {
@@ -205,7 +205,7 @@ export class Lexer {
   }
 
   private explicitString(quoteType: string): Token {
-    this.advance(); // Opening quote
+    this.eat(quoteType);
 
     let result = "";
     while (this.currentChar !== null && this.currentChar !== quoteType) {
@@ -217,7 +217,7 @@ export class Lexer {
       this.error(`Unterminated string, missing '${quoteType}'.`);
     }
 
-    this.advance(); // Closing quote
+    this.eat(quoteType);
 
     return { type: TokenType.EXPLICIT_STRING, value: result, line: this.line };
   }
@@ -266,96 +266,90 @@ export class Lexer {
         return this.reference();
       }
       if (this.currentChar === "[") {
-        this.advance();
+        this.eat("[");
         return { type: TokenType.LBLOCK, value: "[", line: this.line };
       }
       if (this.currentChar === "]") {
-        this.advance();
+        this.eat("]");
         return { type: TokenType.RBLOCK, value: "]", line: this.line };
       }
       if (this.currentChar === "!" && this.peek() === "=") {
-        this.advance();
-        this.advance();
+        this.eat("!");
+        this.eat("=");
         return { type: TokenType.IS_NOT_EQ, value: "!=", line: this.line };
       }
       if (this.currentChar === "+") {
-        const result = {
+        this.eat("+");
+        return {
           type: TokenType.OPERATION,
           value: Operations.ADD,
           line: this.line,
         };
-        this.advance();
-        return result;
       }
       if (this.currentChar === "-") {
-        const result = {
+        this.eat("-");
+        return {
           type: TokenType.OPERATION,
           value: Operations.SUBTRACT,
           line: this.line,
         };
-        this.advance();
-        return result;
       }
       if (this.currentChar === "*") {
-        const result = {
+        this.eat("*");
+        return {
           type: TokenType.OPERATION,
           value: Operations.MULTIPLY,
           line: this.line,
         };
-        this.advance();
-        return result;
       }
       if (this.currentChar === "/") {
-        const result = {
+        this.eat("/");
+        return {
           type: TokenType.OPERATION,
           value: Operations.DIVIDE,
           line: this.line,
         };
-        this.advance();
-        return result;
       }
       if (this.currentChar === "^") {
-        const result = {
+        this.eat("^");
+        return {
           type: TokenType.OPERATION,
           value: Operations.POWER,
           line: this.line,
         };
-        this.advance();
-        return result;
       }
       if (this.currentChar === "!") {
-        const result = {
+        this.eat("!");
+        return {
           type: TokenType.OPERATION,
           value: Operations.LOGIC_NOT,
           line: this.line,
         };
-        this.advance();
-        return result;
       }
       if (this.currentChar === "(") {
-        this.advance();
+        this.eat("(");
         return { type: TokenType.LPAREN, value: "(", line: this.line };
       }
       if (this.currentChar === ")") {
-        this.advance();
+        this.eat(")");
         return { type: TokenType.RPAREN, value: ")", line: this.line };
       }
       if (this.currentChar === ",") {
-        this.advance();
+        this.eat(",");
         return { type: TokenType.COMMA, value: ",", line: this.line };
       }
       if (this.currentChar === ".") {
         if (this.peek() !== null && isNumber(this.peek())) {
           return this.number();
         }
-        this.advance();
+        this.eat(".");
         return { type: TokenType.DOT, value: ".", line: this.line };
       }
       if (this.currentChar === "#") {
         return this.hexColor();
       }
       if (this.currentChar === "%") {
-        this.advance();
+        this.eat("%");
         return {
           type: TokenType.FORMAT,
           value: SupportedFormats.PERCENTAGE,
@@ -364,38 +358,38 @@ export class Lexer {
       }
       if (this.currentChar === "=") {
         if (this.peek() === "=") {
-          this.advance();
-          this.advance();
+          this.eat("=");
+          this.eat("=");
           return { type: TokenType.IS_EQ, value: "==", line: this.line };
         }
-        this.advance();
+        this.eat("=");
         return { type: TokenType.ASSIGN, value: "=", line: this.line };
       }
       if (this.currentChar === ">") {
         if (this.peek() === "=") {
-          this.advance();
-          this.advance();
+          this.eat(">");
+          this.eat("=");
           return { type: TokenType.IS_GT_EQ, value: ">=", line: this.line };
         }
-        this.advance();
+        this.eat(">");
         return { type: TokenType.IS_GT, value: ">", line: this.line };
       }
       if (this.currentChar === "<") {
         if (this.peek() === "=") {
-          this.advance();
-          this.advance();
+          this.eat("<");
+          this.eat("=");
           return { type: TokenType.IS_LT_EQ, value: "<=", line: this.line };
         }
-        this.advance();
+        this.eat("<");
         return { type: TokenType.IS_LT, value: "<", line: this.line };
       }
       if (this.currentChar === ";") {
-        this.advance();
+        this.eat(";");
         return { type: TokenType.SEMICOLON, value: ";", line: this.line };
       }
       if (this.currentChar === "&" && this.peek() === "&") {
-        this.advance();
-        this.advance();
+        this.eat("&");
+        this.eat("&");
         return {
           type: TokenType.LOGIC_AND,
           value: Operations.LOGIC_AND,
@@ -403,8 +397,8 @@ export class Lexer {
         };
       }
       if (this.currentChar === "|" && this.peek() === "|") {
-        this.advance();
-        this.advance();
+        this.eat("|");
+        this.eat("|");
         return {
           type: TokenType.LOGIC_OR,
           value: Operations.LOGIC_OR,
@@ -412,7 +406,7 @@ export class Lexer {
         };
       }
       if (this.currentChar === ":") {
-        this.advance();
+        this.eat(":");
         return { type: TokenType.COLON, value: ":", line: this.line };
       }
 
