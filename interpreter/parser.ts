@@ -141,7 +141,7 @@ export class Parser {
     this.requiredReferences.add(node.value);
 
     if (this.currentToken.type === TokenType.FORMAT) {
-      return this.formatNode(node);
+      return this.format(node);
     }
     return node;
   }
@@ -336,7 +336,7 @@ export class Parser {
     return node;
   }
 
-  private formatNode(node: ASTNode): ASTNode {
+  private format(node: ASTNode): ASTNode {
     const formatToken = this.currentToken;
     this.eat(TokenType.FORMAT);
     return new ElementWithUnitNode(node, formatToken.value);
@@ -346,7 +346,7 @@ export class Parser {
     const node = new NumNode(this.currentToken);
     this.eat(TokenType.NUMBER);
     if (this.currentToken.type === TokenType.FORMAT) {
-      return this.formatNode(node);
+      return this.format(node);
     }
     return node;
   }
@@ -391,7 +391,7 @@ export class Parser {
       const node = this.expr();
       this.eat(TokenType.RPAREN);
       if (this.currentToken.type === TokenType.FORMAT) {
-        return this.formatNode(node);
+        return this.format(node);
       }
       return node;
     }
