@@ -883,10 +883,6 @@ export class Interpreter {
       }
     }
 
-    if (result instanceof BaseSymbolType) {
-      return result;
-    }
-
-    return result === null ? null : String(result);
+    return result;
   }
 }
