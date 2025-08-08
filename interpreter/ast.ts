@@ -80,8 +80,8 @@ export class ImplicitListNode extends ListNode {
   }
 }
 
-export class FunctionNode implements ASTNode {
-  nodeType = "FunctionNode";
+export class FunctionCallNode implements ASTNode {
+  nodeType = "FunctionCallNode";
   public name: string;
   constructor(
     nameTokenValue: string,
@@ -236,10 +236,10 @@ export class StatementListNode implements ASTNode {
 // Represents an attribute access, e.g., obj.property or obj.method()
 export class AttributeAccessNode implements ASTNode {
   nodeType = "AttributeAccessNode";
-  // 'left' is the object, 'right' is the attribute (IdentifierNode) or method (FunctionNode)
+  // 'left' is the object, 'right' is the attribute (IdentifierNode) or method (FunctionCallNode)
   constructor(
     public left: ASTNode,
-    public right: IdentifierNode | FunctionNode,
+    public right: IdentifierNode | FunctionCallNode,
     public token?: Token,
   ) {}
 }

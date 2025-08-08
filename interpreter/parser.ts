@@ -13,7 +13,7 @@ import {
   BlockNode,
   BooleanNode,
   ElementWithUnitNode,
-  FunctionNode,
+  FunctionCallNode,
   HexColorNode,
   IdentifierNode,
   IfNode,
@@ -438,7 +438,7 @@ export class Parser {
     return node;
   }
 
-  private functionCall(functionName: Token): FunctionNode {
+  private functionCall(functionName: Token): FunctionCallNode {
     const _token = this.currentToken;
     this.eat(TokenType.LPAREN);
     const args: ASTNode[] = [];
@@ -449,7 +449,11 @@ export class Parser {
       args.push(this.implicitListExpr());
     }
     this.eat(TokenType.RPAREN);
-    return new FunctionNode(functionName.value as string, args, functionName);
+    return new FunctionCallNode(
+      functionName.value as string,
+      args,
+      functionName,
+    );
   }
 
   public parse(inlineMode = false): ASTNode | null {

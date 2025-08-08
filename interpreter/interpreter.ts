@@ -14,7 +14,7 @@ import {
   type BlockNode,
   type BooleanNode,
   type ElementWithUnitNode,
-  FunctionNode,
+  FunctionCallNode as FunctionCallNode,
   type HexColorNode,
   IdentifierNode,
   type IfNode,
@@ -399,7 +399,7 @@ export class Interpreter {
     return new NumberWithUnitSymbol(valNodeVisit.value, node.unit);
   }
 
-  private visitFunctionNode(node: FunctionNode): ISymbolType {
+  private visitFunctionCallNode(node: FunctionCallNode): ISymbolType {
     const funcName = node.name.toLowerCase();
     const args = node.args.map((arg) => {
       const visitedArg = this.visit(arg);
@@ -703,7 +703,7 @@ export class Interpreter {
       }
       return attributeValue; // attributeValue is ISymbolType
     }
-    if (node.right instanceof FunctionNode) {
+    if (node.right instanceof FunctionCallNode) {
       if (
         typeof leftValue.callMethod !== "function" ||
         typeof leftValue.hasMethod !== "function"
