@@ -403,11 +403,6 @@ export class Interpreter {
     const funcName = node.name.toLowerCase();
     const args = node.args.map((arg) => {
       const visitedArg = this.visit(arg);
-      if (visitedArg == null)
-        throw new InterpreterError(
-          `Function argument for '${node.name}' evaluated to null or undefined.`,
-          (arg as any).token?.line,
-        );
       return visitedArg as ISymbolType;
     });
 
