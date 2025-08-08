@@ -159,16 +159,6 @@ export class Interpreter {
     }
   }
 
-  public addReference(key: string, value: any): void {
-    // NOTE: This method is now deprecated in the shared reference model
-    // but kept for backward compatibility
-    if (this.references instanceof Map) {
-      this.references.set(key, this.importReferenceValue(value));
-    } else {
-      this.references[key] = this.importReferenceValue(value);
-    }
-  }
-
   public setAst(ast: ASTNode | null): void {
     this.ast = ast;
     this.parser = null; // Clear parser since we're using pre-parsed AST
