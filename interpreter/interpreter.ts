@@ -867,12 +867,12 @@ export class Interpreter {
     const tree = this.ast || (this.parser ? this.parser.parse() : null);
     if (!tree) return "";
 
-    let visitOutcome: ISymbolType | null | undefined;
+    let result: ISymbolType | null | undefined;
     try {
-      visitOutcome = this.visit(tree);
+      result = this.visit(tree);
     } catch (e) {
       if (e instanceof ReturnSignal) {
-        visitOutcome = e.value;
+        result = e.value;
       } else if (e instanceof Error) {
         throw e;
       } else {
@@ -882,14 +882,14 @@ export class Interpreter {
       }
     }
 
-    if (visitOutcome === undefined) {
+    if (result === undefined) {
       return null;
     }
 
-    if (visitOutcome instanceof BaseSymbolType) {
-      return visitOutcome;
+    if (result instanceof BaseSymbolType) {
+      return result;
     }
 
-    return visitOutcome === null ? null : String(visitOutcome);
+    return result === null ? null : String(result);
   }
 }
