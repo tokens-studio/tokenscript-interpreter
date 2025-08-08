@@ -103,7 +103,7 @@ export class Parser {
     if (this.currentToken.type === TokenType.STRING) {
       const nextToken = this.lexer.peekToken();
       if (nextToken && nextToken.type === TokenType.ASSIGN) {
-        return this.reassignStatement();
+        return this.reassignVariable();
       }
       // TODO: Handle attribute assignment (ident.ident = ...)
     }
@@ -127,7 +127,7 @@ export class Parser {
     return new AssignNode(varName, typeDecl, assignmentExpr, token);
   }
 
-  private reassignStatement(): ReassignNode {
+  private reassignVariable(): ReassignNode {
     const identifierToken = this.eat(TokenType.STRING);
     const identifier = new IdentifierNode(identifierToken);
     this.eat(TokenType.ASSIGN);
