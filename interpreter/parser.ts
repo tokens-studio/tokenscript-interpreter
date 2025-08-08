@@ -183,10 +183,10 @@ export class Parser {
   }
 
   private returnStatement(): ReturnNode {
-    const returnToken = this.eat(TokenType.RESERVED_KEYWORD); // 'return'
-    const expr = this.listExpr(); // Changed from this.expr() to this.listExpr() to support implicit lists
+    const token = this.eat(TokenType.RESERVED_KEYWORD); // 'return'
+    const expr = this.listExpr();
     // Semicolon is optional in the grammar, handled by statementList expecting SEMICOLON
-    return new ReturnNode(expr, returnToken);
+    return new ReturnNode(expr, token);
   }
 
   private whileStatement(): WhileNode {
