@@ -288,7 +288,7 @@ export class Parser {
     return new ImplicitListNode(elements, token);
   }
 
-  // LogicTerm = Comparison (("+" | "-") Comparison)*
+  // term ((PLUS | MINUS) term)*
   private logicTerm(): ASTNode {
     let node = this.comparison();
     while (
@@ -302,7 +302,7 @@ export class Parser {
     return node;
   }
 
-  // Comparison = Term (("==" | "!=" | ">" | "<" | ">=" | "<=") Term)*
+  // term ((IS_EQ | IS_NOT_EQ | IS_GT | IS_LT | IS_GT_EQ | IS_LT_EQ) term)*
   private comparison(): ASTNode {
     let node = this.term();
     while (
