@@ -484,19 +484,8 @@ export class Interpreter {
             rawValueForCoercion = (rawValueForCoercion as any[]).map((v) =>
               this.importReferenceValue(v),
             );
-          } else if (rawValueForCoercion instanceof BaseSymbolType) {
-            // This unwrap might be too aggressive if a constructor expects a symbol.
-            // However, it matches the original logic.
-            // Consider if constructors should primarily handle raw values or if they are robust to symbol inputs.
-            // Many current symbol constructors (e.g., NumberSymbol) can handle symbol inputs.
-            // For now, keeping the unwrap for consistency with the provided code's apparent intention.
-            // rawValueForCoercion = rawValueForCoercion.value; // Potentially problematic unwrap
           }
-          // If SymbolConstructor is robust (e.g. NumberSymbol can take NumberSymbol),
-          // passing currentAssignmentValue directly might be better than rawValueForCoercion sometimes.
-          // Forcing rawValueForCoercion is safer if constructors expect primitives.
 
-          // Let's pass 'currentAssignmentValue' itself if target is same type, or its .value for coercion
           let valueForConstructor: any;
           if (assignmentValue instanceof SymbolConstructor) {
             valueForConstructor = assignmentValue; // Pass instance if it's already the target type
@@ -564,17 +553,7 @@ export class Interpreter {
       }
     }
 
-    // Final check: valueToAssign must be an ISymbolType by now, or an error should have been thrown.
-    if (valueToAssign == null) {
-      // Handles null or undefined
-      // This should be an internal error if logic above is complete.
-      throw new InterpreterError(
-        `Internal error: Variable '${varName}' could not be initialized to a valid symbol.`,
-        node.varName.token.line,
-        node.varName.token,
-      );
-    }
-    this.symbolTable.set(varName, valueToAssign); // valueToAssign is guaranteed ISymbolType here
+    this.symbolTable.set(varName, valueToAssign);
   }
 
   private visitReassignNode(node: ReassignNode): void {
