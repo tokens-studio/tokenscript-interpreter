@@ -749,21 +749,6 @@ export class Interpreter {
     throw new ReturnSignal(returnValueVisit); // returnValueVisit is ISymbolType | null
   }
 
-  private visitBlockNode(node: BlockNode): ISymbolType | null {
-    const oldSymbolTable = this.symbolTable;
-    this.symbolTable = new SymbolTable(oldSymbolTable);
-    let result: ISymbolType | null = null;
-    try {
-      const blockVisitResult = this.visit(node.statements);
-      if (blockVisitResult !== null) {
-        result = blockVisitResult;
-      }
-    } finally {
-      this.symbolTable = oldSymbolTable;
-    }
-    return result;
-  }
-
   private visitWhileNode(node: WhileNode): void {
     let iterations = 0;
     while (true) {
