@@ -11,16 +11,14 @@ import {
 
 export class SymbolTable {
   private symbols: Record<string, ISymbolType>;
-  private parent: SymbolTable | null;
   private activeSymbolTypes: Record<
     string,
     | (new (...args: any[]) => ISymbolType)
     | Record<string, new (...args: any[]) => ISymbolType>
   >;
 
-  constructor(parent: SymbolTable | null = null) {
+  constructor() {
     this.symbols = {};
-    this.parent = parent;
     this.activeSymbolTypes = {
       number: NumberSymbol as new (...args: any[]) => ISymbolType,
       string: StringSymbol as new (...args: any[]) => ISymbolType,
@@ -38,13 +36,10 @@ export class SymbolTable {
 
   get(name: string): ISymbolType | null {
     const value = this.symbols[name.toLowerCase()];
-    if (value !== undefined) {
-      return value;
+    if (!value) {
+      return null;
     }
-    if (this.parent) {
-      return this.parent.get(name);
-    }
-    return null;
+    return value;
   }
 
   set(name: string, value: ISymbolType): void {
@@ -56,10 +51,7 @@ export class SymbolTable {
   }
 
   exists(name: string): boolean {
-    return (
-      this.symbols[name.toLowerCase()] !== undefined ||
-      (this.parent?.exists(name) ?? false)
-    );
+    return !!this.symbols[name.toLowerCase()];
   }
 
   isSymbolType(typeName: string): boolean {
