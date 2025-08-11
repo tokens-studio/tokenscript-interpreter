@@ -10,8 +10,8 @@ import {
 } from "./symbols";
 
 export class SymbolTable {
-  private symbols: Record<string, ISymbolType>;
-  private activeSymbolTypes: Record<
+  private symbols: Record<string, ISymbolType | null>;
+  public activeSymbolTypes: Record<
     string,
     | (new (...args: any[]) => ISymbolType)
     | Record<string, new (...args: any[]) => ISymbolType>
@@ -42,7 +42,7 @@ export class SymbolTable {
     return value;
   }
 
-  set(name: string, value: ISymbolType): void {
+  set(name: string, value: ISymbolType | null): void {
     this.symbols[name.toLowerCase()] = value;
   }
 

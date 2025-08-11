@@ -418,127 +418,133 @@ export class Interpreter {
   }
 
   private visitAssignNode(node: AssignNode): void {
-    const varName = node.varName.name;
-    let valueToAssign: ISymbolType | null = null;
+    const name = node.varName.name;
 
-    if (node.assignmentExpr) {
-      const visitedValue = this.visit(node.assignmentExpr);
-      valueToAssign = visitedValue || null;
-    }
-
-    const typeName = node.typeDecl.baseType.name.toLowerCase();
-    const subTypeName =
+    const baseType = node.typeDecl.baseType.name.toLowerCase();
+    const subType =
       node.typeDecl.subTypes.length > 0
         ? node.typeDecl.subTypes.map((s) => s.name).join(".")
         : undefined;
-    const SymbolConstructor: new (...args: any[]) => ISymbolType =
-      this.symbolTable.getSymbolConstructor(typeName, subTypeName);
 
-    if (this.symbolTable.exists(varName)) {
+    if (!this.symbolTable.isSymbolType(baseType)) {
       throw new InterpreterError(
-        `Variable '${varName}' already declared.`,
+        `Invalid variable type '${baseType}'. Use a valid type. (${Object.keys(this.symbolTable.activeSymbolTypes).join(", ")})`,
         node.varName.token.line,
         node.varName.token,
       );
     }
 
-    if (valueToAssign) {
-      const assignedValue: ISymbolType = valueToAssign;
-
-      // Get the target type by creating a temporary instance
-      const tempInstance = new SymbolConstructor(null);
-      const targetType = tempInstance.type;
-
-      const isCorrectType = assignedValue instanceof SymbolConstructor;
-      const hasType = assignedValue.type;
-      const typeMismatch =
-        hasType &&
-        assignedValue.type.toLowerCase() !== targetType.toLowerCase();
-
-      if (!isCorrectType && typeMismatch) {
-        // Type assertion to help TypeScript understand that currentAssignmentValue is ISymbolType
-        const assignmentValue = assignedValue as ISymbolType;
-        const originalTypeForErrorMessage = assignmentValue.type;
-        try {
-          let rawValueForCoercion = assignmentValue.value;
-
-          if (
-            SymbolConstructor === (ListSymbol as any) &&
-            Array.isArray(rawValueForCoercion)
-          ) {
-            rawValueForCoercion = (rawValueForCoercion as any[]).map((v) =>
-              this.importReferenceValue(v),
-            );
-          }
-
-          let valueForConstructor: any;
-          if (assignmentValue instanceof SymbolConstructor) {
-            valueForConstructor = assignmentValue; // Pass instance if it's already the target type
-          } else {
-            // Special handling for coercing to String - use toString() method
-            if (SymbolConstructor === StringSymbol) {
-              valueForConstructor = (assignmentValue as ISymbolType).toString();
-            } else {
-              // Prepare rawValueForCoercion from assignmentValue.value
-              let preparedRawValue = (assignmentValue as ISymbolType).value;
-              if (
-                SymbolConstructor === ListSymbol &&
-                Array.isArray(preparedRawValue)
-              ) {
-                preparedRawValue = preparedRawValue.map((v) =>
-                  this.importReferenceValue(v),
-                );
-              }
-              // The original code had an unwrap: else if (preparedRawValue instanceof BaseSymbolType) preparedRawValue = preparedRawValue.value;
-              // This general unwrap is removed to allow constructors to handle symbol inputs.
-              valueForConstructor = preparedRawValue;
-            }
-          }
-
-          const coercedValue = new SymbolConstructor(valueForConstructor);
-
-          if (
-            coercedValue.type.toLowerCase() === targetType.toLowerCase() ||
-            this.symbolTable.getSymbolConstructor(typeName, subTypeName) ===
-              coercedValue.constructor
-          ) {
-            valueToAssign = coercedValue;
-          } else {
-            throw new Error(
-              `Coercion to ${node.typeDecl.toString()} resulted in an unexpected type ${coercedValue.type}.`,
-            );
-          }
-        } catch (e: any) {
-          throw new InterpreterError(
-            `Type mismatch: Cannot assign value of type ${originalTypeForErrorMessage} to variable '${varName}' of type ${node.typeDecl.toString()}. Coercion failed: ${e.message || String(e)}`,
-            node.varName.token.line,
-            node.varName.token,
-          );
-        }
-      }
-      // If no coercion needed, valueToAssign (which is currentAssignmentValue) is already correct.
-    } else {
-      try {
-        if (
-          SymbolConstructor === (NumberWithUnitSymbol as any) &&
-          node.typeDecl.subTypes.length === 0
-        ) {
-          throw new InterpreterError(
-            `Cannot create a default instance for '${varName}' of type ${node.typeDecl.toString()}. Unit is required.`,
-            node.varName.token.line,
-          );
-        }
-        valueToAssign = new SymbolConstructor(null); // Create default instance
-      } catch (e: any) {
-        throw new InterpreterError(
-          `Cannot create a default instance for variable '${varName}' of type ${node.typeDecl.toString()}. Type might require explicit initialization. Constructor error: ${e.message || String(e)}`,
-          node.varName.token.line,
-          node.varName.token,
-        );
-      }
+    if (this.symbolTable.exists(name)) {
+      throw new InterpreterError(
+        `Variable '${name}' already defined. Use a different name.`,
+        node.varName.token.line,
+        node.varName.token,
+      );
     }
 
-    this.symbolTable.set(varName, valueToAssign);
+    if (!node.assignmentExpr) {
+      this.symbolTable.set(name, null);
+    }
+
+    const value: ISymbolType = this.visit(node.assignmentExpr) as ISymbolType;
+
+    this.symbolTable.set(name, value);
+
+    // if (valueToAssign) {
+    //   const assignedValue: ISymbolType = valueToAssign;
+
+    //   // Get the target type by creating a temporary instance
+    //   const tempInstance = new SymbolConstructor(null);
+    //   const targetType = tempInstance.type;
+
+    //   const isCorrectType = assignedValue instanceof SymbolConstructor;
+    //   const hasType = assignedValue.type;
+    //   const typeMismatch =
+    //     hasType &&
+    //     assignedValue.type.toLowerCase() !== targetType.toLowerCase();
+
+    //   if (!isCorrectType && typeMismatch) {
+    //     // Type assertion to help TypeScript understand that currentAssignmentValue is ISymbolType
+    //     const assignmentValue = assignedValue as ISymbolType;
+    //     const originalTypeForErrorMessage = assignmentValue.type;
+    //     try {
+    //       let rawValueForCoercion = assignmentValue.value;
+
+    //       if (
+    //         SymbolConstructor === (ListSymbol as any) &&
+    //         Array.isArray(rawValueForCoercion)
+    //       ) {
+    //         rawValueForCoercion = (rawValueForCoercion as any[]).map((v) =>
+    //           this.importReferenceValue(v),
+    //         );
+    //       }
+
+    //       let valueForConstructor: any;
+    //       if (assignmentValue instanceof SymbolConstructor) {
+    //         valueForConstructor = assignmentValue; // Pass instance if it's already the target type
+    //       } else {
+    //         // Special handling for coercing to String - use toString() method
+    //         if (SymbolConstructor === StringSymbol) {
+    //           valueForConstructor = (assignmentValue as ISymbolType).toString();
+    //         } else {
+    //           // Prepare rawValueForCoercion from assignmentValue.value
+    //           let preparedRawValue = (assignmentValue as ISymbolType).value;
+    //           if (
+    //             SymbolConstructor === ListSymbol &&
+    //             Array.isArray(preparedRawValue)
+    //           ) {
+    //             preparedRawValue = preparedRawValue.map((v) =>
+    //               this.importReferenceValue(v),
+    //             );
+    //           }
+    //           // The original code had an unwrap: else if (preparedRawValue instanceof BaseSymbolType) preparedRawValue = preparedRawValue.value;
+    //           // This general unwrap is removed to allow constructors to handle symbol inputs.
+    //           valueForConstructor = preparedRawValue;
+    //         }
+    //       }
+
+    //       const coercedValue = new SymbolConstructor(valueForConstructor);
+
+    //       if (
+    //         coercedValue.type.toLowerCase() === targetType.toLowerCase() ||
+    //         this.symbolTable.getSymbolConstructor(typeName, subTypeName) ===
+    //           coercedValue.constructor
+    //       ) {
+    //         valueToAssign = coercedValue;
+    //       } else {
+    //         throw new Error(
+    //           `Coercion to ${node.typeDecl.toString()} resulted in an unexpected type ${coercedValue.type}.`,
+    //         );
+    //       }
+    //     } catch (e: any) {
+    //       throw new InterpreterError(
+    //         `Type mismatch: Cannot assign value of type ${originalTypeForErrorMessage} to variable '${varName}' of type ${node.typeDecl.toString()}. Coercion failed: ${e.message || String(e)}`,
+    //         node.varName.token.line,
+    //         node.varName.token,
+    //       );
+    //     }
+    //   }
+    //   // If no coercion needed, valueToAssign (which is currentAssignmentValue) is already correct.
+    // } else {
+    //   try {
+    //     if (
+    //       SymbolConstructor === (NumberWithUnitSymbol as any) &&
+    //       node.typeDecl.subTypes.length === 0
+    //     ) {
+    //       throw new InterpreterError(
+    //         `Cannot create a default instance for '${varName}' of type ${node.typeDecl.toString()}. Unit is required.`,
+    //         node.varName.token.line,
+    //       );
+    //     }
+    //     valueToAssign = new SymbolConstructor(null); // Create default instance
+    //   } catch (e: any) {
+    //     throw new InterpreterError(
+    //       `Cannot create a default instance for variable '${varName}' of type ${node.typeDecl.toString()}. Type might require explicit initialization. Constructor error: ${e.message || String(e)}`,
+    //       node.varName.token.line,
+    //       node.varName.token,
+    //     );
+    //   }
+    // }
   }
 
   private visitReassignNode(node: ReassignNode): void {
