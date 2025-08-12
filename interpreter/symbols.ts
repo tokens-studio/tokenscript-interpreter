@@ -137,7 +137,10 @@ export class NumberSymbol extends BaseSymbolType {
   type = "Number";
   public isFloat: boolean;
 
-  constructor(value: number | NumberSymbol | NumberWithUnitSymbol | null) {
+  constructor(
+    value: number | NumberSymbol | NumberWithUnitSymbol | null,
+    isFloat = false,
+  ) {
     let numValue: number;
     if (
       value instanceof NumberSymbol ||
@@ -150,15 +153,21 @@ export class NumberSymbol extends BaseSymbolType {
       numValue = 0; // Default to 0 if value is null
     } else {
       throw new InterpreterError(
-        `Cannot create NumberSymbol from value of type ${typeof value}: ${value}`,
+        `Value must be int or float, got ${typeof value}.`,
       );
     }
     super(numValue);
-    this.isFloat = !Number.isInteger(numValue);
+    this.isFloat = isFloat;
     this._SUPPORTED_METHODS = {
       to_string: {
         function: this.to_string,
-        args: [],
+        args: [
+          {
+            name: "radix",
+            type: NumberSymbol,
+            optional: true,
+          },
+        ],
         returnType: StringSymbol,
       },
     };
@@ -171,18 +180,77 @@ export class NumberSymbol extends BaseSymbolType {
   }
 
   toString(): string {
-    // If explicitly marked as float, or is actually a float value, preserve the decimal format
-    if (this.isFloat) {
-      // Ensure at least one decimal place for float numbers, even if they're whole numbers (like 1.0)
-      const str = String(this.value);
-      return str.includes(".") ? str : `${str}.0`;
+    if (!this.isFloat) {
+      if (typeof this.value === "number" && Number.isInteger(this.value)) {
+        return String(Math.trunc(this.value));
+      } else if (Number.isInteger(this.value)) {
+        return String(this.value);
+      }
     }
-    // For actual integers, return without decimal places
-    return String(Math.trunc(this.value));
+    return String(Number(this.value));
   }
 
-  to_string(): StringSymbol {
-    return new StringSymbol(this.toString());
+  to_string(radix?: NumberSymbol): StringSymbol {
+    if (radix === undefined) {
+      return new StringSymbol(String(this.value));
+    }
+
+    // Convert to integer if it's a float but represents an integer
+    let numValue: number;
+    if (typeof this.value === "number" && Number.isInteger(this.value)) {
+      numValue = Math.trunc(this.value);
+    } else {
+      numValue = Number.isInteger(this.value) ? this.value : this.value;
+    }
+
+    // Get the radix value
+    const base = radix.value;
+
+    // Validate the base
+    if (!Number.isInteger(base) || base < 2 || base > 36) {
+      throw new InterpreterError(
+        `Invalid radix: ${base}. Must be between 2 and 36.`,
+      );
+    }
+
+    // Perform the base conversion
+    try {
+      if (Number.isInteger(numValue)) {
+        let result = "";
+
+        // Handle negative numbers
+        const isNegative = numValue < 0;
+        if (isNegative) {
+          numValue = Math.abs(numValue);
+        }
+
+        // Special case for zero
+        if (numValue === 0) {
+          return new StringSymbol("0");
+        }
+
+        // Convert to the specified base
+        const digits = "0123456789abcdefghijklmnopqrstuvwxyz";
+        while (numValue > 0) {
+          result = digits[numValue % base] + result;
+          numValue = Math.floor(numValue / base);
+        }
+
+        // Add negative sign if needed
+        if (isNegative) {
+          result = "-" + result;
+        }
+
+        return new StringSymbol(result);
+      } else {
+        // For non-integer values, simply return the string representation
+        return new StringSymbol(String(this.value));
+      }
+    } catch (e) {
+      throw new InterpreterError(
+        `Error converting to base ${base}: ${String(e)}.`,
+      );
+    }
   }
 }
 
