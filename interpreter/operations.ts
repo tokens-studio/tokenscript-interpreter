@@ -110,22 +110,10 @@ function comparisonWrapper(
   };
 }
 
-export const OPERATION_IMPLEMENTATIONS: Record<
+export const LOGICAL_BOOLEAN_IMPLEMENTATIONS: Record<
   string,
-  | OperationFunction
-  | BooleanOperationFunction
-  | ((a: ISymbolType, b: ISymbolType) => BooleanSymbol)
+  BooleanOperationFunction
 > = {
-  [Operations.ADD]: mathWrapper((a, b) => a + b),
-  [Operations.SUBTRACT]: mathWrapper((a, b) => a - b),
-  [Operations.MULTIPLY]: mathWrapper((a, b) => a * b),
-  [Operations.DIVIDE]: mathWrapper((a, b) => {
-    if (b === 0) throw new InterpreterError("Division by zero.");
-    return a / b;
-  }),
-  [Operations.POWER]: mathWrapper((a, b) => a ** b),
-
-  // Logical operations for Booleans
   [Operations.LOGIC_AND]: (a: ISymbolType, b: ISymbolType) => {
     if (!(a instanceof BooleanSymbol) || !(b instanceof BooleanSymbol))
       throw new InterpreterError("&& operator requires boolean operands.");
@@ -136,6 +124,17 @@ export const OPERATION_IMPLEMENTATIONS: Record<
       throw new InterpreterError("|| operator requires boolean operands.");
     return new BooleanSymbol(a.value || b.value);
   },
+};
+
+export const MATH_IMPLEMENTATIONS: Record<string, OperationFunction> = {
+  [Operations.ADD]: mathWrapper((a, b) => a + b),
+  [Operations.SUBTRACT]: mathWrapper((a, b) => a - b),
+  [Operations.MULTIPLY]: mathWrapper((a, b) => a * b),
+  [Operations.DIVIDE]: mathWrapper((a, b) => {
+    if (b === 0) throw new InterpreterError("Division by zero.");
+    return a / b;
+  }),
+  [Operations.POWER]: mathWrapper((a, b) => a ** b),
 };
 
 // Comparison operations map to TokenType values directly

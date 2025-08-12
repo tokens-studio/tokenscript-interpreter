@@ -31,12 +31,7 @@ import {
 } from "./ast";
 import type { ColorManager } from "./colorManager";
 import { InterpreterError } from "./errors";
-import {
-  COMPARISON_IMPLEMENTATIONS,
-  DEFAULT_FUNCTION_MAP,
-  LANGUAGE_OPTIONS as DEFAULT_LANGUAGE_OPTIONS,
-  OPERATION_IMPLEMENTATIONS,
-} from "./operations";
+import * as operations from "./operations";
 import { Parser } from "./parser";
 import {
   BaseSymbolType,
@@ -48,6 +43,9 @@ import {
   StringSymbol,
 } from "./symbols";
 import { SymbolTable } from "./symbolTable";
+
+const { DEFAULT_FUNCTION_MAP, LANGUAGE_OPTIONS: DEFAULT_LANGUAGE_OPTIONS } =
+  operations;
 
 class ReturnSignal {
   constructor(public value: ISymbolType | null) {}
@@ -214,32 +212,20 @@ export class Interpreter {
   }
 
   private visitBinOpNode(node: BinOpNode): ISymbolType {
-    const leftUnsafe = this.visit(node.left);
-    const rightUnsafe = this.visit(node.right);
-
-    if (leftUnsafe == null || rightUnsafe == null) {
-      // Checks for null or undefined
-      throw new InterpreterError(
-        "Cannot perform binary operation on null or undefined value.",
-        node.opToken.line,
-        node.opToken,
-      );
-    }
-    const left = leftUnsafe as ISymbolType; // Safe due to check above
-    const right = rightUnsafe as ISymbolType; // Safe due to check above
+    const left = this.visit(node.left) as ISymbolType;
+    const right = this.visit(node.right) as ISymbolType;
 
     const opVal = node.opToken.value as string;
     const opType = node.opToken.type;
-    const opImpl = OPERATION_IMPLEMENTATIONS[opVal];
 
-    if (opVal === Operations.LOGIC_AND || opVal === Operations.LOGIC_OR) {
-      if (opImpl)
-        return (opImpl as (a: ISymbolType, b: ISymbolType) => BooleanSymbol)(
-          left,
-          right,
-        );
-    } else if (opImpl) {
-      // Arithmetic operations
+    const logicalBooleanImpl =
+      operations.LOGICAL_BOOLEAN_IMPLEMENTATIONS[opVal];
+    if (logicalBooleanImpl) {
+      return logicalBooleanImpl(left, right);
+    }
+
+    const mathImpl = operations.MATH_IMPLEMENTATIONS[opVal];
+    if (mathImpl) {
       if (
         !(
           (left instanceof NumberSymbol ||
@@ -254,12 +240,13 @@ export class Interpreter {
           node.opToken,
         );
       }
-      return (opImpl as (a: MathOperand, b: MathOperand) => MathOperand)(
-        left,
-        right,
-      );
-    } else if (COMPARISON_IMPLEMENTATIONS[opType]) {
-      return COMPARISON_IMPLEMENTATIONS[opType](left, right);
+
+      return mathImpl(left, right);
+    }
+
+    const comparisonImpl = operations.COMPARISON_IMPLEMENTATIONS[opType];
+    if (comparisonImpl) {
+      return comparisonImpl(left, right);
     }
 
     throw new InterpreterError(
