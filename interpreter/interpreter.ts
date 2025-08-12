@@ -44,8 +44,7 @@ import {
 } from "./symbols";
 import { SymbolTable } from "./symbolTable";
 
-const { DEFAULT_FUNCTION_MAP, LANGUAGE_OPTIONS: DEFAULT_LANGUAGE_OPTIONS } =
-  operations;
+const { LANGUAGE_OPTIONS: DEFAULT_LANGUAGE_OPTIONS } = operations;
 
 class ReturnSignal {
   constructor(public value: ISymbolType | null) {}
@@ -364,28 +363,25 @@ export class Interpreter {
   }
 
   private visitFunctionCallNode(node: FunctionCallNode): ISymbolType {
-    const funcName = node.name.toLowerCase();
-    const args = node.args.map((arg) => {
-      const visitedArg = this.visit(arg);
-      return visitedArg as ISymbolType;
-    });
+    const fnName = node.name.toLowerCase();
+    const args = node.args.map((arg) => this.visit(arg) as ISymbolType);
 
-    if (DEFAULT_FUNCTION_MAP[funcName]) {
-      return DEFAULT_FUNCTION_MAP[funcName](...args);
+    const defaultFn = operations.DEFAULT_FUNCTION_MAP[fnName];
+    if (defaultFn) {
+      return defaultFn(...args);
     }
 
-    // Check ColorManager for color functions
-    if (this.colorManager?.hasFunction(funcName)) {
-      return this.colorManager.executeFunction(funcName, args);
+    if (this.colorManager?.hasFunction(fnName)) {
+      return this.colorManager.executeFunction(fnName, args);
     }
 
-    if (UNINTERPRETED_KEYWORDS.includes(funcName)) {
+    if (UNINTERPRETED_KEYWORDS.includes(fnName)) {
       const argStrings = args.map((arg) => arg.toString());
-      return new StringSymbol(`${funcName}(${argStrings.join(", ")})`);
+      return new StringSymbol(`${fnName}(${argStrings.join(", ")})`);
     }
 
     throw new InterpreterError(
-      `Function '${node.name}' not found.`,
+      `Unknown function: '${node.name}'`,
       node.token?.line,
       node.token,
     );
@@ -657,11 +653,7 @@ export class Interpreter {
   }
 
   private visitReturnNode(node: ReturnNode): void {
-    const returnValueVisit = this.visit(node.expr);
-    if (returnValueVisit === null) {
-      throw new ReturnSignal(null);
-    }
-    throw new ReturnSignal(returnValueVisit); // returnValueVisit is ISymbolType | null
+    throw new ReturnSignal(this.visit(node.expr));
   }
 
   private visitWhileNode(node: WhileNode): void {
