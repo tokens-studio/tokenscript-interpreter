@@ -493,17 +493,28 @@ export class Interpreter {
       );
     }
 
-    const valueToAssign = valueToAssignVisit as ISymbolType;
+    const value = valueToAssignVisit as ISymbolType;
 
-    // Type checking - ensure the new value is compatible with the existing variable type
-    if (!existingVar.validValue(valueToAssign)) {
+    if (value.type.toLowerCase() === "list") {
+      // TODO Type checking for lists
+    } else {
+      if (existingVar.type.toLowerCase() !== value.type.toLowerCase()) {
+        throw new InterpreterError(
+          `Invalid value '${value}' ('${value.type}') for variable '${varName}'. Use a valid value.`,
+          node.token?.line,
+          node.token,
+        );
+      }
+    }
+
+    if (!existingVar.validValue(value)) {
       throw new InterpreterError(
-        `Cannot assign ${valueToAssign.type} to variable '${varName}' of type ${existingVar.type}.`,
+        `Cannot assign ${value.type} to variable '${varName}' of type ${existingVar.type}.`,
         (node.value as any).token?.line,
       );
     }
 
-    this.symbolTable.set(varName, valueToAssign);
+    this.symbolTable.set(varName, value);
   }
 
   private visitAttributeAssignNode(node: AttributeAssignNode): void {
