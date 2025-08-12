@@ -57,56 +57,46 @@ function mathWrapper(
 }
 
 function comparisonWrapper(
-  func: (a: any, b: any) => boolean,
+  fn: (a: any, b: any) => boolean,
 ): BooleanOperationFunction {
   return (a: ISymbolType, b: ISymbolType): BooleanSymbol => {
-    // Check for type compatibility first
     const isNumericA =
       a instanceof NumberSymbol || a instanceof NumberWithUnitSymbol;
     const isNumericB =
       b instanceof NumberSymbol || b instanceof NumberWithUnitSymbol;
-    const isStringA = a instanceof StringSymbol;
-    const isStringB = b instanceof StringSymbol;
-    const isBooleanA = a instanceof BooleanSymbol;
-    const isBooleanB = b instanceof BooleanSymbol;
-
-    // Only allow comparisons between compatible types
     if (isNumericA && !isNumericB) {
       throw new InterpreterError(
         `Cannot compare ${a.type} with ${b.type}. Incompatible types.`,
       );
     }
+
+    const isStringA = a instanceof StringSymbol;
+    const isStringB = b instanceof StringSymbol;
     if (isStringA && !isStringB) {
       throw new InterpreterError(
         `Cannot compare ${a.type} with ${b.type}. Incompatible types.`,
       );
     }
+
+    const isBooleanA = a instanceof BooleanSymbol;
+    const isBooleanB = b instanceof BooleanSymbol;
     if (isBooleanA && !isBooleanB) {
       throw new InterpreterError(
         `Cannot compare ${a.type} with ${b.type}. Incompatible types.`,
       );
     }
 
-    // For comparisons, we often compare raw values if types are compatible (e.g. Number and NumberWithUnit)
-    const valA = a.value;
-    const valB = b.value;
-
-    if (a instanceof NumberWithUnitSymbol && b instanceof NumberSymbol) {
-      // Allow comparison between NumberWithUnit and Number
-    } else if (a instanceof NumberSymbol && b instanceof NumberWithUnitSymbol) {
-      // Allow comparison between Number and NumberWithUnit
-    } else if (
+    if (
       a instanceof NumberWithUnitSymbol &&
-      b instanceof NumberWithUnitSymbol
+      b instanceof NumberWithUnitSymbol &&
+      a.unit !== b.unit
     ) {
-      if (a.unit !== b.unit) {
-        throw new InterpreterError(
-          `Cannot compare NumberWithUnit of different units: ${a.unit} and ${b.unit}`,
-        );
-      }
+      throw new InterpreterError(
+        `Cannot compare NumberWithUnit of different units: ${a.unit} and ${b.unit}`,
+      );
     }
-    // If types are compatible, rely on their direct .value comparison
-    return new BooleanSymbol(func(valA, valB));
+
+    return new BooleanSymbol(fn(a.value, b.value));
   };
 }
 
