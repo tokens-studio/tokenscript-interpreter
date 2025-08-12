@@ -703,23 +703,17 @@ export class Interpreter {
           node.token,
         );
       }
-      const conditionVisitResult = this.visit(node.condition);
-      if (!(conditionVisitResult instanceof BooleanSymbol)) {
+      const conditionNode = this.visit(node.condition);
+      if (!(conditionNode instanceof BooleanSymbol)) {
         throw new InterpreterError(
           "While loop condition must be a boolean.",
           node.condition.token?.line,
           node.condition?.token,
         );
       }
-      const conditionValue = conditionVisitResult as BooleanSymbol;
-      if (!conditionValue.value) break;
+      if (!conditionNode.value) break;
 
-      try {
-        this.visit(node.body);
-      } catch (e) {
-        if (e instanceof ReturnSignal) throw e;
-        throw e;
-      }
+      this.visit(node.body);
     }
   }
 
