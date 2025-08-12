@@ -672,15 +672,14 @@ export class Interpreter {
 
   private visitStatementListNode(node: StatementListNode): ISymbolType | null {
     let result: ISymbolType | null = null;
+
     for (const statement of node.statements) {
-      const statementVisitResult = this.visit(statement);
-      if (statementVisitResult instanceof ReturnSignal) {
-        throw statementVisitResult;
-      }
-      if (statementVisitResult !== null) {
-        result = statementVisitResult;
+      const statementResult = this.visit(statement);
+      if (statementResult) {
+        result = statementResult;
       }
     }
+
     return result;
   }
 
