@@ -707,8 +707,8 @@ export class Interpreter {
       if (!(conditionVisitResult instanceof BooleanSymbol)) {
         throw new InterpreterError(
           "While loop condition must be a boolean.",
-          (node.condition as any).token?.line,
-          (node.condition as any).token,
+          node.condition.token?.line,
+          node.condition?.token,
         );
       }
       const conditionValue = conditionVisitResult as BooleanSymbol;
