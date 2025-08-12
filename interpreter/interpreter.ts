@@ -93,7 +93,7 @@ export class Interpreter {
           const colorManager = this.colorManager;
 
           class ColorConstructor extends BaseSymbolType {
-            type = colorType!.type;
+            type = colorType?.type || 'Color';
 
             constructor(value?: ISymbolType) {
               const instance = colorManager.initColorFormat(name, value);
@@ -102,7 +102,7 @@ export class Interpreter {
             }
 
             validValue(value: any): boolean {
-              return colorType!.validValue(value);
+              return colorType?.validValue(value) || false;
             }
           }
 
