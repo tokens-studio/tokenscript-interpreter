@@ -122,12 +122,12 @@ export class Interpreter {
     if (this.references instanceof Map) {
       // For Map-based references (shared reference model)
       for (const key in references) {
-        this.references.set(key, this.importReferenceValue(references[key]));
+        this.references.set(key, this.importReference(references[key]));
       }
     } else {
       // For Record-based references (backward compatibility)
       for (const key in references) {
-        this.references[key] = this.importReferenceValue(references[key]);
+        this.references[key] = this.importReference(references[key]);
       }
     }
   }
@@ -141,10 +141,7 @@ export class Interpreter {
           !this.references.has(key) ||
           this.references.get(key) !== newReferences[key]
         ) {
-          this.references.set(
-            key,
-            this.importReferenceValue(newReferences[key]),
-          );
+          this.references.set(key, this.importReference(newReferences[key]));
         }
       }
     } else {
@@ -153,13 +150,13 @@ export class Interpreter {
           !(key in this.references) ||
           this.references[key] !== newReferences[key]
         ) {
-          this.references[key] = this.importReferenceValue(newReferences[key]);
+          this.references[key] = this.importReference(newReferences[key]);
         }
       }
     }
   }
 
-  private importReferenceValue(value: any): ISymbolType {
+  private importReference(value: any): ISymbolType {
     if (value instanceof BaseSymbolType) return value;
     if (typeof value === "number") return new NumberSymbol(value);
     if (typeof value === "string") {
@@ -168,7 +165,7 @@ export class Interpreter {
     }
     if (typeof value === "boolean") return new BooleanSymbol(value);
     if (Array.isArray(value))
-      return new ListSymbol(value.map((v) => this.importReferenceValue(v)));
+      return new ListSymbol(value.map((v) => this.importReference(v)));
 
     if (value instanceof NumberWithUnitSymbol) return value;
     const numberWithUnit = NumberWithUnitSymbol.fromRecord(value);
