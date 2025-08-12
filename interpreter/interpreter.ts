@@ -118,6 +118,8 @@ export class Interpreter {
     }
   }
 
+  // References ------------------------------------------------------------------
+
   public setReferences(references: ReferenceRecord): void {
     if (this.references instanceof Map) {
       // For Map-based references (shared reference model)
@@ -159,11 +161,6 @@ export class Interpreter {
     }
   }
 
-  public setAst(ast: ASTNode | null): void {
-    this.ast = ast;
-    this.parser = null; // Clear parser since we're using pre-parsed AST
-  }
-
   private importReferenceValue(value: any): ISymbolType {
     if (value instanceof BaseSymbolType) return value;
     if (typeof value === "number") return new NumberSymbol(value);
@@ -181,6 +178,25 @@ export class Interpreter {
 
     throw new InterpreterError(`Invalid reference value type: ${typeof value}`);
   }
+
+  public getReference(key: string): ReferenceRecord | undefined {
+    // NOTE: This method is now deprecated in the shared reference model
+    // but kept for backward compatibility
+    if (this.references instanceof Map) {
+      return this.references.get(key);
+    } else {
+      return this.references[key];
+    }
+  }
+
+  // Utilities -------------------------------------------------------------------
+
+  public setAst(ast: ASTNode | null): void {
+    this.ast = ast;
+    this.parser = null; // Clear parser since we're using pre-parsed AST
+  }
+
+  // Visit Functions -------------------------------------------------------------
 
   private visit(node: ASTNode | null): ISymbolType | null {
     if (!node) return null;
@@ -333,22 +349,16 @@ export class Interpreter {
   }
 
   private visitReferenceNode(node: ReferenceNode): ISymbolType {
-    let value: ISymbolType | undefined;
+    const value = this.getReference(node.value);
 
-    if (this.references instanceof Map) {
-      value = this.references.get(node.value);
-    } else {
-      value = this.references[node.value];
-    }
-
-    if (value === undefined) {
-      // References specifically uses undefined for not found
+    if (!value) {
       throw new InterpreterError(
-        `Reference '{${node.value}}' not found.`,
+        `Unknown reference: ${node.value}`,
         node.token.line,
         node.token,
       );
     }
+
     return value;
   }
 
