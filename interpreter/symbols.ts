@@ -160,7 +160,7 @@ export class NumberSymbol extends BaseSymbolType {
     this.isFloat = isFloat;
     this._SUPPORTED_METHODS = {
       to_string: {
-        function: this.to_string,
+        function: this.toStringImpl,
         args: [
           {
             name: "radix",
@@ -190,7 +190,7 @@ export class NumberSymbol extends BaseSymbolType {
     return String(Number(this.value));
   }
 
-  to_string(radix?: NumberSymbol): StringSymbol {
+  toStringImpl(radix?: NumberSymbol): StringSymbol {
     if (radix === undefined) {
       return new StringSymbol(String(this.value));
     }
@@ -528,7 +528,7 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
 
     this._SUPPORTED_METHODS = {
       to_string: {
-        function: this.to_string,
+        function: this.toStringImpl,
         args: [],
         returnType: StringSymbol,
       },
@@ -569,7 +569,7 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
     };
   }
 
-  to_string(): StringSymbol {
+  toStringImpl(): StringSymbol {
     return new StringSymbol(this.toString());
   }
   to_number(): NumberSymbol {
