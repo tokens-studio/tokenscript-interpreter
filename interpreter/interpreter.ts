@@ -322,16 +322,10 @@ export class Interpreter {
   }
 
   private visitListNode(node: ListNode): ListSymbol {
-    const elements = node.elements.map((el) => {
-      const visitedEl = this.visit(el);
-      if (visitedEl == null)
-        throw new InterpreterError(
-          "List elements cannot be null or undefined after evaluation.",
-          node.token?.line,
-        );
-      return visitedEl as ISymbolType;
-    });
-    return new ListSymbol(elements, node instanceof ImplicitListNode);
+    return new ListSymbol(
+      node.elements.map((el) => this.visit(el) as ISymbolType),
+      node instanceof ImplicitListNode,
+    );
   }
 
   private visitImplicitListNode(node: ImplicitListNode): ListSymbol {
@@ -599,14 +593,13 @@ export class Interpreter {
   private visitAttributeAccessNode(node: AttributeAccessNode): ISymbolType {
     const leftVisitResult = this.visit(node.left);
     if (leftVisitResult == null) {
-      // Check for null or undefined
       throw new InterpreterError(
         "Cannot access attribute or method on null or undefined.",
         node.token?.line,
         node.token,
       );
     }
-    const leftValue = leftVisitResult as ISymbolType; // Safe due to check
+    const leftValue = leftVisitResult as ISymbolType;
 
     if (node.right instanceof IdentifierNode) {
       if (
