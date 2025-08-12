@@ -8,7 +8,6 @@ import {
 import {
   AssignNode,
   AttributeAccessNode,
-  AttributeAssignNode,
   BinOpNode,
   BlockNode,
   BooleanNode,
@@ -417,7 +416,6 @@ export class Parser {
     this.error(
       `Unexpected token in factor: ${token.type} (${String(token.value)})`,
     );
-    return new StringNode({ type: TokenType.STRING, value: "dummy", line: 0 }); // Should be unreachable
   }
 
   private attributeAccess(leftNode: ASTNode): ASTNode {
@@ -439,7 +437,6 @@ export class Parser {
   }
 
   private functionCall(functionName: Token): FunctionCallNode {
-    const _token = this.currentToken;
     this.eat(TokenType.LPAREN);
     const args: ASTNode[] = [];
     while (this.currentToken.type !== TokenType.RPAREN) {
