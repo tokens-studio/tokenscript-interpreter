@@ -448,25 +448,27 @@ export class Interpreter {
 
     const value: ISymbolType = this.visit(node.assignmentExpr) as ISymbolType;
 
-    if (!subType && !value.validValue(value)) {
-      throw new InterpreterError(
-        `Variable '${name}' already defined. Use a different name.`,
-        node.varName.token.line,
-        node.varName.token,
-      );
-    }
-
-    // TODO: Type checking for lists
     if (value.type.toLowerCase() === "list") {
+      // TODO Type checking for lists
     } else {
       if (!subType && baseType !== value.type.toLowerCase()) {
         throw new InterpreterError(
-          `Type mismatch for ${baseType} and ${value.type.toLowerCase()}`,
+          `Invalid value '${value}' ('${baseType}') for variable '${name}'. Use a valid value.`,
           node.varName.token.line,
           node.varName.token,
         );
       }
     }
+
+    if ([".", "[", "-"].some((c) => name.includes(c))) {
+      throw new InterpreterError(
+        `Invalid variable name '${name}'. Use a simple name (and underscores) without '.', '-', '['.`,
+        node.varName.token.line,
+        node.varName.token,
+      );
+    }
+
+    // TODO Add subtypes
 
     this.symbolTable.set(name, value);
   }
