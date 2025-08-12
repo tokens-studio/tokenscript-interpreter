@@ -179,7 +179,7 @@ export class Interpreter {
     throw new InterpreterError(`Invalid reference value type: ${typeof value}`);
   }
 
-  public getReference(key: string): ReferenceRecord | undefined {
+  public getReference(key: string): ISymbolType | undefined {
     // NOTE: This method is now deprecated in the shared reference model
     // but kept for backward compatibility
     if (this.references instanceof Map) {
@@ -334,7 +334,7 @@ export class Interpreter {
     }
 
     throw new InterpreterError(
-      `Unknown unary operator type: ${node.op?.type}`,
+      `Unknown unary operator type: ${node.op}`,
       node.opToken.line,
       node.opToken,
     );
@@ -362,7 +362,7 @@ export class Interpreter {
       );
     }
 
-    return value;
+    return value as ISymbolType;
   }
 
   private visitHexColorNode(node: HexColorNode): ColorSymbol {
