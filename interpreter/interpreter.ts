@@ -7,18 +7,17 @@ import {
   UNINTERPRETED_KEYWORDS,
 } from "../types";
 import {
+  FunctionCallNode,
+  IdentifierNode,
+  ImplicitListNode,
   type AssignNode,
   type AttributeAccessNode,
   type AttributeAssignNode,
   type BinOpNode,
-  type BlockNode,
   type BooleanNode,
   type ElementWithUnitNode,
-  FunctionCallNode as FunctionCallNode,
   type HexColorNode,
-  IdentifierNode,
   type IfNode,
-  ImplicitListNode,
   type ListNode,
   type NumNode,
   type ReassignNode,
@@ -49,8 +48,6 @@ const { LANGUAGE_OPTIONS: DEFAULT_LANGUAGE_OPTIONS } = operations;
 class ReturnSignal {
   constructor(public value: ISymbolType | null) {}
 }
-
-type MathOperand = NumberSymbol | NumberWithUnitSymbol;
 
 export class Interpreter {
   private parser: Parser | null; // Null if created with pre-parsed AST
