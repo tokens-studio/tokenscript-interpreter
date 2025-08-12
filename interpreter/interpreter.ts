@@ -288,50 +288,53 @@ export class Interpreter {
   }
 
   private visitUnaryOpNode(node: UnaryOpNode): ISymbolType {
-    const exprVisitResult = this.visit(node.expr);
-    if (exprVisitResult == null)
-      throw new InterpreterError(
-        "Cannot apply unary operator to null or undefined.",
-        node.opToken.line,
-        node.opToken,
-      );
-    const exprValue = exprVisitResult as ISymbolType;
+    const result = this.visit(node.expr) as ISymbolType;
 
     if (node.op === Operations.SUBTRACT) {
-      if (exprValue instanceof NumberSymbol)
-        return new NumberSymbol(-exprValue.value);
-      if (exprValue instanceof NumberWithUnitSymbol)
-        return new NumberWithUnitSymbol(-exprValue.value, exprValue.unit);
+      if (result instanceof NumberSymbol) {
+        return new NumberSymbol(-result.value);
+      }
+
+      if (result instanceof NumberWithUnitSymbol) {
+        return new NumberWithUnitSymbol(-result.value, result.unit);
+      }
+
       throw new InterpreterError(
-        `Unary '-' not applicable to ${exprValue.type}.`,
+        `Cannot apply unary '-' to non-number value: ${result.value}`,
         node.opToken.line,
         node.opToken,
       );
     }
+
     if (node.op === Operations.ADD) {
-      // Unary plus
       if (
-        exprValue instanceof NumberSymbol ||
-        exprValue instanceof NumberWithUnitSymbol
-      )
-        return exprValue;
+        result instanceof NumberSymbol ||
+        result instanceof NumberWithUnitSymbol
+      ) {
+        return result;
+      }
+
       throw new InterpreterError(
-        `Unary '+' not applicable to ${exprValue.type}.`,
+        `Cannot apply unary '+' to non-number value: ${result.value}`,
         node.opToken.line,
         node.opToken,
       );
     }
+
     if (node.op === Operations.LOGIC_NOT) {
-      if (exprValue instanceof BooleanSymbol)
-        return new BooleanSymbol(!exprValue.value);
+      if (result instanceof BooleanSymbol) {
+        return new BooleanSymbol(!result.value);
+      }
+
       throw new InterpreterError(
-        `Unary '!' not applicable to ${exprValue.type}.`,
+        `Cannot apply NOT to non-boolean value: ${result.value}.`,
         node.opToken.line,
         node.opToken,
       );
     }
+
     throw new InterpreterError(
-      `Unknown unary operator: ${node.op}`,
+      `Unknown unary operator type: ${node.op?.type}`,
       node.opToken.line,
       node.opToken,
     );
