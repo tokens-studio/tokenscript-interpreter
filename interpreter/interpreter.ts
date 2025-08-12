@@ -735,15 +735,17 @@ export class Interpreter {
         (node.condition as any).token,
       );
     }
-    const conditionValue = conditionNode as BooleanSymbol;
+    const validConditionNode = conditionNode as BooleanSymbol;
 
-    if (conditionValue.value) {
+    if (validConditionNode.value) {
       return this.visit(node.ifBody);
     }
+
     if (node.elseBody) {
       return this.visit(node.elseBody);
     }
-    return null; // no branch taken
+
+    return null;
   }
 
   public interpret(): ISymbolType | string | null {
