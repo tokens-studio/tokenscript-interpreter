@@ -79,7 +79,11 @@ describe("Interpreter - Basic Expressions", () => {
     const text = "{hello} + {world} + {test}, 5+6, {test}*2";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { hello: 1, world: 2, test: 3 });
+    const interpreter = new Interpreter(parser, {
+      hello: 1,
+      world: 2,
+      test: 3,
+    });
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("6, 11, 6");
@@ -241,7 +245,8 @@ describe("Interpreter - Functions", () => {
   });
 
   it("should handle math functions", () => {
-    const text = "min(1, 2, 3) + max(4, 5, 6) - average(7, 8, 9, max(20,98)) + sqrt(round(9.2))";
+    const text =
+      "min(1, 2, 3) + max(4, 5, 6) - average(7, 8, 9, max(20,98)) + sqrt(round(9.2))";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
     const interpreter = new Interpreter(parser, {});
@@ -280,8 +285,14 @@ describe("Interpreter - String Methods", () => {
     interpreter.interpret();
     const parts = interpreter.symbolTable.get("parts");
     const colorParts = interpreter.symbolTable.get("color_parts");
-    expect(parts?.elements.map((e) => e.toString())).toEqual(["hello", "world"]);
-    expect(colorParts?.elements.map((e) => e.toString())).toEqual(["", "000000"]);
+    expect(parts?.elements.map((e) => e.toString())).toEqual([
+      "hello",
+      "world",
+    ]);
+    expect(colorParts?.elements.map((e) => e.toString())).toEqual([
+      "",
+      "000000",
+    ]);
   });
 });
 
@@ -312,8 +323,137 @@ describe("Interpreter - References", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    expect(() => new Interpreter(parser, { unsupported_ref: { unsupported_ref: 0.5 } })).toThrow(
-      InterpreterError
+    expect(
+      () =>
+        new Interpreter(parser, { unsupported_ref: { unsupported_ref: 0.5 } }),
+    ).toThrow(InterpreterError);
+  });
+});
+
+describe("Interpreter - Variable Name Validation", () => {
+  it("should throw error for variable name containing dot", () => {
+    // Create a mock AST node that bypasses parser validation
+    const mockAssignNode = {
+      nodeType: "AssignNode",
+      varName: {
+        name: "my.var",
+        token: { line: 1, type: "IDENTIFIER", value: "my.var" },
+      },
+      typeDecl: {
+        baseType: { name: "String" },
+        subTypes: [],
+      },
+      assignmentExpr: {
+        nodeType: "StringNode",
+        value: "test",
+        token: { line: 1, type: "STRING", value: "test" },
+      },
+    };
+
+    const interpreter = new Interpreter(mockAssignNode as any, {});
+
+    expect(() => interpreter.interpret()).toThrow(InterpreterError);
+    expect(() => interpreter.interpret()).toThrow(
+      "Invalid variable name 'my.var'. Use a simple name (and underscores) without '.', '-', '['.",
+    );
+  });
+
+  it("should throw error for variable name containing bracket", () => {
+    // Create a mock AST node that bypasses parser validation
+    const mockAssignNode = {
+      nodeType: "AssignNode",
+      varName: {
+        name: "my[var",
+        token: { line: 1, type: "IDENTIFIER", value: "my[var" },
+      },
+      typeDecl: {
+        baseType: { name: "String" },
+        subTypes: [],
+      },
+      assignmentExpr: {
+        nodeType: "StringNode",
+        value: "test",
+        token: { line: 1, type: "STRING", value: "test" },
+      },
+    };
+
+    const interpreter = new Interpreter(mockAssignNode as any, {});
+
+    expect(() => interpreter.interpret()).toThrow(InterpreterError);
+    expect(() => interpreter.interpret()).toThrow(
+      "Invalid variable name 'my[var'. Use a simple name (and underscores) without '.', '-', '['.",
+    );
+  });
+
+  it("should throw error for variable name containing dash", () => {
+    // Create a mock AST node that bypasses parser validation
+    const mockAssignNode = {
+      nodeType: "AssignNode",
+      varName: {
+        name: "my-var",
+        token: { line: 1, type: "IDENTIFIER", value: "my-var" },
+      },
+      typeDecl: {
+        baseType: { name: "String" },
+        subTypes: [],
+      },
+      assignmentExpr: {
+        nodeType: "StringNode",
+        value: "test",
+        token: { line: 1, type: "STRING", value: "test" },
+      },
+    };
+
+    const interpreter = new Interpreter(mockAssignNode as any, {});
+
+    expect(() => interpreter.interpret()).toThrow(InterpreterError);
+    expect(() => interpreter.interpret()).toThrow(
+      "Invalid variable name 'my-var'. Use a simple name (and underscores) without '.', '-', '['.",
+    );
+  });
+
+  it("should allow valid variable names with underscores", () => {
+    const text = 'variable my_var: String = "test";';
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser, {});
+
+    expect(() => interpreter.interpret()).not.toThrow();
+  });
+
+  it("should allow simple variable names", () => {
+    const text = 'variable myvar: String = "test";';
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser, {});
+
+    expect(() => interpreter.interpret()).not.toThrow();
+  });
+
+  it("should throw error for variable name with multiple invalid characters", () => {
+    // Create a mock AST node that bypasses parser validation
+    const mockAssignNode = {
+      nodeType: "AssignNode",
+      varName: {
+        name: "my-var.test[0",
+        token: { line: 1, type: "IDENTIFIER", value: "my-var.test[0" },
+      },
+      typeDecl: {
+        baseType: { name: "String" },
+        subTypes: [],
+      },
+      assignmentExpr: {
+        nodeType: "StringNode",
+        value: "test",
+        token: { line: 1, type: "STRING", value: "test" },
+      },
+    };
+
+    const interpreter = new Interpreter(mockAssignNode as any, {});
+
+    expect(() => interpreter.interpret()).toThrow(InterpreterError);
+    expect(() => interpreter.interpret()).toThrow(
+      "Invalid variable name 'my-var.test[0'. Use a simple name (and underscores) without '.', '-', '['.",
     );
   });
 });
