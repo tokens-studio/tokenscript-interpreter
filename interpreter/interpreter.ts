@@ -261,11 +261,10 @@ export class Interpreter {
     return new StringSymbol(node.value);
   }
 
+  // Bare identifiers are treated as string literals if not found as variables
   private visitIdentifierNode(node: IdentifierNode): ISymbolType {
     const value = this.symbolTable.get(node.name);
-    if (value === null) {
-      // In TokenScript, bare identifiers are treated as string literals if not found as variables
-      // This matches the Python implementation behavior
+    if (!value) {
       return new StringSymbol(node.name);
     }
     return value;
