@@ -364,23 +364,7 @@ export class Interpreter {
     node: ElementWithUnitNode,
   ): NumberWithUnitSymbol {
     const valNodeVisit = this.visit(node.astNode);
-
-    if (valNodeVisit instanceof NumberWithUnitSymbol)
-      return valNodeVisit as NumberWithUnitSymbol;
-
-    if (!(valNodeVisit instanceof NumberSymbol)) {
-      const typeStr = valNodeVisit
-        ? (valNodeVisit as ISymbolType).type
-        : valNodeVisit == null
-          ? "null/undefined"
-          : "void";
-      throw new InterpreterError(
-        `Cannot apply unit to non-number type ${typeStr}.`,
-        node.token?.line,
-        node.token,
-      );
-    }
-    return new NumberWithUnitSymbol(valNodeVisit.value, node.unit);
+    return new NumberWithUnitSymbol(valNodeVisit?.value, node.unit);
   }
 
   private visitFunctionCallNode(node: FunctionCallNode): ISymbolType {
