@@ -727,18 +727,15 @@ export class Interpreter {
   }
 
   private visitIfNode(node: IfNode): ISymbolType | null {
-    const conditionVisitResult = this.visit(node.condition);
-    if (
-      !conditionVisitResult ||
-      !(conditionVisitResult instanceof BooleanSymbol)
-    ) {
+    const conditionNode = this.visit(node.condition);
+    if (!(conditionNode instanceof BooleanSymbol)) {
       throw new InterpreterError(
         "If condition must be a boolean.",
         (node.condition as any).token?.line,
         (node.condition as any).token,
       );
     }
-    const conditionValue = conditionVisitResult as BooleanSymbol;
+    const conditionValue = conditionNode as BooleanSymbol;
 
     if (conditionValue.value) {
       return this.visit(node.ifBody);
