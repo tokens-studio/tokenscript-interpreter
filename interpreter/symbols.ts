@@ -331,13 +331,15 @@ export class StringSymbol extends BaseSymbolType {
 export class BooleanSymbol extends BaseSymbolType {
   type = "Boolean";
   constructor(value: boolean | BooleanSymbol | null) {
-    super(
-      value instanceof BooleanSymbol
-        ? value.value
-        : value === null
-          ? false
-          : value,
-    );
+    let safeValue: boolean;
+    if (typeof value === "boolean") {
+      safeValue = value;
+    } else if (value instanceof BooleanSymbol) {
+      safeValue = value.value;
+    } else {
+      throw new InterpreterError(`Value must be boolean, got ${typeof value}.`);
+    }
+    super(safeValue);
   }
   validValue(val: any): boolean {
     return typeof val === "boolean" || val instanceof BooleanSymbol;
