@@ -353,22 +353,25 @@ export class ListSymbol extends BaseSymbolType {
   _SUPPORTED_METHODS: SupportedMethods;
 
   constructor(elements: ISymbolType[] | null, isImplicit = false) {
-    super(elements === null ? [] : elements);
-    this.elements = elements === null ? [] : elements;
+    const safeElements = elements === null ? [] : elements;
+    super(safeElements);
+    this.elements = safeElements;
+
     this.isImplicit = isImplicit;
+
     this._SUPPORTED_METHODS = {
       append: {
-        function: this.append,
+        function: this.appendImpl,
         args: [{ name: "item", type: BaseSymbolType, unpack: false }],
         returnType: ListSymbol,
       },
       extend: {
-        function: this.extend,
+        function: this.extendImpl,
         args: [{ name: "items", type: BaseSymbolType, unpack: true }],
         returnType: ListSymbol,
       },
       insert: {
-        function: this.insert,
+        function: this.insertImpl,
         args: [
           { name: "index", type: NumberSymbol },
           { name: "item", type: BaseSymbolType, unpack: false },
@@ -376,23 +379,23 @@ export class ListSymbol extends BaseSymbolType {
         returnType: ListSymbol,
       },
       delete: {
-        function: this.delete,
+        function: this.deleteImpl,
         args: [{ name: "index", type: NumberSymbol }],
         returnType: ListSymbol,
       },
       length: { function: this.length, args: [], returnType: NumberSymbol },
       index: {
-        function: this.index,
+        function: this.indexImpl,
         args: [{ name: "item", type: BaseSymbolType, unpack: false }],
         returnType: NumberSymbol,
       },
       get: {
-        function: this.get,
+        function: this.getImpl,
         args: [{ name: "index", type: NumberSymbol }],
         returnType: BaseSymbolType,
       },
       update: {
-        function: this.update,
+        function: this.updateImpl,
         args: [
           { name: "index", type: NumberSymbol },
           { name: "item", type: BaseSymbolType, unpack: false },
@@ -457,11 +460,11 @@ export class ListSymbol extends BaseSymbolType {
     return this.elements.map((e) => e.toString()).join(", ");
   }
 
-  append(item: ISymbolType): ListSymbol {
+  appendImpl(item: ISymbolType): ListSymbol {
     this.elements.push(item);
     return this;
   }
-  extend(...items: ISymbolType[]): ListSymbol {
+  extendImpl(...items: ISymbolType[]): ListSymbol {
     // Handle both individual arguments and ListSymbol arguments
     for (const item of items) {
       if (item instanceof ListSymbol) {
@@ -472,14 +475,14 @@ export class ListSymbol extends BaseSymbolType {
     }
     return this;
   }
-  insert(indexSymbol: NumberSymbol, item: ISymbolType): ListSymbol {
+  insertImpl(indexSymbol: NumberSymbol, item: ISymbolType): ListSymbol {
     const index = indexSymbol.value as number;
     if (index < 0 || index > this.elements.length)
       throw new InterpreterError("Index out of range for insert.");
     this.elements.splice(index, 0, item);
     return this;
   }
-  delete(indexSymbol: NumberSymbol): ListSymbol {
+  deleteImpl(indexSymbol: NumberSymbol): ListSymbol {
     const index = indexSymbol.value as number;
     if (index < 0 || index >= this.elements.length)
       throw new InterpreterError("Index out of range for delete.");
@@ -489,17 +492,17 @@ export class ListSymbol extends BaseSymbolType {
   length(): NumberSymbol {
     return new NumberSymbol(this.elements.length);
   }
-  index(item: ISymbolType): NumberSymbol {
+  indexImpl(item: ISymbolType): NumberSymbol {
     const idx = this.elements.findIndex((el) => el.equals(item));
     return new NumberSymbol(idx);
   }
-  get(indexSymbol: NumberSymbol): ISymbolType {
+  getImpl(indexSymbol: NumberSymbol): ISymbolType {
     const index = indexSymbol.value as number;
     if (index < 0 || index >= this.elements.length)
       throw new InterpreterError("Index out of range for get.");
     return this.elements[index];
   }
-  update(indexSymbol: NumberSymbol, item: ISymbolType): ListSymbol {
+  updateImpl(indexSymbol: NumberSymbol, item: ISymbolType): ListSymbol {
     const index = indexSymbol.value as number;
     if (index < 0 || index >= this.elements.length)
       throw new InterpreterError("Index out of range for update.");
@@ -590,12 +593,21 @@ export class ColorSymbol extends BaseSymbolType {
   type = "Color";
   _SUPPORTED_METHODS: SupportedMethods;
 
-  constructor(value: string | null) {
-    const effectiveValue = value === null ? "#000000" : value; // Default to black if null
-    super(effectiveValue);
-    if (!ColorSymbol.isValidHex(effectiveValue)) {
-      throw new InterpreterError(`Invalid hex color format: ${effectiveValue}`);
+  constructor(value: string | ColorSymbol) {
+    let safeValue: string;
+    if (typeof value === "string") {
+      if (!ColorSymbol.isValidHex(value)) {
+        throw new InterpreterError(`Invalid hex color format: ${value}`);
+      }
+      safeValue = value;
+    } else if (value instanceof ColorSymbol) {
+      safeValue = value.value;
+    } else {
+      throw new InterpreterError(
+        `Value must be string or ColorSymbol, got ${typeof value}.`,
+      );
     }
+    super(safeValue);
 
     this._SUPPORTED_METHODS = {
       split: {
