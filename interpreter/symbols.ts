@@ -269,16 +269,16 @@ export class StringSymbol extends BaseSymbolType {
     super(safeValue);
 
     this._SUPPORTED_METHODS = {
-      upper: { function: this.upper, args: [], returnType: StringSymbol },
-      lower: { function: this.lower, args: [], returnType: StringSymbol },
-      length: { function: this.length, args: [], returnType: NumberSymbol },
+      upper: { function: this.upperImpl, args: [], returnType: StringSymbol },
+      lower: { function: this.lowerImpl, args: [], returnType: StringSymbol },
+      length: { function: this.lengthImpl, args: [], returnType: NumberSymbol },
       concat: {
-        function: this.concat,
+        function: this.concatImpl,
         args: [{ name: "other", type: StringSymbol }],
         returnType: StringSymbol,
       },
       split: {
-        function: this.split,
+        function: this.splitImpl,
         args: [{ name: "delimiter", type: StringSymbol, optional: true }],
         returnType: ListSymbol,
       },
@@ -289,19 +289,19 @@ export class StringSymbol extends BaseSymbolType {
     return typeof val === "string" || val instanceof StringSymbol;
   }
 
-  upper(): StringSymbol {
+  upperImpl(): StringSymbol {
     return new StringSymbol(this.value.toUpperCase());
   }
 
-  lower(): StringSymbol {
+  lowerImpl(): StringSymbol {
     return new StringSymbol(this.value.toLowerCase());
   }
 
-  length(): NumberSymbol {
+  lengthImpl(): NumberSymbol {
     return new NumberSymbol(this.value.length);
   }
 
-  concat(other: StringSymbol): StringSymbol {
+  concatImpl(other: StringSymbol): StringSymbol {
     if (other instanceof StringSymbol) {
       return new StringSymbol(this.value + other.value);
     }
@@ -310,7 +310,7 @@ export class StringSymbol extends BaseSymbolType {
     );
   }
 
-  split(delimiter?: StringSymbol): ListSymbol {
+  splitImpl(delimiter?: StringSymbol): ListSymbol {
     const strValue = this.value as string;
     let parts: string[];
     if (delimiter === undefined) {
