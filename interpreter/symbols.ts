@@ -306,7 +306,7 @@ export class StringSymbol extends BaseSymbolType {
       return new StringSymbol(this.value + other.value);
     }
     throw new InterpreterError(
-      `Cannot concatenate String with ${typeof other}`,
+      `Cannot concatenate String ${typeof other} to String.`,
     );
   }
 
