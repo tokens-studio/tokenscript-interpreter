@@ -271,7 +271,6 @@ export class StringSymbol extends BaseSymbolType {
     this._SUPPORTED_METHODS = {
       upper: { function: this.upper, args: [], returnType: StringSymbol },
       lower: { function: this.lower, args: [], returnType: StringSymbol },
-      trim: { function: this.trim, args: [], returnType: StringSymbol },
       length: { function: this.length, args: [], returnType: NumberSymbol },
       concat: {
         function: this.concat,
@@ -293,12 +292,11 @@ export class StringSymbol extends BaseSymbolType {
   upper(): StringSymbol {
     return new StringSymbol(this.value.toUpperCase());
   }
+
   lower(): StringSymbol {
     return new StringSymbol(this.value.toLowerCase());
   }
-  trim(): StringSymbol {
-    return new StringSymbol(this.value.trim());
-  }
+
   length(): NumberSymbol {
     return new NumberSymbol(this.value.length);
   }

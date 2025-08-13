@@ -116,7 +116,6 @@ describe("Complex Expressions - Variable References", () => {
     expect(() => parser.parse(true)).toThrow("Invalid character '´'");
   });
 
-
   it("should handle variable references in function calls", () => {
     const text = "max({a}, {b}, {c}) + min({d}, {e})";
     const lexer = new Lexer(text);
@@ -148,20 +147,6 @@ describe("Complex Expressions - String Operations", () => {
 
     const result = interpreter.symbolTable.get("result");
     expect(result?.toString()).toBe("Hello World!");
-  });
-
-  it("should handle string method chaining", () => {
-    const text = `
-    variable text: String = "  Hello World  ";
-    variable result: String = text.trim().upper().concat("!");
-    `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
-    interpreter.interpret();
-
-    const result = interpreter.symbolTable.get("result");
-    expect(result?.toString()).toBe("HELLO WORLD!");
   });
 
   it("should handle complex string splitting and joining", () => {
