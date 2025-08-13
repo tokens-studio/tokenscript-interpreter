@@ -1,7 +1,25 @@
 import { type ISymbolType, SupportedFormats } from "../types";
 import { InterpreterError } from "./errors";
 
+// Types -----------------------------------------------------------------------
+
 type SupportedMethods = Record<string, MethodDefinitionDef>;
+
+interface MethodArgumentDef {
+  name: string;
+  type: any; // Could be ISymbolType constructor or a special marker like SymbolSelfType
+  optional?: boolean;
+  unpack?: boolean;
+}
+
+interface MethodDefinitionDef {
+  name?: string;
+  function: (...args: any[]) => ISymbolType | null | undefined;
+  args: MethodArgumentDef[];
+  returnType: any; // Could be ISymbolType constructor or a special marker
+}
+
+// Base Type -------------------------------------------------------------------
 
 export abstract class BaseSymbolType implements ISymbolType {
   abstract type: string;
@@ -110,21 +128,7 @@ export abstract class BaseSymbolType implements ISymbolType {
   }
 }
 
-interface MethodArgumentDef {
-  name: string;
-  type: any; // Could be ISymbolType constructor or a special marker like SymbolSelfType
-  optional?: boolean;
-  unpack?: boolean;
-}
-
-interface MethodDefinitionDef {
-  name?: string;
-  function: (...args: any[]) => ISymbolType | null | undefined;
-  args: MethodArgumentDef[];
-  returnType: any; // Could be ISymbolType constructor or a special marker
-}
-
-// --- Concrete Symbol Types ---
+// Concrete Symbol Types -------------------------------------------------------
 
 export class NumberSymbol extends BaseSymbolType {
   type = "Number";
@@ -136,20 +140,20 @@ export class NumberSymbol extends BaseSymbolType {
     value: number | NumberSymbol | NumberWithUnitSymbol | null,
     isFloat = false,
   ) {
-    let numValue: number;
+    let safeValue: number;
     if (typeof value === "number") {
-      numValue = value;
+      safeValue = value;
     } else if (
       value instanceof NumberSymbol ||
       value instanceof NumberWithUnitSymbol
     ) {
-      numValue = value.value as number;
+      safeValue = value.value as number;
     } else {
       throw new InterpreterError(
         `Value must be int or float, got ${typeof value}.`,
       );
     }
-    super(numValue);
+    super(safeValue);
 
     this.isFloat = isFloat;
     this._SUPPORTED_METHODS = {
@@ -254,9 +258,16 @@ export class StringSymbol extends BaseSymbolType {
   _SUPPORTED_METHODS: SupportedMethods;
 
   constructor(value: string | StringSymbol | null) {
-    super(
-      value instanceof StringSymbol ? value.value : value === null ? "" : value,
-    );
+    let safeValue: string;
+    if (typeof value === "string") {
+      safeValue = value;
+    } else if (value instanceof StringSymbol) {
+      safeValue = value.value;
+    } else {
+      throw new InterpreterError(`Value must be string, got ${typeof value}.`);
+    }
+    super(safeValue);
+
     this._SUPPORTED_METHODS = {
       upper: { function: this.upper, args: [], returnType: StringSymbol },
       lower: { function: this.lower, args: [], returnType: StringSymbol },
