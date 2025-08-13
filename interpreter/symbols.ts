@@ -411,7 +411,6 @@ export class ListSymbol extends BaseSymbolType {
 
   toString(): string {
     const delimiter = this.isImplicit ? " " : ", ";
-
     return this.elements.map((x) => x.toString()).join(delimiter);
   }
 
@@ -419,6 +418,7 @@ export class ListSymbol extends BaseSymbolType {
     this.elements.push(item);
     return this;
   }
+
   extendImpl(...items: ISymbolType[]): ListSymbol {
     // Handle both individual arguments and ListSymbol arguments
     for (const item of items) {
@@ -430,6 +430,7 @@ export class ListSymbol extends BaseSymbolType {
     }
     return this;
   }
+
   insertImpl(indexSymbol: NumberSymbol, item: ISymbolType): ListSymbol {
     const index = indexSymbol.value as number;
     if (index < 0 || index > this.elements.length)
@@ -437,6 +438,7 @@ export class ListSymbol extends BaseSymbolType {
     this.elements.splice(index, 0, item);
     return this;
   }
+
   deleteImpl(indexSymbol: NumberSymbol): ListSymbol {
     const index = indexSymbol.value as number;
     if (index < 0 || index >= this.elements.length)
@@ -444,19 +446,23 @@ export class ListSymbol extends BaseSymbolType {
     this.elements.splice(index, 1);
     return this;
   }
+
   length(): NumberSymbol {
     return new NumberSymbol(this.elements.length);
   }
+
   indexImpl(item: ISymbolType): NumberSymbol {
     const idx = this.elements.findIndex((el) => el.equals(item));
     return new NumberSymbol(idx);
   }
+
   getImpl(indexSymbol: NumberSymbol): ISymbolType {
     const index = indexSymbol.value as number;
     if (index < 0 || index >= this.elements.length)
       throw new InterpreterError("Index out of range for get.");
     return this.elements[index];
   }
+
   updateImpl(indexSymbol: NumberSymbol, item: ISymbolType): ListSymbol {
     const index = indexSymbol.value as number;
     if (index < 0 || index >= this.elements.length)
