@@ -588,7 +588,6 @@ export class ColorSymbol extends BaseSymbolType {
       throw new InterpreterError(`Invalid hex color format: ${effectiveValue}`);
     }
 
-    // Add string methods to Color since it's essentially a string
     this._SUPPORTED_METHODS = {
       split: {
         function: this.split,
