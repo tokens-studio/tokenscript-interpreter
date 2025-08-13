@@ -522,13 +522,13 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
       safeValue = value;
     } else if (value instanceof NumberSymbol) {
       safeValue = value.value;
-    } else if (value === null) {
-      safeValue = 0;
     } else {
-      throw new InterpreterError(`Value must be number or NumberSymbol, got ${typeof value}.`);
+      throw new InterpreterError(
+        `Value must be number or NumberSymbol, got ${typeof value}.`,
+      );
     }
     super(safeValue);
-    
+
     if (
       typeof unit === "string" &&
       !(Object.values(SupportedFormats) as string[]).includes(unit)
