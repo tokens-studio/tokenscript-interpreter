@@ -1,7 +1,6 @@
 import { type ISymbolType, SupportedFormats } from "../types";
 import { InterpreterError } from "./errors";
 
-// Base class for all symbols
 export abstract class BaseSymbolType implements ISymbolType {
   abstract type: string;
   public value: any;
@@ -118,6 +117,7 @@ interface MethodArgumentDef {
 }
 
 interface MethodDefinitionDef {
+  name?: string;
   function: (...args: any[]) => ISymbolType | null | undefined;
   args: MethodArgumentDef[];
   returnType: any; // Could be ISymbolType constructor or a special marker
@@ -134,24 +134,24 @@ export class NumberSymbol extends BaseSymbolType {
     isFloat = false,
   ) {
     let numValue: number;
-    if (
+    if (typeof value === "number") {
+      numValue = value;
+    } else if (
       value instanceof NumberSymbol ||
       value instanceof NumberWithUnitSymbol
     ) {
       numValue = value.value as number;
-    } else if (typeof value === "number") {
-      numValue = value;
-    } else if (value === null) {
-      numValue = 0; // Default to 0 if value is null
     } else {
       throw new InterpreterError(
         `Value must be int or float, got ${typeof value}.`,
       );
     }
     super(numValue);
+
     this.isFloat = isFloat;
     this._SUPPORTED_METHODS = {
-      to_string: {
+      tostring: {
+        name: "toString",
         function: this.toStringImpl,
         args: [
           {
@@ -171,10 +171,11 @@ export class NumberSymbol extends BaseSymbolType {
     return typeof val === "number" || val instanceof NumberSymbol;
   }
 
+  // TOOO: This seems very unnecessary
   toString(): string {
     if (!this.isFloat) {
+      return String(this.value);
       if (typeof this.value === "number" && Number.isInteger(this.value)) {
-        return String(Math.trunc(this.value));
       } else if (Number.isInteger(this.value)) {
         return String(this.value);
       }
@@ -182,8 +183,9 @@ export class NumberSymbol extends BaseSymbolType {
     return String(Number(this.value));
   }
 
+  // Direct translation of to_string method from token_interpreter/symbols.py
   toStringImpl(radix?: NumberSymbol): StringSymbol {
-    if (radix === undefined) {
+    if (!radix) {
       return new StringSymbol(String(this.value));
     }
 
@@ -509,9 +511,15 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
     this.unit = typeof unit === "string" ? (unit as SupportedFormats) : unit;
 
     this._SUPPORTED_METHODS = {
-      to_string: {
+      toString: {
         function: this.toStringImpl,
-        args: [],
+        args: [
+          {
+            name: "radix",
+            type: NumberSymbol,
+            optional: true,
+          },
+        ],
         returnType: StringSymbol,
       },
       to_number: {
