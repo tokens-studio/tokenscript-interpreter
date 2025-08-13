@@ -410,54 +410,9 @@ export class ListSymbol extends BaseSymbolType {
   }
 
   toString(): string {
-    if (this.isImplicit) {
-      // Check if any element is exactly a single space string - this indicates explicit spacing
-      const hasExplicitSingleSpaces = this.elements.some(
-        (e) => e instanceof StringSymbol && e.value === " ",
-      );
+    const delimiter = this.isImplicit ? " " : ", ";
 
-      if (hasExplicitSingleSpaces) {
-        // Direct concatenation when single space strings are present
-        return this.elements.map((e) => e.toString()).join("");
-      }
-
-      // For other cases, use smart concatenation based on leading/trailing spaces
-      let result = "";
-
-      for (let i = 0; i < this.elements.length; i++) {
-        const current = this.elements[i].toString();
-
-        if (i === 0) {
-          // First element, just add it
-          result += current;
-        } else {
-          const previous = this.elements[i - 1];
-          const currentElement = this.elements[i];
-
-          // Check if previous element ends with space or current element starts with space
-          const prevEndsWithSpace =
-            previous instanceof StringSymbol &&
-            typeof previous.value === "string" &&
-            previous.value.endsWith(" ");
-          const currentStartsWithSpace =
-            currentElement instanceof StringSymbol &&
-            typeof currentElement.value === "string" &&
-            currentElement.value.startsWith(" ");
-
-          if (prevEndsWithSpace || currentStartsWithSpace) {
-            // No additional space needed
-            result += current;
-          } else {
-            // Add space between elements
-            result += ` ${current}`;
-          }
-        }
-      }
-
-      return result;
-    }
-    // Comma separation for explicit lists
-    return this.elements.map((e) => e.toString()).join(", ");
+    return this.elements.map((x) => x.toString()).join(delimiter);
   }
 
   appendImpl(item: ISymbolType): ListSymbol {

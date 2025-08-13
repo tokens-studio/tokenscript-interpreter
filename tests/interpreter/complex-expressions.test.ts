@@ -137,8 +137,8 @@ describe("Complex Expressions - String Operations", () => {
   it("should handle complex string concatenation", () => {
     const text = `
     variable prefix: String = "Hello";
-    variable suffix: String = "World";
-    variable result: String = prefix " " suffix "!";
+    variable suffix: String = "World!";
+    variable result: List = prefix suffix;
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
@@ -280,7 +280,7 @@ describe("Complex Expressions - Mixed Types", () => {
     const text = `
     variable a: Number = 10;
     variable b: String = "px";
-    variable result: String = a b " solid " "black";
+    variable result: List = a b "solid" "black";
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
