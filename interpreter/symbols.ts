@@ -20,14 +20,6 @@ export abstract class BaseSymbolType implements ISymbolType {
     return this.type === other.type && this.value === other.value;
   }
 
-  // Custom JSON serialization to follow W3C Design Tokens spec format
-  toJSON(): any {
-    return {
-      $value: this.value,
-      $type: this.type.toLowerCase(),
-    };
-  }
-
   hasMethod?(methodName: string, args: ISymbolType[]): boolean {
     const methodDefinition = (this as any)._SUPPORTED_METHODS?.[
       methodName.toLowerCase()
@@ -394,16 +386,6 @@ export class ListSymbol extends BaseSymbolType {
     return Array.isArray(val) || val instanceof ListSymbol;
   }
 
-  // Custom JSON serialization for lists
-  toJSON(): any {
-    return {
-      $value: this.elements.map((element) =>
-        element.toJSON ? element.toJSON() : element,
-      ),
-      $type: this.type.toLowerCase(),
-    };
-  }
-
   toString(): string {
     if (this.isImplicit) {
       // Check if any element is exactly a single space string - this indicates explicit spacing
@@ -559,14 +541,6 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
 
   toString(): string {
     return `${this.value}${this.unit}`;
-  }
-
-  // Custom JSON serialization for numbers with units
-  toJSON(): any {
-    return {
-      $value: this.toString(), // Include unit in the value
-      $type: "dimension", // Use standard dimension type for numbers with units
-    };
   }
 
   toStringImpl(): StringSymbol {
