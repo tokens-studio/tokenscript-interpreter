@@ -39,7 +39,8 @@ export abstract class BaseSymbolType implements ISymbolType {
       return false;
     }
 
-    // Basic type checking can be added here if needed
+    // TODO Type checking
+
     return true;
   }
 
