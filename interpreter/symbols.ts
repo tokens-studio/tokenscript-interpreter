@@ -1,6 +1,8 @@
 import { type ISymbolType, SupportedFormats } from "../types";
 import { InterpreterError } from "./errors";
 
+type SupportedMethods = Record<string, MethodDefinitionDef>;
+
 export abstract class BaseSymbolType implements ISymbolType {
   abstract type: string;
   public value: any;
@@ -38,8 +40,6 @@ export abstract class BaseSymbolType implements ISymbolType {
     if (!hasUnpackArg && args.length > methodDefinition.args.length) {
       return false;
     }
-
-    // TODO Type checking
 
     return true;
   }
@@ -130,6 +130,8 @@ export class NumberSymbol extends BaseSymbolType {
   type = "Number";
   public isFloat: boolean;
 
+  _SUPPORTED_METHODS: SupportedMethods;
+
   constructor(
     value: number | NumberSymbol | NumberWithUnitSymbol | null,
     isFloat = false,
@@ -165,8 +167,6 @@ export class NumberSymbol extends BaseSymbolType {
       },
     };
   }
-
-  _SUPPORTED_METHODS: Record<string, MethodDefinitionDef>;
 
   validValue(val: any): boolean {
     return typeof val === "number" || val instanceof NumberSymbol;
@@ -251,7 +251,7 @@ export class NumberSymbol extends BaseSymbolType {
 
 export class StringSymbol extends BaseSymbolType {
   type = "String";
-  _SUPPORTED_METHODS: Record<string, MethodDefinitionDef>;
+  _SUPPORTED_METHODS: SupportedMethods;
 
   constructor(value: string | StringSymbol | null) {
     super(
@@ -333,7 +333,7 @@ export class ListSymbol extends BaseSymbolType {
   type = "List";
   public elements: ISymbolType[];
   public isImplicit: boolean;
-  _SUPPORTED_METHODS: Record<string, MethodDefinitionDef>;
+  _SUPPORTED_METHODS: SupportedMethods;
 
   constructor(elements: ISymbolType[] | null, isImplicit = false) {
     super(elements === null ? [] : elements);
@@ -494,7 +494,7 @@ export class ListSymbol extends BaseSymbolType {
 export class NumberWithUnitSymbol extends BaseSymbolType {
   type = "NumberWithUnit";
   public unit: SupportedFormats;
-  _SUPPORTED_METHODS: Record<string, MethodDefinitionDef>;
+  _SUPPORTED_METHODS: SupportedMethods;
 
   constructor(
     value: number | NumberSymbol | null,
@@ -561,8 +561,8 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
 }
 
 export class ColorSymbol extends BaseSymbolType {
-  type = "Color"; // Base color type, typically hex
-  _SUPPORTED_METHODS: Record<string, MethodDefinitionDef>;
+  type = "Color";
+  _SUPPORTED_METHODS: SupportedMethods;
 
   constructor(value: string | null) {
     const effectiveValue = value === null ? "#000000" : value; // Default to black if null
