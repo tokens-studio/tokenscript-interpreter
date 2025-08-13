@@ -312,13 +312,24 @@ export class StringSymbol extends BaseSymbolType {
 
   splitImpl(delimiter?: StringSymbol): ListSymbol {
     const strValue = this.value as string;
-    let parts: string[];
-    if (delimiter === undefined) {
-      parts = strValue.split("");
-    } else {
-      parts = strValue.split(delimiter.value as string);
+    
+    if (delimiter instanceof StringSymbol) {
+      // Split by StringSymbol delimiter
+      const parts = strValue.split(delimiter.value as string);
+      return new ListSymbol(parts.map((p) => new StringSymbol(p)));
+    } else if (typeof delimiter === "string") {
+      // Split by string delimiter
+      const parts = strValue.split(delimiter);
+      return new ListSymbol(parts.map((p) => new StringSymbol(p)));
+    } else if (delimiter === undefined || delimiter === null) {
+      // Split into individual characters
+      const parts = Array.from(strValue);
+      return new ListSymbol(parts.map((p) => new StringSymbol(p)));
     }
-    return new ListSymbol(parts.map((p) => new StringSymbol(p)));
+    
+    throw new InterpreterError(
+      `Cannot split String by ${typeof delimiter}.`
+    );
   }
 }
 
