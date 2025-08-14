@@ -16,7 +16,8 @@
       "!examples",
       "!tsconfig*.json",
       "!**/*.test.ts",
-      "!**/*.test.tsx"
+      "!**/*.test.tsx",
+      "!compliance-suite"
     ]
   },
   "formatter": {
