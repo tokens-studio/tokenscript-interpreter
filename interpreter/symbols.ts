@@ -157,14 +157,9 @@ export class NumberSymbol extends BaseSymbolType {
     return typeof val === "number" || val instanceof NumberSymbol;
   }
 
-  // TOOO: This seems very unnecessary
   toString(): string {
     if (!this.isFloat) {
       return String(this.value);
-      if (typeof this.value === "number" && Number.isInteger(this.value)) {
-      } else if (Number.isInteger(this.value)) {
-        return String(this.value);
-      }
     }
     return String(Number(this.value));
   }
