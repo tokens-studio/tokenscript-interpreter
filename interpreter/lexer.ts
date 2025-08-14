@@ -1,18 +1,6 @@
-import {
-  Operations,
-  ReservedKeyword,
-  SupportedFormats,
-  type Token,
-  TokenType,
-} from "../types";
+import { Operations, ReservedKeyword, SupportedFormats, type Token, TokenType } from "../types";
 import { LexerError } from "./errors";
-import {
-  CodePoint,
-  isAlpha,
-  isNumber,
-  isSpace,
-  isAlphaNumeric,
-} from "./utils/string";
+import { CodePoint, isAlpha, isAlphaNumeric, isNumber, isSpace } from "./utils/string";
 
 const SUPPORTED_FORMAT_STRINGS: Record<string, SupportedFormats> = {};
 for (const val of Object.values(SupportedFormats) as string[]) {
@@ -108,10 +96,7 @@ export class Lexer {
   // Python like isdigit, that allows numbers starting with '.'
   private isDigit(): boolean {
     if (this.currentChar === null) return false;
-    return (
-      isNumber(this.currentChar) ||
-      (this.currentChar === "." && isNumber(this.peek()))
-    );
+    return isNumber(this.currentChar) || (this.currentChar === "." && isNumber(this.peek()));
   }
 
   private isValidIdentifierStart(char: string | null): boolean {
@@ -134,10 +119,7 @@ export class Lexer {
     if (char === null) return false;
     const cp = char.codePointAt(0) ?? 0;
     return (
-      isAlphaNumeric(char) ||
-      cp === CodePoint.HYPHEN ||
-      cp === CodePoint.UNDERSCORE ||
-      cp > 127 // Support emoji range
+      isAlphaNumeric(char) || cp === CodePoint.HYPHEN || cp === CodePoint.UNDERSCORE || cp > 127 // Support emoji range
     );
   }
 
@@ -224,18 +206,12 @@ export class Lexer {
 
   private hexColor(): Token {
     let result = "";
-    while (
-      isAlpha(this.currentChar) ||
-      this.isDigit() ||
-      this.currentChar === "#"
-    ) {
+    while (isAlpha(this.currentChar) || this.isDigit() || this.currentChar === "#") {
       result += this.currentChar;
       this.advance();
     }
     if (result.length !== 4 && result.length !== 7) {
-      this.error(
-        `Invalid hex color format: ${result}. Length should be #RGB or #RRGGBB.`,
-      );
+      this.error(`Invalid hex color format: ${result}. Length should be #RGB or #RRGGBB.`);
     }
     return { type: TokenType.HEX_COLOR, value: result, line: this.line };
   }

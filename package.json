@@ -18,7 +18,11 @@
   "bin": {
     "tokenscript": "./dist/cli.js"
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "npm run build:lib",
     "build:lib": "tsc -p tsconfig.lib.json",
@@ -37,6 +41,7 @@
     "format": "biome format --write .",
     "format:check": "biome format .",
     "check": "biome ci .",
+    "check:errors": "biome ci . --diagnostic-level=error",
     "check:all": "npm run check && npm run test",
     "fix": "biome check --write .",
     "prepublishOnly": "npm run test && npm run build:lib",

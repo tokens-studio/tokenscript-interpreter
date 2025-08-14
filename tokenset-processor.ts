@@ -4,10 +4,7 @@ import { Interpreter } from "./interpreter/interpreter";
 import { Lexer } from "./interpreter/lexer";
 import { Parser } from "./interpreter/parser";
 import { UNINTERPRETED_KEYWORDS } from "./types";
-import {
-  flattenTokens as flattenDTCGTokens,
-  hasNestedDTCGStructure,
-} from "./utils/dtcg-adapter";
+import { flattenTokens as flattenDTCGTokens, hasNestedDTCGStructure } from "./utils/dtcg-adapter";
 import { PerformanceTracker } from "./utils/performance-tracker";
 
 export interface TokenSetResolverOptions {
@@ -30,10 +27,7 @@ export class TokenSetResolver {
   private warnings: string[] = [];
   private errors: string[] = [];
 
-  constructor(
-    tokens: Record<string, string>,
-    globalTokens: Record<string, any> = {},
-  ) {
+  constructor(tokens: Record<string, string>, globalTokens: Record<string, any> = {}) {
     this.tokens = new Map(Object.entries(tokens));
     this.resolvedTokens = new Map(Object.entries(globalTokens));
 
@@ -65,9 +59,7 @@ export class TokenSetResolver {
           this.parsers.set(tokenName, ast);
 
           if (parser.requiredReferences.has(tokenName)) {
-            this.warnings.push(
-              `Token '${tokenName}' has a circular reference to itself.`,
-            );
+            this.warnings.push(`Token '${tokenName}' has a circular reference to itself.`);
           }
 
           // Build dependency graph
@@ -189,9 +181,7 @@ export async function processThemes(
 ): Promise<Record<string, any>> {
   const outputTokens: Record<string, any> = {};
   const globalTokensCache: Record<string, any> = {};
-  const performanceTracker = options?.enablePerformanceTracking
-    ? new PerformanceTracker()
-    : null;
+  const performanceTracker = options?.enablePerformanceTracking ? new PerformanceTracker() : null;
 
   performanceTracker?.startTracking();
 
@@ -227,13 +217,7 @@ export async function processThemes(
     const inputCount = Object.keys(themeTokens).length;
     const outputCount = Object.keys(resolvedTokens).length;
 
-    performanceTracker?.addEntry(
-      themeName,
-      inputCount,
-      outputCount,
-      startTime,
-      endTime,
-    );
+    performanceTracker?.addEntry(themeName, inputCount, outputCount, startTime, endTime);
 
     outputTokens[themeName] = resolvedTokens;
     Object.assign(globalTokensCache, resolvedTokens);
@@ -267,15 +251,10 @@ export function buildThemeTree(
     if (Array.isArray(selectedTokenSets)) {
       // New format: array of objects with id and status
       for (const tokenSetRef of selectedTokenSets) {
-        if (
-          tokenSetRef.status === "enabled" ||
-          tokenSetRef.status === "source"
-        ) {
+        if (tokenSetRef.status === "enabled" || tokenSetRef.status === "source") {
           const setId = tokenSetRef.id;
           if (!(setId in tokensets)) {
-            console.warn(
-              `Token set '${setId}' referenced in '${themeName}' not found.`,
-            );
+            console.warn(`Token set '${setId}' referenced in '${themeName}' not found.`);
             continue;
           }
           Object.assign(tokens, flattenDTCGTokens(tokensets[setId]));
@@ -286,9 +265,7 @@ export function buildThemeTree(
       for (const [setName, status] of Object.entries(selectedTokenSets)) {
         if (status === "enabled" || status === "source") {
           if (!(setName in tokensets)) {
-            throw new Error(
-              `Token set '${setName}' referenced in '${themeName}' not found.`,
-            );
+            throw new Error(`Token set '${setName}' referenced in '${themeName}' not found.`);
           }
           Object.assign(tokens, flattenDTCGTokens(tokensets[setName]));
         }
@@ -317,13 +294,9 @@ export function permutateTokensets(
     throw new Error("No permutation available to process");
   }
 
-  console.log(
-    chalk.blue("🔄 Permutating on: ") + chalk.magenta(currentPermutation),
-  );
+  console.log(chalk.blue("🔄 Permutating on: ") + chalk.magenta(currentPermutation));
 
-  for (const [themeName, themeTokens] of Object.entries(
-    themeTree[currentPermutation],
-  )) {
+  for (const [themeName, themeTokens] of Object.entries(themeTree[currentPermutation])) {
     if (!themeTokens) {
       continue;
     }
@@ -366,11 +339,7 @@ export function interpretTokensets(
 
   const output: any = {};
   for (const theme of currentPermutation.options) {
-    output[theme] = interpretTokensets(
-      permutationTree[theme],
-      remainingDimensions,
-      tokens,
-    );
+    output[theme] = interpretTokensets(permutationTree[theme], remainingDimensions, tokens);
   }
 
   return output;
@@ -378,9 +347,7 @@ export function interpretTokensets(
 
 // Simple function to process any DTCG JSON blob - the main API users want
 // Pure in-memory processing - no file system operations
-export function interpretTokens(
-  tokenInput: Record<string, any>,
-): Record<string, any> {
+export function interpretTokens(tokenInput: Record<string, any>): Record<string, any> {
   if (!tokenInput || typeof tokenInput !== "object") {
     throw new Error("Invalid JSON input: Expected an object");
   }
@@ -420,23 +387,17 @@ export function interpretTokens(
 }
 
 // Keep the original functions for backward compatibility
-export function processTokensFromJson(
-  dtcgJson: Record<string, any>,
-): Record<string, any> {
+export function processTokensFromJson(dtcgJson: Record<string, any>): Record<string, any> {
   return interpretTokens(dtcgJson);
 }
 
-export function processSingleTokenSet(
-  tokens: Record<string, any>,
-): Record<string, any> {
+export function processSingleTokenSet(tokens: Record<string, any>): Record<string, any> {
   // This function is now just a wrapper around interpretTokens for backward compatibility
   return interpretTokens(tokens);
 }
 
 // Load themes from DTCG JSON object (similar to loadThemes but for JSON input)
-function loadThemesFromJson(
-  dtcgJson: Record<string, any>,
-): Record<string, Record<string, any>> {
+function loadThemesFromJson(dtcgJson: Record<string, any>): Record<string, Record<string, any>> {
   if (!dtcgJson.$themes) {
     throw new Error("No themes found in the DTCG JSON.");
   }
@@ -454,23 +415,15 @@ function loadThemesFromJson(
     if (Array.isArray(selectedTokenSets)) {
       // New format: array of objects with id and status
       for (const tokenSetRef of selectedTokenSets) {
-        if (
-          tokenSetRef.status === "enabled" ||
-          tokenSetRef.status === "source"
-        ) {
+        if (tokenSetRef.status === "enabled" || tokenSetRef.status === "source") {
           const setId = tokenSetRef.id;
           if (!(setId in dtcgJson)) {
             console.warn(
-              chalk.yellow(
-                `⚠️  Token set '${setId}' referenced in '${themeName}' not found.`,
-              ),
+              chalk.yellow(`⚠️  Token set '${setId}' referenced in '${themeName}' not found.`),
             );
             continue;
           }
-          Object.assign(
-            themeTokens[themeName],
-            flattenDTCGTokens(dtcgJson[setId]),
-          );
+          Object.assign(themeTokens[themeName], flattenDTCGTokens(dtcgJson[setId]));
         }
       }
     } else {
@@ -478,14 +431,9 @@ function loadThemesFromJson(
       for (const [setName, status] of Object.entries(selectedTokenSets)) {
         if (status === "enabled" || status === "source") {
           if (!(setName in dtcgJson)) {
-            throw new Error(
-              `Token set '${setName}' referenced in '${themeName}' not found.`,
-            );
+            throw new Error(`Token set '${setName}' referenced in '${themeName}' not found.`);
           }
-          Object.assign(
-            themeTokens[themeName],
-            flattenDTCGTokens(dtcgJson[setName]),
-          );
+          Object.assign(themeTokens[themeName], flattenDTCGTokens(dtcgJson[setName]));
         }
       }
     }
@@ -495,9 +443,7 @@ function loadThemesFromJson(
 }
 
 // Synchronous version of processThemes for in-memory processing
-function processThemesSync(
-  themes: Record<string, Record<string, any>>,
-): Record<string, any> {
+function processThemesSync(themes: Record<string, Record<string, any>>): Record<string, any> {
   const outputTokens: Record<string, any> = {};
 
   for (const [themeName, themeTokens] of Object.entries(themes)) {

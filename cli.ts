@@ -57,7 +57,7 @@ program
       options.tokenset,
       options.permutateOn,
       options.permutateTo,
-      options.output
+      options.output,
     );
   });
 
@@ -127,7 +127,7 @@ async function interactiveMode(): Promise<void> {
 
 // Set variables interactively
 async function setVariablesInteractively(
-  currentReferences: ReferenceRecord
+  currentReferences: ReferenceRecord,
 ): Promise<ReferenceRecord> {
   const references = { ...currentReferences };
 
@@ -159,7 +159,7 @@ async function setVariablesInteractively(
         chalk.green("✅ Set ") +
           chalk.cyan(name) +
           chalk.green(" = ") +
-          chalk.yellow(references[name])
+          chalk.yellow(references[name]),
       );
     } catch (_error) {
       console.log(chalk.yellow("⚠️  Invalid input. Please enter in the format name=value."));
@@ -231,7 +231,7 @@ async function permutateTokenset(
   tokensetPath: string,
   permutateOn: string[],
   permutateTo: string,
-  outputPath: string
+  outputPath: string,
 ): Promise<void> {
   console.log(chalk.cyan("🔄 Permutating tokenset from: ") + chalk.yellow(tokensetPath));
   console.log(chalk.blue("📋 Permutating on: ") + chalk.magenta(permutateOn.join(", ")));
@@ -247,13 +247,13 @@ async function permutateTokenset(
     // Validate permutation parameters
     if (!permutateOn.every((theme) => theme in themeTree)) {
       throw new Error(
-        `Some themes in permutate-on not found. Available: ${Object.keys(themeTree).join(", ")}`
+        `Some themes in permutate-on not found. Available: ${Object.keys(themeTree).join(", ")}`,
       );
     }
 
     if (!(permutateTo in themeTree)) {
       throw new Error(
-        `Target theme '${permutateTo}' not found. Available: ${Object.keys(themeTree).join(", ")}`
+        `Target theme '${permutateTo}' not found. Available: ${Object.keys(themeTree).join(", ")}`,
       );
     }
 
@@ -274,7 +274,7 @@ async function permutateTokenset(
         tokens: interpretTokensets(
           JSON.parse(JSON.stringify(permutations)),
           JSON.parse(JSON.stringify(permutationDimensions)),
-          JSON.parse(JSON.stringify(themeTree[permutateTo][item]))
+          JSON.parse(JSON.stringify(themeTree[permutateTo][item])),
         ),
       };
     }
@@ -462,7 +462,7 @@ function loadThemes(tokensets: Record<string, any>): Record<string, Record<strin
           const tokenSet = flattenedTokenSetsCache.get(setId);
           if (!tokenSet) {
             console.warn(
-              chalk.yellow(`⚠️  Token set '${setId}' referenced in '${themeName}' not found.`)
+              chalk.yellow(`⚠️  Token set '${setId}' referenced in '${themeName}' not found.`),
             );
             continue;
           }

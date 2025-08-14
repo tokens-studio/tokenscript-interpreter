@@ -10,10 +10,7 @@ import {
 
 type MathOperand = NumberSymbol | NumberWithUnitSymbol;
 type OperationFunction = (a: MathOperand, b: MathOperand) => MathOperand;
-type BooleanOperationFunction = (
-  a: ISymbolType,
-  b: ISymbolType,
-) => BooleanSymbol;
+type BooleanOperationFunction = (a: ISymbolType, b: ISymbolType) => BooleanSymbol;
 
 function decomposeUnit(operand: MathOperand): {
   value: number;
@@ -30,10 +27,7 @@ function decomposeUnit(operand: MathOperand): {
   );
 }
 
-function recomposeUnit(
-  value: number,
-  units: (SupportedFormats | null)[],
-): MathOperand {
+function recomposeUnit(value: number, units: (SupportedFormats | null)[]): MathOperand {
   const validUnits = units.filter((u) => u !== null) as SupportedFormats[];
   if (validUnits.length === 0) {
     return new NumberSymbol(value);
@@ -44,9 +38,7 @@ function recomposeUnit(
   return new NumberWithUnitSymbol(value, validUnits[0]);
 }
 
-function mathWrapper(
-  func: (a: number, b: number) => number,
-): OperationFunction {
+function mathWrapper(func: (a: number, b: number) => number): OperationFunction {
   return (a: MathOperand, b: MathOperand): MathOperand => {
     const opA = decomposeUnit(a);
     const opB = decomposeUnit(b);
@@ -56,34 +48,24 @@ function mathWrapper(
   };
 }
 
-function comparisonWrapper(
-  fn: (a: any, b: any) => boolean,
-): BooleanOperationFunction {
+function comparisonWrapper(fn: (a: any, b: any) => boolean): BooleanOperationFunction {
   return (a: ISymbolType, b: ISymbolType): BooleanSymbol => {
-    const isNumericA =
-      a instanceof NumberSymbol || a instanceof NumberWithUnitSymbol;
-    const isNumericB =
-      b instanceof NumberSymbol || b instanceof NumberWithUnitSymbol;
+    const isNumericA = a instanceof NumberSymbol || a instanceof NumberWithUnitSymbol;
+    const isNumericB = b instanceof NumberSymbol || b instanceof NumberWithUnitSymbol;
     if (isNumericA && !isNumericB) {
-      throw new InterpreterError(
-        `Cannot compare ${a.type} with ${b.type}. Incompatible types.`,
-      );
+      throw new InterpreterError(`Cannot compare ${a.type} with ${b.type}. Incompatible types.`);
     }
 
     const isStringA = a instanceof StringSymbol;
     const isStringB = b instanceof StringSymbol;
     if (isStringA && !isStringB) {
-      throw new InterpreterError(
-        `Cannot compare ${a.type} with ${b.type}. Incompatible types.`,
-      );
+      throw new InterpreterError(`Cannot compare ${a.type} with ${b.type}. Incompatible types.`);
     }
 
     const isBooleanA = a instanceof BooleanSymbol;
     const isBooleanB = b instanceof BooleanSymbol;
     if (isBooleanA && !isBooleanB) {
-      throw new InterpreterError(
-        `Cannot compare ${a.type} with ${b.type}. Incompatible types.`,
-      );
+      throw new InterpreterError(`Cannot compare ${a.type} with ${b.type}. Incompatible types.`);
     }
 
     if (
@@ -100,10 +82,7 @@ function comparisonWrapper(
   };
 }
 
-export const LOGICAL_BOOLEAN_IMPLEMENTATIONS: Record<
-  string,
-  BooleanOperationFunction
-> = {
+export const LOGICAL_BOOLEAN_IMPLEMENTATIONS: Record<string, BooleanOperationFunction> = {
   [Operations.LOGIC_AND]: (a: ISymbolType, b: ISymbolType) => {
     if (!(a instanceof BooleanSymbol) || !(b instanceof BooleanSymbol))
       throw new InterpreterError("&& operator requires boolean operands.");
@@ -128,10 +107,7 @@ export const MATH_IMPLEMENTATIONS: Record<string, OperationFunction> = {
 };
 
 // Comparison operations map to TokenType values directly
-export const COMPARISON_IMPLEMENTATIONS: Record<
-  string,
-  BooleanOperationFunction
-> = {
+export const COMPARISON_IMPLEMENTATIONS: Record<string, BooleanOperationFunction> = {
   IS_EQ: comparisonWrapper((a, b) => a === b),
   IS_NOT_EQ: comparisonWrapper((a, b) => a !== b),
   GT: comparisonWrapper((a, b) => a > b),
@@ -141,10 +117,7 @@ export const COMPARISON_IMPLEMENTATIONS: Record<
 };
 
 // Built-in functions
-export const DEFAULT_FUNCTION_MAP: Record<
-  string,
-  (...args: ISymbolType[]) => ISymbolType
-> = {
+export const DEFAULT_FUNCTION_MAP: Record<string, (...args: ISymbolType[]) => ISymbolType> = {
   // Math functions - assuming they operate on NumberSymbol values
   min: (...args: ISymbolType[]): NumberSymbol => {
     const nums = args.map((arg) => {
@@ -165,12 +138,10 @@ export const DEFAULT_FUNCTION_MAP: Record<
     return new NumberSymbol(Math.max(...nums));
   },
   sum: (...args: ISymbolType[]): NumberSymbol => {
-    if (args.length < 2)
-      throw new InterpreterError("sum() requires at least two arguments.");
+    if (args.length < 2) throw new InterpreterError("sum() requires at least two arguments.");
     const sum = args.reduce((acc, arg) => {
       if (arg instanceof NumberSymbol) return acc + (arg.value as number);
-      if (arg instanceof NumberWithUnitSymbol)
-        return acc + (arg.value as number);
+      if (arg instanceof NumberWithUnitSymbol) return acc + (arg.value as number);
       if (typeof arg.value === "number") return acc + (arg.value as number);
       throw new InterpreterError("sum() expects number arguments.");
     }, 0);
@@ -195,8 +166,7 @@ export const DEFAULT_FUNCTION_MAP: Record<
     return new NumberSymbol(((aVal % bVal) + bVal) % bVal);
   },
   average: (...args: ISymbolType[]): NumberSymbol => {
-    if (args.length === 0)
-      throw new InterpreterError("average() requires at least one argument.");
+    if (args.length === 0) throw new InterpreterError("average() requires at least one argument.");
     const sum = args.reduce((acc, arg) => {
       if (!(arg instanceof NumberSymbol))
         throw new InterpreterError("average() expects number arguments.");
@@ -236,16 +206,10 @@ export const DEFAULT_FUNCTION_MAP: Record<
       throw new InterpreterError("pow() expects two number arguments.");
     return new NumberSymbol((base.value as number) ** (exp.value as number));
   },
-  parse_int: (
-    strSymbol: ISymbolType,
-    baseSymbol?: ISymbolType,
-  ): NumberSymbol => {
+  parse_int: (strSymbol: ISymbolType, baseSymbol?: ISymbolType): NumberSymbol => {
     if (!(strSymbol instanceof StringSymbol))
-      throw new InterpreterError(
-        "parse_int() first argument must be a string.",
-      );
-    const base =
-      baseSymbol instanceof NumberSymbol ? (baseSymbol.value as number) : 10;
+      throw new InterpreterError("parse_int() first argument must be a string.");
+    const base = baseSymbol instanceof NumberSymbol ? (baseSymbol.value as number) : 10;
     const parsed = Number.parseInt(strSymbol.value as string, base);
     if (Number.isNaN(parsed))
       throw new InterpreterError(
@@ -299,21 +263,17 @@ export const DEFAULT_FUNCTION_MAP: Record<
     if (!(arg instanceof NumberSymbol))
       throw new InterpreterError("log() expects a number argument.");
     const value = arg.value as number;
-    if (value <= 0)
-      throw new InterpreterError("log() argument must be positive.");
+    if (value <= 0) throw new InterpreterError("log() argument must be positive.");
 
     if (base === undefined) {
       // Natural logarithm (base e)
       return new NumberSymbol(Math.log(value));
     }
 
-    if (!(base instanceof NumberSymbol))
-      throw new InterpreterError("log() base must be a number.");
+    if (!(base instanceof NumberSymbol)) throw new InterpreterError("log() base must be a number.");
     const baseValue = base.value as number;
     if (baseValue <= 0 || baseValue === 1)
-      throw new InterpreterError(
-        "log() base must be positive and not equal to 1.",
-      );
+      throw new InterpreterError("log() base must be positive and not equal to 1.");
 
     // Change of base formula: log_base(x) = ln(x) / ln(base)
     return new NumberSymbol(Math.log(value) / Math.log(baseValue));
@@ -334,16 +294,12 @@ export const DEFAULT_FUNCTION_MAP: Record<
   // Advanced rounding function with precision using banker's rounding
   roundto: (value: ISymbolType, precision?: ISymbolType): NumberSymbol => {
     if (!(value instanceof NumberSymbol))
-      throw new InterpreterError(
-        "roundTo() expects a number as first argument.",
-      );
+      throw new InterpreterError("roundTo() expects a number as first argument.");
 
     let precisionValue = 0; // Default to integer rounding
     if (precision !== undefined) {
       if (!(precision instanceof NumberSymbol))
-        throw new InterpreterError(
-          "roundTo() expects a number as second argument.",
-        );
+        throw new InterpreterError("roundTo() expects a number as second argument.");
       precisionValue = precision.value as number;
     }
 

@@ -96,9 +96,7 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
           if (val && typeof val === "object") {
             // Handle ListSymbol or arrays
             if (Array.isArray(val)) {
-              const isUniformTypeList = val.every(
-                (v) => v.type === val[0].type,
-              );
+              const isUniformTypeList = val.every((v) => v.type === val[0].type);
 
               const normList = val.map((v) => {
                 const normItem = normalize(v);
@@ -106,9 +104,7 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
                 if (isUniformTypeList) return normItem.value;
 
                 // Wrap strings in list of mixed types in quotes
-                return normItem.type === "String"
-                  ? `"${normItem.value}"`
-                  : normItem.value;
+                return normItem.type === "String" ? `"${normItem.value}"` : normItem.value;
               });
 
               return { value: normList, type: "List" };
@@ -119,8 +115,7 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
                 val.$type === "NumberWithUnit" ||
                 val.type === "dimension" ||
                 val.$type === "dimension") &&
-              (typeof val.value === "number" ||
-                typeof val.$value === "number") &&
+              (typeof val.value === "number" || typeof val.$value === "number") &&
               (typeof val.unit === "string" || typeof val.$unit === "string")
             ) {
               const number = val.value ?? val.$value;
@@ -133,17 +128,11 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
               const norm = normalize(val.$value);
               return {
                 value: norm.value,
-                type: val.$type
-                  ? capitalizeFirst(val.$type)
-                  : getType(val.$value),
+                type: val.$type ? capitalizeFirst(val.$type) : getType(val.$value),
               };
             }
             // Handle objects with value/type (TokenScript output)
-            if (
-              "value" in val &&
-              "type" in val &&
-              typeof val.type === "string"
-            ) {
+            if ("value" in val && "type" in val && typeof val.type === "string") {
               // Recursively normalize value
               const norm = normalize(val.value);
               return { value: norm.value, type: capitalizeFirst(val.type) };
@@ -151,8 +140,7 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
           }
           return { value: val, type: getType(val) };
         }
-        const { value: normalizedValue, type: normalizedType } =
-          normalize(result);
+        const { value: normalizedValue, type: normalizedType } = normalize(result);
         actualOutput = normalizedValue;
         actualOutputType = normalizedType;
 
@@ -162,10 +150,7 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
           failed++;
         }
         // Simply stringify arrays and compare as strings, regardless of format
-        else if (
-          Array.isArray(normalizedValue) &&
-          test.expectedOutputType === "List"
-        ) {
+        else if (Array.isArray(normalizedValue) && test.expectedOutputType === "List") {
           // Handle case where expectedOutput is already a string but the normalizedValue is an array
           const actualArrayString = normalizedValue.join(", ").toLowerCase();
           const expectedOutputLower =
@@ -186,10 +171,7 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
           }
         }
         // Special handling for ImplicitList (space-separated instead of comma-separated)
-        else if (
-          Array.isArray(normalizedValue) &&
-          test.expectedOutputType === "ImplicitList"
-        ) {
+        else if (Array.isArray(normalizedValue) && test.expectedOutputType === "ImplicitList") {
           // Convert normalized value to space-separated string
           const actualArrayString = normalizedValue.join(" ").toLowerCase();
 
@@ -228,10 +210,7 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
           const errorMsg = e instanceof Error ? e.message : String(e);
 
           const normalizedError = errorMsg.replace(/^Line \d+: /, "");
-          const normalizedOutputError = test.expectedOutput.replace(
-            / at position \d+\.$/,
-            "",
-          );
+          const normalizedOutputError = test.expectedOutput.replace(/ at position \d+\.$/, "");
 
           if (normalizedError.includes(normalizedOutputError)) {
             status = "passed";
@@ -257,9 +236,7 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
           : actualOutput,
         actualOutputType,
         expectedOutput: Array.isArray(test.expectedOutput)
-          ? test.expectedOutput.join(
-              test.expectedOutputType === "ImplicitList" ? " " : ", ",
-            )
+          ? test.expectedOutput.join(test.expectedOutputType === "ImplicitList" ? " " : ", ")
           : test.expectedOutput,
         expectedOutputType: test.expectedOutputType,
         error,

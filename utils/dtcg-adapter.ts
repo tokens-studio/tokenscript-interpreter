@@ -64,7 +64,7 @@ export function clearFlatteningCaches(): void {
  */
 export function extractThemeTokens(
   dtcgJson: Record<string, any>,
-  theme: any
+  theme: any,
 ): { flatTokens: Record<string, string> } {
   const flatTokens: Record<string, string> = {};
   const selectedTokenSets = theme.selectedTokenSets;
@@ -129,6 +129,6 @@ export function hasNestedDTCGStructure(json: Record<string, any>): boolean {
       typeof json[key] === "object" &&
       json[key] !== null &&
       !Array.isArray(json[key]) &&
-      !key.startsWith("$")
+      !key.startsWith("$"),
   );
 }

@@ -1,10 +1,4 @@
-import type {
-  ASTNode,
-  Operations,
-  SupportedFormats,
-  Token,
-  TokenType,
-} from "../types";
+import type { ASTNode, Operations, SupportedFormats, Token, TokenType } from "../types";
 
 // Re-export ASTNode for external consumers
 export type { ASTNode } from "../types";

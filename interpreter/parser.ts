@@ -1,10 +1,4 @@
-import {
-  type ASTNode,
-  Operations,
-  ReservedKeyword,
-  type Token,
-  TokenType,
-} from "../types";
+import { type ASTNode, Operations, ReservedKeyword, type Token, TokenType } from "../types";
 import {
   AssignNode,
   AttributeAccessNode,
@@ -50,9 +44,7 @@ export class Parser {
     if (this.currentToken.type === tokenType) {
       this.currentToken = this.lexer.nextToken();
     } else {
-      this.error(
-        `Expected token type ${tokenType} but got ${this.currentToken.type}`,
-      );
+      this.error(`Expected token type ${tokenType} but got ${this.currentToken.type}`);
     }
     return token;
   }
@@ -193,11 +185,7 @@ export class Parser {
     const condition = this.expr();
     this.eat(TokenType.RPAREN);
     const body = this.block();
-    return new WhileNode(
-      condition,
-      body.statements as StatementListNode,
-      whileToken,
-    );
+    return new WhileNode(condition, body.statements as StatementListNode, whileToken);
   }
 
   private ifStatement(): IfNode {
@@ -357,8 +345,7 @@ export class Parser {
 
     if (
       token.type === TokenType.RESERVED_KEYWORD &&
-      (token.value === ReservedKeyword.TRUE ||
-        token.value === ReservedKeyword.FALSE)
+      (token.value === ReservedKeyword.TRUE || token.value === ReservedKeyword.FALSE)
     ) {
       this.eat(TokenType.RESERVED_KEYWORD);
       return new BooleanNode(token.value === ReservedKeyword.TRUE, token);
@@ -413,9 +400,7 @@ export class Parser {
       node = this.attributeAccess(node); // For string methods like "hello".length()
       return node;
     }
-    this.error(
-      `Unexpected token in factor: ${token.type} (${String(token.value)})`,
-    );
+    this.error(`Unexpected token in factor: ${token.type} (${String(token.value)})`);
   }
 
   private attributeAccess(leftNode: ASTNode): ASTNode {
@@ -446,11 +431,7 @@ export class Parser {
       args.push(this.implicitListExpr());
     }
     this.eat(TokenType.RPAREN);
-    return new FunctionCallNode(
-      functionName.value as string,
-      args,
-      functionName,
-    );
+    return new FunctionCallNode(functionName.value as string, args, functionName);
   }
 
   public parse(inlineMode = false): ASTNode | null {
