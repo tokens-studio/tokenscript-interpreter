@@ -86,12 +86,8 @@
       "bracketSameLine": false,
       "bracketSpacing": true,
       "attributePosition": "multiline"
-    },
-    "imports": {
-      "preferSingleLine": false
     }
   },
-
   "json": {
     "formatter": {
       "enabled": true,
