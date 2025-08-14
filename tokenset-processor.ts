@@ -77,9 +77,9 @@ export class TokenSetResolver {
         } else {
           this.resolvedTokens.set(tokenName, tokenData);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         this.warnings.push(
-          `Error parsing token '${tokenName}': ${error.message} (value: ${tokenData})`,
+          `Error parsing token '${tokenName}': ${error instanceof Error ? error.message : String(error)} (value: ${tokenData})`,
         );
         this.resolvedTokens.set(tokenName, tokenData);
       }
@@ -111,9 +111,9 @@ export class TokenSetResolver {
         // The interpreter will see this new value on the next call to interpret()
         // automatically, because it holds a reference to the same map.
         this.resolvedTokens.set(tokenName, result);
-      } catch (error: any) {
+      } catch (error: unknown) {
         this.warnings.push(
-          `Error interpreting token '${tokenName}': ${error.message} (value: ${this.tokens.get(tokenName)})`,
+          `Error interpreting token '${tokenName}': ${error instanceof Error ? error.message : String(error)} (value: ${this.tokens.get(tokenName)})`,
         );
         const tokenValue = this.tokens.get(tokenName);
         if (tokenValue !== undefined) {

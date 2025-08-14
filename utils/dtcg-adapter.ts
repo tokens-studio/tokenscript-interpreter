@@ -19,7 +19,10 @@
  * Input:  { "color": { "red": { "$value": "#FF0000", "$type": "color" } } }
  * Output: { "color.red": "#FF0000" }
  */
-export function flattenTokens(tokenset: any, prefix = ""): Record<string, string> {
+export function flattenTokens(
+  tokenset: Record<string, unknown>,
+  prefix = "",
+): Record<string, string> {
   const flattenedTokens: Record<string, string> = {};
 
   for (const [key, node] of Object.entries(tokenset)) {
@@ -34,7 +37,10 @@ export function flattenTokens(tokenset: any, prefix = ""): Record<string, string
         flattenedTokens[name] = String((node as any).$value);
       } else {
         // This is a nested group - recurse
-        const nested = flattenTokens(node, prefix ? `${prefix}.${key}` : key);
+        const nested = flattenTokens(
+          node as Record<string, unknown>,
+          prefix ? `${prefix}.${key}` : key,
+        );
         Object.assign(flattenedTokens, nested);
       }
     }
