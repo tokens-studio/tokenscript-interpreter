@@ -464,7 +464,8 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
     this.unit = typeof unit === "string" ? (unit as SupportedFormats) : unit;
 
     this._SUPPORTED_METHODS = {
-      toString: {
+      tostring: {
+        name: "toString",
         function: this.toStringImpl,
         args: [
           {

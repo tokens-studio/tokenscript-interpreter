@@ -285,7 +285,7 @@ describe("Variables - String Features", () => {
 });
 
 describe("Variables - Number Features", () => {
-    it.only("should handle number to string", () => {
+    it("should handle number to string", () => {
         const text = `
     variable hello: Number = 123;
     variable result: String = hello.toString();
