@@ -16,7 +16,8 @@
       "!examples",
       "!tsconfig*.json",
       "!**/*.test.ts",
-      "!**/*.test.tsx"
+      "!**/*.test.tsx",
+      "!compliance-suite"
     ]
   },
   "formatter": {
@@ -80,12 +81,14 @@
       "quoteStyle": "double",
       "jsxQuoteStyle": "double",
       "quoteProperties": "asNeeded",
-      "trailingCommas": "es5",
+      "trailingCommas": "all",
       "semicolons": "always",
-      "arrowParentheses": "always"
+      "arrowParentheses": "always",
+      "bracketSameLine": false,
+      "bracketSpacing": true,
+      "attributePosition": "multiline"
     }
   },
-
   "json": {
     "formatter": {
       "enabled": true,

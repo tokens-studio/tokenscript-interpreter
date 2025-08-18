@@ -47,7 +47,6 @@ export class TokenSetResolver {
       try {
         const lexer = new Lexer(tokenData);
 
-        // Check if lexer is at EOF (empty or whitespace-only input)
         if (lexer.isEOF()) {
           this.resolvedTokens.set(tokenName, tokenData);
           continue;
@@ -59,16 +58,12 @@ export class TokenSetResolver {
         if (ast) {
           this.parsers.set(tokenName, ast);
 
-          // Extract required references from parser
-          const requiredRefs = parser.getRequiredReferences();
-
-          // Check for self-reference
-          if (requiredRefs.includes(tokenName)) {
+          if (parser.requiredReferences.has(tokenName)) {
             this.warnings.push(`Token '${tokenName}' has a circular reference to itself.`);
           }
 
           // Build dependency graph
-          for (const refToken of requiredRefs) {
+          for (const refToken of parser.requiredReferences) {
             if (!this.requiresTokens[tokenName]) {
               this.requiresTokens[tokenName] = new Set();
             }
@@ -82,9 +77,9 @@ export class TokenSetResolver {
         } else {
           this.resolvedTokens.set(tokenName, tokenData);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         this.warnings.push(
-          `Error parsing token '${tokenName}': ${error.message} (value: ${tokenData})`
+          `Error parsing token '${tokenName}': ${error instanceof Error ? error.message : String(error)} (value: ${tokenData})`,
         );
         this.resolvedTokens.set(tokenName, tokenData);
       }
@@ -116,9 +111,9 @@ export class TokenSetResolver {
         // The interpreter will see this new value on the next call to interpret()
         // automatically, because it holds a reference to the same map.
         this.resolvedTokens.set(tokenName, result);
-      } catch (error: any) {
+      } catch (error: unknown) {
         this.warnings.push(
-          `Error interpreting token '${tokenName}': ${error.message} (value: ${this.tokens.get(tokenName)})`
+          `Error interpreting token '${tokenName}': ${error instanceof Error ? error.message : String(error)} (value: ${this.tokens.get(tokenName)})`,
         );
         const tokenValue = this.tokens.get(tokenName);
         if (tokenValue !== undefined) {
@@ -134,7 +129,7 @@ export class TokenSetResolver {
     // Iterative topological sort resolution
     // 1. Find all tokens with zero dependencies and add them to the queue
     const queue: string[] = Array.from(this.tokens.keys()).filter(
-      (tokenName) => !(tokenName in this.requiresTokens)
+      (tokenName) => !(tokenName in this.requiresTokens),
     );
 
     // 2. Process tokens iteratively
@@ -162,12 +157,12 @@ export class TokenSetResolver {
 
     // Check for unresolved tokens (circular dependencies or missing references)
     const unresolvedTokens = Array.from(this.tokens.keys()).filter(
-      (tokenName) => !this.resolvedTokens.has(tokenName)
+      (tokenName) => !this.resolvedTokens.has(tokenName),
     );
 
     if (unresolvedTokens.length > 0) {
       this.warnings.push(
-        `Not all tokens could be resolved. Remaining tokens: ${unresolvedTokens.map((token) => `${token}: ${this.tokens.get(token)}`).join(", ")}`
+        `Not all tokens could be resolved. Remaining tokens: ${unresolvedTokens.map((token) => `${token}: ${this.tokens.get(token)}`).join(", ")}`,
       );
     }
 
@@ -182,7 +177,7 @@ export class TokenSetResolver {
 // Process themes and resolve tokens
 export async function processThemes(
   themes: Record<string, Record<string, any>>,
-  options?: { enablePerformanceTracking?: boolean }
+  options?: { enablePerformanceTracking?: boolean },
 ): Promise<Record<string, any>> {
   const outputTokens: Record<string, any> = {};
   const globalTokensCache: Record<string, any> = {};
@@ -194,7 +189,7 @@ export async function processThemes(
     console.log(
       chalk.blue("🔄 Processing theme: ") +
         chalk.cyan(themeName) +
-        chalk.gray(` (${Object.keys(themeTokens).length} tokens)`)
+        chalk.gray(` (${Object.keys(themeTokens).length} tokens)`),
     );
 
     const startTime = Date.now();
@@ -236,7 +231,7 @@ export async function processThemes(
 
 // Build theme tree for permutations
 export function buildThemeTree(
-  tokensets: Record<string, any>
+  tokensets: Record<string, any>,
 ): Record<string, Record<string, Record<string, any>>> {
   const themesData = tokensets.$themes;
   const themeTree: Record<string, Record<string, Record<string, any>>> = {};
@@ -287,7 +282,7 @@ export function buildThemeTree(
 export function permutateTokensets(
   themeTree: Record<string, Record<string, Record<string, any>>>,
   permutateOn: string[],
-  tokens: Record<string, any> = {}
+  tokens: Record<string, any> = {},
 ): any {
   if (permutateOn.length === 0) {
     return tokens;
@@ -317,7 +312,7 @@ export function permutateTokensets(
 export function interpretTokensets(
   permutationTree: any,
   permutationDimensions: Array<{ name: string; options: string[] }>,
-  tokens: Record<string, any>
+  tokens: Record<string, any>,
 ): any {
   if (permutationDimensions.length === 0) {
     const relevantTokens = Object.keys(tokens);
@@ -424,7 +419,7 @@ function loadThemesFromJson(dtcgJson: Record<string, any>): Record<string, Recor
           const setId = tokenSetRef.id;
           if (!(setId in dtcgJson)) {
             console.warn(
-              chalk.yellow(`⚠️  Token set '${setId}' referenced in '${themeName}' not found.`)
+              chalk.yellow(`⚠️  Token set '${setId}' referenced in '${themeName}' not found.`),
             );
             continue;
           }

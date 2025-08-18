@@ -10,25 +10,21 @@ import {
 } from "./symbols";
 
 export class SymbolTable {
-  private symbols: Record<string, ISymbolType>;
-  private parent: SymbolTable | null;
-  private activeSymbolTypes: Record<
+  private symbols: Record<string, ISymbolType | null>;
+  public activeSymbolTypes: Record<
     string,
     (new (...args: any[]) => ISymbolType) | Record<string, new (...args: any[]) => ISymbolType>
   >;
 
-  constructor(parent: SymbolTable | null = null) {
+  constructor() {
     this.symbols = {};
-    this.parent = parent;
     this.activeSymbolTypes = {
-      // Default types
       number: NumberSymbol as new (...args: any[]) => ISymbolType,
       string: StringSymbol as new (...args: any[]) => ISymbolType,
       list: ListSymbol as new (...args: any[]) => ISymbolType,
       boolean: BooleanSymbol as new (...args: any[]) => ISymbolType,
       numberwithunit: NumberWithUnitSymbol as new (...args: any[]) => ISymbolType,
       color: {
-        // Sub-types for Color
         default: ColorSymbol as new (...args: any[]) => ISymbolType, // Default Color type (Hex)
         // More color types like RGB, HSL would be registered here by ColorManager
       },
@@ -37,16 +33,13 @@ export class SymbolTable {
 
   get(name: string): ISymbolType | null {
     const value = this.symbols[name.toLowerCase()];
-    if (value !== undefined) {
-      return value;
+    if (!value) {
+      return null;
     }
-    if (this.parent) {
-      return this.parent.get(name);
-    }
-    return null;
+    return value;
   }
 
-  set(name: string, value: ISymbolType): void {
+  set(name: string, value: ISymbolType | null): void {
     this.symbols[name.toLowerCase()] = value;
   }
 
@@ -55,7 +48,7 @@ export class SymbolTable {
   }
 
   exists(name: string): boolean {
-    return this.symbols[name.toLowerCase()] !== undefined || (this.parent?.exists(name) ?? false);
+    return !!this.symbols[name.toLowerCase()];
   }
 
   isSymbolType(typeName: string): boolean {
@@ -76,7 +69,7 @@ export class SymbolTable {
 
   getSymbolConstructor(
     baseTypeName: string,
-    subTypeName?: string
+    subTypeName?: string,
   ): new (
     ...args: any[]
   ) => ISymbolType {
@@ -91,7 +84,7 @@ export class SymbolTable {
       // It's a direct constructor (e.g., NumberSymbol)
       if (subTypeName) {
         throw new InterpreterError(
-          `Type ${baseTypeName} does not support subtypes like '.${subTypeName}'.`
+          `Type ${baseTypeName} does not support subtypes like '.${subTypeName}'.`,
         );
       }
       return typeEntry as new (
@@ -106,7 +99,7 @@ export class SymbolTable {
       ];
       if (!subTypeEntry) {
         throw new InterpreterError(
-          `Unknown subtype '${subTypeName || "default"}' for type '${baseTypeName}'.`
+          `Unknown subtype '${subTypeName || "default"}' for type '${baseTypeName}'.`,
         );
       }
       return subTypeEntry;
@@ -117,7 +110,7 @@ export class SymbolTable {
   // For ColorManager to register new color types, e.g. Color.RGB
   addColorSubType(
     colorFormatName: string,
-    symbolConstructor: new (...args: any[]) => ISymbolType
+    symbolConstructor: new (...args: any[]) => ISymbolType,
   ): void {
     const colorCategory = this.activeSymbolTypes.color;
     if (typeof colorCategory !== "object" || colorCategory === null) {

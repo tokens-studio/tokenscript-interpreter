@@ -23,3 +23,5 @@ dist-ssr
 *.sln
 *.sw?
 /compliance-report.json
+/.nrepl-port
+.lsp

@@ -2,12 +2,11 @@ import { type ASTNode, Operations, ReservedKeyword, type Token, TokenType } from
 import {
   AssignNode,
   AttributeAccessNode,
-  AttributeAssignNode,
   BinOpNode,
   BlockNode,
   BooleanNode,
   ElementWithUnitNode,
-  FunctionNode,
+  FunctionCallNode,
   HexColorNode,
   IdentifierNode,
   IfNode,
@@ -36,39 +35,36 @@ export class Parser {
     this.currentToken = this.lexer.nextToken();
   }
 
-  public getRequiredReferences(): string[] {
-    return Array.from(this.requiredReferences);
-  }
-
   private error(message = "Invalid syntax"): never {
     throw new ParserError(message, this.currentToken?.line, this.currentToken);
   }
 
   private eat(tokenType: TokenType): Token {
-    const eatenToken = this.currentToken;
+    const token = this.currentToken;
     if (this.currentToken.type === tokenType) {
       this.currentToken = this.lexer.nextToken();
     } else {
       this.error(`Expected token type ${tokenType} but got ${this.currentToken.type}`);
     }
-    return eatenToken;
+    return token;
   }
 
-  public parse(inlineMode = false): ASTNode | null {
-    if (this.currentToken.type === TokenType.EOF) return null;
+  private typeDeclaration(): TypeDeclNode {
+    const baseTypeToken = this.eat(TokenType.STRING);
+    const baseType = new IdentifierNode(baseTypeToken);
 
-    if (inlineMode) return this.listExpr();
-
-    const node = this.statementList();
-    if ((this.currentToken.type as TokenType) !== TokenType.EOF) {
-      this.error("Unexpected token at the end of input.");
+    const subTypes: IdentifierNode[] = [];
+    while (this.currentToken.type === TokenType.DOT) {
+      this.eat(TokenType.DOT);
+      const subTypeToken = this.eat(TokenType.STRING);
+      subTypes.push(new IdentifierNode(subTypeToken));
     }
-    return node;
+    return new TypeDeclNode(baseType, subTypes, baseTypeToken);
   }
 
-  private statementList(): StatementListNode {
+  private statementsList(): ASTNode | StatementListNode {
     const statements: ASTNode[] = [];
-    const firstToken = this.currentToken;
+    const token = this.currentToken;
 
     while (
       this.currentToken.type !== TokenType.EOF &&
@@ -86,27 +82,32 @@ export class Parser {
         }
       }
     }
-    return new StatementListNode(statements, firstToken);
+
+    if (statements.length === 1) {
+      return statements[0];
+    }
+
+    return new StatementListNode(statements, token);
   }
 
   private statement(): ASTNode {
     if (this.currentToken.type === TokenType.RESERVED_KEYWORD) {
       switch (this.currentToken.value) {
-        case ReservedKeyword.VARIABLE:
-          return this.assignDeclaration();
         case ReservedKeyword.RETURN:
           return this.returnStatement();
         case ReservedKeyword.WHILE:
           return this.whileStatement();
         case ReservedKeyword.IF:
           return this.ifStatement();
+        case ReservedKeyword.VARIABLE:
+          return this.assignVariable();
       }
     }
 
     if (this.currentToken.type === TokenType.STRING) {
-      const nextToken = this.lexer.peekNextToken();
+      const nextToken = this.lexer.peekToken();
       if (nextToken && nextToken.type === TokenType.ASSIGN) {
-        return this.reassignStatement();
+        return this.reassignVariable();
       }
       // TODO: Handle attribute assignment (ident.ident = ...)
     }
@@ -114,79 +115,68 @@ export class Parser {
     return this.listExpr();
   }
 
-  private assignDeclaration(): AssignNode {
-    const varToken = this.eat(TokenType.RESERVED_KEYWORD); // 'variable'
+  private assignVariable(): AssignNode {
+    // consume 'variable'
+    const token = this.eat(TokenType.RESERVED_KEYWORD);
+
+    // get variable name
     const varNameToken = this.eat(TokenType.STRING);
     const varName = new IdentifierNode(varNameToken);
     this.eat(TokenType.COLON);
 
+    // get type declaration
     const typeDecl = this.typeDeclaration();
 
-    let assignmentExpr: ASTNode | null = null;
+    // handle assignment if present
     if (this.currentToken.type === TokenType.ASSIGN) {
       this.eat(TokenType.ASSIGN);
-      assignmentExpr = this.listExpr();
+      const assignmentExpr = this.listExpr();
+      return new AssignNode(varName, typeDecl, assignmentExpr, token);
     }
-    return new AssignNode(varName, typeDecl, assignmentExpr, varToken);
+
+    // No assignment, just declaration
+    return new AssignNode(varName, typeDecl, null, token);
   }
 
-  private reassignStatement(): ReassignNode {
-    const identifierToken = this.eat(TokenType.STRING);
-    const identifier = new IdentifierNode(identifierToken);
+  private reassignVariable(): ReassignNode {
+    const varNameToken = this.eat(TokenType.STRING);
+    const varName = new IdentifierNode(varNameToken);
+
     this.eat(TokenType.ASSIGN);
-    const value = this.listExpr();
-    return new ReassignNode(identifier, value, identifierToken);
+
+    const assignmentExpr = this.listExpr();
+
+    return new ReassignNode(varName, assignmentExpr, varNameToken);
   }
 
-  private typeDeclaration(): TypeDeclNode {
-    const baseTypeToken = this.eat(TokenType.STRING);
-    const baseType = new IdentifierNode(baseTypeToken);
-    const subTypes: IdentifierNode[] = [];
-    while (this.currentToken.type === TokenType.DOT) {
-      this.eat(TokenType.DOT);
-      const subTypeToken = this.eat(TokenType.STRING);
-      subTypes.push(new IdentifierNode(subTypeToken));
+  private reference(): ASTNode {
+    const node = new ReferenceNode(this.currentToken);
+    this.eat(TokenType.REFERENCE);
+    this.requiredReferences.add(node.value);
+
+    if (this.currentToken.type === TokenType.FORMAT) {
+      return this.format(node);
     }
-    return new TypeDeclNode(baseType, subTypes, baseTypeToken);
+    return node;
   }
 
-  private attributeAssignment(): AttributeAssignNode {
-    // Grammar: ident ("." ident)* "=" ListExpr
-    // This is simplified due to lack of multi-token lookahead.
-    // A full implementation requires parsing the identifier chain first.
-    const objectIdentifierToken = this.eat(TokenType.STRING); // Assuming STRING is for ident
-    const objectIdentifier = new IdentifierNode(objectIdentifierToken);
-    const _attributes: IdentifierNode[] = [];
-
-    // This part is tricky without proper lookahead.
-    // We're currently in statement() which calls listExpr(), which might consume attributes.
-    // This needs a more robust parsing strategy for assignments.
-    // For now, this is a placeholder for the structure.
-    this.error(
-      "Attribute assignment parsing is complex and not fully implemented with current lookahead."
-    );
-    // Pseudocode for what should happen:
-    // while (this.currentToken.type === TokenType.DOT) {
-    //   this.eat(TokenType.DOT);
-    //   const attrToken = this.eat(TokenType.STRING);
-    //   attributes.push(new IdentifierNode(attrToken));
-    // }
-    // this.eat(TokenType.ASSIGN);
-    // const value = this.listExpr();
-    // return new AttributeAssignNode(objectIdentifier, attributes, value, objectIdentifierToken);
-    return new AttributeAssignNode(
-      objectIdentifier,
-      [],
-      new StringNode({ type: TokenType.STRING, value: "dummy", line: 0 }),
-      objectIdentifierToken
-    ); // Placeholder
+  // logic_term ((AND | OR) logic_term)*
+  private expr(): ASTNode {
+    let node = this.logicTerm();
+    while (
+      this.currentToken.type === TokenType.LOGIC_AND ||
+      this.currentToken.type === TokenType.LOGIC_OR
+    ) {
+      const token = this.eat(this.currentToken.type);
+      node = new BinOpNode(node, token, this.logicTerm());
+    }
+    return node;
   }
 
   private returnStatement(): ReturnNode {
-    const returnToken = this.eat(TokenType.RESERVED_KEYWORD); // 'return'
-    const expr = this.listExpr(); // Changed from this.expr() to this.listExpr() to support implicit lists
-    // Semicolon is optional in the grammar, handled by statementList expecting SEMICOLON
-    return new ReturnNode(expr, returnToken);
+    const token = this.eat(TokenType.RESERVED_KEYWORD); // 'return'
+    const expr = this.listExpr();
+    return new ReturnNode(expr, token);
   }
 
   private whileStatement(): WhileNode {
@@ -216,61 +206,49 @@ export class Parser {
   }
 
   private block(): BlockNode {
-    this.eat(TokenType.LBLOCK); // '['
-    const statements = this.statementList(); // StatementList handles multiple statements
-    this.eat(TokenType.RBLOCK); // ']'
+    this.eat(TokenType.LBLOCK);
+    const statements = this.statementsList() as StatementListNode;
+    this.eat(TokenType.RBLOCK);
     return new BlockNode(statements);
   }
 
-  // Expression parsing ( siguiendo la precedencia de operadores )
-  // ListExpr = NonemptyListOf<ImplicitList, ",">
+  // implicit_list_expr : factor ((COMMA) factor)*
+  private implicitListExpr(): ASTNode {
+    const token = this.currentToken;
+    const elements: ASTNode[] = [this.expr()];
+
+    while (
+      this.currentToken.type !== TokenType.COMMA &&
+      this.currentToken.type !== TokenType.RPAREN &&
+      this.currentToken.type !== TokenType.EOF &&
+      this.currentToken.type !== TokenType.SEMICOLON
+    ) {
+      elements.push(this.expr());
+    }
+
+    if (elements.length === 1) return elements[0];
+
+    return new ImplicitListNode(elements, token);
+  }
+
+  // factor ((COMMA) factor)
   private listExpr(): ASTNode {
     const firstToken = this.currentToken;
-    const elements: ASTNode[] = [this.implicitList()];
+    const elements: ASTNode[] = [this.implicitListExpr()];
+
     while (this.currentToken.type === TokenType.COMMA) {
       this.eat(TokenType.COMMA);
-      elements.push(this.implicitList());
+      elements.push(this.implicitListExpr());
     }
-    if (elements.length === 1) return elements[0];
+
+    if (elements.length === 1) {
+      return elements[0];
+    }
+
     return new ListNode(elements, firstToken);
   }
 
-  // ImplicitList = Expr+
-  private implicitList(): ASTNode {
-    const firstToken = this.currentToken;
-    const elements: ASTNode[] = [this.expr()];
-    while (
-      this.currentToken.type !== TokenType.COMMA &&
-      this.currentToken.type !== TokenType.RPAREN && // End of function args
-      this.currentToken.type !== TokenType.RBLOCK && // End of block
-      this.currentToken.type !== TokenType.SEMICOLON &&
-      this.currentToken.type !== TokenType.EOF
-    ) {
-      // This condition ensures we only consume tokens that can be part of an implicit list element
-      // e.g. `10px 5em` vs `10px, 5em`
-      // We need to ensure we don't accidentally consume operators that belong to the next Expr in a ListExpr
-      // A simple check: if it's not an operator that would start a new term, it's part of current implicit list.
-      // This is a simplification. A more robust check would consider operator precedence.
-      elements.push(this.expr());
-    }
-    if (elements.length === 1) return elements[0];
-    return new ImplicitListNode(elements, firstToken);
-  }
-
-  // Expr = LogicTerm (("&&" | "||") LogicTerm)*
-  private expr(): ASTNode {
-    let node = this.logicTerm();
-    while (
-      this.currentToken.type === TokenType.LOGIC_AND ||
-      this.currentToken.type === TokenType.LOGIC_OR
-    ) {
-      const token = this.eat(this.currentToken.type);
-      node = new BinOpNode(node, token, this.logicTerm());
-    }
-    return node;
-  }
-
-  // LogicTerm = Comparison (("+" | "-") Comparison)*
+  // term ((PLUS | MINUS) term)*
   private logicTerm(): ASTNode {
     let node = this.comparison();
     while (
@@ -284,7 +262,7 @@ export class Parser {
     return node;
   }
 
-  // Comparison = Term (("==" | "!=" | ">" | "<" | ">=" | "<=") Term)*
+  // term ((IS_EQ | IS_NOT_EQ | IS_GT | IS_LT | IS_GT_EQ | IS_LT_EQ) term)*
   private comparison(): ASTNode {
     let node = this.term();
     while (
@@ -315,7 +293,7 @@ export class Parser {
     return node;
   }
 
-  // Power = Factor ("^" Factor)*
+  // factor (POWER factor)*
   private power(): ASTNode {
     let node = this.factor();
     while (
@@ -328,7 +306,30 @@ export class Parser {
     return node;
   }
 
-  // Factor = UnaryOp | NumberLit | ParenExpr | Reference | Identifier | StringLit | HexColor | Boolean
+  private format(node: ASTNode): ASTNode {
+    const formatToken = this.currentToken;
+    this.eat(TokenType.FORMAT);
+    return new ElementWithUnitNode(node, formatToken.value);
+  }
+
+  private number(): ASTNode {
+    const node = new NumNode(this.currentToken);
+    this.eat(TokenType.NUMBER);
+    if (this.currentToken.type === TokenType.FORMAT) {
+      return this.format(node);
+    }
+    return node;
+  }
+
+  // factor : PLUS factor
+  //        | MINUS factor
+  //        | NOT factor
+  //        | NUMBER (FORMAT)?
+  //        | LPAREN expr RPAREN (FORMAT)?
+  //        | REFERENCE (DOT (STRING | function))*
+  //        | STRING (LPAREN args RPAREN)? (DOT (STRING | function))*
+  //        | EXPLICIT_STRING (DOT (STRING | function))*
+  //        | HEX_COLOR
   private factor(): ASTNode {
     const token = this.currentToken;
 
@@ -341,40 +342,43 @@ export class Parser {
       this.eat(TokenType.OPERATION);
       return new UnaryOpNode(token, this.factor());
     }
-    if (token.type === TokenType.NUMBER) {
-      this.eat(TokenType.NUMBER);
-      let node: ASTNode = new NumNode(token);
-      if (this.currentToken.type === TokenType.FORMAT) {
-        const formatToken = this.eat(TokenType.FORMAT);
-        node = new ElementWithUnitNode(node, formatToken.value);
-      }
-      return node;
+
+    if (
+      token.type === TokenType.RESERVED_KEYWORD &&
+      (token.value === ReservedKeyword.TRUE || token.value === ReservedKeyword.FALSE)
+    ) {
+      this.eat(TokenType.RESERVED_KEYWORD);
+      return new BooleanNode(token.value === ReservedKeyword.TRUE, token);
     }
+
+    if (token.type === TokenType.NUMBER) {
+      return this.number();
+    }
+
     if (token.type === TokenType.LPAREN) {
       this.eat(TokenType.LPAREN);
-      let node = this.expr();
+      const node = this.expr();
       this.eat(TokenType.RPAREN);
       if (this.currentToken.type === TokenType.FORMAT) {
-        const formatToken = this.eat(TokenType.FORMAT);
-        node = new ElementWithUnitNode(node, formatToken.value);
+        return this.format(node);
       }
       return node;
     }
+
     if (token.type === TokenType.REFERENCE) {
-      this.eat(TokenType.REFERENCE);
-      this.requiredReferences.add(token.value as string);
-      let node: ASTNode = new ReferenceNode(token);
-      if (this.currentToken.type === TokenType.FORMAT) {
-        // e.g. {size}px
-        const formatToken = this.eat(TokenType.FORMAT);
-        node = new ElementWithUnitNode(node, formatToken.value);
-      }
+      let node = this.reference();
       // Handle attribute access like {ref}.property or {ref}.method()
-      node = this.parseAttributeAccess(node);
+      node = this.attributeAccess(node);
       return node;
     }
+
+    if (token.type === TokenType.HEX_COLOR) {
+      this.eat(TokenType.HEX_COLOR);
+      return new HexColorNode(token);
+    }
+
+    // Identifier or function call
     if (token.type === TokenType.STRING) {
-      // Identifier or function call
       this.eat(TokenType.STRING);
       let node: ASTNode;
       // After `eat(STRING)`, currentToken is updated.
@@ -387,31 +391,19 @@ export class Parser {
         node = new IdentifierNode(token);
       }
       // Handle attribute access like ident.property or ident.method()
-      node = this.parseAttributeAccess(node);
+      node = this.attributeAccess(node);
       return node;
     }
     if (token.type === TokenType.EXPLICIT_STRING) {
       this.eat(TokenType.EXPLICIT_STRING);
       let node: ASTNode = new StringNode(token);
-      node = this.parseAttributeAccess(node); // For string methods like "hello".length()
+      node = this.attributeAccess(node); // For string methods like "hello".length()
       return node;
     }
-    if (token.type === TokenType.HEX_COLOR) {
-      this.eat(TokenType.HEX_COLOR);
-      return new HexColorNode(token);
-    }
-    if (
-      token.type === TokenType.RESERVED_KEYWORD &&
-      (token.value === ReservedKeyword.TRUE || token.value === ReservedKeyword.FALSE)
-    ) {
-      this.eat(TokenType.RESERVED_KEYWORD);
-      return new BooleanNode(token.value === ReservedKeyword.TRUE, token);
-    }
     this.error(`Unexpected token in factor: ${token.type} (${String(token.value)})`);
-    return new StringNode({ type: TokenType.STRING, value: "dummy", line: 0 }); // Should be unreachable
   }
 
-  private parseAttributeAccess(leftNode: ASTNode): ASTNode {
+  private attributeAccess(leftNode: ASTNode): ASTNode {
     let node = leftNode;
     while (this.currentToken.type === TokenType.DOT) {
       this.eat(TokenType.DOT);
@@ -419,7 +411,6 @@ export class Parser {
       // After `eat(STRING)`, currentToken is updated.
       // This comparison (this.currentToken.type as TokenType) === TokenType.LPAREN is valid.
       if ((this.currentToken.type as TokenType) === TokenType.LPAREN) {
-        // Method call
         const methodNode = this.functionCall(attrNameToken);
         node = new AttributeAccessNode(node, methodNode);
       } else {
@@ -430,19 +421,28 @@ export class Parser {
     return node;
   }
 
-  private functionCall(nameToken: Token): FunctionNode {
-    // LPAREN is already checked before calling this
+  private functionCall(functionName: Token): FunctionCallNode {
     this.eat(TokenType.LPAREN);
     const args: ASTNode[] = [];
-    if (this.currentToken.type !== TokenType.RPAREN) {
-      // Parse comma-separated arguments
-      args.push(this.implicitList()); // First argument
-      while (this.currentToken.type === TokenType.COMMA) {
+    while (this.currentToken.type !== TokenType.RPAREN) {
+      if (this.currentToken.type === TokenType.COMMA) {
         this.eat(TokenType.COMMA);
-        args.push(this.implicitList()); // Additional arguments
       }
+      args.push(this.implicitListExpr());
     }
     this.eat(TokenType.RPAREN);
-    return new FunctionNode(nameToken.value as string, args, nameToken);
+    return new FunctionCallNode(functionName.value as string, args, functionName);
+  }
+
+  public parse(inlineMode = false): ASTNode | null {
+    if (this.currentToken.type === TokenType.EOF) return null;
+
+    if (inlineMode) return this.listExpr();
+
+    const node = this.statementsList();
+    if ((this.currentToken.type as TokenType) !== TokenType.EOF) {
+      this.error("Unexpected token at the end of input.");
+    }
+    return node;
   }
 }

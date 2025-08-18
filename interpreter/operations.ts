@@ -12,7 +12,10 @@ type MathOperand = NumberSymbol | NumberWithUnitSymbol;
 type OperationFunction = (a: MathOperand, b: MathOperand) => MathOperand;
 type BooleanOperationFunction = (a: ISymbolType, b: ISymbolType) => BooleanSymbol;
 
-function decomposeUnit(operand: MathOperand): { value: number; unit: SupportedFormats | null } {
+function decomposeUnit(operand: MathOperand): {
+  value: number;
+  unit: SupportedFormats | null;
+} {
   if (operand instanceof NumberWithUnitSymbol) {
     return { value: operand.value as number, unit: operand.unit };
   }
@@ -20,7 +23,7 @@ function decomposeUnit(operand: MathOperand): { value: number; unit: SupportedFo
     return { value: operand.value as number, unit: null };
   }
   throw new InterpreterError(
-    `Unsupported operand type for unit decomposition: ${(operand as BaseSymbolType).type}`
+    `Unsupported operand type for unit decomposition: ${(operand as BaseSymbolType).type}`,
   );
 }
 
@@ -35,7 +38,7 @@ function recomposeUnit(value: number, units: (SupportedFormats | null)[]): MathO
   return new NumberWithUnitSymbol(value, validUnits[0]);
 }
 
-function mathWrapper(func: (v1: number, v2: number) => number): OperationFunction {
+function mathWrapper(func: (a: number, b: number) => number): OperationFunction {
   return (a: MathOperand, b: MathOperand): MathOperand => {
     const opA = decomposeUnit(a);
     const opB = decomposeUnit(b);
@@ -45,61 +48,41 @@ function mathWrapper(func: (v1: number, v2: number) => number): OperationFunctio
   };
 }
 
-function comparisonWrapper(func: (v1: any, v2: any) => boolean): BooleanOperationFunction {
+function comparisonWrapper(fn: (a: any, b: any) => boolean): BooleanOperationFunction {
   return (a: ISymbolType, b: ISymbolType): BooleanSymbol => {
-    // Check for type compatibility first
     const isNumericA = a instanceof NumberSymbol || a instanceof NumberWithUnitSymbol;
     const isNumericB = b instanceof NumberSymbol || b instanceof NumberWithUnitSymbol;
-    const isStringA = a instanceof StringSymbol;
-    const isStringB = b instanceof StringSymbol;
-    const isBooleanA = a instanceof BooleanSymbol;
-    const isBooleanB = b instanceof BooleanSymbol;
-
-    // Only allow comparisons between compatible types
     if (isNumericA && !isNumericB) {
       throw new InterpreterError(`Cannot compare ${a.type} with ${b.type}. Incompatible types.`);
     }
+
+    const isStringA = a instanceof StringSymbol;
+    const isStringB = b instanceof StringSymbol;
     if (isStringA && !isStringB) {
       throw new InterpreterError(`Cannot compare ${a.type} with ${b.type}. Incompatible types.`);
     }
+
+    const isBooleanA = a instanceof BooleanSymbol;
+    const isBooleanB = b instanceof BooleanSymbol;
     if (isBooleanA && !isBooleanB) {
       throw new InterpreterError(`Cannot compare ${a.type} with ${b.type}. Incompatible types.`);
     }
 
-    // For comparisons, we often compare raw values if types are compatible (e.g. Number and NumberWithUnit)
-    const valA = a.value;
-    const valB = b.value;
-
-    if (a instanceof NumberWithUnitSymbol && b instanceof NumberSymbol) {
-      // Allow comparison between NumberWithUnit and Number
-    } else if (a instanceof NumberSymbol && b instanceof NumberWithUnitSymbol) {
-      // Allow comparison between Number and NumberWithUnit
-    } else if (a instanceof NumberWithUnitSymbol && b instanceof NumberWithUnitSymbol) {
-      if (a.unit !== b.unit) {
-        throw new InterpreterError(
-          `Cannot compare NumberWithUnit of different units: ${a.unit} and ${b.unit}`
-        );
-      }
+    if (
+      a instanceof NumberWithUnitSymbol &&
+      b instanceof NumberWithUnitSymbol &&
+      a.unit !== b.unit
+    ) {
+      throw new InterpreterError(
+        `Cannot compare NumberWithUnit of different units: ${a.unit} and ${b.unit}`,
+      );
     }
-    // If types are compatible, rely on their direct .value comparison
-    return new BooleanSymbol(func(valA, valB));
+
+    return new BooleanSymbol(fn(a.value, b.value));
   };
 }
 
-export const OPERATION_IMPLEMENTATIONS: Record<
-  string,
-  OperationFunction | BooleanOperationFunction | ((a: ISymbolType, b: ISymbolType) => BooleanSymbol)
-> = {
-  [Operations.ADD]: mathWrapper((v1, v2) => v1 + v2),
-  [Operations.SUBTRACT]: mathWrapper((v1, v2) => v1 - v2),
-  [Operations.MULTIPLY]: mathWrapper((v1, v2) => v1 * v2),
-  [Operations.DIVIDE]: mathWrapper((v1, v2) => {
-    if (v2 === 0) throw new InterpreterError("Division by zero.");
-    return v1 / v2;
-  }),
-  [Operations.POWER]: mathWrapper((v1, v2) => v1 ** v2),
-
-  // Logical operations for Booleans
+export const LOGICAL_BOOLEAN_IMPLEMENTATIONS: Record<string, BooleanOperationFunction> = {
   [Operations.LOGIC_AND]: (a: ISymbolType, b: ISymbolType) => {
     if (!(a instanceof BooleanSymbol) || !(b instanceof BooleanSymbol))
       throw new InterpreterError("&& operator requires boolean operands.");
@@ -112,14 +95,25 @@ export const OPERATION_IMPLEMENTATIONS: Record<
   },
 };
 
+export const MATH_IMPLEMENTATIONS: Record<string, OperationFunction> = {
+  [Operations.ADD]: mathWrapper((a, b) => a + b),
+  [Operations.SUBTRACT]: mathWrapper((a, b) => a - b),
+  [Operations.MULTIPLY]: mathWrapper((a, b) => a * b),
+  [Operations.DIVIDE]: mathWrapper((a, b) => {
+    if (b === 0) throw new InterpreterError("Division by zero.");
+    return a / b;
+  }),
+  [Operations.POWER]: mathWrapper((a, b) => a ** b),
+};
+
 // Comparison operations map to TokenType values directly
 export const COMPARISON_IMPLEMENTATIONS: Record<string, BooleanOperationFunction> = {
-  IS_EQ: comparisonWrapper((v1, v2) => v1 === v2),
-  IS_NOT_EQ: comparisonWrapper((v1, v2) => v1 !== v2),
-  GT: comparisonWrapper((v1, v2) => v1 > v2),
-  LT: comparisonWrapper((v1, v2) => v1 < v2),
-  IS_GT_EQ: comparisonWrapper((v1, v2) => v1 >= v2),
-  IS_LT_EQ: comparisonWrapper((v1, v2) => v1 <= v2),
+  IS_EQ: comparisonWrapper((a, b) => a === b),
+  IS_NOT_EQ: comparisonWrapper((a, b) => a !== b),
+  GT: comparisonWrapper((a, b) => a > b),
+  LT: comparisonWrapper((a, b) => a < b),
+  IS_GT_EQ: comparisonWrapper((a, b) => a >= b),
+  IS_LT_EQ: comparisonWrapper((a, b) => a <= b),
 };
 
 // Built-in functions
@@ -219,7 +213,7 @@ export const DEFAULT_FUNCTION_MAP: Record<string, (...args: ISymbolType[]) => IS
     const parsed = Number.parseInt(strSymbol.value as string, base);
     if (Number.isNaN(parsed))
       throw new InterpreterError(
-        `Invalid string for parse_int: "${strSymbol.value}" with base ${base}.`
+        `Invalid string for parse_int: "${strSymbol.value}" with base ${base}.`,
       );
     return new NumberSymbol(parsed);
   },

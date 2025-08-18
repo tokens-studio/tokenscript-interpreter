@@ -38,7 +38,7 @@ export class PerformanceTracker {
     inputTokens: number,
     outputTokens: number,
     startTime: number,
-    endTime: number
+    endTime: number,
   ): void {
     const duration = (endTime - startTime) / 1000;
     const tokensPerSecond = outputTokens / Math.max(duration, 0.001); // Avoid division by zero
@@ -62,10 +62,10 @@ export class PerformanceTracker {
     const averageTokensPerSecond = totalOutputTokens / Math.max(totalDuration, 0.001);
 
     const fastestTheme = this.timingData.reduce((fastest, current) =>
-      current.tokensPerSecond > fastest.tokensPerSecond ? current : fastest
+      current.tokensPerSecond > fastest.tokensPerSecond ? current : fastest,
     );
     const slowestTheme = this.timingData.reduce((slowest, current) =>
-      current.tokensPerSecond < slowest.tokensPerSecond ? current : slowest
+      current.tokensPerSecond < slowest.tokensPerSecond ? current : slowest,
     );
 
     return {
@@ -96,8 +96,8 @@ export class PerformanceTracker {
           "Input".padStart(12) +
           "Output".padStart(12) +
           "Time (s)".padStart(12) +
-          "Tokens/s".padStart(14)
-      )
+          "Tokens/s".padStart(14),
+      ),
     );
     console.log(chalk.gray("-".repeat(80)));
 
@@ -115,7 +115,7 @@ export class PerformanceTracker {
           chalk.blue(data.inputTokens.toLocaleString().padStart(12)) +
           chalk.green(data.outputTokens.toLocaleString().padStart(12)) +
           chalk.yellow(data.duration.toFixed(3).padStart(12)) +
-          speedColor(tokensPerSec.padStart(14))
+          speedColor(tokensPerSec.padStart(14)),
       );
     }
 
@@ -129,41 +129,41 @@ export class PerformanceTracker {
         chalk.blue(summary.totalInputTokens.toLocaleString().padStart(12)) +
         chalk.green(summary.totalOutputTokens.toLocaleString().padStart(12)) +
         chalk.yellow(summary.totalDuration.toFixed(3).padStart(12)) +
-        totalSpeedColor(Math.round(summary.averageTokensPerSecond).toLocaleString().padStart(14))
+        totalSpeedColor(Math.round(summary.averageTokensPerSecond).toLocaleString().padStart(14)),
     );
 
     console.log(chalk.cyan("\n📊 Summary:"));
     console.log(
-      chalk.white("   • Total themes processed: ") + chalk.cyan(summary.timingData.length)
+      chalk.white("   • Total themes processed: ") + chalk.cyan(summary.timingData.length),
     );
     console.log(
       chalk.white("   • Total tokens resolved: ") +
-        chalk.green(summary.totalOutputTokens.toLocaleString())
+        chalk.green(summary.totalOutputTokens.toLocaleString()),
     );
     console.log(
       chalk.white("   • Total processing time: ") +
-        chalk.yellow(`${summary.totalDuration.toFixed(3)}s`)
+        chalk.yellow(`${summary.totalDuration.toFixed(3)}s`),
     );
     console.log(
       chalk.white("   • Average throughput: ") +
         totalSpeedColor(
-          `${Math.round(summary.averageTokensPerSecond).toLocaleString()} tokens/second`
-        )
+          `${Math.round(summary.averageTokensPerSecond).toLocaleString()} tokens/second`,
+        ),
     );
 
     console.log(
       chalk.white("   • Fastest theme: ") +
         chalk.green(summary.fastestTheme.name) +
         chalk.gray(
-          ` (${Math.round(summary.fastestTheme.tokensPerSecond).toLocaleString()} tokens/s)`
-        )
+          ` (${Math.round(summary.fastestTheme.tokensPerSecond).toLocaleString()} tokens/s)`,
+        ),
     );
     console.log(
       chalk.white("   • Slowest theme: ") +
         chalk.red(summary.slowestTheme.name) +
         chalk.gray(
-          ` (${Math.round(summary.slowestTheme.tokensPerSecond).toLocaleString()} tokens/s)`
-        )
+          ` (${Math.round(summary.slowestTheme.tokensPerSecond).toLocaleString()} tokens/s)`,
+        ),
     );
     console.log(chalk.cyan("=".repeat(80)));
   }
@@ -213,7 +213,7 @@ export class PerformanceTracker {
 export function trackPerformance<T>(
   operation: () => T,
   name: string,
-  inputCount: number = 0
+  inputCount: number = 0,
 ): { result: T; performanceData: PerformanceData } {
   const startTime = Date.now();
   const result = operation();

@@ -9,7 +9,7 @@ export class BinOpNode implements ASTNode {
     public left: ASTNode,
     public opToken: Token,
     public right: ASTNode,
-    public token?: Token
+    public token?: Token,
   ) {
     this.token = opToken;
   }
@@ -23,11 +23,11 @@ export class NumNode implements ASTNode {
   public value: number;
   public isFloat: boolean;
   constructor(public token: Token) {
-    if (String(this.token.value).includes(".")) {
-      this.value = Number.parseFloat(String(this.token.value));
+    if (this.token.value.includes(".")) {
+      this.value = Number.parseFloat(this.token.value);
       this.isFloat = true;
     } else {
-      this.value = Number.parseInt(String(this.token.value), 10);
+      this.value = Number.parseInt(this.token.value, 10);
       this.isFloat = false;
     }
   }
@@ -37,7 +37,7 @@ export class StringNode implements ASTNode {
   nodeType = "StringNode";
   public value: string;
   constructor(public token: Token) {
-    this.value = String(token.value);
+    this.value = token.value;
   }
 }
 
@@ -46,7 +46,7 @@ export class UnaryOpNode implements ASTNode {
   constructor(
     public opToken: Token,
     public expr: ASTNode,
-    public token?: Token
+    public token?: Token,
   ) {
     this.token = opToken;
   }
@@ -59,7 +59,7 @@ export class ListNode implements ASTNode {
   nodeType = "ListNode";
   constructor(
     public elements: ASTNode[],
-    public token?: Token
+    public token?: Token,
   ) {}
 }
 
@@ -68,19 +68,19 @@ export class ImplicitListNode extends ListNode {
   public isImplicit = true;
   constructor(
     public elements: ASTNode[],
-    public token?: Token
+    public token?: Token,
   ) {
     super(elements, token);
   }
 }
 
-export class FunctionNode implements ASTNode {
-  nodeType = "FunctionNode";
+export class FunctionCallNode implements ASTNode {
+  nodeType = "FunctionCallNode";
   public name: string;
   constructor(
     nameTokenValue: string,
     public args: ASTNode[],
-    public token?: Token
+    public token?: Token,
   ) {
     this.name = nameTokenValue;
   }
@@ -95,17 +95,15 @@ export class ReferenceNode implements ASTNode {
   nodeType = "ReferenceNode";
   public value: string;
   constructor(public token: Token) {
-    this.value = String(token.value);
+    this.value = token.value;
   }
 }
 
-// 'VarNode' was used in Python AST for Var, but it seems to be identical to ReferenceNode in usage context.
-// Let's use IdentifierNode for declared variables and variable usage in expressions (non-curly-brace ones)
 export class IdentifierNode implements ASTNode {
   nodeType = "IdentifierNode";
   public name: string;
   constructor(public token: Token) {
-    this.name = String(token.value);
+    this.name = token.value;
   }
 }
 
@@ -113,7 +111,7 @@ export class HexColorNode implements ASTNode {
   nodeType = "HexColorNode";
   public value: string;
   constructor(public token: Token) {
-    this.value = String(token.value);
+    this.value = token.value;
   }
 }
 
@@ -121,7 +119,7 @@ export class BooleanNode implements ASTNode {
   nodeType = "BooleanNode";
   constructor(
     public value: boolean,
-    public token?: Token
+    public token?: Token,
   ) {}
 }
 
@@ -131,7 +129,7 @@ export class ElementWithUnitNode implements ASTNode {
   constructor(
     public astNode: ASTNode,
     unitTokenValue: SupportedFormats,
-    public token?: Token
+    public token?: Token,
   ) {
     this.unit = unitTokenValue;
   }
@@ -143,7 +141,7 @@ export class AssignNode implements ASTNode {
     public varName: IdentifierNode,
     public typeDecl: TypeDeclNode, // Represents the full type string like 'Color.RGB' or 'String'
     public assignmentExpr: ASTNode | null, // Null if no assignment
-    public token?: Token
+    public token?: Token,
   ) {}
 }
 
@@ -154,7 +152,7 @@ export class TypeDeclNode implements ASTNode {
   constructor(
     public baseType: IdentifierNode,
     public subTypes: IdentifierNode[],
-    public token?: Token
+    public token?: Token,
   ) {}
 
   toString(): string {
@@ -172,7 +170,7 @@ export class AttributeAssignNode implements ASTNode {
     public objectIdentifier: IdentifierNode,
     public attributes: IdentifierNode[],
     public value: ASTNode,
-    public token?: Token
+    public token?: Token,
   ) {}
 }
 
@@ -181,7 +179,7 @@ export class ReassignNode implements ASTNode {
   constructor(
     public identifier: IdentifierNode,
     public value: ASTNode,
-    public token?: Token
+    public token?: Token,
   ) {}
 }
 
@@ -189,7 +187,7 @@ export class ReturnNode implements ASTNode {
   nodeType = "ReturnNode";
   constructor(
     public expr: ASTNode,
-    public token?: Token
+    public token?: Token,
   ) {}
 }
 
@@ -198,7 +196,7 @@ export class WhileNode implements ASTNode {
   constructor(
     public condition: ASTNode,
     public body: StatementListNode,
-    public token?: Token
+    public token?: Token,
   ) {}
 }
 
@@ -208,7 +206,7 @@ export class IfNode implements ASTNode {
     public condition: ASTNode,
     public ifBody: StatementListNode,
     public elseBody: StatementListNode | null,
-    public token?: Token
+    public token?: Token,
   ) {}
 }
 
@@ -217,7 +215,7 @@ export class BlockNode implements ASTNode {
   nodeType = "BlockNode";
   constructor(
     public statements: StatementListNode,
-    public token?: Token
+    public token?: Token,
   ) {}
 }
 
@@ -225,17 +223,17 @@ export class StatementListNode implements ASTNode {
   nodeType = "StatementListNode";
   constructor(
     public statements: ASTNode[],
-    public token?: Token
+    public token?: Token,
   ) {}
 }
 
 // Represents an attribute access, e.g., obj.property or obj.method()
 export class AttributeAccessNode implements ASTNode {
   nodeType = "AttributeAccessNode";
-  // 'left' is the object, 'right' is the attribute (IdentifierNode) or method (FunctionNode)
+  // 'left' is the object, 'right' is the attribute (IdentifierNode) or method (FunctionCallNode)
   constructor(
     public left: ASTNode,
-    public right: IdentifierNode | FunctionNode,
-    public token?: Token
+    public right: IdentifierNode | FunctionCallNode,
+    public token?: Token,
   ) {}
 }

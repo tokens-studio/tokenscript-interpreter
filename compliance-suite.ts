@@ -35,7 +35,7 @@ function getType(value: any): string {
   if (Array.isArray(value)) return "Array";
   return typeof value === "object"
     ? "Object"
-    : value.constructor && value.constructor.name
+    : value.constructor?.name
       ? value.constructor.name
       : typeof value;
 }
@@ -46,7 +46,7 @@ function readJsonFilesRecursively(dir: string): string[] {
   list.forEach((file) => {
     const filePath = path.join(dir, file);
     const stat = fs.statSync(filePath);
-    if (stat && stat.isDirectory()) {
+    if (stat?.isDirectory()) {
       results = results.concat(readJsonFilesRecursively(filePath));
     } else if (file.endsWith(".json")) {
       results.push(filePath);
@@ -165,7 +165,7 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
             passed++;
           } else {
             console.log(
-              `List comparison failed: "${actualArrayString}" !== "${expectedOutputLower}"`
+              `List comparison failed: "${actualArrayString}" !== "${expectedOutputLower}"`,
             );
             failed++;
           }
@@ -231,7 +231,7 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
         actualOutput: Array.isArray(actualOutput)
           ? actualOutput.join(
               // Use test.expectedOutputType as fallback since normalizedType is not in scope here
-              test.expectedOutputType === "ImplicitList" ? " " : ", "
+              test.expectedOutputType === "ImplicitList" ? " " : ", ",
             )
           : actualOutput,
         actualOutputType,

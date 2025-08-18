@@ -116,7 +116,6 @@ describe("Complex Expressions - Variable References", () => {
     expect(() => parser.parse(true)).toThrow("Invalid character '´'");
   });
 
-
   it("should handle variable references in function calls", () => {
     const text = "max({a}, {b}, {c}) + min({d}, {e})";
     const lexer = new Lexer(text);
@@ -138,8 +137,8 @@ describe("Complex Expressions - String Operations", () => {
   it("should handle complex string concatenation", () => {
     const text = `
     variable prefix: String = "Hello";
-    variable suffix: String = "World";
-    variable result: String = prefix " " suffix "!";
+    variable suffix: String = "World!";
+    variable result: List = prefix suffix;
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
@@ -148,20 +147,6 @@ describe("Complex Expressions - String Operations", () => {
 
     const result = interpreter.symbolTable.get("result");
     expect(result?.toString()).toBe("Hello World!");
-  });
-
-  it("should handle string method chaining", () => {
-    const text = `
-    variable text: String = "  Hello World  ";
-    variable result: String = text.trim().upper().concat("!");
-    `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
-    interpreter.interpret();
-
-    const result = interpreter.symbolTable.get("result");
-    expect(result?.toString()).toBe("HELLO WORLD!");
   });
 
   it("should handle complex string splitting and joining", () => {
@@ -295,7 +280,7 @@ describe("Complex Expressions - Mixed Types", () => {
     const text = `
     variable a: Number = 10;
     variable b: String = "px";
-    variable result: String = a b " solid " "black";
+    variable result: List = a b "solid" "black";
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);

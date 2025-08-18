@@ -63,7 +63,7 @@ export class DynamicColorSymbol extends BaseSymbolType {
     this.type = `Color.${typeName.toUpperCase()}`;
   }
 
-  valid_value(value: any): boolean {
+  validValue(value: any): boolean {
     return value instanceof DynamicColorSymbol;
   }
 
@@ -89,7 +89,7 @@ export class DynamicColorSymbol extends BaseSymbolType {
   getAttribute(attributeName: string): ISymbolType | null {
     if (!this.hasAttribute(attributeName)) {
       throw new InterpreterError(
-        `Color type ${this._typeName} does not have attribute '${attributeName}'`
+        `Color type ${this._typeName} does not have attribute '${attributeName}'`,
       );
     }
     return this._values[attributeName] || null;
@@ -98,7 +98,7 @@ export class DynamicColorSymbol extends BaseSymbolType {
   setAttribute(attributeName: string, value: ISymbolType): void {
     if (!this.hasAttribute(attributeName)) {
       throw new InterpreterError(
-        `Color type ${this._typeName} does not have attribute '${attributeName}'`
+        `Color type ${this._typeName} does not have attribute '${attributeName}'`,
       );
     }
     this._values[attributeName] = value;
@@ -232,7 +232,7 @@ export class ColorManager {
     const colorInstance = new DynamicColorSymbol(
       colorType._typeName,
       colorType._id,
-      colorType._availableAttributes
+      colorType._availableAttributes,
     );
 
     // If input is provided, initialize the color values
