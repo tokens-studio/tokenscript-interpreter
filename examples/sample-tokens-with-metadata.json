@@ -1,0 +1,36 @@
+{
+  "colors": {
+    "primary": {
+      "$value": "#3b82f6",
+      "$type": "color",
+      "$description": "Primary brand color used for buttons and links",
+      "$extensions": {
+        "com.figma": {
+          "scopes": ["fill", "stroke"]
+        }
+      }
+    },
+    "secondary": {
+      "$value": "#6b7280", 
+      "$type": "color",
+      "$description": "Secondary color for subtle UI elements"
+    }
+  },
+  "spacing": {
+    "small": {
+      "$value": "8px",
+      "$type": "dimension", 
+      "$description": "Small spacing for tight layouts"
+    },
+    "medium": {
+      "$value": "{spacing.small} * 2",
+      "$type": "dimension",
+      "$description": "Medium spacing, computed as twice the small spacing"
+    },
+    "large": {
+      "$value": "{spacing.medium} + 8px", 
+      "$type": "dimension",
+      "$description": "Large spacing with additional padding"
+    }
+  }
+}

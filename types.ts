@@ -136,3 +136,50 @@ export type ReferenceRecord = Record<
   string,
   string | number | ISymbolType | Array<string | number | ISymbolType>
 >;
+
+// Transform system types
+export interface TokenTransform {
+  name: string;
+  targetTypes?: string[]; // Token types to apply to (color, dimension, etc.)
+  transform: (value: any, metadata?: any, tokenName?: string) => any;
+  transformMetadata?: (metadata: any, tokenName?: string) => any;
+}
+
+export interface TransformOptions {
+  transforms?: TokenTransform[];
+  enableThemes?: boolean;
+  continueOnError?: boolean;
+}
+
+export interface TransformResult {
+  tokens: Record<string, any>;
+  metadata: Record<string, any>;
+  errors?: string[];
+  warnings?: string[];
+}
+
+// Token object structure for Approach 3
+export interface TokenObject {
+  value: any;                    // Original value (e.g., "#3b82f6")
+  transformedValue?: any;        // Transformed value (e.g., { r: 0.231, g: 0.509, b: 0.964, a: 1 })
+  [key: string]: any;           // For metadata like $type, $description, $extensions, etc.
+}
+
+// Transform interface for token objects
+export interface TokenObjectTransform {
+  name: string;
+  targetTypes?: string[]; // Token types to apply to (color, dimension, etc.)
+  transform: (tokenObject: TokenObject, tokenName?: string) => TokenObject;
+}
+
+export interface TokenObjectTransformOptions {
+  transforms?: TokenObjectTransform[];
+  enableThemes?: boolean;
+  continueOnError?: boolean;
+}
+
+export interface TokenObjectResult {
+  tokens: Record<string, TokenObject>;
+  errors?: string[];
+  warnings?: string[];
+}
