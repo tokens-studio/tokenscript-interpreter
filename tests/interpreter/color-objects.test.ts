@@ -11,7 +11,7 @@ describe("Color Objects - Hex Color Literals", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     const result = interpreter.interpret();
 
     expect(result).toBeDefined();
@@ -25,7 +25,7 @@ describe("Color Objects - Hex Color Literals", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     const result = interpreter.interpret();
 
     expect(result).toBeDefined();
@@ -41,7 +41,7 @@ describe("Color Objects - Hex Color Literals", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     const result = interpreter.interpret();
 
     expect(result).toBeDefined();
@@ -59,7 +59,7 @@ describe("Color Objects - Color Type System", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const red = interpreter.symbolTable.get("red");
@@ -81,7 +81,7 @@ describe("Color Objects - Color Type System", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     const result = interpreter.interpret();
 
     expect(result).toBeDefined();
@@ -100,7 +100,7 @@ describe("Color Objects - Color Operations", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const same = interpreter.symbolTable.get("same");
@@ -118,7 +118,7 @@ describe("Color Objects - Color Operations", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const palette = interpreter.symbolTable.get("palette");

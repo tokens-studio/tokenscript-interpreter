@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { describe, expect, it } from "vitest";
-import { ColorManager } from "../../interpreter/colorManager";
+import { ColorManager, Config } from "../../interpreter/config";
 import { Interpreter } from "../../interpreter/interpreter";
 import { Lexer } from "../../interpreter/lexer";
 import { Parser } from "../../interpreter/parser";
@@ -197,7 +197,12 @@ describe("Color Manager - Integration with Interpreter", () => {
 
     const lexer = new Lexer(code);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {}, undefined, undefined, colorManager);
+    const interpreter = new Interpreter(
+      parser,
+      {},
+      undefined,
+      new Config({ colorManager }),
+    );
     const result = interpreter.interpret();
 
     expect(result).toBeDefined();
@@ -254,7 +259,12 @@ describe("Color Manager - Integration with Interpreter", () => {
 
     const lexer = new Lexer(code);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {}, undefined, undefined, colorManager);
+    const interpreter = new Interpreter(
+      parser,
+      {},
+      undefined,
+      new Config({ colorManager }),
+    );
     interpreter.interpret();
 
     const red = interpreter.symbolTable.get("red");
@@ -284,7 +294,12 @@ describe("Color Manager - Integration with Interpreter", () => {
 
     const lexer = new Lexer(code);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {}, undefined, undefined, colorManager);
+    const interpreter = new Interpreter(
+      parser,
+      {},
+      undefined,
+      new Config({ colorManager }),
+    );
     const result = interpreter.interpret();
 
     expect(result).toBeDefined();

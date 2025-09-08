@@ -1,8 +1,8 @@
-import type { ASTNode, ISymbolType } from "../types";
-import { InterpreterError } from "./errors";
-import { Lexer } from "./lexer";
-import { Parser } from "./parser";
-import { BaseSymbolType, ListSymbol } from "./symbols";
+import type { ASTNode, ISymbolType } from "../../types";
+import { InterpreterError } from "../errors";
+import { Lexer } from "../lexer";
+import { Parser } from "../parser";
+import { BaseSymbolType, ListSymbol } from "../symbols";
 
 // Color format specification interfaces
 interface ColorFormatSpec {

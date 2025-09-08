@@ -33,7 +33,7 @@ if(x == 72) [
 
     const lexer = new Lexer(code);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
 
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
@@ -54,7 +54,7 @@ if(x == 72) [
 
     const lexer = new Lexer(code);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
 
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
@@ -75,7 +75,7 @@ if(x == 72) [
 
     const lexer = new Lexer(code);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
 
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
@@ -117,7 +117,7 @@ if(x == 72) [
 
     const lexer = new Lexer(code);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
 
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
@@ -143,7 +143,7 @@ if(x == 72) [
     // And it should interpret correctly
     const lexer2 = new Lexer(code);
     const parser2 = new Parser(lexer2);
-    const interpreter = new Interpreter(parser2, {});
+    const interpreter = new Interpreter(parser2);
 
     const result = interpreter.interpret();
     expect(result).not.toBeNull();

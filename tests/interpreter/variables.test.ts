@@ -13,7 +13,7 @@ describe("Variables - Assignment", () => {
     `;
         const lexer = new Lexer(text);
         const parser = new Parser(lexer);
-        const interpreter = new Interpreter(parser, {});
+        const interpreter = new Interpreter(parser);
         interpreter.interpret();
 
         const hello = interpreter.symbolTable.get("hello");
@@ -32,7 +32,7 @@ describe("Variables - Assignment", () => {
     `;
         const lexer = new Lexer(text);
         const parser = new Parser(lexer);
-        const interpreter = new Interpreter(parser, {});
+        const interpreter = new Interpreter(parser);
         expect(() => interpreter.interpret()).toThrow(InterpreterError);
     });
 
@@ -43,7 +43,7 @@ describe("Variables - Assignment", () => {
     `;
         const lexer = new Lexer(text);
         const parser = new Parser(lexer);
-        const interpreter = new Interpreter(parser, {});
+        const interpreter = new Interpreter(parser);
         interpreter.interpret();
 
         const hello = interpreter.symbolTable.get("hello");
@@ -56,7 +56,7 @@ describe("Variables - Assignment", () => {
     `;
         const lexer = new Lexer(text);
         const parser = new Parser(lexer);
-        const interpreter = new Interpreter(parser, {});
+        const interpreter = new Interpreter(parser);
         expect(() => interpreter.interpret()).toThrow(InterpreterError);
     });
 
@@ -67,7 +67,7 @@ describe("Variables - Assignment", () => {
     `;
         const lexer = new Lexer(text);
         const parser = new Parser(lexer);
-        const interpreter = new Interpreter(parser, {});
+        const interpreter = new Interpreter(parser);
         expect(() => interpreter.interpret()).toThrow(InterpreterError);
     });
 
@@ -78,7 +78,7 @@ describe("Variables - Assignment", () => {
     `;
         const lexer = new Lexer(text);
         const parser = new Parser(lexer);
-        const interpreter = new Interpreter(parser, {});
+        const interpreter = new Interpreter(parser);
         expect(() => interpreter.interpret()).toThrow(InterpreterError);
     });
 
@@ -89,7 +89,7 @@ describe("Variables - Assignment", () => {
     `;
         const lexer = new Lexer(text);
         const parser = new Parser(lexer);
-        const interpreter = new Interpreter(parser, {});
+        const interpreter = new Interpreter(parser);
         interpreter.interpret();
 
         const hello = interpreter.symbolTable.get("hello");
@@ -109,7 +109,7 @@ describe("Variables - Assignment", () => {
     `;
         const lexer = new Lexer(text);
         const parser = new Parser(lexer);
-        const interpreter = new Interpreter(parser, {});
+        const interpreter = new Interpreter(parser);
         interpreter.interpret();
 
         const hello = interpreter.symbolTable.get("hello");
@@ -132,7 +132,7 @@ describe("Variables - Assignment", () => {
     `;
         const lexer = new Lexer(text);
         const parser = new Parser(lexer);
-        const interpreter = new Interpreter(parser, {});
+        const interpreter = new Interpreter(parser);
         expect(() => interpreter.interpret()).toThrow(InterpreterError);
     });
 
@@ -143,7 +143,7 @@ describe("Variables - Assignment", () => {
     `;
         const lexer = new Lexer(text);
         const parser = new Parser(lexer);
-        const interpreter = new Interpreter(parser, {});
+        const interpreter = new Interpreter(parser);
         expect(() => interpreter.interpret()).toThrow(InterpreterError);
     });
 
@@ -154,7 +154,7 @@ describe("Variables - Assignment", () => {
     `;
         const lexer = new Lexer(text);
         const parser = new Parser(lexer);
-        const interpreter = new Interpreter(parser, {});
+        const interpreter = new Interpreter(parser);
         expect(() => interpreter.interpret()).toThrow(InterpreterError);
     });
 });
@@ -168,7 +168,7 @@ describe("Variables - Math Operations", () => {
     `;
         const lexer = new Lexer(text);
         const parser = new Parser(lexer);
-        const interpreter = new Interpreter(parser, {});
+        const interpreter = new Interpreter(parser);
         expect(() => interpreter.interpret()).toThrow(InterpreterError);
     });
 
@@ -180,7 +180,7 @@ describe("Variables - Math Operations", () => {
     `;
         const lexer = new Lexer(text);
         const parser = new Parser(lexer);
-        const interpreter = new Interpreter(parser, {});
+        const interpreter = new Interpreter(parser);
         interpreter.interpret();
 
         const result = interpreter.symbolTable.get("result");
@@ -199,7 +199,7 @@ describe("Variables - String Features", () => {
     `;
         const lexer = new Lexer(text);
         const parser = new Parser(lexer);
-        const interpreter = new Interpreter(parser, {});
+        const interpreter = new Interpreter(parser);
         interpreter.interpret();
 
         const result = interpreter.symbolTable.get("result");
@@ -219,7 +219,7 @@ describe("Variables - String Features", () => {
     `;
         const lexer = new Lexer(text);
         const parser = new Parser(lexer);
-        const interpreter = new Interpreter(parser, {});
+        const interpreter = new Interpreter(parser);
         interpreter.interpret();
 
         const result = interpreter.symbolTable.get("result");
@@ -234,7 +234,7 @@ describe("Variables - String Features", () => {
     `;
         const lexer = new Lexer(text);
         const parser = new Parser(lexer);
-        const interpreter = new Interpreter(parser, {});
+        const interpreter = new Interpreter(parser);
         interpreter.interpret();
 
         const result = interpreter.symbolTable.get("result");
@@ -248,7 +248,7 @@ describe("Variables - String Features", () => {
     `;
         const lexer = new Lexer(text);
         const parser = new Parser(lexer);
-        const interpreter = new Interpreter(parser, {});
+        const interpreter = new Interpreter(parser);
         interpreter.interpret();
 
         const result = interpreter.symbolTable.get("result");
@@ -262,7 +262,7 @@ describe("Variables - String Features", () => {
     `;
         const lexer = new Lexer(text);
         const parser = new Parser(lexer);
-        const interpreter = new Interpreter(parser, {});
+        const interpreter = new Interpreter(parser);
         interpreter.interpret();
 
         const result = interpreter.symbolTable.get("result");
@@ -276,7 +276,7 @@ describe("Variables - String Features", () => {
     `;
         const lexer = new Lexer(text);
         const parser = new Parser(lexer);
-        const interpreter = new Interpreter(parser, {});
+        const interpreter = new Interpreter(parser);
         interpreter.interpret();
 
         const result = interpreter.symbolTable.get("result");
@@ -292,7 +292,7 @@ describe("Variables - Number Features", () => {
     `;
         const lexer = new Lexer(text);
         const parser = new Parser(lexer);
-        const interpreter = new Interpreter(parser, {});
+        const interpreter = new Interpreter(parser);
         interpreter.interpret();
 
         const result = interpreter.symbolTable.get("result");
@@ -306,7 +306,7 @@ describe("Variables - Number Features", () => {
     `;
         const lexer = new Lexer(text);
         const parser = new Parser(lexer);
-        const interpreter = new Interpreter(parser, {});
+        const interpreter = new Interpreter(parser);
         interpreter.interpret();
 
         const result = interpreter.symbolTable.get("result");
@@ -326,7 +326,7 @@ describe("Variables - Boolean Features", () => {
     `;
         const lexer = new Lexer(text);
         const parser = new Parser(lexer);
-        const interpreter = new Interpreter(parser, {});
+        const interpreter = new Interpreter(parser);
         interpreter.interpret();
 
         const result = interpreter.symbolTable.get("result");
@@ -349,7 +349,7 @@ describe("Variables - Boolean Features", () => {
     `;
         const lexer = new Lexer(text);
         const parser = new Parser(lexer);
-        const interpreter = new Interpreter(parser, {});
+        const interpreter = new Interpreter(parser);
         interpreter.interpret();
 
         const result = interpreter.symbolTable.get("result");
@@ -368,7 +368,7 @@ describe("Variables - Boolean Features", () => {
     `;
         const lexer = new Lexer(text);
         const parser = new Parser(lexer);
-        const interpreter = new Interpreter(parser, {});
+        const interpreter = new Interpreter(parser);
         interpreter.interpret();
 
         const result = interpreter.symbolTable.get("result");

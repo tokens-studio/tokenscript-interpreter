@@ -107,9 +107,6 @@ export type InterpreterValue =
   | null
   | Array<InterpreterValue>;
 
-export interface LanguageOptions {
-  MAX_ITERATIONS: number;
-}
 
 export const UNINTERPRETED_KEYWORDS: string[] = [
   "inside",

@@ -93,7 +93,7 @@ describe("Interpreter - Basic Expressions", () => {
     const text = "0";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("0");
@@ -125,7 +125,7 @@ describe("Interpreter - Math Operations", () => {
     const text = "4 / 2";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("2");
@@ -135,7 +135,7 @@ describe("Interpreter - Math Operations", () => {
     const text = "5 / 2";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("2.5");
@@ -145,7 +145,7 @@ describe("Interpreter - Math Operations", () => {
     const text = "4 * 2^3";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("32");
@@ -155,7 +155,7 @@ describe("Interpreter - Math Operations", () => {
     const text = "4 ^ (2 ^ 3) * 5";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("327680");
@@ -165,7 +165,7 @@ describe("Interpreter - Math Operations", () => {
     const text = "(10*10+4)px";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("104px");
@@ -175,7 +175,7 @@ describe("Interpreter - Math Operations", () => {
     const text = "10^2px";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("100px");
@@ -185,7 +185,7 @@ describe("Interpreter - Math Operations", () => {
     const text = "10rem^2";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("100rem");
@@ -195,7 +195,7 @@ describe("Interpreter - Math Operations", () => {
     const text = "10rem^2px";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     expect(() => interpreter.interpret()).toThrow();
   });
 });
@@ -205,7 +205,7 @@ describe("Interpreter - Functions", () => {
     const text = "pi() + 2px";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("5.141592653589793px");
@@ -215,7 +215,7 @@ describe("Interpreter - Functions", () => {
     const text = "unknown_function(1, 2, 3)";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
@@ -223,7 +223,7 @@ describe("Interpreter - Functions", () => {
     const text = "linear-gradient(1, 2 5px, 3rem)";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("linear-gradient(1, 2 5px, 3rem)");
@@ -236,7 +236,7 @@ describe("Interpreter - Functions", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
     const i = interpreter.symbolTable.get("i");
     const j = interpreter.symbolTable.get("j");
@@ -249,7 +249,7 @@ describe("Interpreter - Functions", () => {
       "min(1, 2, 3) + max(4, 5, 6) - average(7, 8, 9, max(20,98)) + sqrt(round(9.2))";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("-20.5");
@@ -266,7 +266,7 @@ describe("Interpreter - Return Statements", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(Number.parseFloat(result?.value)).toBe(7);
@@ -281,7 +281,7 @@ describe("Interpreter - String Methods", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
     const parts = interpreter.symbolTable.get("parts");
     const colorParts = interpreter.symbolTable.get("color_parts");
@@ -416,7 +416,7 @@ describe("Interpreter - Variable Name Validation", () => {
     const text = 'variable my_var: String = "test";';
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
 
     expect(() => interpreter.interpret()).not.toThrow();
   });
@@ -425,7 +425,7 @@ describe("Interpreter - Variable Name Validation", () => {
     const text = 'variable myvar: String = "test";';
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
 
     expect(() => interpreter.interpret()).not.toThrow();
   });
@@ -465,7 +465,7 @@ describe("Interpreter - Edge Cases", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     const result = interpreter.interpret();
     expect(result?.toString() || "").toBe("");
   });
@@ -484,7 +484,7 @@ describe("Interpreter - Edge Cases", () => {
     const text = "-1%";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("-1%");
@@ -497,7 +497,7 @@ describe("Interpreter - Edge Cases", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("#FF5733");
@@ -507,7 +507,7 @@ describe("Interpreter - Edge Cases", () => {
     const text = "linear-gradient(1, 2 5px, 3rem)";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("linear-gradient(1, 2 5px, 3rem)");
@@ -522,7 +522,7 @@ describe("Interpreter - Edge Cases", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.value).toBe(7);
@@ -535,7 +535,7 @@ describe("Interpreter - Edge Cases", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
     const i = interpreter.symbolTable.get("i");
     const j = interpreter.symbolTable.get("j");

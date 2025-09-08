@@ -1,7 +1,6 @@
 import {
   type ASTNode,
   type ISymbolType,
-  type LanguageOptions,
   Operations,
   type ReferenceRecord,
   UNINTERPRETED_KEYWORDS,
@@ -28,7 +27,7 @@ import {
   type UnaryOpNode,
   type WhileNode,
 } from "./ast";
-import type { ColorManager } from "./colorManager";
+import { Config } from "./config";
 import { InterpreterError } from "./errors";
 import * as operations from "./operations";
 import { Parser } from "./parser";
@@ -43,7 +42,6 @@ import {
 } from "./symbols";
 import { SymbolTable } from "./symbolTable";
 
-const { LANGUAGE_OPTIONS: DEFAULT_LANGUAGE_OPTIONS } = operations;
 
 class ReturnSignal {
   constructor(public value: ISymbolType | null) {}
@@ -54,15 +52,13 @@ export class Interpreter {
   private symbolTable: SymbolTable;
   private references: Map<string, ISymbolType> | Record<string, ISymbolType>;
   private ast: ASTNode | null = null;
-  private languageOptions: LanguageOptions;
-  private colorManager: ColorManager | null = null;
+  private config: Config;
 
   constructor(
     input: Parser | ASTNode | null,
     references?: ReferenceRecord | Map<string, any>,
     symbolTable?: SymbolTable,
-    languageOptions?: LanguageOptions,
-    colorManager?: ColorManager,
+    config?: Config,
   ) {
     if (input instanceof Parser) {
       this.parser = input;
@@ -71,8 +67,7 @@ export class Interpreter {
       this.parser = null;
     }
     this.symbolTable = symbolTable || new SymbolTable();
-    this.languageOptions = { ...DEFAULT_LANGUAGE_OPTIONS, ...languageOptions };
-    this.colorManager = colorManager || null;
+    this.config = config || new Config();
 
     // CRITICAL: Store the reference directly for shared reference model
     if (references instanceof Map) {
@@ -86,11 +81,11 @@ export class Interpreter {
       }
     }
 
-    if (this.colorManager) {
-      for (const [name, _formatId] of Object.entries(this.colorManager.names)) {
-        const colorType = this.colorManager.getColorType(name);
+    if (this.config.colorManager) {
+      for (const [name, _formatId] of Object.entries(this.config.colorManager.names)) {
+        const colorType = this.config.colorManager.getColorType(name);
         if (colorType) {
-          const colorManager = this.colorManager;
+          const colorManager = this.config.colorManager;
 
           class ColorConstructor extends BaseSymbolType {
             type = colorType?.type || "Color";
@@ -349,8 +344,8 @@ export class Interpreter {
       return defaultFn(...args);
     }
 
-    if (this.colorManager?.hasFunction(fnName)) {
-      return this.colorManager.executeFunction(fnName, args);
+    if (this.config.colorManager?.hasFunction(fnName)) {
+      return this.config.colorManager.executeFunction(fnName, args);
     }
 
     if (UNINTERPRETED_KEYWORDS.includes(fnName)) {
@@ -625,7 +620,7 @@ export class Interpreter {
     let iterations = 0;
     while (true) {
       iterations++;
-      if (iterations > this.languageOptions.MAX_ITERATIONS) {
+      if (iterations > this.config.languageOptions.MAX_ITERATIONS) {
         throw new InterpreterError(
           "Max iterations exceeded in while loop.",
           node.token?.line,
