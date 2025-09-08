@@ -27,7 +27,7 @@ import {
   type UnaryOpNode,
   type WhileNode,
 } from "./ast";
-import { Config } from "./config";
+import { Config } from "./config/config";
 import { InterpreterError } from "./errors";
 import * as operations from "./operations";
 import { Parser } from "./parser";

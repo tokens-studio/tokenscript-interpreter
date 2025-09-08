@@ -1,2 +1,2 @@
-export * from "./colorManager";
-export * from "./config";
+export * from "./managers/color/manager";
+export * from "./managers/color/schema";
