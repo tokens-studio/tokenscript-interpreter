@@ -80,32 +80,32 @@ export class Interpreter {
       }
     }
 
-    if (this.config.colorManager) {
-      for (const [name, _formatId] of Object.entries(
-        this.config.colorManager.names,
-      )) {
-        const colorType = this.config.colorManager.getColorType(name);
-        if (colorType) {
-          const colorManager = this.config.colorManager;
+    // if (this.config.colorManager) {
+    //   for (const [name, _formatId] of Object.entries(
+    //     this.config.colorManager.names,
+    //   )) {
+    //     const colorType = this.config.colorManager.getColorType(name);
+    //     if (colorType) {
+    //       const colorManager = this.config.colorManager;
 
-          class ColorConstructor extends BaseSymbolType {
-            type = colorType?.type || "Color";
+    //       class ColorConstructor extends BaseSymbolType {
+    //         type = colorType?.type || "Color";
 
-            constructor(value?: ISymbolType) {
-              const instance = colorManager.initColorFormat(name, value);
-              super(instance.value);
-              Object.assign(this, instance);
-            }
+    //         constructor(value?: ISymbolType) {
+    //           const instance = colorManager.initColorFormat(name, value);
+    //           super(instance.value);
+    //           Object.assign(this, instance);
+    //         }
 
-            validValue(value: any): boolean {
-              return colorType?.validValue(value) || false;
-            }
-          }
+    //         validValue(value: any): boolean {
+    //           return colorType?.validValue(value) || false;
+    //         }
+    //       }
 
-          this.symbolTable.addColorSubType(name, ColorConstructor);
-        }
-      }
-    }
+    //       this.symbolTable.addColorSubType(name, ColorConstructor);
+    //     }
+    //   }
+    // }
   }
 
   // References ------------------------------------------------------------------
@@ -364,9 +364,9 @@ export class Interpreter {
       return defaultFn(...args);
     }
 
-    if (this.config.colorManager?.hasFunction(fnName)) {
-      return this.config.colorManager.executeFunction(fnName, args);
-    }
+    // if (this.config.colorManager?.hasFunction(fnName)) {
+    //   return this.config.colorManager.executeFunction(fnName, args);
+    // }
 
     if (UNINTERPRETED_KEYWORDS.includes(fnName)) {
       const argStrings = args.map((arg) => arg.toString());

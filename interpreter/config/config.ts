@@ -1,4 +1,4 @@
-import type { ColorManager } from "./colorManager";
+import type { ColorManager } from "./managers/ColorManager";
 
 export interface LanguageOptions {
   MAX_ITERATIONS: number;
