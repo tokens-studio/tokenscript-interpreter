@@ -4,7 +4,6 @@ import { Lexer } from "../lexer";
 import { Parser } from "../parser";
 import { BaseSymbolType, ListSymbol } from "../symbols";
 
-// Color format specification interfaces
 interface ColorFormatSpec {
   $type: string;
   $id: string;
@@ -111,7 +110,10 @@ export class ColorConversionProxy {
   private sourceId: string;
   public sourceColor: DynamicColorSymbol | null = null;
 
-  constructor(colorTransforms: Record<string, Record<string, ASTNode>>, sourceId: string) {
+  constructor(
+    colorTransforms: Record<string, Record<string, ASTNode>>,
+    sourceId: string,
+  ) {
     this.colorTransforms = colorTransforms;
     this.sourceId = sourceId;
   }
@@ -147,11 +149,17 @@ export class ColorManager {
     this.names[name] = formatId;
 
     // Register the color type
-    this.colorTypes[formatId] = new DynamicColorSymbol(name, formatId, formatSpec.schema);
+    this.colorTypes[formatId] = new DynamicColorSymbol(
+      name,
+      formatId,
+      formatSpec.schema,
+    );
 
     // Register initializer functions
     if (!formatSpec.initializers) {
-      throw new InterpreterError("Color format specification must have initializers");
+      throw new InterpreterError(
+        "Color format specification must have initializers",
+      );
     }
 
     for (const initializer of formatSpec.initializers) {
@@ -165,7 +173,9 @@ export class ColorManager {
       }
 
       if (keyword in this.functions) {
-        throw new InterpreterError(`Initializer function ${keyword} already registered`);
+        throw new InterpreterError(
+          `Initializer function ${keyword} already registered`,
+        );
       }
 
       this.functions[keyword] = this.parseFunction(initializer.script);
@@ -185,10 +195,14 @@ export class ColorManager {
       }
 
       if (this.colorTransforms[source][target]) {
-        throw new InterpreterError(`Conversion from ${source} to ${target} already registered`);
+        throw new InterpreterError(
+          `Conversion from ${source} to ${target} already registered`,
+        );
       }
 
-      this.colorTransforms[source][target] = this.parseFunction(conversion.script);
+      this.colorTransforms[source][target] = this.parseFunction(
+        conversion.script,
+      );
     }
   }
 
@@ -277,6 +291,8 @@ export class ColorManager {
       return this.initColorFormat("rgb", rgbValues);
     }
 
-    throw new InterpreterError(`Color function ${name} execution not implemented`);
+    throw new InterpreterError(
+      `Color function ${name} execution not implemented`,
+    );
   }
 }
