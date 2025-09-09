@@ -31,6 +31,7 @@ import { Config } from "./config/config";
 import { InterpreterError } from "./errors";
 import * as operations from "./operations";
 import { Parser } from "./parser";
+import { isValidHex } from "./utils/color";
 import {
   BaseSymbolType,
   BooleanSymbol,
@@ -146,7 +147,7 @@ export class Interpreter {
     if (value instanceof BaseSymbolType) return value;
     if (typeof value === "number") return new NumberSymbol(value);
     if (typeof value === "string") {
-      if (ColorSymbol.isValidHex(value)) return new ColorSymbol(value);
+      if (isValidHex(value)) return new ColorSymbol(value);
       return new StringSymbol(value);
     }
     if (typeof value === "boolean") return new BooleanSymbol(value);

@@ -1,5 +1,6 @@
 import { type ISymbolType, SupportedFormats } from "../types";
 import { InterpreterError } from "./errors";
+import { isValidHex } from "./utils/color";
 
 // Types -----------------------------------------------------------------------
 
@@ -545,15 +546,13 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
 export class ColorSymbol extends BaseSymbolType {
   type = "Color";
 
-  constructor(value: string | ColorSymbol) {
+  constructor(value: string) {
     let safeValue: string;
     if (typeof value === "string") {
-      if (!ColorSymbol.isValidHex(value)) {
+      if (!isValidHex(value)) {
         throw new InterpreterError(`Invalid hex color format: ${value}`);
       }
       safeValue = value;
-    } else if (value instanceof ColorSymbol) {
-      safeValue = value.value;
     } else {
       throw new InterpreterError(
         `Value must be string or ColorSymbol, got ${typeof value}.`,
@@ -571,30 +570,15 @@ export class ColorSymbol extends BaseSymbolType {
     };
   }
 
-  static isValidHex(value: string): boolean {
-    if (typeof value !== "string") return false;
-    if (!value.startsWith("#")) return false;
-    const hexPart = value.substring(1);
-    if (!(hexPart.length === 3 || hexPart.length === 6)) return false;
-    for (let i = 0; i < hexPart.length; i++) {
-      const char = hexPart[i].toLowerCase();
-      if (!((char >= "0" && char <= "9") || (char >= "a" && char <= "f"))) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   toStringImpl(): StringSymbol {
     return new StringSymbol(this.value as string);
   }
 
   validValue(val: any): boolean {
-    // Accept other ColorSymbol instances
     if (val instanceof ColorSymbol) {
       return true;
     }
-    // Accept valid hex color strings
-    return typeof val === "string" && ColorSymbol.isValidHex(val);
+
+    return typeof val === "string" && isValidHex(val);
   }
 }
