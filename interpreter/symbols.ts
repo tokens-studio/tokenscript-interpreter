@@ -24,6 +24,7 @@ interface MethodDefinitionDef {
 export abstract class BaseSymbolType implements ISymbolType {
   abstract type: string;
   public value: any;
+  _SUPPORTED_METHODS?: SupportedMethods;
 
   constructor(value: any) {
     this.value = value;
@@ -133,8 +134,6 @@ export abstract class BaseSymbolType implements ISymbolType {
 export class NumberSymbol extends BaseSymbolType {
   type = "Number";
   public isFloat: boolean;
-
-  _SUPPORTED_METHODS: SupportedMethods;
 
   constructor(
     value: number | NumberSymbol | NumberWithUnitSymbol | null,
@@ -250,7 +249,6 @@ export class NumberSymbol extends BaseSymbolType {
 
 export class StringSymbol extends BaseSymbolType {
   type = "String";
-  _SUPPORTED_METHODS: SupportedMethods;
 
   constructor(value: string | StringSymbol | null) {
     let safeValue: string;
@@ -345,7 +343,6 @@ export class ListSymbol extends BaseSymbolType {
   type = "List";
   public elements: ISymbolType[];
   public isImplicit: boolean;
-  _SUPPORTED_METHODS: SupportedMethods;
 
   constructor(elements: ISymbolType[] | null, isImplicit = false) {
     const safeElements = elements === null ? [] : elements;
@@ -470,7 +467,6 @@ export class ListSymbol extends BaseSymbolType {
 export class NumberWithUnitSymbol extends BaseSymbolType {
   type = "NumberWithUnit";
   public unit: SupportedFormats;
-  _SUPPORTED_METHODS: SupportedMethods;
 
   constructor(
     value: number | NumberSymbol | null,
@@ -548,7 +544,6 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
 
 export class ColorSymbol extends BaseSymbolType {
   type = "Color";
-  _SUPPORTED_METHODS: SupportedMethods;
 
   constructor(value: string | ColorSymbol) {
     let safeValue: string;
