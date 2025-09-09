@@ -514,16 +514,14 @@ export class ColorSymbol extends BaseSymbolType {
   type = "Color";
 
   constructor(value: string) {
-    let safeValue: string;
     if (typeof value === "string") {
       if (!isValidHex(value)) {
         throw new InterpreterError(`Invalid hex color format: ${value}`);
       }
-      safeValue = value;
     } else {
       throw new InterpreterError(`Value must be string or ColorSymbol, got ${typeof value}.`);
     }
-    super(safeValue);
+    super(value);
 
     this._SUPPORTED_METHODS = {
       tostring: {
