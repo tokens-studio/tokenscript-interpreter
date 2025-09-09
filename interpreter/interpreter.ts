@@ -129,19 +129,13 @@ export class Interpreter {
     // but kept for backward compatibility
     if (this.references instanceof Map) {
       for (const key in newReferences) {
-        if (
-          !this.references.has(key) ||
-          this.references.get(key) !== newReferences[key]
-        ) {
+        if (!this.references.has(key) || this.references.get(key) !== newReferences[key]) {
           this.references.set(key, this.importReference(newReferences[key]));
         }
       }
     } else {
       for (const key in newReferences) {
-        if (
-          !(key in this.references) ||
-          this.references[key] !== newReferences[key]
-        ) {
+        if (!(key in this.references) || this.references[key] !== newReferences[key]) {
           this.references[key] = this.importReference(newReferences[key]);
         }
       }
@@ -156,8 +150,7 @@ export class Interpreter {
       return new StringSymbol(value);
     }
     if (typeof value === "boolean") return new BooleanSymbol(value);
-    if (Array.isArray(value))
-      return new ListSymbol(value.map((v) => this.importReference(v)));
+    if (Array.isArray(value)) return new ListSymbol(value.map((v) => this.importReference(v)));
 
     if (value instanceof NumberWithUnitSymbol) return value;
     const numberWithUnit = NumberWithUnitSymbol.fromRecord(value);
@@ -207,8 +200,7 @@ export class Interpreter {
     const opVal = node.opToken.value as string;
     const opType = node.opToken.type;
 
-    const logicalBooleanImpl =
-      operations.LOGICAL_BOOLEAN_IMPLEMENTATIONS[opVal];
+    const logicalBooleanImpl = operations.LOGICAL_BOOLEAN_IMPLEMENTATIONS[opVal];
     if (logicalBooleanImpl) {
       return logicalBooleanImpl(left, right);
     }
@@ -217,10 +209,8 @@ export class Interpreter {
     if (mathImpl) {
       if (
         !(
-          (left instanceof NumberSymbol ||
-            left instanceof NumberWithUnitSymbol) &&
-          (right instanceof NumberSymbol ||
-            right instanceof NumberWithUnitSymbol)
+          (left instanceof NumberSymbol || left instanceof NumberWithUnitSymbol) &&
+          (right instanceof NumberSymbol || right instanceof NumberWithUnitSymbol)
         )
       ) {
         throw new InterpreterError(
@@ -282,10 +272,7 @@ export class Interpreter {
     }
 
     if (node.op === Operations.ADD) {
-      if (
-        result instanceof NumberSymbol ||
-        result instanceof NumberWithUnitSymbol
-      ) {
+      if (result instanceof NumberSymbol || result instanceof NumberWithUnitSymbol) {
         return result;
       }
 
@@ -330,11 +317,7 @@ export class Interpreter {
     const value = this.getReference(node.value);
 
     if (!value) {
-      throw new InterpreterError(
-        `Unknown reference: ${node.value}`,
-        node.token.line,
-        node.token,
-      );
+      throw new InterpreterError(`Unknown reference: ${node.value}`, node.token.line, node.token);
     }
 
     return value as ISymbolType;
@@ -348,9 +331,7 @@ export class Interpreter {
     return new BooleanSymbol(node.value);
   }
 
-  private visitElementWithUnitNode(
-    node: ElementWithUnitNode,
-  ): NumberWithUnitSymbol {
+  private visitElementWithUnitNode(node: ElementWithUnitNode): NumberWithUnitSymbol {
     const valNodeVisit = this.visit(node.astNode);
     return new NumberWithUnitSymbol(valNodeVisit?.value, node.unit);
   }
@@ -373,11 +354,7 @@ export class Interpreter {
       return new StringSymbol(`${fnName}(${argStrings.join(", ")})`);
     }
 
-    throw new InterpreterError(
-      `Unknown function: '${node.name}'`,
-      node.token?.line,
-      node.token,
-    );
+    throw new InterpreterError(`Unknown function: '${node.name}'`, node.token?.line, node.token);
   }
 
   private visitAssignNode(node: AssignNode): void {
@@ -515,9 +492,7 @@ export class Interpreter {
       }
       if (currentVar.constructor !== valueToAssign.constructor) {
         try {
-          const coerced = new (currentVar.constructor as any)(
-            valueToAssign.value,
-          );
+          const coerced = new (currentVar.constructor as any)(valueToAssign.value);
           this.symbolTable.set(node.objectIdentifier.name, coerced);
         } catch (_e) {
           throw new InterpreterError(
@@ -594,10 +569,7 @@ export class Interpreter {
       return attributeValue; // attributeValue is ISymbolType
     }
     if (node.right instanceof FunctionCallNode) {
-      if (
-        typeof leftValue.callMethod !== "function" ||
-        typeof leftValue.hasMethod !== "function"
-      ) {
+      if (typeof leftValue.callMethod !== "function" || typeof leftValue.hasMethod !== "function") {
         throw new InterpreterError(
           `Type ${leftValue.type} does not support method calls.`,
           node.right.token?.line,
@@ -625,11 +597,7 @@ export class Interpreter {
       }
       return result; // result is now guaranteed to be ISymbolType
     }
-    throw new InterpreterError(
-      "Invalid attribute access structure.",
-      node.token?.line,
-      node.token,
-    );
+    throw new InterpreterError("Invalid attribute access structure.", node.token?.line, node.token);
   }
 
   private visitStatementListNode(node: StatementListNode): ISymbolType | null {
@@ -709,9 +677,7 @@ export class Interpreter {
       } else if (e instanceof Error) {
         throw e;
       } else {
-        throw new InterpreterError(
-          "An unknown error occurred during interpretation.",
-        );
+        throw new InterpreterError("An unknown error occurred during interpretation.");
       }
     }
 

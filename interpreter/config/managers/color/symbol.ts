@@ -1,4 +1,4 @@
-import { InterpreterError } from "../../../errors";
+// import { InterpreterError } from "../../../errors";
 
 // export class Color implements ISymbolType {
 //   public readonly type: string = "COLOR";

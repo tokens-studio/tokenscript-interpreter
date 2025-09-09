@@ -1,4 +1,4 @@
-import { ColorSpecification, ColorSpecificationSchema } from "./schema";
+import { type ColorSpecification, ColorSpecificationSchema } from "./schema";
 
 type uri = string;
 
@@ -29,9 +29,7 @@ ${jsonSpec}`,
     return this.specs.get(uri);
   }
 
-  public findSpecByName(
-    name: string,
-  ): [string, ColorSpecification] | undefined {
+  public findSpecByName(name: string): [string, ColorSpecification] | undefined {
     const lowerCaseName = name.toLowerCase();
     for (const [uri, spec] of this.specs.entries()) {
       if (spec.name.toLowerCase() === lowerCaseName) {
@@ -41,9 +39,7 @@ ${jsonSpec}`,
     return undefined;
   }
 
-  public findSpecByKeyword(
-    keyword: string,
-  ): [string, ColorSpecification] | undefined {
+  public findSpecByKeyword(keyword: string): [string, ColorSpecification] | undefined {
     for (const [uri, spec] of this.specs.entries()) {
       if (spec.initializers.some((init) => init.keyword === keyword)) {
         return [uri, spec];
@@ -54,8 +50,7 @@ ${jsonSpec}`,
 
   public isSupportedKeyword(keyword: string): boolean {
     return (
-      this.findSpecByName(keyword) !== undefined ||
-      this.findSpecByKeyword(keyword) !== undefined
+      this.findSpecByName(keyword) !== undefined || this.findSpecByKeyword(keyword) !== undefined
     );
   }
 
@@ -63,9 +58,7 @@ ${jsonSpec}`,
     uri: string;
     spec: ColorSpecification;
   } {
-    const spec =
-      this.findSpecByName(nameOrKeyword) ||
-      this.findSpecByKeyword(nameOrKeyword);
+    const spec = this.findSpecByName(nameOrKeyword) || this.findSpecByKeyword(nameOrKeyword);
     if (spec) {
       return { uri: spec[0], spec: spec[1] };
     }

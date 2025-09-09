@@ -107,7 +107,6 @@ export type InterpreterValue =
   | null
   | Array<InterpreterValue>;
 
-
 export const UNINTERPRETED_KEYWORDS: string[] = [
   "inside",
   "outside",
