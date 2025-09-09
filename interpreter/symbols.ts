@@ -560,22 +560,17 @@ export class ColorSymbol extends BaseSymbolType {
     } else if (value instanceof ColorSymbol) {
       safeValue = value.value;
     } else {
-      throw new InterpreterError(`Value must be string or ColorSymbol, got ${typeof value}.`);
+      throw new InterpreterError(
+        `Value must be string or ColorSymbol, got ${typeof value}.`,
+      );
     }
     super(safeValue);
 
     this._SUPPORTED_METHODS = {
-      split: {
-        function: this.split,
-        args: [{ name: "delimiter", type: StringSymbol, optional: true }],
-        returnType: ListSymbol,
-      },
-      upper: { function: this.upper, args: [], returnType: StringSymbol },
-      lower: { function: this.lower, args: [], returnType: StringSymbol },
-      length: { function: this.length, args: [], returnType: NumberSymbol },
-      concat: {
-        function: this.concat,
-        args: [{ name: "other", type: StringSymbol }],
+      tostring: {
+        name: "toString",
+        function: this.toStringImpl,
+        args: [],
         returnType: StringSymbol,
       },
     };
@@ -595,6 +590,10 @@ export class ColorSymbol extends BaseSymbolType {
     return true;
   }
 
+  toStringImpl(): StringSymbol {
+    return new StringSymbol(this.value as string);
+  }
+
   validValue(val: any): boolean {
     // Accept other ColorSymbol instances
     if (val instanceof ColorSymbol) {
@@ -602,36 +601,5 @@ export class ColorSymbol extends BaseSymbolType {
     }
     // Accept valid hex color strings
     return typeof val === "string" && ColorSymbol.isValidHex(val);
-  }
-
-  // String-like methods for Color
-  split(delimiter?: StringSymbol): ListSymbol {
-    const strValue = this.value as string;
-    let parts: string[];
-    if (delimiter === undefined) {
-      parts = strValue.split("");
-    } else {
-      parts = strValue.split(delimiter.value as string);
-    }
-    return new ListSymbol(parts.map((p) => new StringSymbol(p)));
-  }
-
-  upper(): StringSymbol {
-    return new StringSymbol((this.value as string).toUpperCase());
-  }
-
-  lower(): StringSymbol {
-    return new StringSymbol((this.value as string).toLowerCase());
-  }
-
-  length(): NumberSymbol {
-    return new NumberSymbol((this.value as string).length);
-  }
-
-  concat(other: StringSymbol): StringSymbol {
-    if (other instanceof StringSymbol) {
-      return new StringSymbol((this.value as string) + other.value);
-    }
-    throw new InterpreterError(`Cannot concatenate Color with ${typeof other}`);
   }
 }

@@ -143,4 +143,35 @@ describe("Color Objects - Color Operations", () => {
     expect(result).toBeDefined();
     expect(result?.toString()).toBe("#3366CC");
   });
+
+  it("should support toString method on color objects", () => {
+    const text = `
+    variable color: Color = #FF5733;
+    variable colorString: String = color.toString();
+    return colorString;
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    const result = interpreter.interpret();
+
+    expect(result).toBeDefined();
+    expect(result?.type).toBe("String");
+    expect(result?.value).toBe("#FF5733");
+  });
+
+  it("should support toString method on 3-digit hex colors", () => {
+    const text = `
+    variable color: Color = #F53;
+    variable result: String = color.toString();
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    const result = interpreter.symbolTable.get("result");
+    expect(result?.type).toBe("String");
+    expect(result?.value).toBe("#F53");
+  });
 });
