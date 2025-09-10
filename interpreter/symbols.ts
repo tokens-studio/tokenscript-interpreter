@@ -2,7 +2,7 @@ import { type ISymbolType, SupportedFormats } from "../types";
 import { InterpreterError } from "./errors";
 import { isValidHex } from "./utils/color";
 
-// Types -----------------------------------------------------------------------
+// Base Type -------------------------------------------------------------------
 
 type SupportedMethods = Record<string, MethodDefinitionDef>;
 
@@ -19,8 +19,6 @@ interface MethodDefinitionDef {
   args: MethodArgumentDef[];
   returnType: any; // Could be ISymbolType constructor or a special marker
 }
-
-// Base Type -------------------------------------------------------------------
 
 export abstract class BaseSymbolType implements ISymbolType {
   abstract type: string;
