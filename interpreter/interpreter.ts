@@ -34,6 +34,7 @@ import { Parser } from "./parser";
 import { isValidHex } from "./utils/color";
 import {
   BaseSymbolType,
+  basicSymbolTypes,
   BooleanSymbol,
   ColorSymbol,
   ListSymbol,
@@ -381,17 +382,20 @@ export class Interpreter {
         ? node.typeDecl.subTypes.map((s) => s.name).join(".")
         : undefined;
 
-    if (!this.symbolTable.isSymbolType(baseType)) {
+    if (!this.config.isValidSymbolType(baseType, subType)) {
+
+
       throw new InterpreterError(
-        `Invalid variable type '${baseType}'. Use a valid type. (${Object.keys(this.symbolTable.activeSymbolTypes).join(", ")})`,
+        `Invalid variable type '${baseType}'. Use a valid type. (${Object.keys(basicSymbolTypes).join(", ")})`,
         node.varName.token.line,
         node.varName.token,
       );
     }
 
-    if (this.symbolTable.exists(name)) {
+    if (this.symbolTable.isDefined(name)) {
       throw new InterpreterError(
         `Variable '${name}' already defined. Use a different name.`,
+
         node.varName.token.line,
         node.varName.token,
       );
@@ -492,7 +496,7 @@ export class Interpreter {
     const valueToAssign = valueToAssignVisit as ISymbolType; // Safe due to check
 
     if (node.attributes.length === 0) {
-      if (!this.symbolTable.exists(node.objectIdentifier.name)) {
+      if (!this.symbolTable.isDefined(node.objectIdentifier.name)) {
         throw new InterpreterError(
           `Variable '${node.objectIdentifier.name}' not defined for reassignment.`,
           node.objectIdentifier.token.line,

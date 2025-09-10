@@ -3,6 +3,11 @@ import { Config } from "./config/config";
 import { InterpreterError } from "./errors";
 import { isValidHex } from "./utils/color";
 
+// Utilities -------------------------------------------------------------------
+
+export const typeEquals = (typeA: string, typeB: string) =>
+  typeA.toLowerCase() === typeB.toLowerCase();
+
 // Base Type -------------------------------------------------------------------
 
 type SupportedMethods = Record<string, MethodDefinitionDef>;
@@ -124,6 +129,8 @@ type numberValue = number | null;
 
 export class NumberSymbol extends BaseSymbolType {
   type = "Number";
+  static readonly type = "Number";
+
   public value: numberValue;
   public isFloat: boolean;
 
@@ -241,6 +248,8 @@ export class NumberSymbol extends BaseSymbolType {
 
 export class StringSymbol extends BaseSymbolType {
   type = "String";
+  static readonly type = "String";
+
   public value: string | null;
 
   constructor(value: string | StringSymbol | null) {
@@ -328,6 +337,8 @@ export class StringSymbol extends BaseSymbolType {
 
 export class BooleanSymbol extends BaseSymbolType {
   type = "Boolean";
+  static readonly type = "Boolean";
+
   public value: boolean | null;
   constructor(value: boolean | BooleanSymbol | null) {
     let safeValue: boolean | null;
@@ -356,6 +367,9 @@ export class BooleanSymbol extends BaseSymbolType {
 
 export class ListSymbol extends BaseSymbolType {
   type = "List";
+  static readonly type = "List";
+
+
   public value: ISymbolType[] | null;
   public elements: ISymbolType[];
   public isImplicit: boolean;
@@ -483,6 +497,8 @@ export class ListSymbol extends BaseSymbolType {
 
 export class NumberWithUnitSymbol extends BaseSymbolType {
   type = "NumberWithUnit";
+  static readonly type = "NumberWithUnit";
+
   public value: number | null;
   public unit: SupportedFormats;
 
@@ -571,6 +587,8 @@ type dynamicColorValue = Record<string, ISymbolType>;
 
 export class ColorSymbol extends BaseSymbolType {
   type = "Color";
+  static readonly type = "Color";
+
   public subType: string | null = null;
   public value: string | dynamicColorValue | null;
   public config: Config;
@@ -625,3 +643,14 @@ export class ColorSymbol extends BaseSymbolType {
     return typeof val === "string" && isValidHex(val);
   }
 }
+
+// Utilities -------------------------------------------------------------------
+
+export const basicSymbolTypes = {
+  [NumberSymbol.type.toLowerCase()]: NumberSymbol,
+  [StringSymbol.type.toLowerCase()]: StringSymbol,
+  [BooleanSymbol.type.toLowerCase()]: BooleanSymbol,
+  [ListSymbol.type.toLowerCase()]: ListSymbol,
+  [NumberWithUnitSymbol.type.toLowerCase()]: NumberWithUnitSymbol,
+  [ColorSymbol.type.toLowerCase()]: ColorSymbol,
+} as const;
