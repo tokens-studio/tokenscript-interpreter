@@ -258,10 +258,24 @@ export class Interpreter {
 
     if (node.op === Operations.SUBTRACT) {
       if (result instanceof NumberSymbol) {
+        if (result.value === null) {
+          throw new InterpreterError(
+            `Cannot apply unary '-' to a null NumberSymbol.`,
+            node.opToken.line,
+            node.opToken,
+          );
+        }
         return new NumberSymbol(-result.value);
       }
 
       if (result instanceof NumberWithUnitSymbol) {
+        if (result.value === null) {
+          throw new InterpreterError(
+            `Cannot apply unary '-' to a null NumberWithUnitSymbol.`,
+            node.opToken.line,
+            node.opToken,
+          );
+        }
         return new NumberWithUnitSymbol(-result.value, result.unit);
       }
 

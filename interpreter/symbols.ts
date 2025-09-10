@@ -22,7 +22,7 @@ interface MethodDefinitionDef {
 
 export abstract class BaseSymbolType implements ISymbolType {
   abstract type: string;
-  public value: any;
+  public value: any | null;
   _SUPPORTED_METHODS?: SupportedMethods;
 
   constructor(value: any) {
@@ -119,21 +119,26 @@ export abstract class BaseSymbolType implements ISymbolType {
 
 // Concrete Symbol Types -------------------------------------------------------
 
+type numberValue = number | null;
+
 export class NumberSymbol extends BaseSymbolType {
   type = "Number";
+  public value: numberValue;
   public isFloat: boolean;
 
   constructor(value: number | NumberSymbol | NumberWithUnitSymbol | null, isFloat = false) {
-    let safeValue: number;
+    let safeValue: numberValue;
     if (typeof value === "number") {
       safeValue = value;
     } else if (value instanceof NumberSymbol || value instanceof NumberWithUnitSymbol) {
       safeValue = value.value as number;
+    } else if (value === null) {
+      safeValue = null;
     } else {
       throw new InterpreterError(`Value must be int or float, got ${typeof value}.`);
     }
     super(safeValue);
-
+    this.value = safeValue;
     this.isFloat = isFloat;
     this._SUPPORTED_METHODS = {
       tostring: {
@@ -155,6 +160,12 @@ export class NumberSymbol extends BaseSymbolType {
     return typeof val === "number" || val instanceof NumberSymbol;
   }
 
+  expectSafeValue(val: any): asserts val is number {
+    if (val === null || val === undefined) {
+      throw new InterpreterError("Value must be int or float, got null.");
+    }
+  }
+
   toString(): string {
     if (!this.isFloat) {
       return String(this.value);
@@ -164,7 +175,11 @@ export class NumberSymbol extends BaseSymbolType {
 
   // Direct translation of to_string method from token_interpreter/symbols.py
   toStringImpl(radix?: NumberSymbol): StringSymbol {
-    if (!radix) {
+    this.expectSafeValue(this.value);
+
+    if (radix) {
+      this.expectSafeValue(radix?.value);
+    } else {
       return new StringSymbol(String(this.value));
     }
 
@@ -173,7 +188,7 @@ export class NumberSymbol extends BaseSymbolType {
     if (typeof this.value === "number" && Number.isInteger(this.value)) {
       numValue = Math.trunc(this.value);
     } else {
-      numValue = Number.isInteger(this.value) ? this.value : this.value;
+      numValue = this.value;
     }
 
     // Get the radix value
@@ -225,18 +240,21 @@ export class NumberSymbol extends BaseSymbolType {
 
 export class StringSymbol extends BaseSymbolType {
   type = "String";
+  public value: string | null;
 
   constructor(value: string | StringSymbol | null) {
-    let safeValue: string;
+    let safeValue: string | null;
     if (typeof value === "string") {
       safeValue = value;
     } else if (value instanceof StringSymbol) {
       safeValue = value.value;
+    } else if (value === null) {
+      safeValue = null;
     } else {
       throw new InterpreterError(`Value must be string, got ${typeof value}.`);
     }
     super(safeValue);
-
+    this.value = safeValue;
     this._SUPPORTED_METHODS = {
       upper: { function: this.upperImpl, args: [], returnType: StringSymbol },
       lower: { function: this.lowerImpl, args: [], returnType: StringSymbol },
@@ -258,27 +276,39 @@ export class StringSymbol extends BaseSymbolType {
     return typeof val === "string" || val instanceof StringSymbol;
   }
 
+  expectSafeValue(val: any): asserts val is string {
+    if (val === null || val === undefined) {
+      throw new InterpreterError("Value must be a string, got null.");
+    }
+  }
+
   upperImpl(): StringSymbol {
+    this.expectSafeValue(this.value);
     return new StringSymbol(this.value.toUpperCase());
   }
 
   lowerImpl(): StringSymbol {
+    this.expectSafeValue(this.value);
     return new StringSymbol(this.value.toLowerCase());
   }
 
   lengthImpl(): NumberSymbol {
+    this.expectSafeValue(this.value);
     return new NumberSymbol(this.value.length);
   }
 
   concatImpl(other: StringSymbol): StringSymbol {
+    this.expectSafeValue(this.value);
     if (other instanceof StringSymbol) {
+      other.expectSafeValue(other.value);
       return new StringSymbol(this.value + other.value);
     }
     throw new InterpreterError(`Cannot concatenate String ${typeof other} to String.`);
   }
 
   splitImpl(delimiter?: StringSymbol): ListSymbol {
-    const strValue = this.value as string;
+    this.expectSafeValue(this.value);
+    const strValue = this.value;
 
     if (delimiter instanceof StringSymbol) {
       const parts = strValue.split(delimiter.value as string);
@@ -297,30 +327,42 @@ export class StringSymbol extends BaseSymbolType {
 
 export class BooleanSymbol extends BaseSymbolType {
   type = "Boolean";
+  public value: boolean | null;
   constructor(value: boolean | BooleanSymbol | null) {
-    let safeValue: boolean;
+    let safeValue: boolean | null;
     if (typeof value === "boolean") {
       safeValue = value;
     } else if (value instanceof BooleanSymbol) {
       safeValue = value.value;
+    } else if (value === null) {
+      safeValue = null;
     } else {
       throw new InterpreterError(`Value must be boolean, got ${typeof value}.`);
     }
     super(safeValue);
+    this.value = safeValue;
   }
   validValue(val: any): boolean {
     return typeof val === "boolean" || val instanceof BooleanSymbol;
+  }
+
+  expectSafeValue(val: any): asserts val is boolean {
+    if (val === null || val === undefined) {
+      throw new InterpreterError("Value must be a boolean, got null.");
+    }
   }
 }
 
 export class ListSymbol extends BaseSymbolType {
   type = "List";
+  public value: ISymbolType[] | null;
   public elements: ISymbolType[];
   public isImplicit: boolean;
 
   constructor(elements: ISymbolType[] | null, isImplicit = false) {
     const safeElements = elements === null ? [] : elements;
     super(safeElements);
+    this.value = safeElements;
     this.elements = safeElements;
 
     this.isImplicit = isImplicit;
@@ -377,7 +419,7 @@ export class ListSymbol extends BaseSymbolType {
 
   toString(): string {
     const delimiter = this.isImplicit ? " " : ", ";
-    return this.elements.map((x) => x.toString()).join(delimiter);
+    return this.elements.map((x) => (x.value === null ? "null" : x.toString())).join(delimiter);
   }
 
   appendImpl(item: ISymbolType): ListSymbol {
@@ -440,18 +482,22 @@ export class ListSymbol extends BaseSymbolType {
 
 export class NumberWithUnitSymbol extends BaseSymbolType {
   type = "NumberWithUnit";
+  public value: number | null;
   public unit: SupportedFormats;
 
   constructor(value: number | NumberSymbol | null, unit: SupportedFormats | string) {
-    let safeValue: number;
+    let safeValue: number | null;
     if (typeof value === "number") {
       safeValue = value;
     } else if (value instanceof NumberSymbol) {
       safeValue = value.value;
+    } else if (value === null) {
+      safeValue = null;
     } else {
       throw new InterpreterError(`Value must be number or NumberSymbol, got ${typeof value}.`);
     }
     super(safeValue);
+    this.value = safeValue;
 
     if (typeof unit === "string" && !(Object.values(SupportedFormats) as string[]).includes(unit)) {
       throw new InterpreterError(`Invalid unit: ${unit}`);
@@ -497,29 +543,49 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
   }
 
   toString(): string {
+    if (this.value === null) {
+      throw new InterpreterError("Cannot convert null to string.");
+    }
     return `${this.value}${this.unit}`;
   }
 
-  toStringImpl(): StringSymbol {
-    return new StringSymbol(this.toString());
+  expectSafeValue(val: any): asserts val is number {
+    if (val === null || val === undefined) {
+      throw new InterpreterError("Value must be a number, got null.");
+    }
   }
+
+  toStringImpl(): StringSymbol {
+    this.expectSafeValue(this.value);
+    return new StringSymbol(`${this.value}${this.unit}`);
+  }
+
   to_number(): NumberSymbol {
-    return new NumberSymbol(this.value as number);
+    this.expectSafeValue(this.value);
+    return new NumberSymbol(this.value);
   }
 }
 
 export class ColorSymbol extends BaseSymbolType {
   type = "Color";
+  public value: string | null;
 
-  constructor(value: string) {
-    if (typeof value === "string") {
+  constructor(value: string | null) {
+    let safeValue: string | null;
+
+    if (value === null) {
+      safeValue = null;
+    } else if (typeof value === "string") {
       if (!isValidHex(value)) {
         throw new InterpreterError(`Invalid hex color format: ${value}`);
       }
+      safeValue = value;
     } else {
       throw new InterpreterError(`Value must be string or ColorSymbol, got ${typeof value}.`);
     }
-    super(value);
+
+    super(safeValue);
+    this.value = safeValue;
 
     this._SUPPORTED_METHODS = {
       tostring: {
@@ -531,11 +597,21 @@ export class ColorSymbol extends BaseSymbolType {
     };
   }
 
+  expectSafeValue(val: any): asserts val is string {
+    if (val === null || val === undefined) {
+      throw new InterpreterError("Value must be a color string, got null.");
+    }
+  }
+
   toStringImpl(): StringSymbol {
-    return new StringSymbol(this.value as string);
+    this.expectSafeValue(this.value);
+    return new StringSymbol(this.value);
   }
 
   validValue(val: any): boolean {
+    if (val === null) {
+      return true;
+    }
     if (val instanceof ColorSymbol) {
       return true;
     }
