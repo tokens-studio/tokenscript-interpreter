@@ -1,0 +1,12 @@
+{:tasks
+ {fmt
+  {:doc "Formats the repo"
+   :task (shell "steam-run npm run format")}
+  fix
+  {:doc "Fixes all"
+   :task (do
+            (shell "steam-run npm run format")
+            (shell "steam-run npm run lint:fix -- --skip=suspicious"))}
+  nrepl
+  {:doc "Start nrepl server"
+   :task (shell "bun run --bun nbb nrepl-server")}}}
