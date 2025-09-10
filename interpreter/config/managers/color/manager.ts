@@ -85,7 +85,7 @@ ${spec}`,
   }
 
   public getSpecByType(type: string): ColorSpecification | undefined {
-    const uri = this.specTypes.get(type);
+    const uri = this.specTypes.get(type.toLowerCase());
     if (!uri) return;
     return this.getSpec(uri);
   }
