@@ -1,5 +1,4 @@
 import { type ISymbolType, SupportedFormats } from "../types";
-import type { Config } from "./config/config";
 import { InterpreterError } from "./errors";
 import { isValidHex } from "./utils/color";
 
@@ -181,6 +180,10 @@ export class NumberSymbol extends BaseSymbolType {
     return String(Number(this.value));
   }
 
+  static empty(): NumberSymbol {
+    return new NumberSymbol(null);
+  }
+
   // Direct translation of to_string method from token_interpreter/symbols.py
   toStringImpl(radix?: NumberSymbol): StringSymbol {
     this.expectSafeValue(this.value);
@@ -297,6 +300,10 @@ export class StringSymbol extends BaseSymbolType {
     return new StringSymbol(this.value.toUpperCase());
   }
 
+  static empty(): StringSymbol {
+    return new StringSymbol(null);
+  }
+
   lowerImpl(): StringSymbol {
     this.expectSafeValue(this.value);
     return new StringSymbol(this.value.toLowerCase());
@@ -362,6 +369,10 @@ export class BooleanSymbol extends BaseSymbolType {
     if (val === null || val === undefined) {
       throw new InterpreterError("Value must be a boolean, got null.");
     }
+  }
+
+  static empty(): BooleanSymbol {
+    return new BooleanSymbol(null);
   }
 }
 
@@ -492,6 +503,10 @@ export class ListSymbol extends BaseSymbolType {
     this.elements[index] = item;
     return this;
   }
+
+  static empty(): ListSymbol {
+    return new ListSymbol(null);
+  }
 }
 
 export class NumberWithUnitSymbol extends BaseSymbolType {
@@ -580,6 +595,10 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
     this.expectSafeValue(this.value);
     return new NumberSymbol(this.value);
   }
+
+  static empty(): NumberWithUnitSymbol {
+    return new NumberWithUnitSymbol(null, "px");
+  }
 }
 
 type dynamicColorValue = Record<string, ISymbolType>;
@@ -590,9 +609,12 @@ export class ColorSymbol extends BaseSymbolType {
 
   public subType: string | null = null;
   public value: string | dynamicColorValue | null;
-  public config: Config;
 
-  constructor(value: string | null, config: Config) {
+  static empty(): ColorSymbol {
+    return new ColorSymbol(null);
+  }
+
+  constructor(value: string | null, subType?: string) {
     let safeValue: string | null;
 
     if (value === null) {
@@ -608,7 +630,7 @@ export class ColorSymbol extends BaseSymbolType {
     super(safeValue);
 
     this.value = safeValue;
-    this.config = config;
+    this.subType = subType || null;
 
     this._SUPPORTED_METHODS = {
       tostring: {
@@ -653,3 +675,5 @@ export const basicSymbolTypes = {
   [NumberWithUnitSymbol.type.toLowerCase()]: NumberWithUnitSymbol,
   [ColorSymbol.type.toLowerCase()]: ColorSymbol,
 } as const;
+
+export type BasicSymbolTypeConstructor = (typeof basicSymbolTypes)[keyof typeof basicSymbolTypes];

@@ -97,6 +97,9 @@ export interface ISymbolType {
   hasAttribute?(attributeName: string): boolean;
   getAttribute?(attributeName: string): ISymbolType | null;
   setAttribute?(attributeName: string, value: ISymbolType): void;
+
+  // Static method to create an empty/null instance of the symbol type
+  // static empty?(...args: any[]): ISymbolType;
 }
 
 export type InterpreterValue =

@@ -1,59 +1,59 @@
 {
-    "name": "RGB",
-    "type": "color",
-    "description": "RGB color",
-    "schema": {
-        "type": "object",
-        "properties": {
-            "r": {
-                "type": "number"
-            },
-            "g": {
-                "type": "number"
-            },
-            "b": {
-                "type": "number"
-            }
-        },
-        "required": ["r", "g", "b"],
-        "order": ["r", "g", "b"],
-        "additionalProperties": false
+  "name": "RGB",
+  "type": "color",
+  "description": "RGB color",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "r": {
+        "type": "number"
+      },
+      "g": {
+        "type": "number"
+      },
+      "b": {
+        "type": "number"
+      }
     },
-    "initializers" : [
-        {
-            "title": "function",
-            "keyword": "rgb",
-            "description": "Creates a RGB color from string",
-            "schema":{
-                "type": "string",
-                "pattern": "^rgb\\((\\d{1,3}),\\s*(\\d{1,3}),\\s*(\\d{1,3})\\)$"
-            },
-            "script": {
-                "type": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/",
-                "script": "variable color_parts: List = {input}; \n variable output: Color.RGB;\n output.r = color_parts.get(0);\n output.g = color_parts.get(1);\n output.b = color_parts.get(2);\n return output;"
-            }
-        }
-    ],
-    "conversions": [
-        {
-            "source": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/hex-color/0/",
-            "target": "$self",
-            "description": "Converts HEX to RGB",
-            "lossless": true,
-            "script": {
-                "type": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/",
-                "script": " variable color_parts: List = {input}.tostring().split('#'); \n variable color: List = color_parts.get(1).split(); \n variable length: Number = color.length(); \n variable rgb: List = 0, 0, 0; \n if(length == 3) [ \n rgb.update(0, parseInt(color.get(0).concat(color.get(0)), 16)); \n rgb.update(1, parseint(color.get(1).concat(color.get(1)), 16)); \n rgb.update(2, parseint(color.get(2).concat(color.get(2)), 16)); \n ] else [ \n rgb.update(0, parseint(color.get(0).concat(color.get(1)), 16)); \n rgb.update(1, parseint(color.get(2).concat(color.get(3)), 16)); \n rgb.update(2, parseint(color.get(4).concat(color.get(5)), 16)); \n ]; \n \n variable output: Color.RGB; \n output.r = rgb.get(0); \n output.g = rgb.get(1); \n output.b = rgb.get(2); \n \n return output; \n"
-            }
-        },
-        {
-            "source": "$self",
-            "target": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/hex-color/0/",
-            "description": "Converts RGB to HEX",
-            "lossless": true,
-            "script": {
-                "type": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/",
-                "script": "variable rgba: List = {input}.r, {input}.g, {input}.b;\n    variable hex: String = \"#\";\n    variable i: Number = 0;\n    variable value: Number = 0;\n    // Convert RGBA to Hex\n    while( i < min(rgba.length(), 3)) [\n        value = rgba.get(i);\n        if(value < 16) [\n            hex = hex.concat(\"0\").concat(value.toString(16));\n        ] else [\n            hex = hex.concat(value.toString(16));\n        ];\n        i = i + 1;\n    ];\n    \n    if (rgba.length() == 4) [\n        value = rgba.get(3) * 255; // Convert alpha to 0-255 range\n        if(value < 16) [\n            hex = hex.concat(\"0\").concat(value.toString(16));\n        ] else [\n            hex = hex.concat(value.toString(16));\n        ];\n    ];\n    \n    return hex;"
-                }
-        }
-    ]
+    "required": ["r", "g", "b"],
+    "order": ["r", "g", "b"],
+    "additionalProperties": false
+  },
+  "initializers": [
+    {
+      "title": "function",
+      "keyword": "rgb",
+      "description": "Creates a RGB color from string",
+      "schema": {
+        "type": "string",
+        "pattern": "^rgb\\((\\d{1,3}),\\s*(\\d{1,3}),\\s*(\\d{1,3})\\)$"
+      },
+      "script": {
+        "type": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/",
+        "script": "variable color_parts: List = {input}; \n variable output: Color.RGB;\n output.r = color_parts.get(0);\n output.g = color_parts.get(1);\n output.b = color_parts.get(2);\n return output;"
+      }
+    }
+  ],
+  "conversions": [
+    {
+      "source": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/hex-color/0/",
+      "target": "$self",
+      "description": "Converts HEX to RGB",
+      "lossless": true,
+      "script": {
+        "type": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/",
+        "script": " variable color_parts: List = {input}.tostring().split('#'); \n variable color: List = color_parts.get(1).split(); \n variable length: Number = color.length(); \n variable rgb: List = 0, 0, 0; \n if(length == 3) [ \n rgb.update(0, parseInt(color.get(0).concat(color.get(0)), 16)); \n rgb.update(1, parseint(color.get(1).concat(color.get(1)), 16)); \n rgb.update(2, parseint(color.get(2).concat(color.get(2)), 16)); \n ] else [ \n rgb.update(0, parseint(color.get(0).concat(color.get(1)), 16)); \n rgb.update(1, parseint(color.get(2).concat(color.get(3)), 16)); \n rgb.update(2, parseint(color.get(4).concat(color.get(5)), 16)); \n ]; \n \n variable output: Color.RGB; \n output.r = rgb.get(0); \n output.g = rgb.get(1); \n output.b = rgb.get(2); \n \n return output; \n"
+      }
+    },
+    {
+      "source": "$self",
+      "target": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/hex-color/0/",
+      "description": "Converts RGB to HEX",
+      "lossless": true,
+      "script": {
+        "type": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/",
+        "script": "variable rgba: List = {input}.r, {input}.g, {input}.b;\n    variable hex: String = \"#\";\n    variable i: Number = 0;\n    variable value: Number = 0;\n    // Convert RGBA to Hex\n    while( i < min(rgba.length(), 3)) [\n        value = rgba.get(i);\n        if(value < 16) [\n            hex = hex.concat(\"0\").concat(value.toString(16));\n        ] else [\n            hex = hex.concat(value.toString(16));\n        ];\n        i = i + 1;\n    ];\n    \n    if (rgba.length() == 4) [\n        value = rgba.get(3) * 255; // Convert alpha to 0-255 range\n        if(value < 16) [\n            hex = hex.concat(\"0\").concat(value.toString(16));\n        ] else [\n            hex = hex.concat(value.toString(16));\n        ];\n    ];\n    \n    return hex;"
+      }
+    }
+  ]
 }

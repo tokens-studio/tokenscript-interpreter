@@ -149,7 +149,7 @@ export class Interpreter {
     if (value instanceof BaseSymbolType) return value;
     if (typeof value === "number") return new NumberSymbol(value);
     if (typeof value === "string") {
-      if (isValidHex(value)) return new ColorSymbol(value, this.config);
+      if (isValidHex(value)) return new ColorSymbol(value);
       return new StringSymbol(value);
     }
     if (typeof value === "boolean") return new BooleanSymbol(value);
@@ -341,7 +341,7 @@ export class Interpreter {
   }
 
   private visitHexColorNode(node: HexColorNode): ColorSymbol {
-    return new ColorSymbol(node.value, this.config);
+    return new ColorSymbol(node.value);
   }
 
   private visitBooleanNode(node: BooleanNode): BooleanSymbol {
@@ -399,7 +399,7 @@ export class Interpreter {
     const baseType = node.typeDecl.baseType.name;
     const subType = node.typeDecl.subTypes[0]?.name;
 
-    if (!this.config.isValidSymbolType(baseType, subType)) {
+    if (!this.config.isTypeDefined(baseType, subType)) {
       throw new InterpreterError(
         `Invalid variable type '${baseType}'. Use a valid type. (${Object.keys(basicSymbolTypes).join(", ")})`,
         node.varName.token.line,
@@ -411,12 +411,11 @@ export class Interpreter {
       this.symbolTable.set(name, null);
     }
 
-    const value: ISymbolType | null = this.visit(node.assignmentExpr);
+    const value: ISymbolType = node.assignmentExpr
+      ? (this.visit(node.assignmentExpr) as ISymbolType)
+      : this.config.getType(baseType, subType);
 
-    // Type Check Value
-    if (value === null) {
-      // All symbols are nullable in value
-    } else if (typeEquals(value.type, "list")) {
+    if (typeEquals(value.type, "list")) {
       // TODO Implement list type-checking
     } else if (!subType && !typeEquals(baseType, value.type)) {
       throw new InterpreterError(

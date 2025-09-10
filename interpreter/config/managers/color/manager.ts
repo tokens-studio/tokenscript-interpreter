@@ -6,6 +6,7 @@ type uri = string;
 
 export class ColorManager {
   private specs: Map<uri, ColorSpecification> = new Map();
+  private specTypes: Map<string, uri> = new Map();
 
   public register(uri: string, jsonSpec: string): ColorSpecification {
     const parsedSpec = ColorSpecificationSchema.safeParse(jsonSpec);
@@ -21,12 +22,19 @@ ${jsonSpec}`,
 
     const spec = parsedSpec.data;
     this.specs.set(uri, spec);
+    this.specTypes.set(spec.type.toLowerCase(), uri);
 
     return spec;
   }
 
   public getSpec(uri: string): ColorSpecification | undefined {
     return this.specs.get(uri);
+  }
+
+  public getSpecByType(type: string): ColorSpecification | undefined {
+    const uri = this.specTypes.get(type);
+    if (!uri) return;
+    return this.getSpec(uri);
   }
 
   public findSpecByName(name: string): [string, ColorSpecification] | undefined {
@@ -39,30 +47,12 @@ ${jsonSpec}`,
     return undefined;
   }
 
-  public findSpecByKeyword(keyword: string): [string, ColorSpecification] | undefined {
+  public expectSpec(keyword: string): [string, ColorSpecification] | undefined {
     for (const [uri, spec] of this.specs.entries()) {
       if (spec.initializers.some((init) => init.keyword === keyword)) {
         return [uri, spec];
       }
     }
     return undefined;
-  }
-
-  public isSupportedKeyword(keyword: string): boolean {
-    return (
-      this.findSpecByName(keyword) !== undefined || this.findSpecByKeyword(keyword) !== undefined
-    );
-  }
-
-  public resolve(nameOrKeyword: string): {
-    uri: string;
-    spec: ColorSpecification;
-  } {
-    const spec = this.findSpecByName(nameOrKeyword) || this.findSpecByKeyword(nameOrKeyword);
-    if (spec) {
-      return { uri: spec[0], spec: spec[1] };
-    }
-
-    throw new Error(`Color format '${nameOrKeyword}' not found.`);
   }
 }
