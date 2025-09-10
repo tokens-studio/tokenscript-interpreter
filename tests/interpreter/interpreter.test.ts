@@ -245,8 +245,7 @@ describe("Interpreter - Functions", () => {
   });
 
   it("should handle math functions", () => {
-    const text =
-      "min(1, 2, 3) + max(4, 5, 6) - average(7, 8, 9, max(20,98)) + sqrt(round(9.2))";
+    const text = "min(1, 2, 3) + max(4, 5, 6) - average(7, 8, 9, max(20,98)) + sqrt(round(9.2))";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
     const interpreter = new Interpreter(parser);
@@ -285,14 +284,8 @@ describe("Interpreter - String Methods", () => {
     interpreter.interpret();
     const parts = interpreter.symbolTable.get("parts");
     const colorParts = interpreter.symbolTable.get("color_parts");
-    expect(parts?.elements.map((e) => e.toString())).toEqual([
-      "hello",
-      "world",
-    ]);
-    expect(colorParts?.elements.map((e) => e.toString())).toEqual([
-      "",
-      "000000",
-    ]);
+    expect(parts?.elements.map((e) => e.toString())).toEqual(["hello", "world"]);
+    expect(colorParts?.elements.map((e) => e.toString())).toEqual(["", "000000"]);
   });
 });
 
@@ -323,10 +316,9 @@ describe("Interpreter - References", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    expect(
-      () =>
-        new Interpreter(parser, { unsupported_ref: { unsupported_ref: 0.5 } }),
-    ).toThrow(InterpreterError);
+    expect(() => new Interpreter(parser, { unsupported_ref: { unsupported_ref: 0.5 } })).toThrow(
+      InterpreterError,
+    );
   });
 });
 
