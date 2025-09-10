@@ -1,4 +1,4 @@
-import type { ColorManager } from "./managers/color/manager";
+import { ColorManager } from "./managers/color/manager";
 
 export interface LanguageOptions {
   MAX_ITERATIONS: number;
@@ -15,17 +15,13 @@ export const DEFAULT_LANGUAGE_OPTIONS: LanguageOptions = {
 
 export class Config {
   public languageOptions: LanguageOptions;
-  public colorManager: ColorManager | null = null;
+  public colorManager: ColorManager;
 
   constructor(options?: ConfigOptions) {
     this.languageOptions = {
       ...DEFAULT_LANGUAGE_OPTIONS,
       ...options?.languageOptions,
     };
-    this.colorManager = options?.colorManager || null;
-  }
-
-  setup(colorManager?: ColorManager) {
-    this.colorManager = colorManager || null;
+    this.colorManager = options?.colorManager || new ColorManager();
   }
 }
