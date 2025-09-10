@@ -1,4 +1,5 @@
 import { type ISymbolType, SupportedFormats } from "../types";
+import { Config } from "./config/config";
 import { InterpreterError } from "./errors";
 import { isValidHex } from "./utils/color";
 
@@ -566,11 +567,15 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
   }
 }
 
+type dynamicColorValue = Record<string, ISymbolType>;
+
 export class ColorSymbol extends BaseSymbolType {
   type = "Color";
-  public value: string | null;
+  public subType: string | null = null;
+  public value: string | dynamicColorValue | null;
+  public config: Config;
 
-  constructor(value: string | null) {
+  constructor(value: string | null, config: Config) {
     let safeValue: string | null;
 
     if (value === null) {
@@ -583,9 +588,10 @@ export class ColorSymbol extends BaseSymbolType {
     } else {
       throw new InterpreterError(`Value must be string or ColorSymbol, got ${typeof value}.`);
     }
-
     super(safeValue);
+
     this.value = safeValue;
+    this.config = config;
 
     this._SUPPORTED_METHODS = {
       tostring: {

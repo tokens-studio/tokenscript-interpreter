@@ -147,7 +147,7 @@ export class Interpreter {
     if (value instanceof BaseSymbolType) return value;
     if (typeof value === "number") return new NumberSymbol(value);
     if (typeof value === "string") {
-      if (isValidHex(value)) return new ColorSymbol(value);
+      if (isValidHex(value)) return new ColorSymbol(value, this.config);
       return new StringSymbol(value);
     }
     if (typeof value === "boolean") return new BooleanSymbol(value);
@@ -339,7 +339,7 @@ export class Interpreter {
   }
 
   private visitHexColorNode(node: HexColorNode): ColorSymbol {
-    return new ColorSymbol(node.value);
+    return new ColorSymbol(node.value, this.config);
   }
 
   private visitBooleanNode(node: BooleanNode): BooleanSymbol {
