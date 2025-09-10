@@ -41,6 +41,7 @@ import {
   NumberSymbol,
   NumberWithUnitSymbol,
   StringSymbol,
+  typeEquals,
 } from "./symbols";
 import { SymbolTable } from "./symbolTable";
 
@@ -376,26 +377,31 @@ export class Interpreter {
   private visitAssignNode(node: AssignNode): void {
     const name = node.varName.name;
 
-    const baseType = node.typeDecl.baseType.name.toLowerCase();
-    const subType =
-      node.typeDecl.subTypes.length > 0
-        ? node.typeDecl.subTypes.map((s) => s.name).join(".")
-        : undefined;
-
-    if (!this.config.isValidSymbolType(baseType, subType)) {
-
-
+    // Variable name validation
+    if ([".", "[", "-"].some((c) => name.includes(c))) {
       throw new InterpreterError(
-        `Invalid variable type '${baseType}'. Use a valid type. (${Object.keys(basicSymbolTypes).join(", ")})`,
+        `Invalid variable name '${name}'. Use a simple name (and underscores) without '.', '-', '['.`,
         node.varName.token.line,
         node.varName.token,
       );
     }
 
+    // Check if variable by the name is already defined
     if (this.symbolTable.isDefined(name)) {
       throw new InterpreterError(
         `Variable '${name}' already defined. Use a different name.`,
+        node.varName.token.line,
+        node.varName.token,
+      );
+    }
 
+    // Type Checking
+    const baseType = node.typeDecl.baseType.name;
+    const subType = node.typeDecl.subTypes[0]?.name;
+
+    if (!this.config.isValidSymbolType(baseType, subType)) {
+      throw new InterpreterError(
+        `Invalid variable type '${baseType}'. Use a valid type. (${Object.keys(basicSymbolTypes).join(", ")})`,
         node.varName.token.line,
         node.varName.token,
       );
@@ -405,29 +411,20 @@ export class Interpreter {
       this.symbolTable.set(name, null);
     }
 
-    const value: ISymbolType = this.visit(node.assignmentExpr) as ISymbolType;
+    const value: ISymbolType | null = this.visit(node.assignmentExpr);
 
-    if (value.type.toLowerCase() === "list") {
-      // TODO Type checking for lists
-    } else {
-      if (!subType && baseType !== value.type.toLowerCase()) {
-        throw new InterpreterError(
-          `Invalid value '${value}' ('${baseType}') for variable '${name}'. Use a valid value.`,
-          node.varName.token.line,
-          node.varName.token,
-        );
-      }
-    }
-
-    if ([".", "[", "-"].some((c) => name.includes(c))) {
+    // Type Check Value
+    if (value === null) {
+      // All symbols are nullable in value
+    } else if (typeEquals(value.type, "list")) {
+      // TODO Implement list type-checking
+    } else if (!subType && !typeEquals(baseType, value.type)) {
       throw new InterpreterError(
-        `Invalid variable name '${name}'. Use a simple name (and underscores) without '.', '-', '['.`,
+        `Invalid value '${value}' ('${baseType}') for variable '${name}'. Use a valid value.`,
         node.varName.token.line,
         node.varName.token,
       );
     }
-
-    // TODO Add subtypes
 
     this.symbolTable.set(name, value);
   }

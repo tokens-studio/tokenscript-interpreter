@@ -1,5 +1,5 @@
 import { type ISymbolType, SupportedFormats } from "../types";
-import { Config } from "./config/config";
+import type { Config } from "./config/config";
 import { InterpreterError } from "./errors";
 import { isValidHex } from "./utils/color";
 
@@ -368,7 +368,6 @@ export class BooleanSymbol extends BaseSymbolType {
 export class ListSymbol extends BaseSymbolType {
   type = "List";
   static readonly type = "List";
-
 
   public value: ISymbolType[] | null;
   public elements: ISymbolType[];

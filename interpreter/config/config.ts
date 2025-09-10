@@ -38,5 +38,4 @@ export class Config {
 
     return !!basicSymbolTypes[lowerBaseType];
   }
-
 }
