@@ -29,12 +29,12 @@ export class Config {
   isValidSymbolType(baseType: string, subType?: string) {
     const lowerBaseType = baseType.toLowerCase();
     if (lowerBaseType === "color") {
-      // if (subType) return !!this.colorManager.findSpecByKeyword(subType);
+      if (subType) return !!this.colorManager.findSpecByKeyword(subType);
       // Color may be defined without subType
       return true;
     }
-    // // Nothing else implements subType other than color
-    // if (subType) return false;
+    // Nothing else implements subType other than color
+    if (subType) return false;
 
     return !!basicSymbolTypes[lowerBaseType];
   }
