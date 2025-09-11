@@ -21,6 +21,17 @@ describe("Color Attributes - RGB Color Type", () => {
     config = new Config({ colorManager });
   });
 
+  it("should verify RGB color type is registered in color manager", () => {
+    expect(config.colorManager).toBeDefined();
+
+    const text = `variable color: Color.RGB;`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser, { config });
+
+    expect(() => interpreter.interpret()).not.toThrow();
+  });
+
   it("should support RGB component math operations", () => {
     const text = `
     variable color: Color.RGB;
