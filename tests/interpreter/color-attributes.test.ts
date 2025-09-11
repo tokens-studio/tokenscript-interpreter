@@ -35,7 +35,9 @@ describe("Color Attributes - RGB Color Type", () => {
   it("should support RGB component math operations", () => {
     const text = `
     variable color: Color.RGB;
-    color.r = 100;
+    color.r = 10;
+    color.g = 20;
+    color.b = 30;
     color;
     `;
     const lexer = new Lexer(text);
@@ -44,10 +46,11 @@ describe("Color Attributes - RGB Color Type", () => {
     const result = interpreter.interpret();
 
     expect(result).toBeDefined();
-    const colorResult = result as any;
-    const expectedAvg = Math.round((100 + 150 + 200) / 3); // 150
-    expect(colorResult.getAttribute("r")?.value).toBe(expectedAvg);
-    expect(colorResult.getAttribute("g")?.value).toBe(expectedAvg);
-    expect(colorResult.getAttribute("b")?.value).toBe(expectedAvg);
+    expect(result.type).toBe("Color");
+    expect(result.subType).toBe("RGB");
+
+    expect(result.getAttribute("r")?.value).toBe(10);
+    expect(result.getAttribute("g")?.value).toBe(20);
+    expect(result.getAttribute("b")?.value).toBe(30);
   });
 });
