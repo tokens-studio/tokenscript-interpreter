@@ -177,7 +177,7 @@ export class AttributeAssignNode implements ASTNode {
 export class ReassignNode implements ASTNode {
   nodeType = "ReassignNode";
   constructor(
-    public identifier: IdentifierNode,
+    public identifier: IdentifierNode | IdentifierNode[],
     public value: ASTNode,
     public token?: Token,
   ) {}

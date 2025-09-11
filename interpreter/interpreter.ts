@@ -355,47 +355,65 @@ export class Interpreter {
   }
 
   private visitReassignNode(node: ReassignNode): void {
-    const varName = node.identifier.name;
-    const existingVar = this.symbolTable.get(varName);
+    // Handle simple variable assignment
+    if (!Array.isArray(node.identifier)) {
+      const varName = node.identifier.name;
+      const existingVar = this.symbolTable.get(varName);
 
-    if (existingVar === null) {
-      throw new InterpreterError(
-        `Variable '${varName}' not found.`,
-        node.identifier.token.line,
-        node.identifier.token,
-      );
-    }
-
-    const valueToAssignVisit = this.visit(node.value);
-    if (valueToAssignVisit === null) {
-      throw new InterpreterError(
-        `Assignment value for '${varName}' is null.`,
-        (node.value as any).token?.line,
-      );
-    }
-
-    const value = valueToAssignVisit as ISymbolType;
-
-    if (value.type.toLowerCase() === "list") {
-      // TODO Type checking for lists
-    } else {
-      if (existingVar.type.toLowerCase() !== value.type.toLowerCase()) {
+      if (existingVar === null) {
         throw new InterpreterError(
-          `Invalid value '${value}' ('${value.type}') for variable '${varName}'. Use a valid value.`,
-          node.token?.line,
-          node.token,
+          `Variable '${varName}' not found.`,
+          node.identifier.token.line,
+          node.identifier.token,
         );
       }
-    }
 
-    if (!existingVar.validValue(value)) {
+      const valueToAssignVisit = this.visit(node.value);
+      if (valueToAssignVisit === null) {
+        throw new InterpreterError(
+          `Assignment value for '${varName}' is null.`,
+          (node.value as any).token?.line,
+        );
+      }
+
+      const value = valueToAssignVisit as ISymbolType;
+
+      if (value.type.toLowerCase() === "list") {
+        // TODO Type checking for lists
+      } else {
+        if (existingVar.type.toLowerCase() !== value.type.toLowerCase()) {
+          throw new InterpreterError(
+            `Invalid value '${value}' ('${value.type}') for variable '${varName}'. Use a valid value.`,
+            node.token?.line,
+            node.token,
+          );
+        }
+      }
+
+      if (!existingVar.validValue(value)) {
+        throw new InterpreterError(
+          `Cannot assign ${value.type} to variable '${varName}' of type ${existingVar.type}.`,
+          (node.value as any).token?.line,
+        );
+      }
+
+      this.symbolTable.set(varName, value);
+    } else {
+      // Handle property chain assignment (e.g., obj.prop = value)
+      const propertyChain = node.identifier;
+      const baseName = propertyChain[0].name;
+
+      // For now, delegate to existing attribute assignment logic
+      // This is a simplified approach - a full implementation would need to traverse the property chain
       throw new InterpreterError(
-        `Cannot assign ${value.type} to variable '${varName}' of type ${existingVar.type}.`,
-        (node.value as any).token?.line,
+        `Property chain assignment not yet implemented for '${baseName}.${propertyChain
+          .slice(1)
+          .map((p) => p.name)
+          .join(".")}'`,
+        propertyChain[0].token.line,
+        propertyChain[0].token,
       );
     }
-
-    this.symbolTable.set(varName, value);
   }
 
   private visitAttributeAssignNode(node: AttributeAssignNode): void {

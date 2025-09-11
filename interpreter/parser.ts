@@ -135,13 +135,23 @@ export class Parser {
 
   private reassignVariable(): ReassignNode {
     const varNameToken = this.eat(TokenType.STRING);
-    const varName = new IdentifierNode(varNameToken);
+    let name: IdentifierNode | IdentifierNode[] = new IdentifierNode(varNameToken);
+
+    if (this.currentToken.type === TokenType.DOT) {
+      const nameChain: IdentifierNode[] = [new IdentifierNode(varNameToken)];
+      while (this.currentToken.type === TokenType.DOT) {
+        this.eat(TokenType.DOT);
+        const propertyToken = this.eat(TokenType.STRING);
+        nameChain.push(new IdentifierNode(propertyToken));
+      }
+      name = nameChain;
+    }
 
     this.eat(TokenType.ASSIGN);
 
     const assignmentExpr = this.listExpr();
 
-    return new ReassignNode(varName, assignmentExpr, varNameToken);
+    return new ReassignNode(name, assignmentExpr, varNameToken);
   }
 
   private reference(): ASTNode {
