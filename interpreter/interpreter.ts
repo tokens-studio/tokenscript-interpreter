@@ -51,7 +51,7 @@ class ReturnSignal {
 }
 
 export class Interpreter {
-  private parser: Parser | null; // Null if created with pre-parsed AST
+  private parser: Parser | null = null; // Null if created with pre-parsed AST
   private symbolTable: SymbolTable;
   private references: Map<string, ISymbolType> = new Map();
   private ast: ASTNode | null = null;
@@ -68,8 +68,7 @@ export class Interpreter {
     if (input instanceof Parser) {
       this.parser = input;
     } else {
-      this.ast = input;
-      this.parser = null;
+      this.setAst(input);
     }
 
     this.symbolTable = options?.symbolTable || new SymbolTable();
