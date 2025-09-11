@@ -84,33 +84,6 @@ export class Interpreter {
         this.setReferences(options.references);
       }
     }
-
-    // if (this.config.colorManager) {
-    //   for (const [name, _formatId] of Object.entries(
-    //     this.config.colorManager.names,
-    //   )) {
-    //     const colorType = this.config.colorManager.getColorType(name);
-    //     if (colorType) {
-    //       const colorManager = this.config.colorManager;
-
-    //       class ColorConstructor extends BaseSymbolType {
-    //         type = colorType?.type || "Color";
-
-    //         constructor(value?: ISymbolType) {
-    //           const instance = colorManager.initColorFormat(name, value);
-    //           super(instance.value);
-    //           Object.assign(this, instance);
-    //         }
-
-    //         validValue(value: any): boolean {
-    //           return colorType?.validValue(value) || false;
-    //         }
-    //       }
-
-    //       this.symbolTable.addColorSubType(name, ColorConstructor);
-    //     }
-    //   }
-    // }
   }
 
   // References ------------------------------------------------------------------
