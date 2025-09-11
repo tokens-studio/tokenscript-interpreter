@@ -377,26 +377,27 @@ export class Interpreter {
     // Type Check
 
     if (existingVar instanceof ColorSymbol && !existingVar.isHex()) {
-    } else {
-      if (typeEquals(value.type, "list")) {
-        // TODO Implement list type-checking
-      } else if (!typeEquals(existingVar.type, value.type)) {
-        throw new InterpreterError(
-          `Invalid value '${value}' (Found '${value.type}', expected '${existingVar.type}') for variable '${node.identifierToString()}'. Use a valid value.`,
-          baseIdentifier.token.line,
-          baseIdentifier.token,
-        );
-      }
-
-      if (!existingVar.validValue(value)) {
-        throw new InterpreterError(
-          `Cannot assign ${value.type} to variable '${node.identifierToString()}' of type ${existingVar.type}.`,
-          (node.value as any).token?.line,
-        );
-      }
-
-      this.symbolTable.set(baseIdentifier.name, value);
+      throw "TODO";
     }
+
+    if (typeEquals(value.type, "list")) {
+      // TODO Implement list type-checking
+    } else if (!typeEquals(existingVar.type, value.type)) {
+      throw new InterpreterError(
+        `Invalid value '${value}' (Found '${value.type}', expected '${existingVar.type}') for variable '${node.identifierToString()}'. Use a valid value.`,
+        baseIdentifier.token.line,
+        baseIdentifier.token,
+      );
+    }
+
+    if (!existingVar.validValue(value)) {
+      throw new InterpreterError(
+        `Cannot assign ${value.type} to variable '${node.identifierToString()}' of type ${existingVar.type}.`,
+        (node.value as any).token?.line,
+      );
+    }
+
+    this.symbolTable.set(baseIdentifier.name, value);
   }
 
   private visitAttributeAssignNode(node: AttributeAssignNode): void {
