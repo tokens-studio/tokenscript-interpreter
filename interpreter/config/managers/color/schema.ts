@@ -50,3 +50,5 @@ export const ColorSpecificationSchema = z.object({
 });
 
 export type ColorSpecification = z.infer<typeof ColorSpecificationSchema>;
+
+export const specName = (spec: ColorSpecification): string => spec.name.toLowerCase();

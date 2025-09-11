@@ -1,8 +1,14 @@
-import { type ColorSpecification, ColorSpecificationSchema } from "./schema";
+import { ISymbolType } from "@/types";
+import { type ColorSymbol } from '@/interpreter/symbols';
+import { type ColorSpecification, ColorSpecificationSchema, specName } from "./schema";
+import { parseExpression } from "@/interpreter/parser";
+import { Interpreter } from "@/lib";
 
 // Types -----------------------------------------------------------------------
 
 type uri = string;
+
+type colorName = string;
 
 type Specs = Map<uri, ColorSpecification>;
 
@@ -42,14 +48,33 @@ const defaultTypes: Specs = new Map([
 
 export class ColorManager {
   private specs: Specs = new Map();
+
   // Computed Map of type name to uri
-  private specTypes: Map<string, uri> = new Map();
+  private specTypes: Map<colorName, uri> = new Map();
+  // Registry of dynamic functions
+  private initializers: Map<colorName, (args: Array<ISymbolType>) => ColorSymbol | null> = new Map();
 
   constructor() {
     for (const [uri, spec] of defaultTypes) {
       this.register(uri, spec);
     }
   }
+
+  // public registerInitializer(spec: ColorSpecification) {
+  //   const initializers = spec.initializers.forEach(spec => {
+  //     try {
+  //       const { ast } = parseExpression(spec.script.script).result
+  //       const fn = (args: Array<ISymbolType>) => {
+  //         const result = new Interpreter(ast, { references: { input: args } }).interpret()
+  //         return result;
+  //       }
+  //       this.initializers.set(spec.keyword.toLowerCase(), fn)
+  //     }
+  //   }))
+
+  //   parseExpression(text)
+  //   this.initializers.set(specName(spec), fn)
+  // }
 
   public register(uri: string, spec: ColorSpecification | string): ColorSpecification {
     let parsedSpec: ColorSpecification;
@@ -75,7 +100,7 @@ ${spec}`,
     }
 
     this.specs.set(uri, parsedSpec);
-    this.specTypes.set(parsedSpec.name.toLowerCase(), uri);
+    this.specTypes.set(specName(parsedSpec), uri);
 
     return parsedSpec;
   }
