@@ -180,7 +180,7 @@ async function interpretExpression(code: string, references: ReferenceRecord): P
       return "No result (empty input)";
     }
 
-    const interpreter = new Interpreter(ast, references);
+    const interpreter = new Interpreter(ast, { references });
     const result = interpreter.interpret();
 
     if (result === null) {

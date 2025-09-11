@@ -25,7 +25,7 @@ describe("Color Converter - Hex to RGB", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { COLOR: "#FF5733" });
+    const interpreter = new Interpreter(parser, { references: { COLOR: "#FF5733" } });
     const result = interpreter.interpret();
 
     expect(result).toBeDefined();
@@ -52,7 +52,7 @@ describe("Color Converter - Hex to RGB", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { COLOR: "#FF5" });
+    const interpreter = new Interpreter(parser, { references: { COLOR: "#FF5" } });
     const result = interpreter.interpret();
 
     expect(result).toBeDefined();
@@ -103,7 +103,7 @@ describe("Color Converter - RGB to Linear RGB", () => {
       new NumberSymbol(0),
       new NumberSymbol(0),
     ]);
-    const interpreter = new Interpreter(parser, { rgb: rgbList });
+    const interpreter = new Interpreter(parser, { references: { rgb: rgbList } });
     const result = interpreter.interpret();
 
     expect(result).toBeDefined();
@@ -152,7 +152,7 @@ describe("Color Converter - RGB to Linear RGB", () => {
       new NumberSymbol(5),
       new NumberSymbol(5),
     ]);
-    const interpreter = new Interpreter(parser, { rgb: rgbList });
+    const interpreter = new Interpreter(parser, { references: { rgb: rgbList } });
     const result = interpreter.interpret();
 
     expect(result).toBeDefined();

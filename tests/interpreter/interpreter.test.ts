@@ -9,7 +9,7 @@ describe("Interpreter - Basic Expressions", () => {
     const text = "1 + {hello} + {world}";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { hello: 1, world: 2 });
+    const interpreter = new Interpreter(parser, { references: { hello: 1, world: 2 } });
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("4");
@@ -19,7 +19,7 @@ describe("Interpreter - Basic Expressions", () => {
     const text = "(1 + {hello}) * 2";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { hello: 3 });
+    const interpreter = new Interpreter(parser, { references: { hello: 3 } });
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("8");
@@ -29,7 +29,7 @@ describe("Interpreter - Basic Expressions", () => {
     const text = "((1 + {hello}) * 2) / 2";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { hello: 3 });
+    const interpreter = new Interpreter(parser, { references: { hello: 3 } });
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("4");
@@ -39,7 +39,7 @@ describe("Interpreter - Basic Expressions", () => {
     const text = "{hello} + {world}";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { hello: 1, world: 2 });
+    const interpreter = new Interpreter(parser, { references: { hello: 1, world: 2 } });
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("3");
@@ -49,7 +49,7 @@ describe("Interpreter - Basic Expressions", () => {
     const text = "{hello} + {world} - 2 * 8 / -4";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { hello: 1, world: 2 });
+    const interpreter = new Interpreter(parser, { references: { hello: 1, world: 2 } });
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("7");
@@ -59,7 +59,7 @@ describe("Interpreter - Basic Expressions", () => {
     const text = "{hello} + {world}rem";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { hello: 1, world: 2 });
+    const interpreter = new Interpreter(parser, { references: { hello: 1, world: 2 } });
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("3rem");
@@ -69,7 +69,7 @@ describe("Interpreter - Basic Expressions", () => {
     const text = "SUM({hello}, {world})";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { hello: 1, world: 2 });
+    const interpreter = new Interpreter(parser, { references: { hello: 1, world: 2 } });
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("3");
@@ -80,9 +80,11 @@ describe("Interpreter - Basic Expressions", () => {
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
     const interpreter = new Interpreter(parser, {
-      hello: 1,
-      world: 2,
-      test: 3,
+      references: {
+        hello: 1,
+        world: 2,
+        test: 3,
+      },
     });
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
@@ -103,7 +105,7 @@ describe("Interpreter - Basic Expressions", () => {
     const text = "{hello} {test} 3px";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { hello: 1, test: 2 });
+    const interpreter = new Interpreter(parser, { references: { hello: 1, test: 2 } });
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("1 2 3px");
@@ -113,7 +115,7 @@ describe("Interpreter - Basic Expressions", () => {
     const text = "{hello} 1px, {test} {hello}, 3px";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { hello: 1, test: 2 });
+    const interpreter = new Interpreter(parser, { references: { hello: 1, test: 2 } });
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("1 1px, 2 1, 3px");
@@ -298,7 +300,7 @@ describe("Interpreter - References", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { float_ref: 0.5 });
+    const interpreter = new Interpreter(parser, { references: { float_ref: 0.5 } });
     interpreter.interpret();
     const i = interpreter.symbolTable.get("i");
     const j = interpreter.symbolTable.get("j");
@@ -316,7 +318,7 @@ describe("Interpreter - References", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    expect(() => new Interpreter(parser, { unsupported_ref: { unsupported_ref: 0.5 } })).toThrow(
+    expect(() => new Interpreter(parser, { references: { unsupported_ref: { unsupported_ref: 0.5 } } })).toThrow(
       InterpreterError,
     );
   });
@@ -342,7 +344,7 @@ describe("Interpreter - Variable Name Validation", () => {
       },
     };
 
-    const interpreter = new Interpreter(mockAssignNode as any, {});
+    const interpreter = new Interpreter(mockAssignNode as any, { references: {} });
 
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
     expect(() => interpreter.interpret()).toThrow(
@@ -369,7 +371,7 @@ describe("Interpreter - Variable Name Validation", () => {
       },
     };
 
-    const interpreter = new Interpreter(mockAssignNode as any, {});
+    const interpreter = new Interpreter(mockAssignNode as any, { references: {} });
 
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
     expect(() => interpreter.interpret()).toThrow(
@@ -396,7 +398,7 @@ describe("Interpreter - Variable Name Validation", () => {
       },
     };
 
-    const interpreter = new Interpreter(mockAssignNode as any, {});
+    const interpreter = new Interpreter(mockAssignNode as any, { references: {} });
 
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
     expect(() => interpreter.interpret()).toThrow(
@@ -441,7 +443,7 @@ describe("Interpreter - Variable Name Validation", () => {
       },
     };
 
-    const interpreter = new Interpreter(mockAssignNode as any, {});
+    const interpreter = new Interpreter(mockAssignNode as any, { references: {} });
 
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
     expect(() => interpreter.interpret()).toThrow(
@@ -466,7 +468,7 @@ describe("Interpreter - Edge Cases", () => {
     const text = "none {is.none}";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { "is.none": "none" });
+    const interpreter = new Interpreter(parser, { references: { "is.none": "none" } });
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("none none");

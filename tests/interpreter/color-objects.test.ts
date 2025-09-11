@@ -137,7 +137,7 @@ describe("Color Objects - Color Operations", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { primary_color: "#3366CC" });
+    const interpreter = new Interpreter(parser, { references: { primary_color: "#3366CC" } });
     const result = interpreter.interpret();
 
     expect(result).toBeDefined();

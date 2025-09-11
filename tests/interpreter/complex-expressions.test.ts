@@ -8,7 +8,7 @@ describe("Complex Expressions - Nested Operations", () => {
     const text = "((((1 + 2) * 3) - 4) / 2)";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser, { references: {} });
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("2.5");
@@ -18,7 +18,7 @@ describe("Complex Expressions - Nested Operations", () => {
     const text = "1 + 2 * 3 ^ 2 - 4 / 2";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser, { references: {} });
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("17");
@@ -28,7 +28,7 @@ describe("Complex Expressions - Nested Operations", () => {
     const text = "(10px + 5px) * 2 - 5px";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser, { references: {} });
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("25px");
@@ -38,7 +38,7 @@ describe("Complex Expressions - Nested Operations", () => {
     const text = "max(min(10, 20), min(30, 40))";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser, { references: {} });
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("30");
@@ -48,7 +48,7 @@ describe("Complex Expressions - Nested Operations", () => {
     const text = "(true && false) || (true && true) && !(false || false)";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser, { references: {} });
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.value).toBe(true);
@@ -58,7 +58,7 @@ describe("Complex Expressions - Nested Operations", () => {
     const text = "5 > 3 && 10 <= 10 && 7 != 8 && 4 == 4";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser, { references: {} });
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.value).toBe(true);
@@ -71,11 +71,13 @@ describe("Complex Expressions - Variable References", () => {
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
     const interpreter = new Interpreter(parser, {
-      a: 2,
-      b: 3,
-      c: 4,
-      d: 10,
-      e: 2,
+      references: {
+        a: 2,
+        b: 3,
+        c: 4,
+        d: 10,
+        e: 2,
+      },
     });
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
@@ -87,8 +89,10 @@ describe("Complex Expressions - Variable References", () => {
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
     const interpreter = new Interpreter(parser, {
-      width: 10,
-      height: 5,
+      references: {
+        width: 10,
+        height: 5,
+      },
     });
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
@@ -101,8 +105,10 @@ describe("Complex Expressions - Variable References", () => {
     const parser = new Parser(lexer);
     const ast = parser.parse(true);
     const interpreter = new Interpreter(ast, {
-      // @ts-ignore
-      x: { value: 2, unit: "rem", type: "NumberWithUnit" },
+      references: {
+        // @ts-ignore
+        x: { value: 2, unit: "rem", type: "NumberWithUnit" },
+      },
     });
     const result = interpreter.interpret();
     expect(result?.toString()).toBe("6rem");
@@ -121,11 +127,13 @@ describe("Complex Expressions - Variable References", () => {
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
     const interpreter = new Interpreter(parser, {
-      a: 10,
-      b: 20,
-      c: 15,
-      d: 5,
-      e: 3,
+      references: {
+        a: 10,
+        b: 20,
+        c: 15,
+        d: 5,
+        e: 3,
+      },
     });
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
@@ -142,7 +150,7 @@ describe("Complex Expressions - String Operations", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser, { references: {} });
     interpreter.interpret();
 
     const result = interpreter.symbolTable.get("result");
@@ -159,7 +167,7 @@ describe("Complex Expressions - String Operations", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser, { references: {} });
     interpreter.interpret();
 
     const result = interpreter.symbolTable.get("result");
@@ -178,7 +186,7 @@ describe("Complex Expressions - List Operations", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser, { references: {} });
     interpreter.interpret();
 
     const result = interpreter.symbolTable.get("list1");
@@ -194,7 +202,7 @@ describe("Complex Expressions - List Operations", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser, { references: {} });
     interpreter.interpret();
 
     const sum = interpreter.symbolTable.get("sum");
@@ -225,7 +233,7 @@ describe("Complex Expressions - Control Flow", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser, { references: {} });
     interpreter.interpret();
 
     const result = interpreter.symbolTable.get("result");
@@ -245,7 +253,7 @@ describe("Complex Expressions - Control Flow", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser, { references: {} });
     interpreter.interpret();
 
     const i = interpreter.symbolTable.get("i");
@@ -265,7 +273,7 @@ describe("Complex Expressions - Mixed Types", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser, { references: {} });
     interpreter.interpret();
 
     const list = interpreter.symbolTable.get("list");
@@ -284,7 +292,7 @@ describe("Complex Expressions - Mixed Types", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser, { references: {} });
     interpreter.interpret();
 
     const result = interpreter.symbolTable.get("result");
@@ -297,7 +305,7 @@ describe("Complex Expressions - Edge Cases", () => {
     const text = "0.000001 * 1000000";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser, { references: {} });
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("1");
@@ -307,7 +315,7 @@ describe("Complex Expressions - Edge Cases", () => {
     const text = "-5 * -3 + -2 / -1";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser, { references: {} });
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("17");
@@ -317,7 +325,7 @@ describe("Complex Expressions - Edge Cases", () => {
     const text = "0 + 5 * 0 - 0 / 1 + 0^5";
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser, { references: {} });
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("0");

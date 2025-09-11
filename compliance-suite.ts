@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import fs from "node:fs";
 import path from "node:path";
 import { Interpreter } from "./interpreter/interpreter";
 import { Lexer } from "./interpreter/lexer";
@@ -89,7 +90,7 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
         const lexer = new Lexer(test.input);
         const parser = new Parser(lexer);
         const ast = parser.parse(test.inline);
-        const interpreter = new Interpreter(ast, test.context || {});
+        const interpreter = new Interpreter(ast, { references: test.context || {} });
         const result = interpreter.interpret();
         // Always deeply normalize output for report and comparison
         function normalize(val: any): { value: any; type: string } {

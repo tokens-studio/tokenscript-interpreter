@@ -58,9 +58,11 @@ export class Interpreter {
 
   constructor(
     input: Parser | ASTNode | null,
-    references?: ReferenceRecord | Map<string, any>,
-    symbolTable?: SymbolTable,
-    config?: Config,
+    options?: {
+      references?: ReferenceRecord | Map<string, any>;
+      symbolTable?: SymbolTable;
+      config?: Config;
+    },
   ) {
     if (input instanceof Parser) {
       this.parser = input;
@@ -68,18 +70,18 @@ export class Interpreter {
       this.ast = input;
       this.parser = null;
     }
-    this.symbolTable = symbolTable || new SymbolTable();
-    this.config = config || new Config();
+    this.symbolTable = options?.symbolTable || new SymbolTable();
+    this.config = options?.config || new Config();
 
     // CRITICAL: Store the reference directly for shared reference model
-    if (references instanceof Map) {
+    if (options?.references instanceof Map) {
       // Direct reference to the shared Map
-      this.references = references;
+      this.references = options.references;
     } else {
       // New Record for backward compatibility
       this.references = {};
-      if (references) {
-        this.setReferences(references);
+      if (options?.references) {
+        this.setReferences(options.references);
       }
     }
 
@@ -404,7 +406,7 @@ export class Interpreter {
         `Invalid variable type '${baseType}'. Use a valid type. (${Object.keys(basicSymbolTypes).join(", ")})`,
         node.varName.token.line,
         node.varName.token,
-        {baseType, subType, config: this.config}
+        { baseType, subType, config: this.config },
       );
     }
 

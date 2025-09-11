@@ -42,7 +42,7 @@ describe("CLI Functionality", () => {
 
       expect(ast).toBeTruthy();
 
-      const interpreter = new Interpreter(ast!, { base: 16 });
+      const interpreter = new Interpreter(ast!, { references: { base: 16 } });
       const result = interpreter.interpret();
 
       expect(result?.toString()).toBe("32px");

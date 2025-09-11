@@ -96,7 +96,7 @@ if(x == 72) [
 
     const lexer = new Lexer(code);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { hello: "hi", world: "there" });
+    const interpreter = new Interpreter(parser, { references: { hello: "hi", world: "there" } });
 
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
