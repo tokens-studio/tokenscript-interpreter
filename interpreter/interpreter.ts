@@ -102,24 +102,6 @@ export class Interpreter {
     }
   }
 
-  public updateReferences(newReferences: ReferenceRecord): void {
-    // NOTE: This method is now deprecated in the shared reference model
-    // but kept for backward compatibility
-    if (this.references instanceof Map) {
-      for (const key in newReferences) {
-        if (!this.references.has(key) || this.references.get(key) !== newReferences[key]) {
-          this.references.set(key, this.importReference(newReferences[key]));
-        }
-      }
-    } else {
-      for (const key in newReferences) {
-        if (!(key in this.references) || this.references[key] !== newReferences[key]) {
-          this.references[key] = this.importReference(newReferences[key]);
-        }
-      }
-    }
-  }
-
   private importReference(value: any): ISymbolType {
     if (value instanceof BaseSymbolType) return value;
     if (typeof value === "number") return new NumberSymbol(value);
