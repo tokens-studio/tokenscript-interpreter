@@ -667,6 +667,23 @@ export class ColorSymbol extends BaseSymbolType {
 
 // Utilities -------------------------------------------------------------------
 
+export const jsValueToSymbolType = (value: any): ISymbolType => {
+  if (value instanceof BaseSymbolType) return value;
+  if (typeof value === "number") return new NumberSymbol(value);
+  if (typeof value === "string") {
+    if (isValidHex(value)) return new ColorSymbol(value);
+    return new StringSymbol(value);
+  }
+  if (typeof value === "boolean") return new BooleanSymbol(value);
+  if (Array.isArray(value)) return new ListSymbol(value.map(jsValueToSymbolType));
+
+  if (value instanceof NumberWithUnitSymbol) return value;
+  const numberWithUnit = NumberWithUnitSymbol.fromRecord(value);
+  if (numberWithUnit) return numberWithUnit;
+
+  throw new InterpreterError(`Invalid value type: ${typeof value}`);
+};
+
 export const basicSymbolTypes = {
   [NumberSymbol.type.toLowerCase()]: NumberSymbol,
   [StringSymbol.type.toLowerCase()]: StringSymbol,

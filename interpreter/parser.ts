@@ -442,9 +442,7 @@ export class Parser {
   }
 }
 
-export function parseExpression(
-  text: string,
-): {
+export function parseExpression(text: string): {
   lexer: Lexer;
   parser: Parser;
   ast: ASTNode | null;
@@ -452,7 +450,7 @@ export function parseExpression(
   const lexer = new Lexer(text);
   const parser = new Parser(lexer);
   const ast = parser.parse();
-  
+
   return {
     lexer,
     parser,

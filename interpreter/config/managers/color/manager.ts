@@ -1,5 +1,5 @@
-import { ISymbolType } from "@/types";
-import { type ColorSymbol } from '@/interpreter/symbols';
+import type { ISymbolType } from "@/types";
+import type { ColorSymbol } from "@/interpreter/symbols";
 import { type ColorSpecification, ColorSpecificationSchema, specName } from "./schema";
 import { parseExpression } from "@/interpreter/parser";
 import { Interpreter } from "@/lib";
@@ -52,7 +52,8 @@ export class ColorManager {
   // Computed Map of type name to uri
   private specTypes: Map<colorName, uri> = new Map();
   // Registry of dynamic functions
-  private initializers: Map<colorName, (args: Array<ISymbolType>) => ColorSymbol | null> = new Map();
+  private initializers: Map<colorName, (args: Array<ISymbolType>) => ColorSymbol | null> =
+    new Map();
 
   constructor() {
     for (const [uri, spec] of defaultTypes) {

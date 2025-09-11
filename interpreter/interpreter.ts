@@ -41,6 +41,7 @@ import {
   NumberSymbol,
   NumberWithUnitSymbol,
   StringSymbol,
+  jsValueToSymbolType,
   typeEquals,
 } from "./symbols";
 import { SymbolTable } from "./symbolTable";
@@ -52,7 +53,7 @@ class ReturnSignal {
 export class Interpreter {
   private parser: Parser | null; // Null if created with pre-parsed AST
   private symbolTable: SymbolTable;
-  private references: Map<string, ISymbolType> | Record<string, ISymbolType>;
+  private references: Map<string, ISymbolType> = new Map();
   private ast: ASTNode | null = null;
   private config: Config;
 
@@ -70,63 +71,31 @@ export class Interpreter {
       this.ast = input;
       this.parser = null;
     }
+
     this.symbolTable = options?.symbolTable || new SymbolTable();
     this.config = options?.config || new Config();
 
-    // CRITICAL: Store the reference directly for shared reference model
-    if (options?.references instanceof Map) {
-      // Direct reference to the shared Map
-      this.references = options.references;
-    } else {
-      // New Record for backward compatibility
-      this.references = {};
-      if (options?.references) {
-        this.setReferences(options.references);
-      }
+    if (options?.references) {
+      this.importReferences(options.references);
     }
   }
 
   // References ------------------------------------------------------------------
 
-  public setReferences(references: ReferenceRecord): void {
-    if (this.references instanceof Map) {
-      // For Map-based references (shared reference model)
+  public importReferences(references?: ReferenceRecord | Map<string, any>): void {
+    if (references instanceof Map) {
+      this.references = references;
+    } else if (references) {
       for (const key in references) {
-        this.references.set(key, this.importReference(references[key]));
+        this.references.set(key, jsValueToSymbolType(references[key]));
       }
     } else {
-      // For Record-based references (backward compatibility)
-      for (const key in references) {
-        this.references[key] = this.importReference(references[key]);
-      }
+      this.references = new Map<string, ISymbolType>();
     }
-  }
-
-  private importReference(value: any): ISymbolType {
-    if (value instanceof BaseSymbolType) return value;
-    if (typeof value === "number") return new NumberSymbol(value);
-    if (typeof value === "string") {
-      if (isValidHex(value)) return new ColorSymbol(value);
-      return new StringSymbol(value);
-    }
-    if (typeof value === "boolean") return new BooleanSymbol(value);
-    if (Array.isArray(value)) return new ListSymbol(value.map((v) => this.importReference(v)));
-
-    if (value instanceof NumberWithUnitSymbol) return value;
-    const numberWithUnit = NumberWithUnitSymbol.fromRecord(value);
-    if (numberWithUnit) return numberWithUnit;
-
-    throw new InterpreterError(`Invalid reference value type: ${typeof value}`);
   }
 
   public getReference(key: string): ISymbolType | undefined {
-    // NOTE: This method is now deprecated in the shared reference model
-    // but kept for backward compatibility
-    if (this.references instanceof Map) {
-      return this.references.get(key);
-    } else {
-      return this.references[key];
-    }
+    return this.references.get(key);
   }
 
   // Utilities -------------------------------------------------------------------
