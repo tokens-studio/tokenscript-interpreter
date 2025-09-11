@@ -155,7 +155,7 @@ export class TypeDeclNode implements ASTNode {
     public token?: Token,
   ) {}
 
-  toString(): string {
+  name(): string {
     let typeStr = this.baseType.name;
     if (this.subTypes.length > 0) {
       typeStr += `.${this.subTypes.map((s) => s.name).join(".")}`;
@@ -181,6 +181,13 @@ export class ReassignNode implements ASTNode {
     public value: ASTNode,
     public token?: Token,
   ) {}
+  baseIdentifier() {
+    return Array.isArray(this.identifier) ? this.identifier[0] : this.identifier;
+  }
+  identifierToString() {
+    const parts = Array.isArray(this.identifier) ? this.identifier : [this.identifier];
+    return parts.map(x => x.name).join(".");
+  }
 }
 
 export class ReturnNode implements ASTNode {
@@ -227,7 +234,6 @@ export class StatementListNode implements ASTNode {
   ) {}
 }
 
-// Represents an attribute access, e.g., obj.property or obj.method()
 export class AttributeAccessNode implements ASTNode {
   nodeType = "AttributeAccessNode";
   // 'left' is the object, 'right' is the attribute (IdentifierNode) or method (FunctionCallNode)

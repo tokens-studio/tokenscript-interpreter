@@ -653,6 +653,10 @@ export class ColorSymbol extends BaseSymbolType {
     return new StringSymbol(this.value);
   }
 
+  isHex(): boolean {
+    return this.subType?.toLowerCase() === 'hex';
+  }
+
   validValue(val: any): boolean {
     if (val === null) {
       return true;
