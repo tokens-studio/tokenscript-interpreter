@@ -404,6 +404,7 @@ export class Interpreter {
         `Invalid variable type '${baseType}'. Use a valid type. (${Object.keys(basicSymbolTypes).join(", ")})`,
         node.varName.token.line,
         node.varName.token,
+        {baseType, subType, config: this.config}
       );
     }
 

@@ -3,8 +3,9 @@ import type { Token } from "../types";
 export class LanguageError extends Error {
   public line?: number;
   public token?: Token;
+  public meta?: any;
 
-  constructor(message: string, line?: number, token?: Token) {
+  constructor(message: string, line?: number, token?: Token, meta?: any) {
     super(message);
     this.name = this.constructor.name;
     this.line = line;
@@ -13,6 +14,7 @@ export class LanguageError extends Error {
     }
     this.token = token;
     this.message = this.formatMessage();
+    this.meta = meta;
   }
 
   private formatMessage(): string {
@@ -42,8 +44,8 @@ export class ParserError extends LanguageError {
 }
 
 export class InterpreterError extends LanguageError {
-  constructor(message: string, line?: number, token?: Token) {
-    super(message, line, token);
+  constructor(message: string, line?: number, token?: Token, meta?: any) {
+    super(message, line, token, meta);
     this.name = "InterpreterError";
   }
 }
