@@ -1,5 +1,4 @@
 import fs from "node:fs";
-import fs from "node:fs";
 import path from "node:path";
 import { Interpreter } from "./interpreter/interpreter";
 import { Lexer } from "./interpreter/lexer";
