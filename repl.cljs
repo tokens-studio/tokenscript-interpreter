@@ -15,6 +15,7 @@
  '["./interpreter/lexer.ts" :refer [Lexer]]
  '["./interpreter/interpreter.ts" :refer [Interpreter]]
  '["./interpreter/parser.ts" :refer [Parser]]
+ '["./interpreter/config/config.ts" :refer [Config]]
  '["./interpreter/symbols.ts"]
  '["./interpreter/config/managers/color/manager.ts" :refer [ColorManager]]
  :reload)
@@ -64,9 +65,18 @@
 (comment
   (run-python! "variable foo: List = 1 1;
 foo")
+  (js/console.log "FOo")
 
-  (run-python! "variable foo: List;
-foo.length()")
+  (run "variable foo: Color.foo;
+foo")
+
+  (-> (run "variable foo: Color.Hex = #333;
+foo")
+      (.-subType))
+
+  (run "variable foo: String;
+foo = '1';
+foo")
 
 
   (run-python! "variable radix: Number;
@@ -226,24 +236,31 @@ return j;
         cm (ColorManager.)
         spec (-> (fs/readFileSync uri "utf-8")
                  (js/JSON.parse))]
-    (.register cm uri spec)))
+    (.register cm uri spec)
+    cm))
 
 (defn run-with-colormanager
-  ([code]
-   (run code {}))
-  ([code opts]
-   (try
-     (let [lexer (Lexer. code)
-           parser (Parser. lexer)
-           interpreter (Interpreter. parser (clj->js opts))
-           color-manager (setup-color-manager)
-           result (.interpret interpreter {:colorManager color-manager})]
-       (reset! !result #js {:lexer lexer
-                            :parser parser
-                            :interpreter interpreter
-                            :result result})
-       result)
-     (catch js/Error e e))))
+  [code & {:as opts}]
+  (try
+    (let [lexer (Lexer. code)
+          parser (Parser. lexer)
+          color-manager (setup-color-manager)
+          config  (Config. #js {:colorManager color-manager})
+          interpreter (Interpreter. parser #js {:config config})
+          result (.interpret interpreter)]
+      (reset! !result #js {:config config
+                           :lexer lexer
+                           :parser parser
+                           :interpreter interpreter
+                           :result result})
+      result)
+    (catch :default e {:error e
+                       :meta (.-meta e)})))
 
-(run-with-colormanager "variable foo: Color = #000;
+(comment
+  (-> (run-with-colormanager "variable foo: Color.Rgb;
 foo")
+      :meta
+      .-config
+      (doto js/console.log))
+  nil)
