@@ -35,6 +35,10 @@ export class Parser {
     this.currentToken = this.lexer.nextToken();
   }
 
+  private peekTokens(n: number): Token[] | null {
+    return this.lexer.peekTokens(n);
+  }
+
   private error(message = "Invalid syntax"): never {
     throw new ParserError(message, this.currentToken?.line, this.currentToken);
   }
@@ -102,14 +106,26 @@ export class Parser {
         case ReservedKeyword.VARIABLE:
           return this.assignVariable();
       }
-    }
+    } else if (this.currentToken.type === TokenType.STRING) {
+      // Look ahead to check the token sequence
+      const nextTokens = this.peekTokens(4); // Get next 4 tokens
+      if (nextTokens !== null) {
+        for (let i = 0; i < nextTokens.length - 1; i += 2) {
+          if (nextTokens[i].type === TokenType.DOT && nextTokens[i + 1].type === TokenType.STRING) {
+            if (i + 2 < nextTokens.length && nextTokens[i + 2].type === TokenType.ASSIGN) {
+              const name = this.currentToken;
+              this.eat(TokenType.STRING);
+              return this.reassignVariable(name);
+            }
+          }
+        }
+      }
 
-    if (this.currentToken.type === TokenType.STRING) {
+      // Check for simple variable reassignment (var = ...)
       const nextToken = this.lexer.peekToken();
       if (nextToken && nextToken.type === TokenType.ASSIGN) {
         return this.reassignVariable();
       }
-      // TODO: Handle attribute assignment (ident.ident = ...)
     }
 
     return this.listExpr();
@@ -133,18 +149,18 @@ export class Parser {
     return new AssignNode(varName, typeDecl, null, token);
   }
 
-  private reassignVariable(): ReassignNode {
-    const varNameToken = this.eat(TokenType.STRING);
+  private reassignVariable(nameToken?: Token): ReassignNode {
+    const varNameToken = nameToken || this.eat(TokenType.STRING);
     let name: IdentifierNode | IdentifierNode[] = new IdentifierNode(varNameToken);
 
     if (this.currentToken.type === TokenType.DOT) {
-      const nameChain: IdentifierNode[] = [new IdentifierNode(varNameToken)];
+      const names: IdentifierNode[] = [new IdentifierNode(varNameToken)];
       while (this.currentToken.type === TokenType.DOT) {
         this.eat(TokenType.DOT);
         const propertyToken = this.eat(TokenType.STRING);
-        nameChain.push(new IdentifierNode(propertyToken));
+        names.push(new IdentifierNode(propertyToken));
       }
-      name = nameChain;
+      name = names;
     }
 
     this.eat(TokenType.ASSIGN);

@@ -25,6 +25,7 @@ describe("Color Attributes - RGB Color Type", () => {
     const text = `
     variable color: Color.RGB;
     color.r = 100;
+    color;
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
