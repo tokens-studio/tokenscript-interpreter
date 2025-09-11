@@ -23,7 +23,7 @@ import {
   WhileNode,
 } from "./ast";
 import { ParserError } from "./errors";
-import type { Lexer } from "./lexer";
+import { Lexer } from "./lexer";
 
 export class Parser {
   private lexer: Lexer;
@@ -440,4 +440,22 @@ export class Parser {
     }
     return node;
   }
+}
+
+export function parseExpression(
+  text: string,
+): {
+  lexer: Lexer;
+  parser: Parser;
+  result: ASTNode | null;
+} {
+  const lexer = new Lexer(text);
+  const parser = new Parser(lexer);
+  const ast = parser.parse();
+  
+  return {
+    lexer,
+    parser,
+    result: ast,
+  };
 }
