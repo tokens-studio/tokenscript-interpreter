@@ -166,7 +166,8 @@ export class TypeDeclNode implements ASTNode {
 
 export const attributesToString = (attrs: string[]): string => attrs.join(".");
 
-export const identifiersChainToString = (attrs: IdentifierNode[]): string => attributesToString(attrs.map(x => x.name))
+export const identifiersChainToString = (attrs: IdentifierNode[]): string =>
+  attributesToString(attrs.map((x) => x.name));
 
 export class ReassignNode implements ASTNode {
   nodeType = "ReassignNode";
@@ -193,7 +194,7 @@ export class ReassignNode implements ASTNode {
     }
   }
   attributesStringChain(): string[] {
-    return this.attributesChain().map(x => x.name);
+    return this.attributesChain().map((x) => x.name);
   }
 }
 
