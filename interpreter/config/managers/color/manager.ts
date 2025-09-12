@@ -131,7 +131,7 @@ ${spec}`,
   ): ColorSymbol {
     const attributes = node.attributesStringChain();
 
-    if (color.value instanceof String) {
+    if (typeof color.value === 'string') {
       throw new InterpreterError(
         `Cannot set attributes '${attributesToString(attributes)}' for variable ${node.identifierToString()} on Color type ${color.subType}.`,
         node.token?.line,
