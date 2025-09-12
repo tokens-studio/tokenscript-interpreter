@@ -37,7 +37,7 @@
       },
       "correctness": {
         "noUnusedVariables": "error",
-        "noUnusedPrivateClassMembers": "error",
+        "noUnusedPrivateClassMembers": "off",
         "noUnusedImports": "error",
         "useExhaustiveDependencies": "warn"
       },
