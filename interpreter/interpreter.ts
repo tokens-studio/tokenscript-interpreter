@@ -332,10 +332,6 @@ export class Interpreter {
       );
     }
 
-    if (!node.assignmentExpr) {
-      this.symbolTable.set(name, null);
-    }
-
     const value: ISymbolType = node.assignmentExpr
       ? (this.visit(node.assignmentExpr) as ISymbolType)
       : this.config.getType(baseType, subType);
