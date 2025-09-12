@@ -1,6 +1,6 @@
 import type { ISymbolType } from "@/types";
-import type { ColorSymbol, dynamicColorValue } from "@/interpreter/symbols";
-import { type ColorSpecification, ColorSpecificationSchema, specName } from "./schema";
+import { type ColorSymbol, type dynamicColorValue, typeEquals } from "@/interpreter/symbols";
+import { type ColorSpecification, ColorSpecificationSchema, specName, validSchemaTypes } from "./schema";
 import { InterpreterError } from "@/interpreter/errors";
 import { attributesToString, identifiersChainToString, ReassignNode, type IdentifierNode } from "@/interpreter/ast";
 // import { parseExpression } from "@/interpreter/parser";
@@ -127,6 +127,13 @@ ${spec}`,
     return undefined;
   }
 
+  public getSpecFromColor(color: ColorSymbol): ColorSpecification | undefined {
+    const key = color.subType?.toLowerCase();
+    if (key) {
+      return this.getSpecByType(key)
+    }
+  }
+
   setAttribute(
     color: ColorSymbol,
     node: ReassignNode,
@@ -144,16 +151,45 @@ ${spec}`,
 
     if (attributes.length !== 1) {
       throw new InterpreterError(
-        `Attributes chain '${attributesToString(attributes)}' for variable ${node.identifierToString()} on Color type may not exceed one element.`,
+        `Attributes chain '${attributesToString(attributes)}' for variable ${node.identifierToString()} on Color type ${color.subType} may not exceed one element.`,
         node.token?.line,
         node.token,
       );
     }
-    const atrr = attributes[0];
+    const attr = attributes[0];
+
+    const spec = this.getSpecFromColor(color)
+    if (!spec) {
+      throw new InterpreterError(
+        `No spec ${color.subType} defined for variable ${node.identifierToString()} on Color type ${color.subType}.`,
+        node.token?.line,
+        node.token,
+        this,
+      );
+    }
+
+    const attrSchema = spec.schema.properties[attr]
+    if (!attrSchema) {
+      throw new InterpreterError(
+        `No schema found for key ${attr} for variable ${node.identifierToString()} on Color type ${color.subType}.`,
+        node.token?.line,
+        node.token,
+        this,
+      );
+    }
+
+    if (!typeEquals(attrSchema.type, attributeValue.type)) {
+      throw new InterpreterError(
+        `Invalid attribute type '${attributeValue.type}'. Use a valid type. (${validSchemaTypes.join(", ")})`,
+        node.token?.line,
+        node.token,
+        this,
+      );
+    }
 
     // Update the value by mutation
     const value = (color.value || {}) as dynamicColorValue;
-    value[atrr] = attributeValue;
+    value[attr] = attributeValue;
     color.value = value;
 
     return color;

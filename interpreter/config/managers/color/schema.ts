@@ -25,12 +25,14 @@ const ConversionSchema = z.object({
   script: ScriptBlockSchema,
 });
 
+export const validSchemaTypes = ["number", "string"];
+
 const SpecSchemaSchema = z.object({
   type: z.literal("object"),
   properties: z.record(
     z.string(),
     z.object({
-      type: z.enum(["number", "string"]),
+      type: z.enum(validSchemaTypes),
     }),
   ),
   required: z.array(z.string()).optional(),
