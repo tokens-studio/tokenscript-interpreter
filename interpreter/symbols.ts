@@ -1,6 +1,7 @@
 import { type ISymbolType, SupportedFormats } from "../types";
 import { InterpreterError } from "./errors";
 import { isValidHex } from "./utils/color";
+import { isNone, isNull, isObject, isString, isUndefined } from "./utils/type";
 
 // Utilities -------------------------------------------------------------------
 
@@ -614,22 +615,26 @@ export class ColorSymbol extends BaseSymbolType {
     return new ColorSymbol(null);
   }
 
-  constructor(value: string | null, subType?: string) {
-    let safeValue: string | null;
+  constructor(value: string | dynamicColorValue | null, subType?: string) {
+    const isHex = (isUndefined(subType) || subType.toLowerCase() === 'hex') && isString(value)
+    const isDynamic = (isString(subType) && isObject(value));
+    const isValid = isNull(value) || isHex || isDynamic;
 
-    if (value === null) {
-      safeValue = null;
-    } else if (typeof value === "string") {
+    if (!isValid) {
+      throw new InterpreterError(
+        `Value ${value} must be string, attributes record, or null, got ${typeof value}.`,
+      );
+    }
+
+    if (isHex) {
       if (!isValidHex(value)) {
         throw new InterpreterError(`Invalid hex color format: ${value}`);
       }
-      safeValue = value;
-    } else {
-      throw new InterpreterError(`Value must be string or ColorSymbol, got ${typeof value}.`);
     }
-    super(safeValue);
 
-    this.value = safeValue;
+    super(value);
+
+    this.value = value;
     this.subType = subType || null;
 
     this._SUPPORTED_METHODS = {
@@ -657,14 +662,7 @@ export class ColorSymbol extends BaseSymbolType {
   }
 
   validValue(val: any): boolean {
-    if (val === null) {
-      return true;
-    }
-    if (val instanceof ColorSymbol) {
-      return true;
-    }
-
-    return typeof val === "string" && isValidHex(val);
+    return val instanceof ColorSymbol || isNull(val) || isObject(val) || isValidHex(val);
   }
 }
 

@@ -1,5 +1,7 @@
+import { isString } from "./type";
+
 export function isValidHex(value: string): boolean {
-  if (typeof value !== "string") return false;
+  if (!isString(value)) return false;
   if (!value.startsWith("#")) return false;
   const hexPart = value.substring(1);
   if (!(hexPart.length === 3 || hexPart.length === 6)) return false;

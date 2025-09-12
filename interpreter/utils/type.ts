@@ -1,6 +1,5 @@
-// Runtime type-checking utilities with proper TypeScript type guards
+// Optional --------------------------------------------------------------------
 
-// Basic null/undefined checks
 export const isSome = <T>(v: T | null | undefined): v is T => {
   return v != null;
 };
@@ -8,6 +7,8 @@ export const isSome = <T>(v: T | null | undefined): v is T => {
 export const isNone = (v: unknown): v is null | undefined => {
   return v == null;
 };
+
+// Primitive type guards -------------------------------------------------------
 
 export const isNull = (v: unknown): v is null => {
   return v === null;
@@ -17,12 +18,10 @@ export const isUndefined = (v: unknown): v is undefined => {
   return v === undefined;
 };
 
-// Object type checking
 export const isObject = (v: unknown): v is Record<string, unknown> => {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 };
 
-// Additional useful type guards
 export const isString = (v: unknown): v is string => {
   return typeof v === "string";
 };
@@ -47,7 +46,8 @@ export const isDate = (v: unknown): v is Date => {
   return v instanceof Date && !isNaN(v.getTime());
 };
 
-// More specific object checks
+// Object ----------------------------------------------------------------------
+
 export const isPlainObject = (v: unknown): v is Record<string, unknown> => {
   if (!isObject(v)) return false;
 
@@ -60,7 +60,8 @@ export const hasProperty = <K extends string>(obj: unknown, key: K): obj is Reco
   return isObject(obj) && key in obj;
 };
 
-// Array utilities
+// Array -----------------------------------------------------------------------
+
 export const isNonEmptyArray = <T>(v: unknown): v is [T, ...T[]] => {
   return isArray(v) && v.length > 0;
 };
@@ -72,7 +73,8 @@ export const isEmpty = (v: unknown): boolean => {
   return false;
 };
 
-// Safe parsing utilities
+// Number parsing --------------------------------------------------------------
+
 export const safeParseInt = (v: unknown): number | null => {
   if (isNumber(v)) return Math.floor(v);
   if (isString(v)) {
@@ -91,7 +93,8 @@ export const safeParseFloat = (v: unknown): number | null => {
   return null;
 };
 
-// Type assertion helpers
+// Type Assertion Helpers ------------------------------------------------------
+
 export const assertIsSome = <T>(v: T | null | undefined, message?: string): T => {
   if (isNone(v)) {
     throw new Error(message || "Expected value to be defined");
@@ -106,17 +109,14 @@ export const assertIsType = <T>(v: unknown, guard: (v: unknown) => v is T, messa
   return v;
 };
 
-// Optional chaining helpers
 export const optional = <T, R>(value: T | null | undefined, fn: (v: T) => R): R | undefined => {
   return isSome(value) ? fn(value) : undefined;
 };
 
-// Default value helpers
 export const withDefault = <T>(v: T | null | undefined, defaultValue: T): T => {
   return isSome(v) ? v : defaultValue;
 };
 
-// Comparison utilities
 export const isEqual = (a: unknown, b: unknown): boolean => {
   if (a === b) return true;
 
