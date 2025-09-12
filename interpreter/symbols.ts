@@ -664,6 +664,27 @@ export class ColorSymbol extends BaseSymbolType {
   validValue(val: any): boolean {
     return val instanceof ColorSymbol || isNull(val) || isObject(val) || isValidHex(val);
   }
+
+  hasAttribute(attributeName: string): boolean {
+    // For dynamic colors (object values), check if the attribute exists
+    if (isObject(this.value)) {
+      return attributeName in this.value;
+    }
+    
+    // For hex colors and null values, no attributes are supported
+    return false;
+  }
+
+  getAttribute(attributeName: string): ISymbolType | null {
+    if (isObject(this.value)) {
+      const attributeValue = this.value[attributeName];
+      if (attributeValue !== undefined) {
+        return attributeValue;
+      }
+    }
+    
+    throw new InterpreterError(`Attribute '${attributeName}' not found on Color.`);
+  }
 }
 
 // Utilities -------------------------------------------------------------------

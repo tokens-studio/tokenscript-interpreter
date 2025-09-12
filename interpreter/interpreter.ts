@@ -405,6 +405,26 @@ export class Interpreter {
     const leftValue = leftVisitResult as ISymbolType;
 
     if (node.right instanceof IdentifierNode) {
+      // Special handling for ColorSymbol attribute access
+      if (leftValue instanceof ColorSymbol) {
+        if (!leftValue.hasAttribute(node.right.name)) {
+          throw new InterpreterError(
+            `Attribute '${node.right.name}' not found on Color.`,
+            node.right.token.line,
+            node.right.token,
+          );
+        }
+        const attributeValue = leftValue.getAttribute(node.right.name);
+        if (attributeValue == null) {
+          throw new InterpreterError(
+            `Attribute '${node.right.name}' resolved to null or undefined on Color.`,
+            node.right.token.line,
+            node.right.token,
+          );
+        }
+        return attributeValue;
+      }
+
       if (
         typeof leftValue.getAttribute !== "function" ||
         typeof leftValue.hasAttribute !== "function" ||
