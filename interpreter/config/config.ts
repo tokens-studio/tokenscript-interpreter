@@ -1,5 +1,5 @@
 import type { ISymbolType } from "@/types";
-import { basicSymbolTypes, ColorSymbol } from "../symbols";
+import { basicSymbolTypes, ColorSymbol, StringSymbol } from "../symbols";
 import { ColorManager } from "./managers/color/manager";
 import { InterpreterError } from "../errors";
 

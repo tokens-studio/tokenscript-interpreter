@@ -1,8 +1,9 @@
 import type { ISymbolType } from "@/types";
-import type { ColorSymbol } from "@/interpreter/symbols";
+import type { ColorSymbol, dynamicColorValue } from "@/interpreter/symbols";
 import { type ColorSpecification, ColorSpecificationSchema, specName } from "./schema";
-import { parseExpression } from "@/interpreter/parser";
-import { Interpreter } from "@/lib";
+import { InterpreterError } from "@/interpreter/errors";
+import { attributesToString, identifiersChainToString, ReassignNode, type IdentifierNode } from "@/interpreter/ast";
+// import { parseExpression } from "@/interpreter/parser";
 
 // Types -----------------------------------------------------------------------
 
@@ -124,6 +125,38 @@ ${spec}`,
       }
     }
     return undefined;
+  }
+
+  setAttribute(
+    color: ColorSymbol,
+    node: ReassignNode,
+    attributeValue: ISymbolType,
+  ): ColorSymbol {
+    const attributes = node.attributesStringChain();
+
+    if (color.value instanceof String) {
+      throw new InterpreterError(
+        `Cannot set attributes '${attributesToString(attributes)}' for variable ${node.identifierToString()} on Color type ${color.subType}.`,
+        node.token?.line,
+        node.token,
+      );
+    }
+
+    if (attributes.length !== 1) {
+      throw new InterpreterError(
+        `Attributes chain '${attributesToString(attributes)}' for variable ${node.identifierToString()} on Color type may not exceed one element.`,
+        node.token?.line,
+        node.token,
+      );
+    }
+    const atrr = attributes[0];
+
+    // Update the value by mutation
+    const value = (color.value || {}) as dynamicColorValue;
+    value[atrr] = attributeValue;
+    color.value = value;
+
+    return color;
   }
 
   public expectSpec(keyword: string): [string, ColorSpecification] | undefined {

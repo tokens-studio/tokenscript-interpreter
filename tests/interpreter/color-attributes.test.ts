@@ -27,7 +27,7 @@ describe("Color Attributes - RGB Color Type", () => {
     expect(() => interpreter.interpret()).not.toThrow();
   });
 
-  it("should support RGB component math operations", () => {
+  it("should allow attribute assignment for dynamic color", () => {
     const text = `
     variable color: Color.RGB;
     color.r = 10;
@@ -41,11 +41,16 @@ describe("Color Attributes - RGB Color Type", () => {
     const result = interpreter.interpret();
 
     expect(result).toBeDefined();
+    // @ts-ignore
     expect(result.type).toBe("Color");
+    // @ts-ignore
     expect(result.subType).toBe("RGB");
 
-    expect(result.getAttribute("r")?.value).toBe(10);
-    expect(result.getAttribute("g")?.value).toBe(20);
-    expect(result.getAttribute("b")?.value).toBe(30);
+    // @ts-ignore
+    expect(result.value.r.value).toBe(10);
+    // @ts-ignore
+    expect(result.value.g.value).toBe(20);
+    // @ts-ignore
+    expect(result.value.b.value).toBe(30);
   });
 });

@@ -601,7 +601,7 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
   }
 }
 
-type dynamicColorValue = Record<string, ISymbolType>;
+export type dynamicColorValue = Record<string, ISymbolType>;
 
 export class ColorSymbol extends BaseSymbolType {
   type = "Color";
@@ -654,7 +654,7 @@ export class ColorSymbol extends BaseSymbolType {
   }
 
   isHex(): boolean {
-    return this.subType?.toLowerCase() === 'hex';
+    return this.subType?.toLowerCase() === "hex";
   }
 
   validValue(val: any): boolean {

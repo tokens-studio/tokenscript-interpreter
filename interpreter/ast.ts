@@ -164,6 +164,9 @@ export class TypeDeclNode implements ASTNode {
   }
 }
 
+export const attributesToString = (attrs: string[]): string => attrs.join(".");
+
+export const identifiersChainToString = (attrs: IdentifierNode[]): string => attributesToString(attrs.map(x => x.name))
 
 export class ReassignNode implements ASTNode {
   nodeType = "ReassignNode";
@@ -172,12 +175,25 @@ export class ReassignNode implements ASTNode {
     public value: ASTNode,
     public token?: Token,
   ) {}
-  baseIdentifier() {
+  baseIdentifier(): IdentifierNode {
     return Array.isArray(this.identifier) ? this.identifier[0] : this.identifier;
   }
-  identifierToString() {
+  isAttributeAssignment(): boolean {
+    return Array.isArray(this.identifier) && !!this.identifier[1];
+  }
+  identifierToString(): string {
     const parts = Array.isArray(this.identifier) ? this.identifier : [this.identifier];
-    return parts.map(x => x.name).join(".");
+    return identifiersChainToString(parts);
+  }
+  attributesChain(): IdentifierNode[] {
+    if (Array.isArray(this.identifier)) {
+      return this.identifier.slice(1);
+    } else {
+      return [];
+    }
+  }
+  attributesStringChain(): string[] {
+    return this.attributesChain().map(x => x.name);
   }
 }
 
