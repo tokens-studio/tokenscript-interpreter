@@ -1,24 +1,19 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import { InterpreterError } from "../../interpreter/errors";
-import { Interpreter } from "../../interpreter/interpreter";
-import { Lexer } from "../../interpreter/lexer";
-import { Parser } from "../../interpreter/parser";
-import { Config } from "../../interpreter/config/config";
-import { ColorManager } from "../../interpreter/config/managers/color/manager";
 import * as fs from "node:fs";
 import * as path from "node:path";
+
+import { Interpreter } from "@/interpreter/interpreter";
+import { Lexer } from "@/interpreter/lexer";
+import { Parser } from "@/interpreter/parser";
+import { Config } from "@/interpreter/config/config";
 
 describe("Color Attributes - RGB Color Type", () => {
   let config: Config;
 
   beforeEach(() => {
-    const colorManager = new ColorManager();
-    
-    const rgbSpecPath = path.join(__dirname, "../../specifications/colors/rgb.json");
-    const rgbSpecString = fs.readFileSync(rgbSpecPath, "utf-8");
-    colorManager.register("test://rgb", rgbSpecString);
-    
-    config = new Config({ colorManager });
+      const spec = fs.readFileSync(path.join(__dirname, "../../specifications/colors/rgb.json"), "utf-8");
+      config = new Config()
+      config.colorManager.register("test://rgb", spec)
   });
 
   it("should verify RGB color type is registered in color manager", () => {
