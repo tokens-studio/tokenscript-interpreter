@@ -1,8 +1,18 @@
 import type { ISymbolType } from "@/types";
 import { type ColorSymbol, type dynamicColorValue, typeEquals } from "@/interpreter/symbols";
-import { type ColorSpecification, ColorSpecificationSchema, specName, validSchemaTypes } from "./schema";
+import {
+  type ColorSpecification,
+  ColorSpecificationSchema,
+  specName,
+  validSchemaTypes,
+} from "./schema";
 import { InterpreterError } from "@/interpreter/errors";
-import { attributesToString, identifiersChainToString, ReassignNode, type IdentifierNode } from "@/interpreter/ast";
+import {
+  attributesToString,
+  identifiersChainToString,
+  type ReassignNode,
+  type IdentifierNode,
+} from "@/interpreter/ast";
 import { ColorManagerError } from "@/interpreter/error-types";
 // import { parseExpression } from "@/interpreter/parser";
 
@@ -121,18 +131,14 @@ ${spec}`,
   public getSpecFromColor(color: ColorSymbol): ColorSpecification | undefined {
     const key = color.subType?.toLowerCase();
     if (key) {
-      return this.getSpecByType(key)
+      return this.getSpecByType(key);
     }
   }
 
-  setAttribute(
-    color: ColorSymbol,
-    node: ReassignNode,
-    attributeValue: ISymbolType,
-  ): ColorSymbol {
+  setAttribute(color: ColorSymbol, node: ReassignNode, attributeValue: ISymbolType): ColorSymbol {
     const attributes = node.attributesStringChain();
 
-    if (typeof color.value === 'string') {
+    if (typeof color.value === "string") {
       throw new InterpreterError(
         `Cannot set attributes '${attributesToString(attributes)}' for variable ${node.identifierToString()} on Color type ${color.subType}.`,
         node.token?.line,
@@ -153,7 +159,7 @@ ${spec}`,
     }
     const attr = attributes[0];
 
-    const spec = this.getSpecFromColor(color)
+    const spec = this.getSpecFromColor(color);
     if (!spec) {
       throw new InterpreterError(
         `No spec ${color.subType} defined for variable ${node.identifierToString()} on Color type ${color.subType}.`,
@@ -164,7 +170,7 @@ ${spec}`,
       );
     }
 
-    const attrSchema = spec.schema.properties[attr]
+    const attrSchema = spec.schema.properties[attr];
     if (!attrSchema) {
       throw new InterpreterError(
         `No schema found for key ${attr} for variable ${node.identifierToString()} on Color type ${color.subType}.`,
