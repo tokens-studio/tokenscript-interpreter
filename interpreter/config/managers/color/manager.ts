@@ -117,16 +117,6 @@ ${spec}`,
     return this.getSpec(uri);
   }
 
-  public findSpecByName(name: string): [string, ColorSpecification] | undefined {
-    const lowerCaseName = name.toLowerCase();
-    for (const [uri, spec] of this.specs.entries()) {
-      if (spec.name.toLowerCase() === lowerCaseName) {
-        return [uri, spec];
-      }
-    }
-    return undefined;
-  }
-
   public getSpecFromColor(color: ColorSymbol): ColorSpecification | undefined {
     const key = color.subType?.toLowerCase();
     if (key) {
@@ -193,14 +183,5 @@ ${spec}`,
     color.value = value;
 
     return color;
-  }
-
-  public expectSpec(keyword: string): [string, ColorSpecification] | undefined {
-    for (const [uri, spec] of this.specs.entries()) {
-      if (spec.initializers.some((init) => init.keyword === keyword)) {
-        return [uri, spec];
-      }
-    }
-    return undefined;
   }
 }
