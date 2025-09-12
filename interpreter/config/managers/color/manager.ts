@@ -7,12 +7,7 @@ import {
   validSchemaTypes,
 } from "./schema";
 import { InterpreterError } from "@/interpreter/errors";
-import {
-  attributesToString,
-  identifiersChainToString,
-  type ReassignNode,
-  type IdentifierNode,
-} from "@/interpreter/ast";
+import { attributesToString, type ReassignNode } from "@/interpreter/ast";
 import { ColorManagerError } from "@/interpreter/error-types";
 // import { parseExpression } from "@/interpreter/parser";
 
@@ -63,9 +58,6 @@ export class ColorManager {
 
   // Computed Map of type name to uri
   private specTypes: Map<colorName, uri> = new Map();
-  // Registry of dynamic functions
-  private initializers: Map<colorName, (args: Array<ISymbolType>) => ColorSymbol | null> =
-    new Map();
 
   constructor() {
     for (const [uri, spec] of defaultTypes) {
