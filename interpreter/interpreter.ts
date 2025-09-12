@@ -8,7 +8,6 @@ import {
 import {
   type AssignNode,
   type AttributeAccessNode,
-  type AttributeAssignNode,
   type BinOpNode,
   type BooleanNode,
   type ElementWithUnitNode,
@@ -393,83 +392,6 @@ export class Interpreter {
     }
 
     this.symbolTable.set(baseIdentifier.name, value);
-  }
-
-  private visitAttributeAssignNode(node: AttributeAssignNode): void {
-    const objVisitResult = this.visit(node.objectIdentifier);
-    if (!objVisitResult)
-      throw new InterpreterError(
-        `Object '${node.objectIdentifier.name}' not found or is null.`,
-        node.objectIdentifier.token.line,
-      );
-    let targetObject = objVisitResult as ISymbolType;
-
-    const valueToAssignVisit = this.visit(node.value);
-    if (valueToAssignVisit == null) {
-      // Check for null or undefined
-      throw new InterpreterError(
-        "Value for attribute assignment is null or undefined.",
-        (node.value as any).token?.line,
-      );
-    }
-    const valueToAssign = valueToAssignVisit as ISymbolType; // Safe due to check
-
-    if (node.attributes.length === 0) {
-      if (!this.symbolTable.isDefined(node.objectIdentifier.name)) {
-        throw new InterpreterError(
-          `Variable '${node.objectIdentifier.name}' not defined for reassignment.`,
-          node.objectIdentifier.token.line,
-        );
-      }
-      const currentVar = this.symbolTable.get(node.objectIdentifier.name);
-      if (!currentVar) {
-        throw new InterpreterError(
-          `Variable '${node.objectIdentifier.name}' not found in symbol table.`,
-          node.objectIdentifier.token.line,
-        );
-      }
-      if (currentVar.constructor !== valueToAssign.constructor) {
-        try {
-          const coerced = new (currentVar.constructor as any)(valueToAssign.value);
-          this.symbolTable.set(node.objectIdentifier.name, coerced);
-        } catch (_e) {
-          throw new InterpreterError(
-            `Type mismatch on reassigning '${node.objectIdentifier.name}'. Expected ${currentVar.type}, got ${valueToAssign.type}.`,
-            node.token?.line,
-          );
-        }
-      } else {
-        this.symbolTable.set(node.objectIdentifier.name, valueToAssign);
-      }
-      return;
-    }
-
-    for (let i = 0; i < node.attributes.length - 1; i++) {
-      const attrName = node.attributes[i].name;
-      if (typeof targetObject.getAttribute !== "function") {
-        throw new InterpreterError(
-          `Cannot access attribute '${attrName}' on intermediate value of type ${targetObject.type}.`,
-          node.attributes[i].token.line,
-        );
-      }
-      const nextTarget = targetObject.getAttribute(attrName);
-      if (!nextTarget) {
-        throw new InterpreterError(
-          `Attribute '${attrName}' not found or is null in path.`,
-          node.attributes[i].token.line,
-        );
-      }
-      targetObject = nextTarget;
-    }
-
-    const finalAttrName = node.attributes[node.attributes.length - 1].name;
-    if (typeof targetObject.setAttribute !== "function") {
-      throw new InterpreterError(
-        `Cannot set attribute '${finalAttrName}' on target of type ${targetObject.type}.`,
-        node.attributes[node.attributes.length - 1].token.line,
-      );
-    }
-    targetObject.setAttribute(finalAttrName, valueToAssign);
   }
 
   private visitAttributeAccessNode(node: AttributeAccessNode): ISymbolType {

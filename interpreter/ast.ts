@@ -164,15 +164,6 @@ export class TypeDeclNode implements ASTNode {
   }
 }
 
-export class AttributeAssignNode implements ASTNode {
-  nodeType = "AttributeAssignNode";
-  constructor(
-    public objectIdentifier: IdentifierNode,
-    public attributes: IdentifierNode[],
-    public value: ASTNode,
-    public token?: Token,
-  ) {}
-}
 
 export class ReassignNode implements ASTNode {
   nodeType = "ReassignNode";
