@@ -1,4 +1,5 @@
 import type { Token } from "../types";
+import type { InterpreterErrorType } from "./error-types";
 
 export class LanguageError extends Error {
   public line?: number;
@@ -44,8 +45,17 @@ export class ParserError extends LanguageError {
 }
 
 export class InterpreterError extends LanguageError {
-  constructor(message: string, line?: number, token?: Token, meta?: any) {
+  public type?: InterpreterErrorType;
+
+  constructor(
+    message: string,
+    line?: number,
+    token?: Token,
+    meta?: any,
+    type?: InterpreterErrorType,
+  ) {
     super(message, line, token, meta);
     this.name = "InterpreterError";
+    this.type = type;
   }
 }

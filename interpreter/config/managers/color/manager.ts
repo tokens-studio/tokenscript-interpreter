@@ -3,6 +3,7 @@ import { type ColorSymbol, type dynamicColorValue, typeEquals } from "@/interpre
 import { type ColorSpecification, ColorSpecificationSchema, specName, validSchemaTypes } from "./schema";
 import { InterpreterError } from "@/interpreter/errors";
 import { attributesToString, identifiersChainToString, ReassignNode, type IdentifierNode } from "@/interpreter/ast";
+import { ColorManagerError } from "@/interpreter/error-types";
 // import { parseExpression } from "@/interpreter/parser";
 
 // Types -----------------------------------------------------------------------
@@ -136,6 +137,8 @@ ${spec}`,
         `Cannot set attributes '${attributesToString(attributes)}' for variable ${node.identifierToString()} on Color type ${color.subType}.`,
         node.token?.line,
         node.token,
+        this,
+        ColorManagerError.STRING_VALUE_ASSIGNMENT,
       );
     }
 
@@ -144,6 +147,8 @@ ${spec}`,
         `Attributes chain '${attributesToString(attributes)}' for variable ${node.identifierToString()} on Color type ${color.subType} may not exceed one element.`,
         node.token?.line,
         node.token,
+        this,
+        ColorManagerError.ATTRIBUTE_CHAIN_TOO_LONG,
       );
     }
     const attr = attributes[0];
@@ -155,6 +160,7 @@ ${spec}`,
         node.token?.line,
         node.token,
         this,
+        ColorManagerError.MISSING_SPEC,
       );
     }
 
@@ -165,6 +171,7 @@ ${spec}`,
         node.token?.line,
         node.token,
         this,
+        ColorManagerError.MISSING_SCHEMA,
       );
     }
 
@@ -174,6 +181,7 @@ ${spec}`,
         node.token?.line,
         node.token,
         this,
+        ColorManagerError.INVALID_ATTRIBUTE_TYPE,
       );
     }
 

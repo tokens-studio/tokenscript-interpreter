@@ -3,6 +3,7 @@ import { ColorManager } from "../../interpreter/config/managers/color/manager";
 import { ColorSymbol, NumberSymbol, StringSymbol } from "../../interpreter/symbols";
 import { ReassignNode, IdentifierNode } from "../../interpreter/ast";
 import { InterpreterError } from "../../interpreter/errors";
+import { ColorManagerError } from "../../interpreter/error-types";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
@@ -75,12 +76,16 @@ describe("ColorManager", () => {
       const node = createReassignNode("myColor", "r");
       const attributeValue = new NumberSymbol(255);
 
-      expect(() => {
+      let error: InterpreterError | undefined;
+      try {
         manager.setAttribute(color, node, attributeValue);
-      }).toThrow(InterpreterError);
-      expect(() => {
-        manager.setAttribute(color, node, attributeValue);
-      }).toThrow("Cannot set attributes 'r' for variable myColor");
+      } catch (e) {
+        error = e as InterpreterError;
+      }
+
+      expect(error).toBeInstanceOf(InterpreterError);
+      expect(error?.type).toBe(ColorManagerError.STRING_VALUE_ASSIGNMENT);
+      expect(error?.message).toContain("Cannot set attributes 'r' for variable myColor");
     });
 
     it("throws error when attributes chain length exceeds one element", () => {
@@ -97,12 +102,16 @@ describe("ColorManager", () => {
       );
       const attributeValue = new NumberSymbol(255);
 
-      expect(() => {
+      let error: InterpreterError | undefined;
+      try {
         manager.setAttribute(color, node, attributeValue);
-      }).toThrow(InterpreterError);
-      expect(() => {
-        manager.setAttribute(color, node, attributeValue);
-      }).toThrow("Attributes chain 'r.value' for variable myColor");
+      } catch (e) {
+        error = e as InterpreterError;
+      }
+
+      expect(error).toBeInstanceOf(InterpreterError);
+      expect(error?.type).toBe(ColorManagerError.ATTRIBUTE_CHAIN_TOO_LONG);
+      expect(error?.message).toContain("Attributes chain 'r.value' for variable myColor");
     });
 
     it("throws error when no spec is found for the color type", () => {
@@ -110,12 +119,16 @@ describe("ColorManager", () => {
       const node = createReassignNode("myColor", "r");
       const attributeValue = new NumberSymbol(255);
 
-      expect(() => {
+      let error: InterpreterError | undefined;
+      try {
         manager.setAttribute(color, node, attributeValue);
-      }).toThrow(InterpreterError);
-      expect(() => {
-        manager.setAttribute(color, node, attributeValue);
-      }).toThrow("No spec UNKNOWN_TYPE defined for variable myColor");
+      } catch (e) {
+        error = e as InterpreterError;
+      }
+
+      expect(error).toBeInstanceOf(InterpreterError);
+      expect(error?.type).toBe(ColorManagerError.MISSING_SPEC);
+      expect(error?.message).toContain("No spec UNKNOWN_TYPE defined for variable myColor");
     });
 
     it("throws error when no schema found for the attribute key", () => {
@@ -123,12 +136,16 @@ describe("ColorManager", () => {
       const node = createReassignNode("myColor", "invalidAttribute");
       const attributeValue = new NumberSymbol(255);
 
-      expect(() => {
+      let error: InterpreterError | undefined;
+      try {
         manager.setAttribute(color, node, attributeValue);
-      }).toThrow(InterpreterError);
-      expect(() => {
-        manager.setAttribute(color, node, attributeValue);
-      }).toThrow("No schema found for key invalidAttribute for variable myColor");
+      } catch (e) {
+        error = e as InterpreterError;
+      }
+
+      expect(error).toBeInstanceOf(InterpreterError);
+      expect(error?.type).toBe(ColorManagerError.MISSING_SCHEMA);
+      expect(error?.message).toContain("No schema found for key invalidAttribute for variable myColor");
     });
 
     it("throws error when attribute type does not match schema type", () => {
@@ -136,12 +153,16 @@ describe("ColorManager", () => {
       const node = createReassignNode("myColor", "r");
       const attributeValue = new StringSymbol("invalid"); // Should be number
 
-      expect(() => {
+      let error: InterpreterError | undefined;
+      try {
         manager.setAttribute(color, node, attributeValue);
-      }).toThrow(InterpreterError);
-      expect(() => {
-        manager.setAttribute(color, node, attributeValue);
-      }).toThrow("Invalid attribute type 'String'. Use a valid type.");
+      } catch (e) {
+        error = e as InterpreterError;
+      }
+
+      expect(error).toBeInstanceOf(InterpreterError);
+      expect(error?.type).toBe(ColorManagerError.INVALID_ATTRIBUTE_TYPE);
+      expect(error?.message).toContain("Invalid attribute type 'String'. Use a valid type.");
     });
 
     it("preserves existing attributes when setting a new one", () => {
