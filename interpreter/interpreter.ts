@@ -319,7 +319,6 @@ export class Interpreter {
       );
     }
 
-    // Type Checking
     const baseType = node.typeDecl.baseType.name;
     const subType = node.typeDecl.subTypes[0]?.name;
 
