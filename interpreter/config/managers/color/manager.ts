@@ -1,5 +1,5 @@
 import type { ISymbolType } from "@/types";
-import { type ColorSymbol, type dynamicColorValue, typeEquals } from "@/interpreter/symbols";
+import { ColorSymbol, type dynamicColorValue, typeEquals } from "@/interpreter/symbols";
 import {
   type ColorSpecification,
   ColorSpecificationSchema,
@@ -9,19 +9,23 @@ import {
 import { InterpreterError } from "@/interpreter/errors";
 import { attributesToString, type ReassignNode } from "@/interpreter/ast";
 import { ColorManagerError } from "@/interpreter/error-types";
+import { parseExpression } from "@/interpreter/parser";
+import { Interpreter } from "@/lib";
+import { isNonEmptyArray } from "@/interpreter/utils/type";
+import { Config } from "../../config";
 // import { parseExpression } from "@/interpreter/parser";
 
 // Types -----------------------------------------------------------------------
 
-type uri = string;
+type uriType = string;
 
 type colorName = string;
 
-type Specs = Map<uri, ColorSpecification>;
+type Specs = Map<uriType, ColorSpecification>;
 
 // Defaults --------------------------------------------------------------------
 
-const defaultTypes: Specs = new Map([
+const defaultTypeSpecs: Specs = new Map([
   [
     "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/hex-color/0/",
     {
@@ -57,31 +61,38 @@ export class ColorManager {
   private specs: Specs = new Map();
 
   // Computed Map of type name to uri
-  private specTypes: Map<colorName, uri> = new Map();
+  private specTypes: Map<colorName, uriType> = new Map();
+  private initializers: Map<colorName, (args: Array<ISymbolType>) => ColorSymbol> = new Map();
 
-  constructor() {
-    for (const [uri, spec] of defaultTypes) {
+  constructor(defaultSpecs = defaultTypeSpecs) {
+    for (const [uri, spec] of defaultSpecs) {
       this.register(uri, spec);
     }
   }
 
-  // public registerInitializer(spec: ColorSpecification) {
-  //   const initializers = spec.initializers.forEach(spec => {
-  //     try {
-  //       const { ast } = parseExpression(spec.script.script).result
-  //       const fn = (args: Array<ISymbolType>) => {
-  //         const result = new Interpreter(ast, { references: { input: args } }).interpret()
-  //         return result;
-  //       }
-  //       this.initializers.set(spec.keyword.toLowerCase(), fn)
-  //     }
-  //   }))
+  public registerInitializer(uri: uriType, spec: ColorSpecification) {
+    // Pass spec to the context of the new interpreter
+    // To recursive initializer remove them
+    const specWithoutInitializers = { ...spec, initializers: [] }
+    const colorManager = new ColorManager(new Map());
+    colorManager.register(uri, specWithoutInitializers)
 
-  //   parseExpression(text)
-  //   this.initializers.set(specName(spec), fn)
-  // }
+    const config = new Config({ colorManager })
 
-  public register(uri: string, spec: ColorSpecification | string): ColorSpecification {
+    spec.initializers.forEach(spec => {
+        const { ast } = parseExpression(spec.script.script);
+        const fn = (args: Array<ISymbolType>): ColorSymbol => {
+          const result = new Interpreter(ast, { references: { input: args }, config }).interpret()
+          if (!(result instanceof ColorSymbol)) {
+            throw new InterpreterError("Initializer crashed!");
+          }
+          return result as ColorSymbol;
+        }
+        this.initializers.set(spec.keyword.toLowerCase(), fn)
+    })
+  }
+
+  public register(uri: uriType, spec: ColorSpecification | string): ColorSpecification {
     let parsedSpec: ColorSpecification;
 
     if (typeof spec === "string") {
@@ -107,6 +118,10 @@ ${spec}`,
     this.specs.set(uri, parsedSpec);
     this.specTypes.set(specName(parsedSpec), uri);
 
+    if (isNonEmptyArray(parsedSpec.initializers)) {
+      this.registerInitializer(uri, parsedSpec);
+    }
+
     return parsedSpec;
   }
 
@@ -125,6 +140,18 @@ ${spec}`,
     if (key) {
       return this.getSpecByType(key);
     }
+  }
+
+  public hasInitializer(keyword: string): boolean {
+    return this.initializers.has(keyword.toLowerCase());
+  }
+
+  public executeInitializer(keyword: string, args: Array<ISymbolType>): ColorSymbol {
+    const initFn = this.initializers.get(keyword.toLowerCase());
+    if (!initFn) {
+      throw new InterpreterError(`No initializer found for keyword '${keyword}'`);
+    }
+    return initFn(args);
   }
 
   setAttribute(color: ColorSymbol, node: ReassignNode, attributeValue: ISymbolType): ColorSymbol {

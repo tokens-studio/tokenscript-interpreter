@@ -89,8 +89,15 @@ c.toString(radix)")
 (comment
   (run-python! "variable c: Color.Hex = #ff0000;
 c")
-  (run "variable c: Color.Hex = #ff0000;")
+  (run "variable c: Color.Hex = #ff0000;
+c")
   ;; => {:js "1 0 0", :py "1.0 0 0"}
+
+  (run "variable c: String
+c")
+
+  (run-python! "variable c: Color.Hex
+c")
 
   (run* "variable c: Color.Hex = '#ffffff';
 c")
@@ -166,6 +173,8 @@ a")
   (run "variable f-a: Number = 1;
 return f-a")
 
+
+  (run-python! "variable i;")
 
   (run* "variable i: lol = 1;
 return i;")
@@ -258,8 +267,13 @@ return j;
                        :meta (.-meta e)})))
 
 (comment
-  (-> (run-with-colormanager "variable foo: Color.Rgb;
-foo")
+  (run-with-colormanager "variable c: Color.Rgb = rgb(255, 255, 255);
+c.r")
+  (-> (run-with-colormanager "variable c: Color.Rgb;
+c.r = 255;
+c.g = 255;
+c.b = 255;
+c.r")
       :meta
       .-config
       (doto js/console.log))

@@ -285,9 +285,9 @@ export class Interpreter {
       return defaultFn(...args);
     }
 
-    // if (this.config.colorManager?.hasFunction(fnName)) {
-    //   return this.config.colorManager.executeFunction(fnName, args);
-    // }
+    if (this.config.colorManager.hasInitializer(fnName)) {
+      return this.config.colorManager.executeInitializer(fnName, args);
+    }
 
     if (UNINTERPRETED_KEYWORDS.includes(fnName)) {
       const argStrings = args.map((arg) => arg.toString());
