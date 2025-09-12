@@ -642,15 +642,14 @@ export class ColorSymbol extends BaseSymbolType {
     };
   }
 
-  expectSafeValue(val: any): asserts val is string {
-    if (val === null || val === undefined) {
-      throw new InterpreterError("Value must be a color string, got null.");
-    }
-  }
-
   toStringImpl(): StringSymbol {
-    this.expectSafeValue(this.value);
-    return new StringSymbol(this.value);
+    if (isObject(this.value)) {
+      return new StringSymbol(JSON.stringify(this.value));
+    }
+    if (isString(this.value)) {
+      return new StringSymbol(this.value);
+    }
+    return new StringSymbol("");
   }
 
   isHex(): boolean {
