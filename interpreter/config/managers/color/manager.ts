@@ -70,26 +70,34 @@ export class ColorManager {
     }
   }
 
-  public registerInitializer(uri: uriType, spec: ColorSpecification) {
-    // Pass spec to the context of the new interpreter
-    // To recursive initializer remove them
-    const specWithoutInitializers = { ...spec, initializers: [] }
+  /**
+   * Creates a clone of this class to be passed down to initializers and conversion functions
+   * Links properties to the parent config.
+   */
+  private clone() {
     const colorManager = new ColorManager(new Map());
-    colorManager.register(uri, specWithoutInitializers)
+    colorManager.specs = this.specs;
+    colorManager.specTypes = this.specTypes;
+    colorManager.initializers = this.initializers;
+    return colorManager;
+  }
 
-    const config = new Config({ colorManager })
+  // Should only be called at the root level?!
+  public registerInitializer(uri: uriType, spec: ColorSpecification) {
+    const colorManager = this.clone();
+    const config = new Config({ colorManager });
 
-    spec.initializers.forEach(spec => {
-        const { ast } = parseExpression(spec.script.script);
-        const fn = (args: Array<ISymbolType>): ColorSymbol => {
-          const result = new Interpreter(ast, { references: { input: args }, config }).interpret()
-          if (!(result instanceof ColorSymbol)) {
-            throw new InterpreterError("Initializer crashed!");
-          }
-          return result as ColorSymbol;
+    spec.initializers.forEach((spec) => {
+      const { ast } = parseExpression(spec.script.script);
+      const fn = (args: Array<ISymbolType>): ColorSymbol => {
+        const result = new Interpreter(ast, { references: { input: args }, config }).interpret();
+        if (!(result instanceof ColorSymbol)) {
+          throw new InterpreterError("Initializer crashed!");
         }
-        this.initializers.set(spec.keyword.toLowerCase(), fn)
-    })
+        return result as ColorSymbol;
+      };
+      this.initializers.set(spec.keyword.toLowerCase(), fn);
+    });
   }
 
   public register(uri: uriType, spec: ColorSpecification | string): ColorSpecification {
@@ -118,9 +126,7 @@ ${spec}`,
     this.specs.set(uri, parsedSpec);
     this.specTypes.set(specName(parsedSpec), uri);
 
-    if (isNonEmptyArray(parsedSpec.initializers)) {
-      this.registerInitializer(uri, parsedSpec);
-    }
+    this.registerInitializer(uri, parsedSpec);
 
     return parsedSpec;
   }
