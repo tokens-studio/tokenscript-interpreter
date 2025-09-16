@@ -222,6 +222,11 @@ ${spec}`,
       throw new InterpreterError(`No source URI found for color type '${color.subType}'`);
     }
 
+    // Identity conversion - if source and target URIs are the same, return original
+    if (sourceUri === targetUri) {
+      return color;
+    }
+
     const conversionFn = this.conversions.get(sourceUri)?.get(targetUri);
     if (!conversionFn) {
       throw new InterpreterError(`No conversion found from '${sourceUri}' to '${targetUri}'`);
@@ -231,6 +236,11 @@ ${spec}`,
   }
 
   public convertToByType(color: ColorSymbol, targetType: string): ColorSymbol {
+    // Identity conversion - if source and target types are the same, return original
+    if (color.subType?.toLowerCase() === targetType.toLowerCase()) {
+      return color;
+    }
+
     const targetUri = this.specTypes.get(targetType.toLowerCase());
 
     if (!targetUri) {
