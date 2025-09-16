@@ -38,7 +38,7 @@ export const isArray = <T = unknown>(v: unknown): v is T[] => {
   return Array.isArray(v);
 };
 
-export const isFunction = (v: unknown): v is Function => {
+export const isFunction = (v: unknown): v is (...args: unknown[]) => unknown => {
   return typeof v === "function";
 };
 

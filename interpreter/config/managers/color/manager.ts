@@ -11,7 +11,6 @@ import { attributesToString, type ReassignNode } from "@/interpreter/ast";
 import { ColorManagerError } from "@/interpreter/error-types";
 import { parseExpression } from "@/interpreter/parser";
 import { Interpreter } from "@/lib";
-import { isNonEmptyArray } from "@/interpreter/utils/type";
 import { Config } from "../../config";
 // import { parseExpression } from "@/interpreter/parser";
 
@@ -83,7 +82,7 @@ export class ColorManager {
   }
 
   // Should only be called at the root level?!
-  public registerInitializer(uri: uriType, spec: ColorSpecification) {
+  public registerInitializer(_uri: uriType, spec: ColorSpecification) {
     const colorManager = this.clone();
     const config = new Config({ colorManager });
 

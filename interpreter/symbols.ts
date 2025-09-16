@@ -1,7 +1,7 @@
 import { type ISymbolType, SupportedFormats } from "../types";
 import { InterpreterError } from "./errors";
 import { isValidHex } from "./utils/color";
-import { isNone, isNull, isObject, isString, isUndefined } from "./utils/type";
+import { isNull, isObject, isString, isUndefined } from "./utils/type";
 
 // Utilities -------------------------------------------------------------------
 
@@ -616,8 +616,8 @@ export class ColorSymbol extends BaseSymbolType {
   }
 
   constructor(value: string | dynamicColorValue | null, subType?: string) {
-    const isHex = (isUndefined(subType) || subType.toLowerCase() === 'hex') && isString(value)
-    const isDynamic = (isString(subType) && isObject(value));
+    const isHex = (isUndefined(subType) || subType.toLowerCase() === "hex") && isString(value);
+    const isDynamic = isString(subType) && isObject(value);
     const isValid = isNull(value) || isHex || isDynamic;
 
     if (!isValid) {
@@ -670,7 +670,7 @@ export class ColorSymbol extends BaseSymbolType {
     if (isObject(this.value)) {
       return attributeName in this.value;
     }
-    
+
     // For hex colors and null values, no attributes are supported
     return false;
   }
@@ -682,7 +682,7 @@ export class ColorSymbol extends BaseSymbolType {
         return attributeValue;
       }
     }
-    
+
     throw new InterpreterError(`Attribute '${attributeName}' not found on Color.`);
   }
 }
