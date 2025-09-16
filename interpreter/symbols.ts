@@ -1,4 +1,5 @@
 import { type ISymbolType, SupportedFormats } from "../types";
+import type { Config } from "./config/config";
 import { InterpreterError } from "./errors";
 import { isValidHex } from "./utils/color";
 import { isNull, isObject, isString, isUndefined } from "./utils/type";
@@ -65,7 +66,11 @@ export abstract class BaseSymbolType implements ISymbolType {
     return true;
   }
 
-  callMethod?(methodName: string, args: ISymbolType[]): ISymbolType | null | undefined {
+  callMethod?(
+    methodName: string,
+    args: ISymbolType[],
+    _config: Config,
+  ): ISymbolType | null | undefined {
     const methodDefinition = (this as unknown as { _SUPPORTED_METHODS?: SupportedMethods })
       ._SUPPORTED_METHODS?.[methodName.toLowerCase()];
     if (!methodDefinition || !this.hasMethod?.(methodName, args)) {

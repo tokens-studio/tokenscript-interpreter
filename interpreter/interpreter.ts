@@ -7,7 +7,7 @@ import {
 } from "../types";
 import {
   type AssignNode,
-  type AttributeAccessNode,
+  AttributeAccessNode,
   type BinOpNode,
   type BooleanNode,
   type ElementWithUnitNode,
@@ -394,89 +394,61 @@ export class Interpreter {
   }
 
   private visitAttributeAccessNode(node: AttributeAccessNode): ISymbolType {
-    const leftVisitResult = this.visit(node.left);
-    if (leftVisitResult == null) {
-      throw new InterpreterError(
-        "Cannot access attribute or method on null or undefined.",
-        node.token?.line,
-        node.token,
-      );
-    }
-    const leftValue = leftVisitResult as ISymbolType;
-
-    if (node.right instanceof IdentifierNode) {
-      // Special handling for ColorSymbol attribute access
-      if (leftValue instanceof ColorSymbol) {
-        if (!leftValue.hasAttribute(node.right.name)) {
-          throw new InterpreterError(
-            `Attribute '${node.right.name}' not found on Color.`,
-            node.right.token.line,
-            node.right.token,
-          );
-        }
-        const attributeValue = leftValue.getAttribute(node.right.name);
-        if (attributeValue == null) {
-          throw new InterpreterError(
-            `Attribute '${node.right.name}' resolved to null or undefined on Color.`,
-            node.right.token.line,
-            node.right.token,
-          );
-        }
-        return attributeValue;
-      }
+    // TODO Clean up this messy implementation for the color conversion
+    // Special case: Handle color conversion syntax like c.to.hex()
+    if (node.left instanceof AttributeAccessNode && node.left.left instanceof IdentifierNode) {
+      const nestedLeft = this.visit(node.left.left) as ISymbolType;
+      const nestedRight = node.left.right;
 
       if (
-        typeof leftValue.getAttribute !== "function" ||
-        typeof leftValue.hasAttribute !== "function" ||
-        !leftValue.hasAttribute(node.right.name)
+        nestedLeft instanceof ColorSymbol &&
+        nestedRight instanceof IdentifierNode &&
+        node.right instanceof FunctionCallNode &&
+        nestedRight.name === "to"
       ) {
-        throw new InterpreterError(
-          `Attribute '${node.right.name}' not found or not accessible on type ${leftValue.type}.`,
-          node.right.token.line,
-          node.right.token,
-        );
-      }
-      const attributeValue = leftValue.getAttribute(node.right.name);
-      if (attributeValue == null) {
-        // Check for null or undefined
-        throw new InterpreterError(
-          `Attribute '${node.right.name}' resolved to null or undefined on object of type ${leftValue.type}.`,
-          node.right.token.line,
-          node.right.token,
-        );
-      }
-      return attributeValue; // attributeValue is ISymbolType
-    }
-    if (node.right instanceof FunctionCallNode) {
-      if (typeof leftValue.callMethod !== "function" || typeof leftValue.hasMethod !== "function") {
-        throw new InterpreterError(
-          `Type ${leftValue.type} does not support method calls.`,
-          node.right.token?.line,
-          node.right.token,
-        );
-      }
-      const methodName = node.right.name;
-      const args = node.right.args.map((arg) => {
-        const visitedArg = this.visit(arg);
-        if (visitedArg == null)
-          throw new InterpreterError(
-            `Method argument for '${methodName}' evaluated to null or undefined.`,
-            (arg as any).token?.line,
-          );
-        return visitedArg as ISymbolType; // Safe due to check
-      });
+        const targetColorMethod = node.right.name;
+        const colorSymbol = nestedLeft;
 
-      const result = leftValue.callMethod(methodName, args); // result is ISymbolType | null | void
-      if (result == null) {
-        // Checks for null OR undefined
+        return this.config.colorManager.convertToByType(colorSymbol, targetColorMethod);
+      }
+    }
+
+    const left = this.visit(node.left) as ISymbolType;
+    const right = node.right;
+
+    // Check if left supports attribute/method access
+    if (typeof left.hasMethod === "function" && typeof left.hasAttribute === "function") {
+      if (right instanceof FunctionCallNode) {
+        // Handle method calls (e.g., str.lower())
+        const args = right.args.map((arg) => this.visit(arg) as ISymbolType);
+        if (left.hasMethod(right.name, args)) {
+          return left.callMethod?.(right.name, args, this.config);
+        }
         throw new InterpreterError(
-          `Method '${methodName}' on type ${leftValue.type} returned null or undefined, which is not a valid symbol.`,
-          node.right.token?.line,
+          `Method '${right.name}' not found on '${left}' (${left.type})`,
+          node.token?.line,
+          node.token,
         );
       }
-      return result; // result is now guaranteed to be ISymbolType
+      if (right instanceof IdentifierNode) {
+        // Handle property access (e.g., str.length)
+        if (left.hasAttribute(right.name)) {
+          return left.getAttribute?.(right.name);
+        }
+        let errMsg = `Attribute '${right.name}' not found on '${left}' (${left.type})`;
+        // Force exactly "on Color" string for ColorSymbols (for test compatibility)
+        if (left instanceof ColorSymbol) {
+          errMsg = `Attribute '${right.name}' not found on Color.`;
+        }
+        throw new InterpreterError(errMsg, node.token?.line, node.token);
+      }
     }
-    throw new InterpreterError("Invalid attribute access structure.", node.token?.line, node.token);
+
+    throw new InterpreterError(
+      `Cannot access attributes on ${left.type}`,
+      node.token?.line,
+      node.token,
+    );
   }
 
   private visitStatementListNode(node: StatementListNode): ISymbolType | null {

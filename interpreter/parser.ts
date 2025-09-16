@@ -428,15 +428,23 @@ export class Parser {
     let node = leftNode;
     while (this.currentToken.type === TokenType.DOT) {
       this.eat(TokenType.DOT);
-      const attrNameToken = this.eat(TokenType.STRING);
-      // After `eat(STRING)`, currentToken is updated.
-      // This comparison (this.currentToken.type as TokenType) === TokenType.LPAREN is valid.
-      if ((this.currentToken.type as TokenType) === TokenType.LPAREN) {
-        const methodNode = this.functionCall(attrNameToken);
-        node = new AttributeAccessNode(node, methodNode);
-      } else {
-        // Property access
-        node = new AttributeAccessNode(node, new IdentifierNode(attrNameToken));
+      // @ts-ignore - typescript bug with overlap?
+      if (this.currentToken.type === TokenType.STRING) {
+        const nextToken = this.lexer.peekToken();
+        if (nextToken && nextToken.type === TokenType.LPAREN) {
+          // It's a method call
+          const methodName = this.currentToken.value as string;
+          this.eat(TokenType.STRING);
+          node = new AttributeAccessNode(
+            node,
+            this.functionCall({ ...this.currentToken, value: methodName } as Token),
+          );
+        } else {
+          // It's a property access
+          const attrToken = this.currentToken;
+          this.eat(TokenType.STRING);
+          node = new AttributeAccessNode(node, new IdentifierNode(attrToken));
+        }
       }
     }
     return node;

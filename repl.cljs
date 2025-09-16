@@ -267,8 +267,9 @@ return j;
                        :meta (.-meta e)})))
 
 (comment
+  (js/console.log "(comment")
   (run-with-colormanager "variable c: Color.Rgb = rgb(255, 255, 255);
-c.r")
+c.to.hex()")
   (-> (run-with-colormanager "variable c: Color.Rgb;
 c.r = 255;
 c.g = 255;

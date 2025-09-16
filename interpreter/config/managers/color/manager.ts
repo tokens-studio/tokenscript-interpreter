@@ -63,6 +63,9 @@ export class ColorManager {
   private specTypes: Map<colorName, uriType> = new Map();
   private initializers: Map<colorName, (args: Array<ISymbolType>) => ColorSymbol> = new Map();
 
+  // Nested map: source URI -> target URI -> conversion function
+  private conversions: Map<uriType, Map<uriType, (color: ColorSymbol) => ColorSymbol>> = new Map();
+
   constructor(defaultSpecs = defaultTypeSpecs) {
     for (const [uri, spec] of defaultSpecs) {
       this.register(uri, spec);
@@ -78,6 +81,7 @@ export class ColorManager {
     colorManager.specs = this.specs;
     colorManager.specTypes = this.specTypes;
     colorManager.initializers = this.initializers;
+    colorManager.conversions = this.conversions;
     return colorManager;
   }
 
@@ -96,6 +100,42 @@ export class ColorManager {
         return result as ColorSymbol;
       };
       this.initializers.set(spec.keyword.toLowerCase(), fn);
+    });
+  }
+
+  public registerConversions(uri: uriType, spec: ColorSpecification) {
+    const colorManager = this.clone();
+    const config = new Config({ colorManager });
+
+    spec.conversions.forEach((conversion) => {
+      // Handle $self replacement
+      const sourceUri = conversion.source === "$self" ? uri : conversion.source;
+      const targetUri = conversion.target === "$self" ? uri : conversion.target;
+
+      const { ast } = parseExpression(conversion.script.script);
+      const fn = (color: ColorSymbol): ColorSymbol => {
+        const result = new Interpreter(ast, { references: { input: color }, config }).interpret();
+        if (!(result instanceof ColorSymbol)) {
+          // If the result is not a ColorSymbol, wrap it in one with the target type
+          const targetSpec = this.getSpec(targetUri);
+          if (!targetSpec) {
+            throw new InterpreterError(`Conversion function crashed! No target spec found for ${targetUri}`, undefined, undefined, {result});
+          }
+          return new ColorSymbol(result, targetSpec.name);
+        }
+        return result as ColorSymbol;
+      };
+
+      // Ensure source map exists
+      if (!this.conversions.has(sourceUri)) {
+        this.conversions.set(sourceUri, new Map());
+      }
+
+      // Set the conversion function
+      const sourceMap = this.conversions.get(sourceUri);
+      if (sourceMap) {
+        sourceMap.set(targetUri, fn);
+      }
     });
   }
 
@@ -126,6 +166,7 @@ ${spec}`,
     this.specTypes.set(specName(parsedSpec), uri);
 
     this.registerInitializer(uri, parsedSpec);
+    this.registerConversions(uri, parsedSpec);
 
     return parsedSpec;
   }
@@ -157,6 +198,46 @@ ${spec}`,
       throw new InterpreterError(`No initializer found for keyword '${keyword}'`);
     }
     return initFn(args);
+  }
+
+  public hasConversion(sourceUri: string, targetUri: string): boolean {
+    return this.conversions.get(sourceUri)?.has(targetUri) ?? false;
+  }
+
+  public hasConversionByType(sourceType: string, targetType: string): boolean {
+    const sourceUri = this.specTypes.get(sourceType.toLowerCase());
+    const targetUri = this.specTypes.get(targetType.toLowerCase());
+
+    if (!sourceUri || !targetUri) {
+      return false;
+    }
+
+    return this.hasConversion(sourceUri, targetUri);
+  }
+
+  public convertTo(color: ColorSymbol, targetUri: string): ColorSymbol {
+    const sourceUri = this.specTypes.get(color.subType?.toLowerCase() || "");
+
+    if (!sourceUri) {
+      throw new InterpreterError(`No source URI found for color type '${color.subType}'`);
+    }
+
+    const conversionFn = this.conversions.get(sourceUri)?.get(targetUri);
+    if (!conversionFn) {
+      throw new InterpreterError(`No conversion found from '${sourceUri}' to '${targetUri}'`);
+    }
+
+    return conversionFn(color);
+  }
+
+  public convertToByType(color: ColorSymbol, targetType: string): ColorSymbol {
+    const targetUri = this.specTypes.get(targetType.toLowerCase());
+
+    if (!targetUri) {
+      throw new InterpreterError(`No target URI found for color type '${targetType}'`);
+    }
+
+    return this.convertTo(color, targetUri);
   }
 
   setAttribute(color: ColorSymbol, node: ReassignNode, attributeValue: ISymbolType): ColorSymbol {
