@@ -270,12 +270,33 @@ return j;
   (run-with-colormanager
    "variable c: Color.Rgb = rgb(255, 255, 255);
 c.to.hex()")
+  ;; => #object[ColorSymbol #ffffff]
+
+  (run-with-colormanager
+   "variable c: Color.Rgb = rgb(255, 255);")
+  ;; => {:error
+  ;;     #object[InterpreterError InterpreterError: Index out of range for get.],
+  ;;     :meta nil}
+
+  (run-with-colormanager
+   "variable c: Color.Hex = #FFF;
+c.to.hex()")
+  ;; => #object[ColorSymbol #FFF]
 
   (run-with-colormanager "variable c: Color.Rgb;
 c.r = 255;
 c.g = 255;
 c.b = 255;
 c.r")
+  ;; => #object[NumberSymbol 255]
+
+  (run-with-colormanager "variable c: Color.Rgb;
+c.r = 255;
+c.to.hex()")
+  ;; => {:error
+  ;;     #object[InterpreterError InterpreterError: Attribute 'g' not found on Color.],
+  ;;     :meta nil}
+
 
   (-> (run-with-colormanager "variable c: Color.Rgb;
 c.r = 255;
