@@ -42,6 +42,10 @@ export abstract class BaseSymbolType implements ISymbolType {
     return String(this.value);
   }
 
+  getTypeName(): string {
+    return this.type;
+  }
+
   equals(other: ISymbolType): boolean {
     return this.type === other.type && this.value === other.value;
   }
@@ -689,6 +693,13 @@ export class ColorSymbol extends BaseSymbolType {
     }
 
     throw new InterpreterError(`Attribute '${attributeName}' not found on Color.`);
+  }
+
+  getTypeName(): string {
+    if (this.subType) {
+      return `Color.${this.subType.charAt(0).toUpperCase() + this.subType.slice(1)}`;
+    }
+    return this.type;
   }
 }
 

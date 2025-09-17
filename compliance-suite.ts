@@ -135,10 +135,10 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
             if ("value" in val && "type" in val && typeof val.type === "string") {
               // Recursively normalize value
               const norm = normalize(val.value);
-              return { value: norm.value, type: capitalizeFirst(val.type) };
+              return { value: norm.value, type: val.getTypeName ? val.getTypeName() : capitalizeFirst(val.type) };
             }
           }
-          return { value: val, type: getType(val) };
+          return { value: val, type: val && val.getTypeName ? val.getTypeName() : getType(val) };
         }
         const { value: normalizedValue, type: normalizedType } = normalize(result);
         actualOutput = normalizedValue;
