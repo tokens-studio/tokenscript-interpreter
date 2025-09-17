@@ -12,7 +12,6 @@ import { ColorManagerError } from "@/interpreter/error-types";
 import { parseExpression } from "@/interpreter/parser";
 import { Interpreter } from "@/lib";
 import { Config } from "../../config";
-// import { parseExpression } from "@/interpreter/parser";
 
 // Types -----------------------------------------------------------------------
 
@@ -61,6 +60,8 @@ export class ColorManager {
 
   // Computed Map of type name to uri
   private specTypes: Map<colorName, uriType> = new Map();
+
+  // Initializer functions
   private initializers: Map<colorName, (args: Array<ISymbolType>) => ColorSymbol> = new Map();
 
   // Nested map: source URI -> target URI -> conversion function
@@ -85,8 +86,7 @@ export class ColorManager {
     return colorManager;
   }
 
-  // Should only be called at the root level?!
-  public registerInitializer(_uri: uriType, spec: ColorSpecification) {
+  public registerRootInitializers(_uri: uriType, spec: ColorSpecification) {
     const colorManager = this.clone();
     const config = new Config({ colorManager });
 
@@ -108,7 +108,7 @@ export class ColorManager {
     const config = new Config({ colorManager });
 
     spec.conversions.forEach((conversion) => {
-      // Handle $self replacement
+      // $self replacement
       const sourceUri = conversion.source === "$self" ? uri : conversion.source;
       const targetUri = conversion.target === "$self" ? uri : conversion.target;
 
@@ -171,7 +171,7 @@ ${spec}`,
     this.specs.set(uri, parsedSpec);
     this.specTypes.set(specName(parsedSpec), uri);
 
-    this.registerInitializer(uri, parsedSpec);
+    this.registerRootInitializers(uri, parsedSpec);
     this.registerConversions(uri, parsedSpec);
 
     return parsedSpec;
