@@ -246,6 +246,21 @@ export class Parser {
     return node;
   }
 
+  private conditionExpr(): ASTNode {
+    if (this.currentToken.type === TokenType.STRING) {
+      const nextToken = this.lexer.peekToken();
+      if (nextToken && nextToken.type === TokenType.ASSIGN) {
+        throw new ParserError(
+          "If/elif condition must be a boolean",
+          this.currentToken.line,
+          this.currentToken,
+        );
+      }
+    }
+
+    return this.expr();
+  }
+
   private returnStatement(): ReturnNode {
     const token = this.eat(TokenType.RESERVED_KEYWORD); // 'return'
     const expr = this.listExpr();
@@ -255,7 +270,7 @@ export class Parser {
   private whileStatement(): WhileNode {
     const whileToken = this.eat(TokenType.RESERVED_KEYWORD); // 'while'
     this.eat(TokenType.LPAREN);
-    const condition = this.expr();
+    const condition = this.conditionExpr();
     this.eat(TokenType.RPAREN);
     const body = this.block();
     return new WhileNode(condition, body.statements as StatementListNode, whileToken);
@@ -264,7 +279,7 @@ export class Parser {
   private ifStatement(): IfNode {
     const ifToken = this.eat(TokenType.RESERVED_KEYWORD); // 'if'
     this.eat(TokenType.LPAREN);
-    const condition = this.expr();
+    const condition = this.conditionExpr();
     this.eat(TokenType.RPAREN);
     const ifBody = this.block().statements as StatementListNode;
 
@@ -277,7 +292,7 @@ export class Parser {
     ) {
       this.eat(TokenType.RESERVED_KEYWORD); // 'elif'
       this.eat(TokenType.LPAREN);
-      const elifCondition = this.expr();
+      const elifCondition = this.conditionExpr();
       this.eat(TokenType.RPAREN);
       const elifBody = this.block().statements as StatementListNode;
       conditions.push(new IfConditionNode(elifCondition, elifBody, ifToken));
