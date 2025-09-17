@@ -5,6 +5,7 @@ import { ColorManager } from "./interpreter/config/managers/color/manager";
 import { Interpreter } from "./interpreter/interpreter";
 import { Lexer } from "./interpreter/lexer";
 import { Parser } from "./interpreter/parser";
+import { ColorSymbol } from "./interpreter/symbols";
 
 interface TestCase {
   name: string;
@@ -127,10 +128,12 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
         const ast = parser.parse(test.inline);
 
         // Load schemas if specified
-        let config: Config | undefined;
+        let config: Config;
         if (test.schemas && test.schemas.length > 0) {
           const colorManager = loadSchemas(test.schemas);
           config = new Config({ colorManager });
+        } else {
+          config = new Config();
         }
 
         const interpreter = new Interpreter(ast, { references: test.context || {}, config });
@@ -138,6 +141,13 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
         // Always deeply normalize output for report and comparison
         function normalize(val: any): { value: any; type: string } {
           if (val && typeof val === "object") {
+            // Handle ColorSymbol specifically to use ColorManager formatting
+            if (val instanceof ColorSymbol) {
+              return {
+                value: config.colorManager.formatColorMethod(val),
+                type: val.getTypeName(),
+              };
+            }
             // Handle ListSymbol or arrays
             if (Array.isArray(val)) {
               const isUniformTypeList = val.every((v) => v.type === val[0].type);

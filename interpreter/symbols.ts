@@ -697,7 +697,7 @@ export class ColorSymbol extends BaseSymbolType {
 
   getTypeName(): string {
     if (this.subType) {
-      return `Color.${this.subType.charAt(0).toUpperCase() + this.subType.slice(1)}`;
+      return `Color.${this.subType.charAt(0).toUpperCase() + this.subType.slice(1).toLowerCase()}`;
     }
     return this.type;
   }

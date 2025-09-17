@@ -407,4 +407,56 @@ ${spec}`,
 
     return color;
   }
+
+  /**
+   * Formats a ColorSymbol as a string representation using the appropriate schema-defined format.
+   *
+   * For hex colors (string values), returns the hex string as-is.
+   * For dynamic colors (object values), uses the schema's `order` property to determine
+   * parameter order and formats as a function call (e.g., "hsl(0, 100, 50.0)").
+   *
+   * @param color - The ColorSymbol to format
+   * @returns Formatted string representation of the color, or empty string if formatting fails
+   *
+   * @example
+   * ```typescript
+   * // Hex color
+   * const hexColor = new ColorSymbol("#ff0000", "Hex");
+   * manager.formatColorMethod(hexColor); // "#ff0000"
+   *
+   * // HSL color with schema order ["h", "s", "l"]
+   * const hslColor = new ColorSymbol({ h: 0, s: 100, l: 50 }, "HSL");
+   * manager.formatColorMethod(hslColor); // "hsl(0, 100, 50)"
+   * ```
+   */
+  formatColorMethod(color: ColorSymbol): string {
+    if (typeof color.value === "string") {
+      // For hex colors, return the hex string
+      return color.value;
+    }
+
+    if (typeof color.value === "object" && color.value !== null && color.subType) {
+      const spec = this.getSpecFromColor(color);
+      if (!spec) {
+        return "";
+      }
+
+      const order = spec.schema.order;
+      if (!order || order.length === 0) {
+        return "";
+      }
+
+      // Extract values in the order specified by the schema
+      const values = order.map((key) => {
+        const value = color.value?.[key];
+        return value?.toString() || "0";
+      });
+
+      // Format as function call with the subtype name
+      const functionName = color.subType.toLowerCase();
+      return `${functionName}(${values.join(", ")})`;
+    }
+
+    return "";
+  }
 }
