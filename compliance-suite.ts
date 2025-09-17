@@ -34,16 +34,21 @@ interface ComplianceReport {
 }
 
 const SCHEMA_FILE_MAP: Record<string, string> = {
-  "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0/": "./specifications/colors/hsl.json",
-  "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0/": "./specifications/colors/srgb.json",
-  "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/": "./specifications/colors/rgb.json",
-  "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgba-color/0/": "./specifications/colors/rgba.json",
-  "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/lrgb-color/0/": "./specifications/colors/lrgb.json",
+  "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0/":
+    "./specifications/colors/hsl.json",
+  "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0/":
+    "./specifications/colors/srgb.json",
+  "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/":
+    "./specifications/colors/rgb.json",
+  "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgba-color/0/":
+    "./specifications/colors/rgba.json",
+  "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/lrgb-color/0/":
+    "./specifications/colors/lrgb.json",
 };
 
 function loadSchemas(schemas: string[]): ColorManager {
   const colorManager = new ColorManager();
-  
+
   for (const schemaUri of schemas) {
     const filePath = SCHEMA_FILE_MAP[schemaUri];
     if (filePath && fs.existsSync(filePath)) {
@@ -57,7 +62,7 @@ function loadSchemas(schemas: string[]): ColorManager {
       console.warn(`No file mapping found for schema: ${schemaUri}`);
     }
   }
-  
+
   return colorManager;
 }
 
@@ -120,14 +125,14 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
         const lexer = new Lexer(test.input);
         const parser = new Parser(lexer);
         const ast = parser.parse(test.inline);
-        
+
         // Load schemas if specified
         let config: Config | undefined;
         if (test.schemas && test.schemas.length > 0) {
           const colorManager = loadSchemas(test.schemas);
           config = new Config({ colorManager });
         }
-        
+
         const interpreter = new Interpreter(ast, { references: test.context || {}, config });
         const result = interpreter.interpret();
         // Always deeply normalize output for report and comparison
@@ -174,10 +179,13 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
             if ("value" in val && "type" in val && typeof val.type === "string") {
               // Recursively normalize value
               const norm = normalize(val.value);
-              return { value: norm.value, type: val.getTypeName ? val.getTypeName() : capitalizeFirst(val.type) };
+              return {
+                value: norm.value,
+                type: val.getTypeName ? val.getTypeName() : capitalizeFirst(val.type),
+              };
             }
           }
-          return { value: val, type: val && val.getTypeName ? val.getTypeName() : getType(val) };
+          return { value: val, type: val?.getTypeName ? val.getTypeName() : getType(val) };
         }
         const { value: normalizedValue, type: normalizedType } = normalize(result);
         actualOutput = normalizedValue;
@@ -284,11 +292,11 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
   }
 
   const report: ComplianceReport = { passed, failed, results };
-  
+
   if (config.output) {
     fs.writeFileSync(config.output, JSON.stringify(report, null, 2), "utf-8");
   }
-  
+
   return report;
 }
 

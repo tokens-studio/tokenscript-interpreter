@@ -36,14 +36,18 @@ export class Parser {
   }
 
   private formatError(message: string, token: Token = this.currentToken): string {
-    const { text: sourceText, line: currentLine, column: currentColumn } = this.lexer.getSourceInfo();
-    const lines = sourceText.split('\n');
+    const {
+      text: sourceText,
+      line: currentLine,
+      column: currentColumn,
+    } = this.lexer.getSourceInfo();
+    const lines = sourceText.split("\n");
     const tokenLine = token.line;
     const errorLineText = lines[tokenLine - 1] || "";
-    
+
     // Find the column position of the token
     let column = 1;
-    
+
     if (currentLine === tokenLine) {
       // If we're on the same line, use the current column position
       column = currentColumn;
@@ -55,29 +59,29 @@ export class Parser {
         column = tokenIndex + 1;
       }
     }
-    
+
     // Show context lines (2 before, 2 after)
     const contextLines = 2;
     const startLine = Math.max(0, tokenLine - 1 - contextLines);
     const endLine = Math.min(lines.length - 1, tokenLine - 1 + contextLines);
-    
+
     let contextText = "";
     for (let i = startLine; i <= endLine; i++) {
       const lineNum = i + 1;
       const lineText = lines[i] || "";
       const isErrorLine = lineNum === tokenLine;
-      
+
       // Add line number prefix
-      const linePrefix = `${lineNum.toString().padStart(3, ' ')} | `;
-      contextText += linePrefix + lineText + '\n';
-      
+      const linePrefix = `${lineNum.toString().padStart(3, " ")} | `;
+      contextText += `${linePrefix + lineText}\n`;
+
       // Add pointer line for the error line
       if (isErrorLine) {
-        const pointer = " ".repeat(linePrefix.length + Math.max(0, column - 1)) + "^";
-        contextText += pointer + '\n';
+        const pointer = `${" ".repeat(linePrefix.length + Math.max(0, column - 1))}^`;
+        contextText += `${pointer}\n`;
       }
     }
-    
+
     return `${message}\n\n${contextText.trim()}`;
   }
 

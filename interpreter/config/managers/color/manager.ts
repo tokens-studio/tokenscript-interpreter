@@ -74,6 +74,55 @@ export class ColorManager {
   }
 
   /**
+   * Removes version information from URI to normalize for comparison
+   */
+  private removeVersionFromUri(uri: string): string {
+    // Remove trailing version numbers like "/0/" or "/1/"
+    return uri.replace(/\/\d+\/$/, "/");
+  }
+
+  /**
+   * Find a conversion path from source to target format using BFS
+   */
+  private findConversionPath(sourceUri: string, targetUri: string): string[] {
+    const normalizedSource = this.removeVersionFromUri(sourceUri);
+    const normalizedTarget = this.removeVersionFromUri(targetUri);
+
+    if (normalizedSource === normalizedTarget) {
+      return [sourceUri];
+    }
+
+    const visited = new Set<string>([normalizedSource]);
+    const queue: Array<[string, string[]]> = [[sourceUri, [sourceUri]]];
+
+    while (queue.length > 0) {
+      const shifted = queue.shift();
+      if (!shifted) break;
+      const [current, path] = shifted;
+      const _normalizedCurrent = this.removeVersionFromUri(current);
+
+      // Check all possible conversions from current format
+      const availableConversions = this.conversions.get(current);
+      if (!availableConversions) continue;
+
+      for (const nextFormat of availableConversions.keys()) {
+        const normalizedNext = this.removeVersionFromUri(nextFormat);
+
+        if (normalizedNext === normalizedTarget) {
+          return [...path, nextFormat];
+        }
+
+        if (!visited.has(normalizedNext)) {
+          visited.add(normalizedNext);
+          queue.push([nextFormat, [...path, nextFormat]]);
+        }
+      }
+    }
+
+    return [];
+  }
+
+  /**
    * Creates a clone of this class to be passed down to initializers and conversion functions
    * Links properties to the parent config.
    */
@@ -92,7 +141,7 @@ export class ColorManager {
 
     spec.initializers.forEach((spec) => {
       try {
-        const { lexer, parser, ast } = parseExpression(spec.script.script);
+        const { ast } = parseExpression(spec.script.script);
         const fn = (args: Array<ISymbolType>): ColorSymbol => {
           const result = new Interpreter(ast, { references: { input: args }, config }).interpret();
           if (!(result instanceof ColorSymbol)) {
@@ -216,7 +265,14 @@ ${spec}`,
   }
 
   public hasConversion(sourceUri: string, targetUri: string): boolean {
-    return this.conversions.get(sourceUri)?.has(targetUri) ?? false;
+    // Check direct conversion first
+    if (this.conversions.get(sourceUri)?.has(targetUri)) {
+      return true;
+    }
+
+    // Check if there's an indirect conversion path
+    const conversionPath = this.findConversionPath(sourceUri, targetUri);
+    return conversionPath.length > 0;
   }
 
   public hasConversionByType(sourceType: string, targetType: string): boolean {
@@ -242,12 +298,35 @@ ${spec}`,
       return color;
     }
 
-    const conversionFn = this.conversions.get(sourceUri)?.get(targetUri);
-    if (!conversionFn) {
-      throw new InterpreterError(`No conversion found from '${sourceUri}' to '${targetUri}'`);
+    // Try direct conversion first
+    const directConversionFn = this.conversions.get(sourceUri)?.get(targetUri);
+    if (directConversionFn) {
+      return directConversionFn(color);
     }
 
-    return conversionFn(color);
+    // If no direct conversion, find a path through intermediate conversions
+    const conversionPath = this.findConversionPath(sourceUri, targetUri);
+    if (conversionPath.length === 0) {
+      throw new InterpreterError(`No conversion path found from '${sourceUri}' to '${targetUri}'`);
+    }
+
+    // Execute the conversion chain
+    let currentColor = color;
+    for (let i = 0; i < conversionPath.length - 1; i++) {
+      const fromUri = conversionPath[i];
+      const toUri = conversionPath[i + 1];
+
+      const conversionFn = this.conversions.get(fromUri)?.get(toUri);
+      if (!conversionFn) {
+        throw new InterpreterError(
+          `Missing conversion step from '${fromUri}' to '${toUri}' in conversion path`,
+        );
+      }
+
+      currentColor = conversionFn(currentColor);
+    }
+
+    return currentColor;
   }
 
   public convertToByType(color: ColorSymbol, targetType: string): ColorSymbol {

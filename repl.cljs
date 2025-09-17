@@ -242,8 +242,8 @@ return j;
 
 (defn setup-color-manager [uris]
   (let [cm (ColorManager.)]
-    (doseq [uri uris]
-      (let [spec (-> (fs/readFileSync uri "utf-8")
+    (doseq [[uri path] uris]
+      (let [spec (-> (fs/readFileSync path "utf-8")
                      (js/JSON.parse))]
         (.register cm uri spec)))
     cm))
@@ -254,7 +254,7 @@ return j;
     (let [lexer (Lexer. code)
           parser (Parser. lexer)
           color-manager (setup-color-manager (or schema-uris
-                                                 ["./specifications/colors/rgb.json"]))
+                                                 {"https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/" "./specifications/colors/rgb.json"}))
           config  (Config. #js {:colorManager color-manager})
           interpreter (Interpreter. parser #js {:config config
                                                 :references (some-> references (clj->js))})
@@ -275,11 +275,12 @@ c")
   ;; => #object[ColorSymbol #ffffff]
 
   (-> (run-with-colormanager
-       "variable c: Color = {COLOR};
-return c.to.hsl()"
+       "variable c: Color.Hsl = hsl(0,0,0);
+return c.to.srgb()"
        {:references {:COLOR "#FF0000"}
-        :schema-uris ["./specifications/colors/rgb.json"
-                      "./specifications/colors/hsl.json"]}))
+        :schema-uris {"https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/" "./specifications/colors/rgb.json"
+                      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0/" "./specifications/colors/srgb.json"
+                      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0/" "./specifications/colors/hsl.json"}}))
   ;; => "HSL"
 
   (run-with-colormanager
