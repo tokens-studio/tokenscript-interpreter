@@ -168,4 +168,100 @@ describe("Control Structures - If Statements", () => {
     const result = interpreter.symbolTable.get("x");
     expect(result?.value).toBe(10);
   });
+
+  it("should handle if-elif-else statement", () => {
+    const text = `
+    variable x: Number = 0;
+    if(false) [
+        x = 5;
+    ] elif(true) [
+        x = 10;
+    ] else [
+        x = 15;
+    ];
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+    const result = interpreter.symbolTable.get("x");
+    expect(result?.value).toBe(10);
+  });
+
+  it("should handle if-elif-else all false conditions", () => {
+    const text = `
+    variable x: Number = 0;
+    if(false) [
+        x = 5;
+    ] elif(false) [
+        x = 10;
+    ] else [
+        x = 15;
+    ];
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+    const result = interpreter.symbolTable.get("x");
+    expect(result?.value).toBe(15);
+  });
+
+  it("should handle multiple elif statements", () => {
+    const text = `
+    variable x: Number = 0;
+    if(false) [
+        x = 5;
+    ] elif(false) [
+        x = 10;
+    ] elif(true) [
+        x = 20;
+    ] elif(true) [
+        x = 25;
+    ] else [
+        x = 30;
+    ];
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+    const result = interpreter.symbolTable.get("x");
+    expect(result?.value).toBe(20);
+  });
+
+  it("should throw error for non-boolean elif condition", () => {
+    const text = `
+    variable x: Number = 0;
+    if(5) [
+        x = 5;
+    ] elif("test") [
+        x = 10;
+    ] else [
+        x = 15;
+    ];
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    expect(() => interpreter.interpret()).toThrow(InterpreterError);
+  });
+
+  it("should handle return in elif statement", () => {
+    const text = `
+    variable x: Number = 0;
+    if(false) [
+        return 5;
+    ] elif(true) [
+        return 10;
+    ] else [
+        return 15;
+    ];
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    const result = interpreter.interpret();
+    expect(result?.value).toBe(10);
+  });
 });

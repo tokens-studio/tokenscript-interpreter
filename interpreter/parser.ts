@@ -9,6 +9,7 @@ import {
   FunctionCallNode,
   HexColorNode,
   IdentifierNode,
+  IfConditionNode,
   IfNode,
   ImplicitListNode,
   ListNode,
@@ -266,6 +267,23 @@ export class Parser {
     const condition = this.expr();
     this.eat(TokenType.RPAREN);
     const ifBody = this.block().statements as StatementListNode;
+
+    const conditions = [new IfConditionNode(condition, ifBody, ifToken)];
+
+    // Handle elif clauses
+    while (
+      this.currentToken.type === TokenType.RESERVED_KEYWORD &&
+      this.currentToken.value === ReservedKeyword.ELIF
+    ) {
+      this.eat(TokenType.RESERVED_KEYWORD); // 'elif'
+      this.eat(TokenType.LPAREN);
+      const elifCondition = this.expr();
+      this.eat(TokenType.RPAREN);
+      const elifBody = this.block().statements as StatementListNode;
+      conditions.push(new IfConditionNode(elifCondition, elifBody, ifToken));
+    }
+
+    // Check for 'else' block
     let elseBody: StatementListNode | null = null;
     if (
       this.currentToken.type === TokenType.RESERVED_KEYWORD &&
@@ -274,7 +292,8 @@ export class Parser {
       this.eat(TokenType.RESERVED_KEYWORD); // 'else'
       elseBody = this.block().statements as StatementListNode;
     }
-    return new IfNode(condition, ifBody, elseBody, ifToken);
+
+    return new IfNode(conditions, elseBody, ifToken);
   }
 
   private block(): BlockNode {
