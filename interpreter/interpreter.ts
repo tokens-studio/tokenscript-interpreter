@@ -422,7 +422,15 @@ export class Interpreter {
         // Handle method calls (e.g., str.lower())
         const args = right.args.map((arg) => this.visit(arg) as ISymbolType);
         if (left.hasMethod(right.name, args)) {
-          return left.callMethod?.(right.name, args, this.config);
+          const result = left.callMethod?.(right.name, args, this.config);
+          if (result === null || result === undefined) {
+            throw new InterpreterError(
+              `Method '${right.name}' returned null or undefined`,
+              node.token?.line,
+              node.token,
+            );
+          }
+          return result;
         }
         throw new InterpreterError(
           `Method '${right.name}' not found on '${left}' (${left.type})`,
@@ -433,7 +441,15 @@ export class Interpreter {
       if (right instanceof IdentifierNode) {
         // Handle property access (e.g., str.length)
         if (left.hasAttribute(right.name)) {
-          return left.getAttribute?.(right.name);
+          const result = left.getAttribute?.(right.name);
+          if (result === null || result === undefined) {
+            throw new InterpreterError(
+              `Attribute '${right.name}' returned null or undefined`,
+              node.token?.line,
+              node.token,
+            );
+          }
+          return result;
         }
         let errMsg = `Attribute '${right.name}' not found on '${left}' (${left.type})`;
         // Force exactly "on Color" string for ColorSymbols (for test compatibility)

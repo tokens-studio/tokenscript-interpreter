@@ -126,7 +126,8 @@ export class ColorManager {
               { result },
             );
           }
-          return new ColorSymbol(result, targetSpec.name);
+          const value = typeof result === "string" ? result : (result?.value ?? null);
+          return new ColorSymbol(value, targetSpec.name);
         }
         return result as ColorSymbol;
       };
