@@ -24,7 +24,7 @@ interface TestResult {
   actualOutputType: string;
   expectedOutput: any;
   expectedOutputType: string;
-  error?: string; // To capture any error that occurred during test execution
+  error?: string;
 }
 
 interface ComplianceReport {
@@ -33,7 +33,6 @@ interface ComplianceReport {
   results: TestResult[];
 }
 
-// Schema URI to local file mapping
 const SCHEMA_FILE_MAP: Record<string, string> = {
   "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0/": "./specifications/colors/hsl.json",
   "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0/": "./specifications/colors/srgb.json",
