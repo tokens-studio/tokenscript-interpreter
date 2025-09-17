@@ -241,9 +241,10 @@ describe("Error Handling - Interpreter Errors", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    expect(() => new Interpreter(parser, { references: { complex_ref: { nested: "object" } } })).toThrow(
-      InterpreterError
-    );
+    expect(() => {
+      const interpreter = new Interpreter(parser, { references: { complex_ref: new Date() } });
+      interpreter.interpret();
+    }).toThrow(InterpreterError);
   });
 
   it("should throw error for multiple units in expression", () => {
