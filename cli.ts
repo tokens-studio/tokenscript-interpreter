@@ -78,7 +78,7 @@ program
   .description("Run the TokenScript compliance suite on a directory of tests")
   .option("--test-dir <path>", "Path to the directory containing compliance tests")
   .option("--test-file <path>", "Path to a specific test file to run")
-  .option("--output <path>", "Output file path", "compliance-report.json")
+  .option("--output <path>", "Output file path (if not provided, results will be printed to console)")
   .action(async (options) => {
     const config = {
       dir: options.testDir,
@@ -87,7 +87,22 @@ program
     };
     const report = await evaluateStandardCompliance(config);
     console.log(`Compliance suite finished. Passed: ${report.passed}, Failed: ${report.failed}`);
-    console.log(`Full report written to ${options.output}`);
+    
+    if (options.output) {
+      console.log(`Full report written to ${options.output}`);
+    } else {
+      console.log("\nDetailed Results:");
+      report.results.forEach((result, index) => {
+        const status = result.status === "passed" ? chalk.green("✅ PASSED") : chalk.red("❌ FAILED");
+        console.log(`\n${index + 1}. ${status} - ${result.name}`);
+        console.log(`   Path: ${result.path}`);
+        console.log(`   Expected: ${result.expectedOutput} (${result.expectedOutputType})`);
+        console.log(`   Actual: ${result.actualOutput} (${result.actualOutputType})`);
+        if (result.error) {
+          console.log(`   Error: ${chalk.yellow(result.error)}`);
+        }
+      });
+    }
   });
 
 // Interactive REPL mode

@@ -90,7 +90,7 @@ function readJsonFilesRecursively(dir: string): string[] {
 interface ComplianceConfig {
   dir?: string;
   file?: string;
-  output: string;
+  output?: string;
 }
 
 export async function evaluateStandardCompliance(config: ComplianceConfig) {
@@ -285,7 +285,11 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
   }
 
   const report: ComplianceReport = { passed, failed, results };
-  fs.writeFileSync(config.output, JSON.stringify(report, null, 2), "utf-8");
+  
+  if (config.output) {
+    fs.writeFileSync(config.output, JSON.stringify(report, null, 2), "utf-8");
+  }
+  
   return report;
 }
 
