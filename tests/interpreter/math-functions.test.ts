@@ -4,11 +4,11 @@ import { Lexer } from "../../interpreter/lexer";
 import { Parser } from "../../interpreter/parser";
 
 describe("Math Functions - Parse Int", () => {
-  it("should handle parse_int with base 16", () => {
+  it("should handle parseint with base 16", () => {
     const text = `
-    variable i: Number = parse_int("ff", 16);
-    variable j: Number = parse_int("00", 16);
-    variable k: Number = parse_int("A0", 16);
+    variable i: Number = parseint("ff", 16);
+    variable j: Number = parseint("00", 16);
+    variable k: Number = parseint("A0", 16);
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
@@ -24,11 +24,11 @@ describe("Math Functions - Parse Int", () => {
     expect(k?.value).toBe(160);
   });
 
-  it("should handle parse_int with base 10", () => {
+  it("should handle parseint with base 10", () => {
     const text = `
-    variable a: Number = parse_int("123", 10);
-    variable b: Number = parse_int("0", 10);
-    variable c: Number = parse_int("999", 10);
+    variable a: Number = parseint("123", 10);
+    variable b: Number = parseint("0", 10);
+    variable c: Number = parseint("999", 10);
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
@@ -44,11 +44,11 @@ describe("Math Functions - Parse Int", () => {
     expect(c?.value).toBe(999);
   });
 
-  it("should handle parse_int with base 2", () => {
+  it("should handle parseint with base 2", () => {
     const text = `
-    variable binary1: Number = parse_int("1010", 2);
-    variable binary2: Number = parse_int("1111", 2);
-    variable binary3: Number = parse_int("0", 2);
+    variable binary1: Number = parseint("1010", 2);
+    variable binary2: Number = parseint("1111", 2);
+    variable binary3: Number = parseint("0", 2);
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);

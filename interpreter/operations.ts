@@ -206,14 +206,14 @@ export const DEFAULT_FUNCTION_MAP: Record<string, (...args: ISymbolType[]) => IS
       throw new InterpreterError("pow() expects two number arguments.");
     return new NumberSymbol((base.value as number) ** (exp.value as number));
   },
-  parse_int: (strSymbol: ISymbolType, baseSymbol?: ISymbolType): NumberSymbol => {
+  parseint: (strSymbol: ISymbolType, baseSymbol?: ISymbolType): NumberSymbol => {
     if (!(strSymbol instanceof StringSymbol))
-      throw new InterpreterError("parse_int() first argument must be a string.");
+      throw new InterpreterError("parseint() first argument must be a string.");
     const base = baseSymbol instanceof NumberSymbol ? (baseSymbol.value as number) : 10;
     const parsed = Number.parseInt(strSymbol.value as string, base);
     if (Number.isNaN(parsed))
       throw new InterpreterError(
-        `Invalid string for parse_int: "${strSymbol.value}" with base ${base}.`,
+        `Invalid string for parseint: "${strSymbol.value}" with base ${base}.`,
       );
     return new NumberSymbol(parsed);
   },

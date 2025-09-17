@@ -165,7 +165,7 @@ return primary;  // #3B82F6
 - References: `{token.name}` syntax
 - Math Functions: `min()`, `max()`, `sqrt()`, `pow()`, `round()`, `floor()`, `ceil()`, `roundTo()`, `abs()`
 - Trigonometric: `sin()`, `cos()`, `tan()`, `pi()`
-- Parsing: `parse_int(value, base)`
+- Parsing: `parseint(value, base)`
 
 ### Performance Tracking
 
