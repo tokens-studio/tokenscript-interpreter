@@ -1,17 +1,17 @@
-import type { ISymbolType } from "@/types";
+import { attributesToString, type ReassignNode } from "@/interpreter/ast";
+import { ColorManagerError } from "@/interpreter/error-types";
+import { InterpreterError } from "@/interpreter/errors";
+import { parseExpression } from "@/interpreter/parser";
 import { ColorSymbol, type dynamicColorValue, typeEquals } from "@/interpreter/symbols";
+import { Interpreter } from "@/lib";
+import type { ISymbolType } from "@/types";
+import { Config } from "../../config";
 import {
   type ColorSpecification,
   ColorSpecificationSchema,
   specName,
   validSchemaTypes,
 } from "./schema";
-import { InterpreterError } from "@/interpreter/errors";
-import { attributesToString, type ReassignNode } from "@/interpreter/ast";
-import { ColorManagerError } from "@/interpreter/error-types";
-import { parseExpression } from "@/interpreter/parser";
-import { Interpreter } from "@/lib";
-import { Config } from "../../config";
 
 // Types -----------------------------------------------------------------------
 

@@ -32,14 +32,14 @@ import * as operations from "./operations";
 import { Parser } from "./parser";
 
 import {
-  basicSymbolTypes,
   BooleanSymbol,
+  basicSymbolTypes,
   ColorSymbol,
+  jsValueToSymbolType,
   ListSymbol,
   NumberSymbol,
   NumberWithUnitSymbol,
   StringSymbol,
-  jsValueToSymbolType,
   typeEquals,
 } from "./symbols";
 import { SymbolTable } from "./symbolTable";
