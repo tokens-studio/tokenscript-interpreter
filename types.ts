@@ -24,7 +24,6 @@ export enum SupportedFormats {
   CM = "cm",
   MM = "mm",
   DEG = "deg",
-  S = "s",
   PERCENTAGE = "%",
 }
 
