@@ -194,6 +194,17 @@ export class NumberSymbol extends BaseSymbolType {
     return new NumberSymbol(null);
   }
 
+  hasAttribute(attributeName: string): boolean {
+    return attributeName === "value";
+  }
+
+  getAttribute(attributeName: string): ISymbolType | null {
+    if (attributeName === "value") {
+      return new NumberSymbol(this.value);
+    }
+    throw new InterpreterError(`Attribute '${attributeName}' not found on Number.`);
+  }
+
   // Direct translation of to_string method from token_interpreter/symbols.py
   toStringImpl(radix?: NumberSymbol): StringSymbol {
     this.expectSafeValue(this.value);
@@ -608,6 +619,17 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
 
   static empty(): NumberWithUnitSymbol {
     return new NumberWithUnitSymbol(null, "px");
+  }
+
+  hasAttribute(attributeName: string): boolean {
+    return attributeName === "value";
+  }
+
+  getAttribute(attributeName: string): ISymbolType | null {
+    if (attributeName === "value") {
+      return new NumberSymbol(this.value);
+    }
+    throw new InterpreterError(`Attribute '${attributeName}' not found on NumberWithUnit.`);
   }
 }
 

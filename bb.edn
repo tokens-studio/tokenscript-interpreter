@@ -5,6 +5,7 @@
   fix
   {:doc "Fixes all"
    :task (do
+            (shell "steam-run npx biome check --fix --diagnostic-level=error")
             (shell "steam-run npm run format")
             (shell "steam-run npm run lint:fix -- --skip=suspicious"))}
   nrepl

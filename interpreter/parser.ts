@@ -513,7 +513,7 @@ export class Parser {
     let node = leftNode;
     while (this.currentToken.type === TokenType.DOT) {
       this.eat(TokenType.DOT);
-      // @ts-ignore - typescript bug with overlap?
+      // @ts-expect-error - typescript bug with overlap?
       if (this.currentToken.type === TokenType.STRING) {
         const nextToken = this.lexer.peekToken();
         if (nextToken && nextToken.type === TokenType.LPAREN) {

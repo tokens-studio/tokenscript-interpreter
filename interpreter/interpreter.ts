@@ -146,7 +146,7 @@ export class Interpreter {
         );
       }
 
-      return mathImpl(left, right);
+      return mathImpl(left, right, this.config);
     }
 
     const comparisonImpl = operations.COMPARISON_IMPLEMENTATIONS[opType];
@@ -169,13 +169,14 @@ export class Interpreter {
     return new StringSymbol(node.value);
   }
 
-  // Bare identifiers are treated as string literals if not found as variables
+  /**
+   * Bare identifiers are treated as string literals if not found as variables
+   * Check symbol table first (variables override references), then references
+   */
   private visitIdentifierNode(node: IdentifierNode): ISymbolType {
-    const value = this.symbolTable.get(node.name);
-    if (!value) {
-      return new StringSymbol(node.name);
-    }
-    return value;
+    return (
+      this.symbolTable.get(node.name) || this.getReference(node.name) || new StringSymbol(node.name)
+    );
   }
 
   private visitUnaryOpNode(node: UnaryOpNode): ISymbolType {
@@ -280,6 +281,11 @@ export class Interpreter {
     const fnName = node.name.toLowerCase();
     const args = node.args.map((arg) => this.visit(arg) as ISymbolType);
 
+    // Special handling for sum function to use unit manager
+    if (fnName === "sum") {
+      return this.handleSumFunction(args);
+    }
+
     const defaultFn = operations.DEFAULT_FUNCTION_MAP[fnName];
     if (defaultFn) {
       return defaultFn(...args);
@@ -295,6 +301,54 @@ export class Interpreter {
     }
 
     throw new InterpreterError(`Unknown function: '${node.name}'`, node.token?.line, node.token);
+  }
+
+  private handleSumFunction(args: ISymbolType[]): ISymbolType {
+    if (args.length < 2) throw new InterpreterError("sum() requires at least two arguments.");
+
+    // Check if any arguments are NumberWithUnitSymbol
+    const hasUnits = args.some((arg) => arg instanceof NumberWithUnitSymbol);
+
+    if (!hasUnits) {
+      // No units, just sum numbers
+      const sum = args.reduce((acc, arg) => {
+        if (arg instanceof NumberSymbol) return acc + (arg.value as number);
+        if (typeof arg.value === "number") return acc + (arg.value as number);
+        throw new InterpreterError("sum() expects number arguments.");
+      }, 0);
+      return new NumberSymbol(sum);
+    }
+
+    // Has units, use unit manager for conversion
+    const numericArgs = args.filter(
+      (arg) => arg instanceof NumberSymbol || arg instanceof NumberWithUnitSymbol,
+    ) as Array<NumberSymbol | NumberWithUnitSymbol>;
+
+    if (numericArgs.length !== args.length) {
+      throw new InterpreterError("sum() expects number or NumberWithUnit arguments.");
+    }
+
+    try {
+      const converted = this.config.unitManager.convertToCommonFormat(numericArgs);
+      const sum = converted.reduce((acc, arg) => {
+        const value = (arg.value as number) || 0;
+        return acc + value;
+      }, 0);
+
+      // Return with the unit of the first converted argument if it has one
+      const firstUnitArg = converted.find(
+        (arg) => arg instanceof NumberWithUnitSymbol,
+      ) as NumberWithUnitSymbol;
+      if (firstUnitArg) {
+        return new NumberWithUnitSymbol(sum, firstUnitArg.unit);
+      }
+
+      return new NumberSymbol(sum);
+    } catch (error) {
+      throw new InterpreterError(
+        `sum() unit conversion failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
   }
 
   private visitAssignNode(node: AssignNode): void {

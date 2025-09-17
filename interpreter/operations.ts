@@ -1,4 +1,5 @@
 import { type ISymbolType, Operations, type SupportedFormats } from "../types";
+import type { Config } from "./config/config";
 import { InterpreterError } from "./errors";
 import {
   type BaseSymbolType,
@@ -9,7 +10,7 @@ import {
 } from "./symbols";
 
 type MathOperand = NumberSymbol | NumberWithUnitSymbol;
-type OperationFunction = (a: MathOperand, b: MathOperand) => MathOperand;
+type OperationFunction = (a: MathOperand, b: MathOperand, config?: Config) => MathOperand;
 type BooleanOperationFunction = (a: ISymbolType, b: ISymbolType) => BooleanSymbol;
 
 function decomposeUnit(operand: MathOperand): {
@@ -27,7 +28,11 @@ function decomposeUnit(operand: MathOperand): {
   );
 }
 
-function recomposeUnit(value: number, units: (SupportedFormats | null)[]): MathOperand {
+function recomposeUnit(
+  value: number,
+  units: (SupportedFormats | null)[],
+  _config?: Config,
+): MathOperand {
   const validUnits = units.filter((u) => u !== null) as SupportedFormats[];
   if (validUnits.length === 0) {
     return new NumberSymbol(value);
@@ -39,12 +44,31 @@ function recomposeUnit(value: number, units: (SupportedFormats | null)[]): MathO
 }
 
 function mathWrapper(func: (a: number, b: number) => number): OperationFunction {
-  return (a: MathOperand, b: MathOperand): MathOperand => {
+  return (a: MathOperand, b: MathOperand, config?: Config): MathOperand => {
+    // If we have a config with unit manager, try to convert to common format
+    if (config?.unitManager) {
+      try {
+        const converted = config.unitManager.convertToCommonFormat([a, b]);
+        if (converted.length === 2) {
+          const convertedA = converted[0] as MathOperand;
+          const convertedB = converted[1] as MathOperand;
+
+          const opA = decomposeUnit(convertedA);
+          const opB = decomposeUnit(convertedB);
+
+          const resultValue = func(opA.value, opB.value);
+          return recomposeUnit(resultValue, [opA.unit, opB.unit], config);
+        }
+      } catch (_error) {
+        // Fall back to original behavior if unit conversion fails
+      }
+    }
+
     const opA = decomposeUnit(a);
     const opB = decomposeUnit(b);
 
     const resultValue = func(opA.value, opB.value);
-    return recomposeUnit(resultValue, [opA.unit, opB.unit]);
+    return recomposeUnit(resultValue, [opA.unit, opB.unit], config);
   };
 }
 
@@ -95,15 +119,65 @@ export const LOGICAL_BOOLEAN_IMPLEMENTATIONS: Record<string, BooleanOperationFun
   },
 };
 
+function powerWrapper(func: (a: number, b: number) => number): OperationFunction {
+  return (a: MathOperand, b: MathOperand, config?: Config): MathOperand => {
+    // Power operations should not allow unit conversion as it doesn't make dimensional sense
+    const opA = decomposeUnit(a);
+    const opB = decomposeUnit(b);
+
+    // Reject if both operands have units
+    if (opA.unit && opB.unit) {
+      throw new InterpreterError(
+        `Cannot raise ${opA.unit} to the power of ${opB.unit}. Unit exponents are not supported.`,
+      );
+    }
+
+    const resultValue = func(opA.value, opB.value);
+    return recomposeUnit(resultValue, [opA.unit, opB.unit], config);
+  };
+}
+
+function multiplyDivideWrapper(func: (a: number, b: number) => number): OperationFunction {
+  return (a: MathOperand, b: MathOperand, config?: Config): MathOperand => {
+    // For multiplication/division, handle percentages specially
+    if (config?.unitManager) {
+      // Check if one operand is a percentage
+      const aIsPercent =
+        a instanceof NumberWithUnitSymbol &&
+        config.unitManager.getSpecByKeyword(a.unit)?.type === "relative";
+      const bIsPercent =
+        b instanceof NumberWithUnitSymbol &&
+        config.unitManager.getSpecByKeyword(b.unit)?.type === "relative";
+
+      if (aIsPercent && !bIsPercent) {
+        // a% * b = (a/100) * b with b's unit (if any)
+        const resultValue = func((a.value as number) / 100, b.value as number);
+        return b instanceof NumberWithUnitSymbol
+          ? new NumberWithUnitSymbol(resultValue, b.unit)
+          : new NumberSymbol(resultValue);
+      } else if (bIsPercent && !aIsPercent) {
+        // a * b% = a * (b/100) with a's unit (if any)
+        const resultValue = func(a.value as number, (b.value as number) / 100);
+        return a instanceof NumberWithUnitSymbol
+          ? new NumberWithUnitSymbol(resultValue, a.unit)
+          : new NumberSymbol(resultValue);
+      }
+    }
+
+    // Fall back to standard unit conversion for non-percentage cases
+    return mathWrapper(func)(a, b, config);
+  };
+}
+
 export const MATH_IMPLEMENTATIONS: Record<string, OperationFunction> = {
   [Operations.ADD]: mathWrapper((a, b) => a + b),
   [Operations.SUBTRACT]: mathWrapper((a, b) => a - b),
-  [Operations.MULTIPLY]: mathWrapper((a, b) => a * b),
-  [Operations.DIVIDE]: mathWrapper((a, b) => {
+  [Operations.MULTIPLY]: multiplyDivideWrapper((a, b) => a * b),
+  [Operations.DIVIDE]: multiplyDivideWrapper((a, b) => {
     if (b === 0) throw new InterpreterError("Division by zero.");
     return a / b;
   }),
-  [Operations.POWER]: mathWrapper((a, b) => a ** b),
+  [Operations.POWER]: powerWrapper((a, b) => a ** b),
 };
 
 // Comparison operations map to TokenType values directly
@@ -137,14 +211,49 @@ export const DEFAULT_FUNCTION_MAP: Record<string, (...args: ISymbolType[]) => IS
     });
     return new NumberSymbol(Math.max(...nums));
   },
-  sum: (...args: ISymbolType[]): NumberSymbol => {
+  sum: (...args: ISymbolType[]): ISymbolType => {
     if (args.length < 2) throw new InterpreterError("sum() requires at least two arguments.");
+
+    // Check if any arguments are NumberWithUnitSymbol
+    const hasUnits = args.some((arg) => arg instanceof NumberWithUnitSymbol);
+
+    if (!hasUnits) {
+      // No units, just sum numbers
+      const sum = args.reduce((acc, arg) => {
+        if (arg instanceof NumberSymbol) return acc + (arg.value as number);
+        if (typeof arg.value === "number") return acc + (arg.value as number);
+        throw new InterpreterError("sum() expects number arguments.");
+      }, 0);
+      return new NumberSymbol(sum);
+    }
+
+    // Has units, need to handle unit conversion
+    // This will be handled by the interpreter context when available
+    const numericArgs = args.filter(
+      (arg) => arg instanceof NumberSymbol || arg instanceof NumberWithUnitSymbol,
+    ) as Array<NumberSymbol | NumberWithUnitSymbol>;
+
+    if (numericArgs.length !== args.length) {
+      throw new InterpreterError("sum() expects number or NumberWithUnit arguments.");
+    }
+
+    // For now, return the first argument type as a placeholder
+    // The actual unit resolution should happen in the interpreter
     const sum = args.reduce((acc, arg) => {
       if (arg instanceof NumberSymbol) return acc + (arg.value as number);
       if (arg instanceof NumberWithUnitSymbol) return acc + (arg.value as number);
       if (typeof arg.value === "number") return acc + (arg.value as number);
       throw new InterpreterError("sum() expects number arguments.");
     }, 0);
+
+    // Return with the unit of the first NumberWithUnitSymbol found
+    const firstUnitArg = args.find(
+      (arg) => arg instanceof NumberWithUnitSymbol,
+    ) as NumberWithUnitSymbol;
+    if (firstUnitArg) {
+      return new NumberWithUnitSymbol(sum, firstUnitArg.unit);
+    }
+
     return new NumberSymbol(sum);
   },
   mod: (a: ISymbolType, b: ISymbolType): NumberSymbol => {

@@ -6,6 +6,7 @@ import { ColorSymbol, type dynamicColorValue, typeEquals } from "@/interpreter/s
 import { Interpreter } from "@/lib";
 import type { ISymbolType } from "@/types";
 import { Config } from "../../config";
+import { BaseManager } from "../base-manager";
 import {
   type ColorSpecification,
   ColorSpecificationSchema,
@@ -55,71 +56,18 @@ const defaultTypeSpecs: Specs = new Map([
 
 // ColorManager ----------------------------------------------------------------
 
-export class ColorManager {
-  private specs: Specs = new Map();
-
-  // Computed Map of type name to uri
-  private specTypes: Map<colorName, uriType> = new Map();
-
-  // Initializer functions
+export class ColorManager extends BaseManager<ColorSpecification, ColorSymbol, ColorSymbol> {
   private initializers: Map<colorName, (args: Array<ISymbolType>) => ColorSymbol> = new Map();
 
-  // Nested map: source URI -> target URI -> conversion function
-  private conversions: Map<uriType, Map<uriType, (color: ColorSymbol) => ColorSymbol>> = new Map();
-
   constructor(defaultSpecs = defaultTypeSpecs) {
+    super();
     for (const [uri, spec] of defaultSpecs) {
       this.register(uri, spec);
     }
   }
 
-  /**
-   * Removes version information from URI to normalize for comparison
-   */
-  private removeVersionFromUri(uri: string): string {
-    // Remove trailing version numbers like "/0/" or "/1/"
-    return uri.replace(/\/\d+\/$/, "/");
-  }
-
-  /**
-   * Find a conversion path from source to target format using BFS
-   */
-  private findConversionPath(sourceUri: string, targetUri: string): string[] {
-    const normalizedSource = this.removeVersionFromUri(sourceUri);
-    const normalizedTarget = this.removeVersionFromUri(targetUri);
-
-    if (normalizedSource === normalizedTarget) {
-      return [sourceUri];
-    }
-
-    const visited = new Set<string>([normalizedSource]);
-    const queue: Array<[string, string[]]> = [[sourceUri, [sourceUri]]];
-
-    while (queue.length > 0) {
-      const shifted = queue.shift();
-      if (!shifted) break;
-      const [current, path] = shifted;
-      const _normalizedCurrent = this.removeVersionFromUri(current);
-
-      // Check all possible conversions from current format
-      const availableConversions = this.conversions.get(current);
-      if (!availableConversions) continue;
-
-      for (const nextFormat of availableConversions.keys()) {
-        const normalizedNext = this.removeVersionFromUri(nextFormat);
-
-        if (normalizedNext === normalizedTarget) {
-          return [...path, nextFormat];
-        }
-
-        if (!visited.has(normalizedNext)) {
-          visited.add(normalizedNext);
-          queue.push([nextFormat, [...path, nextFormat]]);
-        }
-      }
-    }
-
-    return [];
+  protected getSpecName(spec: ColorSpecification): string {
+    return specName(spec);
   }
 
   /**
@@ -190,16 +138,8 @@ export class ColorManager {
         return result as ColorSymbol;
       };
 
-      // Ensure source map exists
-      if (!this.conversions.has(sourceUri)) {
-        this.conversions.set(sourceUri, new Map());
-      }
-
       // Set the conversion function
-      const sourceMap = this.conversions.get(sourceUri);
-      if (sourceMap) {
-        sourceMap.set(targetUri, fn);
-      }
+      this.registerConversionFunction(sourceUri, targetUri, fn);
     });
   }
 
@@ -235,10 +175,6 @@ ${spec}`,
     return parsedSpec;
   }
 
-  public getSpec(uri: string): ColorSpecification | undefined {
-    return this.specs.get(uri);
-  }
-
   public getSpecByType(type: string): ColorSpecification | undefined {
     const uri = this.specTypes.get(type.toLowerCase());
     if (!uri) return;
@@ -264,17 +200,6 @@ ${spec}`,
     return initFn(args);
   }
 
-  public hasConversion(sourceUri: string, targetUri: string): boolean {
-    // Check direct conversion first
-    if (this.conversions.get(sourceUri)?.has(targetUri)) {
-      return true;
-    }
-
-    // Check if there's an indirect conversion path
-    const conversionPath = this.findConversionPath(sourceUri, targetUri);
-    return conversionPath.length > 0;
-  }
-
   public hasConversionByType(sourceType: string, targetType: string): boolean {
     const sourceUri = this.specTypes.get(sourceType.toLowerCase());
     const targetUri = this.specTypes.get(targetType.toLowerCase());
@@ -293,40 +218,11 @@ ${spec}`,
       throw new InterpreterError(`No source URI found for color type '${color.subType}'`);
     }
 
-    // Identity conversion - if source and target URIs are the same, return original
-    if (sourceUri === targetUri) {
-      return color;
+    try {
+      return this.convertThroughPath(color, sourceUri, targetUri);
+    } catch (error: any) {
+      throw new InterpreterError(error.message);
     }
-
-    // Try direct conversion first
-    const directConversionFn = this.conversions.get(sourceUri)?.get(targetUri);
-    if (directConversionFn) {
-      return directConversionFn(color);
-    }
-
-    // If no direct conversion, find a path through intermediate conversions
-    const conversionPath = this.findConversionPath(sourceUri, targetUri);
-    if (conversionPath.length === 0) {
-      throw new InterpreterError(`No conversion path found from '${sourceUri}' to '${targetUri}'`);
-    }
-
-    // Execute the conversion chain
-    let currentColor = color;
-    for (let i = 0; i < conversionPath.length - 1; i++) {
-      const fromUri = conversionPath[i];
-      const toUri = conversionPath[i + 1];
-
-      const conversionFn = this.conversions.get(fromUri)?.get(toUri);
-      if (!conversionFn) {
-        throw new InterpreterError(
-          `Missing conversion step from '${fromUri}' to '${toUri}' in conversion path`,
-        );
-      }
-
-      currentColor = conversionFn(currentColor);
-    }
-
-    return currentColor;
   }
 
   public convertToByType(color: ColorSymbol, targetType: string): ColorSymbol {
