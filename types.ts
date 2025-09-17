@@ -103,6 +103,8 @@ export interface ISymbolType {
   getAttribute?(attributeName: string): ISymbolType | null;
   setAttribute?(attributeName: string, value: ISymbolType): void;
 
+  getTypeName(): string;
+
   // Static method to create an empty/null instance of the symbol type
   // static empty?(...args: any[]): ISymbolType;
 }

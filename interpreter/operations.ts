@@ -347,6 +347,18 @@ export const DEFAULT_FUNCTION_MAP: Record<string, (...args: ISymbolType[]) => IS
     return new StringSymbol(`rgba(${stringArgs})`);
   },
   pi: (): NumberSymbol => new NumberSymbol(Math.PI),
+
+  type: (arg: ISymbolType): StringSymbol => {
+    const typeName = arg.getTypeName();
+
+    // Handle special cases like "Color.Hex" -> "hex"
+    if (typeName.includes(".")) {
+      const parts = typeName.split(".");
+      return new StringSymbol(parts[parts.length - 1].toLowerCase());
+    }
+
+    return new StringSymbol(typeName.toLowerCase());
+  },
 };
 
 export const LANGUAGE_OPTIONS = {
