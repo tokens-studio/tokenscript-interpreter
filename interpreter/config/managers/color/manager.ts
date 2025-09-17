@@ -448,7 +448,7 @@ ${spec}`,
 
       // Extract values in the order specified by the schema
       const values = order.map((key) => {
-        const value = color.value?.[key];
+        const value = (color.value as Record<string, any>)?.[key];
         return value?.toString() || "0";
       });
 
