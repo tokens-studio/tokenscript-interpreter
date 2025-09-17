@@ -58,7 +58,7 @@
       },
       "script": {
         "type": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/",
-        "script": "variable color_parts: List = {input};\nvariable output: Color.HSL;\n output.h = color_parts.get(0);\noutput.l = color_parts.get(2);\nreturn output;"
+        "script": "variable color_parts: List = {input};\nvariable output: Color.HSL;\noutput.h = color_parts.get(0);\noutput.s = color_parts.get(1);\noutput.l = color_parts.get(2);\nreturn output;"
       },
       "keyword": "hsl",
       "description": "Creates a HSL color from string"
