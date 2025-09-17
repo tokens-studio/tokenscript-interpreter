@@ -33,7 +33,7 @@ export class TokenSetResolver {
 
     // CRITICAL: Pass the resolvedTokens Map directly to the Interpreter.
     // The interpreter now holds a LIVE REFERENCE to this map.
-    this.referenceCache = new Interpreter(null, this.resolvedTokens);
+    this.referenceCache = new Interpreter(null, { references: this.resolvedTokens });
   }
 
   private buildRequirementsGraph(): void {

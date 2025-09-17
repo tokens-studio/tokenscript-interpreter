@@ -99,7 +99,7 @@ describe("Error Handling - Interpreter Errors", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
@@ -109,7 +109,7 @@ describe("Error Handling - Interpreter Errors", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
@@ -119,7 +119,7 @@ describe("Error Handling - Interpreter Errors", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
@@ -131,7 +131,7 @@ describe("Error Handling - Interpreter Errors", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
@@ -141,7 +141,7 @@ describe("Error Handling - Interpreter Errors", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
@@ -151,7 +151,7 @@ describe("Error Handling - Interpreter Errors", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
@@ -161,7 +161,7 @@ describe("Error Handling - Interpreter Errors", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
@@ -172,7 +172,7 @@ describe("Error Handling - Interpreter Errors", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
@@ -183,7 +183,7 @@ describe("Error Handling - Interpreter Errors", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     expect(() => interpreter.interpret()).toThrow();
   });
 
@@ -194,7 +194,7 @@ describe("Error Handling - Interpreter Errors", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
@@ -206,7 +206,7 @@ describe("Error Handling - Interpreter Errors", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
@@ -218,7 +218,7 @@ describe("Error Handling - Interpreter Errors", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
@@ -231,7 +231,7 @@ describe("Error Handling - Interpreter Errors", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
@@ -241,7 +241,7 @@ describe("Error Handling - Interpreter Errors", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    expect(() => new Interpreter(parser, { complex_ref: { nested: "object" } })).toThrow(
+    expect(() => new Interpreter(parser, { references: { complex_ref: { nested: "object" } } })).toThrow(
       InterpreterError
     );
   });
@@ -252,7 +252,7 @@ describe("Error Handling - Interpreter Errors", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     expect(() => interpreter.interpret()).toThrow();
   });
 
@@ -262,7 +262,7 @@ describe("Error Handling - Interpreter Errors", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
@@ -272,7 +272,7 @@ describe("Error Handling - Interpreter Errors", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 });

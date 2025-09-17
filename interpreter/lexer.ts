@@ -410,6 +410,31 @@ export class Lexer {
     return nextToken.type === TokenType.EOF ? null : nextToken;
   }
 
+  peekTokens(n: number): Token[] | null {
+    // Save current state
+    const savedPos = this.pos;
+    const savedChar = this.currentChar;
+    const savedLine = this.line;
+    const savedColumn = this.column;
+
+    const tokens: Token[] = [];
+    for (let i = 0; i < n; i++) {
+      const token = this.nextToken();
+      if (token.type === TokenType.EOF) {
+        break;
+      }
+      tokens.push(token);
+    }
+
+    // Restore state
+    this.pos = savedPos;
+    this.currentChar = savedChar;
+    this.line = savedLine;
+    this.column = savedColumn;
+
+    return tokens.length > 0 ? tokens : null;
+  }
+
   public isEOF(): boolean {
     // Check if we're at the end of input or only have whitespace remaining
     let tempPos = this.pos;
@@ -422,5 +447,14 @@ export class Lexer {
     }
 
     return tempChar === null;
+  }
+
+  public getSourceInfo(): { text: string; pos: number; line: number; column: number } {
+    return {
+      text: this.text,
+      pos: this.pos,
+      line: this.line,
+      column: this.column,
+    };
   }
 }

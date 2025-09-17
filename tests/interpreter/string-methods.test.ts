@@ -11,7 +11,7 @@ describe("String Methods - Split Operations", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const parts = interpreter.symbolTable.get("parts");
@@ -29,7 +29,7 @@ describe("String Methods - Split Operations", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const parts = interpreter.symbolTable.get("parts");
@@ -46,7 +46,7 @@ describe("String Methods - Split Operations", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const parts = interpreter.symbolTable.get("parts");
@@ -61,7 +61,7 @@ describe("String Methods - Split Operations", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const chars = interpreter.symbolTable.get("chars");
@@ -79,7 +79,7 @@ describe("String Methods - Concatenation", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const result = interpreter.symbolTable.get("result");
@@ -96,7 +96,7 @@ describe("String Methods - Concatenation", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const result = interpreter.symbolTable.get("result");
@@ -114,7 +114,7 @@ describe("String Methods - Case Conversion", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const upper = interpreter.symbolTable.get("upper");
@@ -135,7 +135,7 @@ describe("String Methods - Length", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const len = interpreter.symbolTable.get("len");
@@ -159,7 +159,7 @@ describe("String Methods - Complex Operations", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const rHex = interpreter.symbolTable.get("r_hex");

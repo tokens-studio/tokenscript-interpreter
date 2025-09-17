@@ -1,7 +1,15 @@
 import { type ISymbolType, SupportedFormats } from "../types";
+import type { Config } from "./config/config";
 import { InterpreterError } from "./errors";
+import { isValidHex } from "./utils/color";
+import { isNull, isObject, isString, isUndefined } from "./utils/type";
 
-// Types -----------------------------------------------------------------------
+// Utilities -------------------------------------------------------------------
+
+export const typeEquals = (typeA: string, typeB: string) =>
+  typeA.toLowerCase() === typeB.toLowerCase();
+
+// Base Type -------------------------------------------------------------------
 
 type SupportedMethods = Record<string, MethodDefinitionDef>;
 
@@ -19,11 +27,10 @@ interface MethodDefinitionDef {
   returnType: any; // Could be ISymbolType constructor or a special marker
 }
 
-// Base Type -------------------------------------------------------------------
-
 export abstract class BaseSymbolType implements ISymbolType {
   abstract type: string;
-  public value: any;
+  public value: any | null;
+  _SUPPORTED_METHODS?: SupportedMethods;
 
   constructor(value: any) {
     this.value = value;
@@ -33,6 +40,10 @@ export abstract class BaseSymbolType implements ISymbolType {
 
   toString(): string {
     return String(this.value);
+  }
+
+  getTypeName(): string {
+    return this.type;
   }
 
   equals(other: ISymbolType): boolean {
@@ -59,7 +70,11 @@ export abstract class BaseSymbolType implements ISymbolType {
     return true;
   }
 
-  callMethod?(methodName: string, args: ISymbolType[]): ISymbolType | null | undefined {
+  callMethod?(
+    methodName: string,
+    args: ISymbolType[],
+    _config: Config,
+  ): ISymbolType | null | undefined {
     const methodDefinition = (this as unknown as { _SUPPORTED_METHODS?: SupportedMethods })
       ._SUPPORTED_METHODS?.[methodName.toLowerCase()];
     if (!methodDefinition || !this.hasMethod?.(methodName, args)) {
@@ -119,23 +134,28 @@ export abstract class BaseSymbolType implements ISymbolType {
 
 // Concrete Symbol Types -------------------------------------------------------
 
+type numberValue = number | null;
+
 export class NumberSymbol extends BaseSymbolType {
   type = "Number";
+  static readonly type = "Number";
+
+  public value: numberValue;
   public isFloat: boolean;
 
-  _SUPPORTED_METHODS: SupportedMethods;
-
   constructor(value: number | NumberSymbol | NumberWithUnitSymbol | null, isFloat = false) {
-    let safeValue: number;
+    let safeValue: numberValue;
     if (typeof value === "number") {
       safeValue = value;
     } else if (value instanceof NumberSymbol || value instanceof NumberWithUnitSymbol) {
       safeValue = value.value as number;
+    } else if (value === null) {
+      safeValue = null;
     } else {
       throw new InterpreterError(`Value must be int or float, got ${typeof value}.`);
     }
     super(safeValue);
-
+    this.value = safeValue;
     this.isFloat = isFloat;
     this._SUPPORTED_METHODS = {
       tostring: {
@@ -157,6 +177,12 @@ export class NumberSymbol extends BaseSymbolType {
     return typeof val === "number" || val instanceof NumberSymbol;
   }
 
+  expectSafeValue(val: any): asserts val is number {
+    if (val === null || val === undefined) {
+      throw new InterpreterError("Value must be int or float, got null.");
+    }
+  }
+
   toString(): string {
     if (!this.isFloat) {
       return String(this.value);
@@ -164,9 +190,17 @@ export class NumberSymbol extends BaseSymbolType {
     return String(Number(this.value));
   }
 
+  static empty(): NumberSymbol {
+    return new NumberSymbol(null);
+  }
+
   // Direct translation of to_string method from token_interpreter/symbols.py
   toStringImpl(radix?: NumberSymbol): StringSymbol {
-    if (!radix) {
+    this.expectSafeValue(this.value);
+
+    if (radix) {
+      this.expectSafeValue(radix?.value);
+    } else {
       return new StringSymbol(String(this.value));
     }
 
@@ -175,7 +209,7 @@ export class NumberSymbol extends BaseSymbolType {
     if (typeof this.value === "number" && Number.isInteger(this.value)) {
       numValue = Math.trunc(this.value);
     } else {
-      numValue = Number.isInteger(this.value) ? this.value : this.value;
+      numValue = this.value;
     }
 
     // Get the radix value
@@ -227,19 +261,23 @@ export class NumberSymbol extends BaseSymbolType {
 
 export class StringSymbol extends BaseSymbolType {
   type = "String";
-  _SUPPORTED_METHODS: SupportedMethods;
+  static readonly type = "String";
+
+  public value: string | null;
 
   constructor(value: string | StringSymbol | null) {
-    let safeValue: string;
+    let safeValue: string | null;
     if (typeof value === "string") {
       safeValue = value;
     } else if (value instanceof StringSymbol) {
       safeValue = value.value;
+    } else if (value === null) {
+      safeValue = null;
     } else {
       throw new InterpreterError(`Value must be string, got ${typeof value}.`);
     }
     super(safeValue);
-
+    this.value = safeValue;
     this._SUPPORTED_METHODS = {
       upper: { function: this.upperImpl, args: [], returnType: StringSymbol },
       lower: { function: this.lowerImpl, args: [], returnType: StringSymbol },
@@ -261,27 +299,43 @@ export class StringSymbol extends BaseSymbolType {
     return typeof val === "string" || val instanceof StringSymbol;
   }
 
+  expectSafeValue(val: any): asserts val is string {
+    if (val === null || val === undefined) {
+      throw new InterpreterError("Value must be a string, got null.");
+    }
+  }
+
   upperImpl(): StringSymbol {
+    this.expectSafeValue(this.value);
     return new StringSymbol(this.value.toUpperCase());
   }
 
+  static empty(): StringSymbol {
+    return new StringSymbol(null);
+  }
+
   lowerImpl(): StringSymbol {
+    this.expectSafeValue(this.value);
     return new StringSymbol(this.value.toLowerCase());
   }
 
   lengthImpl(): NumberSymbol {
+    this.expectSafeValue(this.value);
     return new NumberSymbol(this.value.length);
   }
 
   concatImpl(other: StringSymbol): StringSymbol {
+    this.expectSafeValue(this.value);
     if (other instanceof StringSymbol) {
+      other.expectSafeValue(other.value);
       return new StringSymbol(this.value + other.value);
     }
     throw new InterpreterError(`Cannot concatenate String ${typeof other} to String.`);
   }
 
   splitImpl(delimiter?: StringSymbol): ListSymbol {
-    const strValue = this.value as string;
+    this.expectSafeValue(this.value);
+    const strValue = this.value;
 
     if (delimiter instanceof StringSymbol) {
       const parts = strValue.split(delimiter.value as string);
@@ -300,31 +354,50 @@ export class StringSymbol extends BaseSymbolType {
 
 export class BooleanSymbol extends BaseSymbolType {
   type = "Boolean";
+  static readonly type = "Boolean";
+
+  public value: boolean | null;
   constructor(value: boolean | BooleanSymbol | null) {
-    let safeValue: boolean;
+    let safeValue: boolean | null;
     if (typeof value === "boolean") {
       safeValue = value;
     } else if (value instanceof BooleanSymbol) {
       safeValue = value.value;
+    } else if (value === null) {
+      safeValue = null;
     } else {
       throw new InterpreterError(`Value must be boolean, got ${typeof value}.`);
     }
     super(safeValue);
+    this.value = safeValue;
   }
   validValue(val: any): boolean {
     return typeof val === "boolean" || val instanceof BooleanSymbol;
+  }
+
+  expectSafeValue(val: any): asserts val is boolean {
+    if (val === null || val === undefined) {
+      throw new InterpreterError("Value must be a boolean, got null.");
+    }
+  }
+
+  static empty(): BooleanSymbol {
+    return new BooleanSymbol(null);
   }
 }
 
 export class ListSymbol extends BaseSymbolType {
   type = "List";
+  static readonly type = "List";
+
+  public value: ISymbolType[] | null;
   public elements: ISymbolType[];
   public isImplicit: boolean;
-  _SUPPORTED_METHODS: SupportedMethods;
 
   constructor(elements: ISymbolType[] | null, isImplicit = false) {
     const safeElements = elements === null ? [] : elements;
     super(safeElements);
+    this.value = safeElements;
     this.elements = safeElements;
 
     this.isImplicit = isImplicit;
@@ -381,7 +454,7 @@ export class ListSymbol extends BaseSymbolType {
 
   toString(): string {
     const delimiter = this.isImplicit ? " " : ", ";
-    return this.elements.map((x) => x.toString()).join(delimiter);
+    return this.elements.map((x) => (x.value === null ? "null" : x.toString())).join(delimiter);
   }
 
   appendImpl(item: ISymbolType): ListSymbol {
@@ -440,23 +513,32 @@ export class ListSymbol extends BaseSymbolType {
     this.elements[index] = item;
     return this;
   }
+
+  static empty(): ListSymbol {
+    return new ListSymbol(null);
+  }
 }
 
 export class NumberWithUnitSymbol extends BaseSymbolType {
   type = "NumberWithUnit";
+  static readonly type = "NumberWithUnit";
+
+  public value: number | null;
   public unit: SupportedFormats;
-  _SUPPORTED_METHODS: SupportedMethods;
 
   constructor(value: number | NumberSymbol | null, unit: SupportedFormats | string) {
-    let safeValue: number;
+    let safeValue: number | null;
     if (typeof value === "number") {
       safeValue = value;
     } else if (value instanceof NumberSymbol) {
       safeValue = value.value;
+    } else if (value === null) {
+      safeValue = null;
     } else {
       throw new InterpreterError(`Value must be number or NumberSymbol, got ${typeof value}.`);
     }
     super(safeValue);
+    this.value = safeValue;
 
     if (typeof unit === "string" && !(Object.values(SupportedFormats) as string[]).includes(unit)) {
       throw new InterpreterError(`Invalid unit: ${unit}`);
@@ -502,103 +584,151 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
   }
 
   toString(): string {
+    if (this.value === null) {
+      throw new InterpreterError("Cannot convert null to string.");
+    }
     return `${this.value}${this.unit}`;
   }
 
-  toStringImpl(): StringSymbol {
-    return new StringSymbol(this.toString());
+  expectSafeValue(val: any): asserts val is number {
+    if (val === null || val === undefined) {
+      throw new InterpreterError("Value must be a number, got null.");
+    }
   }
+
+  toStringImpl(): StringSymbol {
+    this.expectSafeValue(this.value);
+    return new StringSymbol(`${this.value}${this.unit}`);
+  }
+
   to_number(): NumberSymbol {
-    return new NumberSymbol(this.value as number);
+    this.expectSafeValue(this.value);
+    return new NumberSymbol(this.value);
+  }
+
+  static empty(): NumberWithUnitSymbol {
+    return new NumberWithUnitSymbol(null, "px");
   }
 }
 
+export type dynamicColorValue = Record<string, ISymbolType>;
+
 export class ColorSymbol extends BaseSymbolType {
   type = "Color";
-  _SUPPORTED_METHODS: SupportedMethods;
+  static readonly type = "Color";
 
-  constructor(value: string | ColorSymbol) {
-    let safeValue: string;
-    if (typeof value === "string") {
-      if (!ColorSymbol.isValidHex(value)) {
+  public subType: string | null = null;
+  public value: string | dynamicColorValue | null;
+
+  static empty(): ColorSymbol {
+    return new ColorSymbol(null);
+  }
+
+  constructor(value: string | dynamicColorValue | null, subType?: string) {
+    const isHex = (isUndefined(subType) || subType.toLowerCase() === "hex") && isString(value);
+    const isDynamic = isString(subType) && isObject(value);
+    const isValid = isNull(value) || isHex || isDynamic;
+
+    if (!isValid) {
+      throw new InterpreterError(
+        `Value ${value} must be string, attributes record, or null, got ${typeof value}.`,
+      );
+    }
+
+    if (isHex) {
+      if (!isValidHex(value)) {
         throw new InterpreterError(`Invalid hex color format: ${value}`);
       }
-      safeValue = value;
-    } else if (value instanceof ColorSymbol) {
-      safeValue = value.value;
-    } else {
-      throw new InterpreterError(`Value must be string or ColorSymbol, got ${typeof value}.`);
     }
-    super(safeValue);
+
+    super(value);
+
+    this.value = value;
+    this.subType = isHex ? "Hex" : subType || null;
 
     this._SUPPORTED_METHODS = {
-      split: {
-        function: this.split,
-        args: [{ name: "delimiter", type: StringSymbol, optional: true }],
-        returnType: ListSymbol,
-      },
-      upper: { function: this.upper, args: [], returnType: StringSymbol },
-      lower: { function: this.lower, args: [], returnType: StringSymbol },
-      length: { function: this.length, args: [], returnType: NumberSymbol },
-      concat: {
-        function: this.concat,
-        args: [{ name: "other", type: StringSymbol }],
+      tostring: {
+        name: "toString",
+        function: this.toStringImpl,
+        args: [],
         returnType: StringSymbol,
       },
     };
   }
 
-  static isValidHex(value: string): boolean {
-    if (typeof value !== "string") return false;
-    if (!value.startsWith("#")) return false;
-    const hexPart = value.substring(1);
-    if (!(hexPart.length === 3 || hexPart.length === 6)) return false;
-    for (let i = 0; i < hexPart.length; i++) {
-      const char = hexPart[i].toLowerCase();
-      if (!((char >= "0" && char <= "9") || (char >= "a" && char <= "f"))) {
-        return false;
-      }
+  toStringImpl(): StringSymbol {
+    if (isObject(this.value)) {
+      return new StringSymbol(JSON.stringify(this.value));
     }
-    return true;
+    if (isString(this.value)) {
+      return new StringSymbol(this.value);
+    }
+    return new StringSymbol("");
+  }
+
+  isHex(): boolean {
+    return this.subType?.toLowerCase() === "hex";
   }
 
   validValue(val: any): boolean {
-    // Accept other ColorSymbol instances
-    if (val instanceof ColorSymbol) {
-      return true;
+    return val instanceof ColorSymbol || isNull(val) || isObject(val) || isValidHex(val);
+  }
+
+  hasAttribute(attributeName: string): boolean {
+    // For dynamic colors (object values), check if the attribute exists
+    if (isObject(this.value)) {
+      return attributeName in this.value;
     }
-    // Accept valid hex color strings
-    return typeof val === "string" && ColorSymbol.isValidHex(val);
+
+    // For hex colors and null values, no attributes are supported
+    return false;
   }
 
-  // String-like methods for Color
-  split(delimiter?: StringSymbol): ListSymbol {
-    const strValue = this.value as string;
-    let parts: string[];
-    if (delimiter === undefined) {
-      parts = strValue.split("");
-    } else {
-      parts = strValue.split(delimiter.value as string);
+  getAttribute(attributeName: string): ISymbolType | null {
+    if (isObject(this.value)) {
+      const attributeValue = this.value[attributeName];
+      if (attributeValue !== undefined) {
+        return attributeValue;
+      }
     }
-    return new ListSymbol(parts.map((p) => new StringSymbol(p)));
+
+    throw new InterpreterError(`Attribute '${attributeName}' not found on Color.`);
   }
 
-  upper(): StringSymbol {
-    return new StringSymbol((this.value as string).toUpperCase());
-  }
-
-  lower(): StringSymbol {
-    return new StringSymbol((this.value as string).toLowerCase());
-  }
-
-  length(): NumberSymbol {
-    return new NumberSymbol((this.value as string).length);
-  }
-
-  concat(other: StringSymbol): StringSymbol {
-    if (other instanceof StringSymbol) {
-      return new StringSymbol((this.value as string) + other.value);
+  getTypeName(): string {
+    if (this.subType) {
+      return `Color.${this.subType.charAt(0).toUpperCase() + this.subType.slice(1).toLowerCase()}`;
     }
-    throw new InterpreterError(`Cannot concatenate Color with ${typeof other}`);
+    return this.type;
   }
 }
+
+// Utilities -------------------------------------------------------------------
+
+export const jsValueToSymbolType = (value: any): ISymbolType => {
+  if (value instanceof BaseSymbolType) return value;
+  if (typeof value === "number") return new NumberSymbol(value);
+  if (typeof value === "string") {
+    if (isValidHex(value)) return new ColorSymbol(value);
+    return new StringSymbol(value);
+  }
+  if (typeof value === "boolean") return new BooleanSymbol(value);
+  if (Array.isArray(value)) return new ListSymbol(value.map(jsValueToSymbolType));
+
+  if (value instanceof NumberWithUnitSymbol) return value;
+  const numberWithUnit = NumberWithUnitSymbol.fromRecord(value);
+  if (numberWithUnit) return numberWithUnit;
+
+  throw new InterpreterError(`Invalid value type: ${typeof value}`);
+};
+
+export const basicSymbolTypes = {
+  [NumberSymbol.type.toLowerCase()]: NumberSymbol,
+  [StringSymbol.type.toLowerCase()]: StringSymbol,
+  [BooleanSymbol.type.toLowerCase()]: BooleanSymbol,
+  [ListSymbol.type.toLowerCase()]: ListSymbol,
+  [NumberWithUnitSymbol.type.toLowerCase()]: NumberWithUnitSymbol,
+  [ColorSymbol.type.toLowerCase()]: ColorSymbol,
+} as const;
+
+export type BasicSymbolTypeConstructor = (typeof basicSymbolTypes)[keyof typeof basicSymbolTypes];

@@ -4,15 +4,15 @@ import { Lexer } from "../../interpreter/lexer";
 import { Parser } from "../../interpreter/parser";
 
 describe("Math Functions - Parse Int", () => {
-  it("should handle parse_int with base 16", () => {
+  it("should handle parseint with base 16", () => {
     const text = `
-    variable i: Number = parse_int("ff", 16);
-    variable j: Number = parse_int("00", 16);
-    variable k: Number = parse_int("A0", 16);
+    variable i: Number = parseint("ff", 16);
+    variable j: Number = parseint("00", 16);
+    variable k: Number = parseint("A0", 16);
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const i = interpreter.symbolTable.get("i");
@@ -24,15 +24,15 @@ describe("Math Functions - Parse Int", () => {
     expect(k?.value).toBe(160);
   });
 
-  it("should handle parse_int with base 10", () => {
+  it("should handle parseint with base 10", () => {
     const text = `
-    variable a: Number = parse_int("123", 10);
-    variable b: Number = parse_int("0", 10);
-    variable c: Number = parse_int("999", 10);
+    variable a: Number = parseint("123", 10);
+    variable b: Number = parseint("0", 10);
+    variable c: Number = parseint("999", 10);
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const a = interpreter.symbolTable.get("a");
@@ -44,15 +44,15 @@ describe("Math Functions - Parse Int", () => {
     expect(c?.value).toBe(999);
   });
 
-  it("should handle parse_int with base 2", () => {
+  it("should handle parseint with base 2", () => {
     const text = `
-    variable binary1: Number = parse_int("1010", 2);
-    variable binary2: Number = parse_int("1111", 2);
-    variable binary3: Number = parse_int("0", 2);
+    variable binary1: Number = parseint("1010", 2);
+    variable binary2: Number = parseint("1111", 2);
+    variable binary3: Number = parseint("0", 2);
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const binary1 = interpreter.symbolTable.get("binary1");
@@ -74,7 +74,7 @@ describe("Math Functions - Power Operations", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const result1 = interpreter.symbolTable.get("result1");
@@ -93,7 +93,7 @@ describe("Math Functions - Power Operations", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const result1 = interpreter.symbolTable.get("result1");
@@ -113,7 +113,7 @@ describe("Math Functions - Trigonometric", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const sinResult = interpreter.symbolTable.get("sin_result");
@@ -135,7 +135,7 @@ describe("Math Functions - Rounding", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const roundResult = interpreter.symbolTable.get("round_result");
@@ -158,7 +158,7 @@ describe("Math Functions - Rounding", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     // Banker's rounding: .5 rounds to nearest even number
@@ -180,7 +180,7 @@ describe("Math Functions - RoundTo", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const result1 = interpreter.symbolTable.get("result1");
@@ -200,7 +200,7 @@ describe("Math Functions - RoundTo", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const result1 = interpreter.symbolTable.get("result1");
@@ -220,7 +220,7 @@ describe("Math Functions - RoundTo", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const result1 = interpreter.symbolTable.get("result1");
@@ -242,7 +242,7 @@ describe("Math Functions - RoundTo", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const h1 = interpreter.symbolTable.get("h1");
@@ -265,7 +265,7 @@ describe("Math Functions - RoundTo", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const result1 = interpreter.symbolTable.get("result1");
@@ -284,7 +284,7 @@ describe("Math Functions - RoundTo", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const result1 = interpreter.symbolTable.get("result1");
@@ -303,7 +303,7 @@ describe("Math Functions - Complex Expressions", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const complex = interpreter.symbolTable.get("complex");
@@ -322,7 +322,7 @@ describe("Math Functions - Complex Expressions", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const linear = interpreter.symbolTable.get("linear");
@@ -343,7 +343,7 @@ describe("Math Functions - Complex Expressions", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const bodyL = interpreter.symbolTable.get("bodyL");
@@ -368,7 +368,7 @@ describe("Math Functions - Inverse Trigonometric", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     expect(interpreter.symbolTable.get("asin_0")?.value).toBeCloseTo(0, 5);
@@ -384,7 +384,7 @@ describe("Math Functions - Inverse Trigonometric", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     expect(interpreter.symbolTable.get("acos_0")?.value).toBeCloseTo(Math.PI / 2, 5);
@@ -400,7 +400,7 @@ describe("Math Functions - Inverse Trigonometric", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     expect(interpreter.symbolTable.get("atan_0")?.value).toBeCloseTo(0, 5);
@@ -412,7 +412,7 @@ describe("Math Functions - Inverse Trigonometric", () => {
     const text = `variable invalid: Number = asin(2);`;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
 
     expect(() => interpreter.interpret()).toThrow("asin() argument must be between -1 and 1");
   });
@@ -427,7 +427,7 @@ describe("Math Functions - Logarithmic", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     expect(interpreter.symbolTable.get("log_e")?.value).toBeCloseTo(1, 5);
@@ -443,7 +443,7 @@ describe("Math Functions - Logarithmic", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     expect(interpreter.symbolTable.get("log_base_10")?.value).toBeCloseTo(2, 5);
@@ -459,21 +459,21 @@ describe("Math Functions - Logarithmic", () => {
     expect(() => {
       const lexer = new Lexer(text1);
       const parser = new Parser(lexer);
-      const interpreter = new Interpreter(parser, {});
+      const interpreter = new Interpreter(parser);
       interpreter.interpret();
     }).toThrow("log() argument must be positive");
 
     expect(() => {
       const lexer = new Lexer(text2);
       const parser = new Parser(lexer);
-      const interpreter = new Interpreter(parser, {});
+      const interpreter = new Interpreter(parser);
       interpreter.interpret();
     }).toThrow("log() argument must be positive");
 
     expect(() => {
       const lexer = new Lexer(text3);
       const parser = new Parser(lexer);
-      const interpreter = new Interpreter(parser, {});
+      const interpreter = new Interpreter(parser);
       interpreter.interpret();
     }).toThrow("log() base must be positive and not equal to 1");
   });
@@ -490,7 +490,7 @@ describe("Math Functions - String Functions", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const color = interpreter.symbolTable.get("color");
@@ -508,7 +508,7 @@ describe("Math Functions - Enhanced RoundTo with Banker's Rounding", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     // Banker's rounding: .5 rounds to nearest even number
@@ -527,7 +527,7 @@ describe("Math Functions - Enhanced RoundTo with Banker's Rounding", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     // Banker's rounding: .5 rounds to nearest even number

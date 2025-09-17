@@ -1,8 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
+import { Config } from "./interpreter/config/config";
+import { ColorManager } from "./interpreter/config/managers/color/manager";
 import { Interpreter } from "./interpreter/interpreter";
 import { Lexer } from "./interpreter/lexer";
 import { Parser } from "./interpreter/parser";
+import { ColorSymbol } from "./interpreter/symbols";
 
 interface TestCase {
   name: string;
@@ -11,6 +14,7 @@ interface TestCase {
   expectedOutputType: string;
   inline: boolean;
   context?: Record<string, any>;
+  schemas?: string[];
 }
 
 interface TestResult {
@@ -21,13 +25,46 @@ interface TestResult {
   actualOutputType: string;
   expectedOutput: any;
   expectedOutputType: string;
-  error?: string; // To capture any error that occurred during test execution
+  error?: string;
 }
 
 interface ComplianceReport {
   passed: number;
   failed: number;
   results: TestResult[];
+}
+
+const SCHEMA_FILE_MAP: Record<string, string> = {
+  "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0/":
+    "./specifications/colors/hsl.json",
+  "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0/":
+    "./specifications/colors/srgb.json",
+  "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/":
+    "./specifications/colors/rgb.json",
+  "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgba-color/0/":
+    "./specifications/colors/rgba.json",
+  "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/lrgb-color/0/":
+    "./specifications/colors/lrgb.json",
+};
+
+function loadSchemas(schemas: string[]): ColorManager {
+  const colorManager = new ColorManager();
+
+  for (const schemaUri of schemas) {
+    const filePath = SCHEMA_FILE_MAP[schemaUri];
+    if (filePath && fs.existsSync(filePath)) {
+      try {
+        const specData = fs.readFileSync(filePath, "utf-8");
+        colorManager.register(schemaUri, specData);
+      } catch (error) {
+        console.warn(`Failed to load schema ${schemaUri} from ${filePath}:`, error);
+      }
+    } else {
+      console.warn(`No file mapping found for schema: ${schemaUri}`);
+    }
+  }
+
+  return colorManager;
 }
 
 function getType(value: any): string {
@@ -58,7 +95,7 @@ function readJsonFilesRecursively(dir: string): string[] {
 interface ComplianceConfig {
   dir?: string;
   file?: string;
-  output: string;
+  output?: string;
 }
 
 export async function evaluateStandardCompliance(config: ComplianceConfig) {
@@ -89,11 +126,28 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
         const lexer = new Lexer(test.input);
         const parser = new Parser(lexer);
         const ast = parser.parse(test.inline);
-        const interpreter = new Interpreter(ast, test.context || {});
+
+        // Load schemas if specified
+        let config: Config;
+        if (test.schemas && test.schemas.length > 0) {
+          const colorManager = loadSchemas(test.schemas);
+          config = new Config({ colorManager });
+        } else {
+          config = new Config();
+        }
+
+        const interpreter = new Interpreter(ast, { references: test.context || {}, config });
         const result = interpreter.interpret();
         // Always deeply normalize output for report and comparison
         function normalize(val: any): { value: any; type: string } {
           if (val && typeof val === "object") {
+            // Handle ColorSymbol specifically to use ColorManager formatting
+            if (val instanceof ColorSymbol) {
+              return {
+                value: config.colorManager.formatColorMethod(val),
+                type: val.getTypeName(),
+              };
+            }
             // Handle ListSymbol or arrays
             if (Array.isArray(val)) {
               const isUniformTypeList = val.every((v) => v.type === val[0].type);
@@ -135,10 +189,13 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
             if ("value" in val && "type" in val && typeof val.type === "string") {
               // Recursively normalize value
               const norm = normalize(val.value);
-              return { value: norm.value, type: capitalizeFirst(val.type) };
+              return {
+                value: norm.value,
+                type: val.getTypeName ? val.getTypeName() : capitalizeFirst(val.type),
+              };
             }
           }
-          return { value: val, type: getType(val) };
+          return { value: val, type: val?.getTypeName ? val.getTypeName() : getType(val) };
         }
         const { value: normalizedValue, type: normalizedType } = normalize(result);
         actualOutput = normalizedValue;
@@ -245,7 +302,11 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
   }
 
   const report: ComplianceReport = { passed, failed, results };
-  fs.writeFileSync(config.output, JSON.stringify(report, null, 2), "utf-8");
+
+  if (config.output) {
+    fs.writeFileSync(config.output, JSON.stringify(report, null, 2), "utf-8");
+  }
+
   return report;
 }
 

@@ -1,5 +1,7 @@
 // Enums from config.py and lexer.py
 
+import type { Config } from "./interpreter/config/config";
+
 export enum Operations {
   SUBTRACT = "-",
   ADD = "+",
@@ -22,7 +24,6 @@ export enum SupportedFormats {
   CM = "cm",
   MM = "mm",
   DEG = "deg",
-  S = "s",
   PERCENTAGE = "%",
 }
 
@@ -93,10 +94,17 @@ export interface ISymbolType {
   toJSON?(): any; // Optional JSON serialization
 
   hasMethod?(methodName: string, args: ISymbolType[]): boolean;
-  callMethod?(methodName: string, args: ISymbolType[]): ISymbolType | null | undefined;
+  callMethod?(
+    methodName: string,
+    args: ISymbolType[],
+    config: Config,
+  ): ISymbolType | null | undefined;
   hasAttribute?(attributeName: string): boolean;
   getAttribute?(attributeName: string): ISymbolType | null;
   setAttribute?(attributeName: string, value: ISymbolType): void;
+
+  // Static method to create an empty/null instance of the symbol type
+  // static empty?(...args: any[]): ISymbolType;
 }
 
 export type InterpreterValue =
@@ -106,10 +114,6 @@ export type InterpreterValue =
   | boolean
   | null
   | Array<InterpreterValue>;
-
-export interface LanguageOptions {
-  MAX_ITERATIONS: number;
-}
 
 export const UNINTERPRETED_KEYWORDS: string[] = [
   "inside",

@@ -14,7 +14,7 @@ describe("Control Structures - While Loops", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
     const result = interpreter.symbolTable.get("i");
     expect(result?.value).toBe(5);
@@ -34,7 +34,7 @@ describe("Control Structures - While Loops", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
     const i = interpreter.symbolTable.get("i");
     const j = interpreter.symbolTable.get("j");
@@ -57,7 +57,7 @@ describe("Control Structures - While Loops", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
     const i = interpreter.symbolTable.get("i");
     const j = interpreter.symbolTable.get("j");
@@ -74,7 +74,7 @@ describe("Control Structures - While Loops", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
@@ -87,7 +87,7 @@ describe("Control Structures - While Loops", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 });
@@ -102,7 +102,7 @@ describe("Control Structures - If Statements", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
     const result = interpreter.symbolTable.get("x");
     expect(result?.value).toBe(5);
@@ -117,7 +117,7 @@ describe("Control Structures - If Statements", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
     const result = interpreter.symbolTable.get("x");
     expect(result?.value).toBe(0);
@@ -133,7 +133,7 @@ describe("Control Structures - If Statements", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
     const result = interpreter.symbolTable.get("x");
     expect(result?.value).toBe(10);
@@ -148,7 +148,7 @@ describe("Control Structures - If Statements", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
@@ -163,7 +163,7 @@ describe("Control Structures - If Statements", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
     const result = interpreter.symbolTable.get("x");
     expect(result?.value).toBe(10);

@@ -155,7 +155,7 @@ export class TypeDeclNode implements ASTNode {
     public token?: Token,
   ) {}
 
-  toString(): string {
+  name(): string {
     let typeStr = this.baseType.name;
     if (this.subTypes.length > 0) {
       typeStr += `.${this.subTypes.map((s) => s.name).join(".")}`;
@@ -164,23 +164,38 @@ export class TypeDeclNode implements ASTNode {
   }
 }
 
-export class AttributeAssignNode implements ASTNode {
-  nodeType = "AttributeAssignNode";
-  constructor(
-    public objectIdentifier: IdentifierNode,
-    public attributes: IdentifierNode[],
-    public value: ASTNode,
-    public token?: Token,
-  ) {}
-}
+export const attributesToString = (attrs: string[]): string => attrs.join(".");
+
+export const identifiersChainToString = (attrs: IdentifierNode[]): string =>
+  attributesToString(attrs.map((x) => x.name));
 
 export class ReassignNode implements ASTNode {
   nodeType = "ReassignNode";
   constructor(
-    public identifier: IdentifierNode,
+    public identifier: IdentifierNode | IdentifierNode[],
     public value: ASTNode,
     public token?: Token,
   ) {}
+  baseIdentifier(): IdentifierNode {
+    return Array.isArray(this.identifier) ? this.identifier[0] : this.identifier;
+  }
+  isAttributeAssignment(): boolean {
+    return Array.isArray(this.identifier) && !!this.identifier[1];
+  }
+  identifierToString(): string {
+    const parts = Array.isArray(this.identifier) ? this.identifier : [this.identifier];
+    return identifiersChainToString(parts);
+  }
+  attributesChain(): IdentifierNode[] {
+    if (Array.isArray(this.identifier)) {
+      return this.identifier.slice(1);
+    } else {
+      return [];
+    }
+  }
+  attributesStringChain(): string[] {
+    return this.attributesChain().map((x) => x.name);
+  }
 }
 
 export class ReturnNode implements ASTNode {
@@ -227,7 +242,6 @@ export class StatementListNode implements ASTNode {
   ) {}
 }
 
-// Represents an attribute access, e.g., obj.property or obj.method()
 export class AttributeAccessNode implements ASTNode {
   nodeType = "AttributeAccessNode";
   // 'left' is the object, 'right' is the attribute (IdentifierNode) or method (FunctionCallNode)

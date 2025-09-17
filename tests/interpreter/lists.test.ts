@@ -10,7 +10,7 @@ describe("Lists - Creation and Basic Operations", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const result = interpreter.symbolTable.get("x");
@@ -26,7 +26,7 @@ describe("Lists - Creation and Basic Operations", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const result = interpreter.symbolTable.get("x");
@@ -47,7 +47,7 @@ describe("Lists - Methods", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const result = interpreter.symbolTable.get("x");
@@ -62,7 +62,7 @@ describe("Lists - Methods", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const result = interpreter.symbolTable.get("x");
@@ -76,7 +76,7 @@ describe("Lists - Methods", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const result = interpreter.symbolTable.get("x");
@@ -90,7 +90,7 @@ describe("Lists - Methods", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const result = interpreter.symbolTable.get("x");
@@ -104,7 +104,7 @@ describe("Lists - Methods", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const result = interpreter.symbolTable.get("len");
@@ -118,7 +118,7 @@ describe("Lists - Methods", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const result = interpreter.symbolTable.get("idx");
@@ -132,7 +132,7 @@ describe("Lists - Methods", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const result = interpreter.symbolTable.get("idx");
@@ -146,7 +146,7 @@ describe("Lists - Methods", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const result = interpreter.symbolTable.get("item");
@@ -160,7 +160,7 @@ describe("Lists - Methods", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const result = interpreter.symbolTable.get("x");
@@ -175,7 +175,7 @@ describe("Lists - Methods", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const index1 = interpreter.symbolTable.get("index1");
@@ -194,7 +194,7 @@ describe("Lists - Methods", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const numbers = interpreter.symbolTable.get("numbers");
@@ -215,7 +215,7 @@ describe("Lists - Method Chaining", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
     const result = interpreter.symbolTable.get("x");
@@ -231,7 +231,7 @@ describe("Lists - Error Cases", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     expect(() => interpreter.interpret()).toThrow();
   });
 
@@ -242,7 +242,7 @@ describe("Lists - Error Cases", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     expect(() => interpreter.interpret()).toThrow();
   });
 
@@ -253,7 +253,7 @@ describe("Lists - Error Cases", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     expect(() => interpreter.interpret()).toThrow();
   });
 
@@ -264,7 +264,7 @@ describe("Lists - Error Cases", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {});
+    const interpreter = new Interpreter(parser);
     expect(() => interpreter.interpret()).toThrow();
   });
 });

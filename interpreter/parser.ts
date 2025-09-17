@@ -23,7 +23,7 @@ import {
   WhileNode,
 } from "./ast";
 import { ParserError } from "./errors";
-import type { Lexer } from "./lexer";
+import { Lexer } from "./lexer";
 
 export class Parser {
   private lexer: Lexer;
@@ -35,8 +35,63 @@ export class Parser {
     this.currentToken = this.lexer.nextToken();
   }
 
+  private formatError(message: string, token: Token = this.currentToken): string {
+    const {
+      text: sourceText,
+      line: currentLine,
+      column: currentColumn,
+    } = this.lexer.getSourceInfo();
+    const lines = sourceText.split("\n");
+    const tokenLine = token.line;
+    const errorLineText = lines[tokenLine - 1] || "";
+
+    // Find the column position of the token
+    let column = 1;
+
+    if (currentLine === tokenLine) {
+      // If we're on the same line, use the current column position
+      column = currentColumn;
+    } else {
+      // If token is from a previous line, estimate the column by finding the token value
+      const tokenValue = String(token.value || "");
+      const tokenIndex = errorLineText.indexOf(tokenValue);
+      if (tokenIndex >= 0) {
+        column = tokenIndex + 1;
+      }
+    }
+
+    // Show context lines (2 before, 2 after)
+    const contextLines = 2;
+    const startLine = Math.max(0, tokenLine - 1 - contextLines);
+    const endLine = Math.min(lines.length - 1, tokenLine - 1 + contextLines);
+
+    let contextText = "";
+    for (let i = startLine; i <= endLine; i++) {
+      const lineNum = i + 1;
+      const lineText = lines[i] || "";
+      const isErrorLine = lineNum === tokenLine;
+
+      // Add line number prefix
+      const linePrefix = `${lineNum.toString().padStart(3, " ")} | `;
+      contextText += `${linePrefix + lineText}\n`;
+
+      // Add pointer line for the error line
+      if (isErrorLine) {
+        const pointer = `${" ".repeat(linePrefix.length + Math.max(0, column - 1))}^`;
+        contextText += `${pointer}\n`;
+      }
+    }
+
+    return `${message}\n\n${contextText.trim()}`;
+  }
+
+  private peekTokens(n: number): Token[] | null {
+    return this.lexer.peekTokens(n);
+  }
+
   private error(message = "Invalid syntax"): never {
-    throw new ParserError(message, this.currentToken?.line, this.currentToken);
+    const formattedMessage = this.formatError(message);
+    throw new ParserError(formattedMessage, this.currentToken?.line, this.currentToken);
   }
 
   private eat(tokenType: TokenType): Token {
@@ -102,51 +157,68 @@ export class Parser {
         case ReservedKeyword.VARIABLE:
           return this.assignVariable();
       }
-    }
+    } else if (this.currentToken.type === TokenType.STRING) {
+      // Look ahead to check the token sequence
+      const nextTokens = this.peekTokens(4); // Get next 4 tokens
+      if (nextTokens !== null) {
+        for (let i = 0; i < nextTokens.length - 1; i += 2) {
+          if (nextTokens[i].type === TokenType.DOT && nextTokens[i + 1].type === TokenType.STRING) {
+            if (i + 2 < nextTokens.length && nextTokens[i + 2].type === TokenType.ASSIGN) {
+              const name = this.currentToken;
+              this.eat(TokenType.STRING);
+              return this.reassignVariable(name);
+            }
+          }
+        }
+      }
 
-    if (this.currentToken.type === TokenType.STRING) {
+      // Check for simple variable reassignment (var = ...)
       const nextToken = this.lexer.peekToken();
       if (nextToken && nextToken.type === TokenType.ASSIGN) {
         return this.reassignVariable();
       }
-      // TODO: Handle attribute assignment (ident.ident = ...)
     }
 
     return this.listExpr();
   }
 
   private assignVariable(): AssignNode {
-    // consume 'variable'
     const token = this.eat(TokenType.RESERVED_KEYWORD);
 
-    // get variable name
     const varNameToken = this.eat(TokenType.STRING);
     const varName = new IdentifierNode(varNameToken);
     this.eat(TokenType.COLON);
 
-    // get type declaration
     const typeDecl = this.typeDeclaration();
 
-    // handle assignment if present
     if (this.currentToken.type === TokenType.ASSIGN) {
       this.eat(TokenType.ASSIGN);
       const assignmentExpr = this.listExpr();
       return new AssignNode(varName, typeDecl, assignmentExpr, token);
     }
 
-    // No assignment, just declaration
     return new AssignNode(varName, typeDecl, null, token);
   }
 
-  private reassignVariable(): ReassignNode {
-    const varNameToken = this.eat(TokenType.STRING);
-    const varName = new IdentifierNode(varNameToken);
+  private reassignVariable(nameToken?: Token): ReassignNode {
+    const varNameToken = nameToken || this.eat(TokenType.STRING);
+    let name: IdentifierNode | IdentifierNode[] = new IdentifierNode(varNameToken);
+
+    if (this.currentToken.type === TokenType.DOT) {
+      const names: IdentifierNode[] = [new IdentifierNode(varNameToken)];
+      while (this.currentToken.type === TokenType.DOT) {
+        this.eat(TokenType.DOT);
+        const propertyToken = this.eat(TokenType.STRING);
+        names.push(new IdentifierNode(propertyToken));
+      }
+      name = names;
+    }
 
     this.eat(TokenType.ASSIGN);
 
     const assignmentExpr = this.listExpr();
 
-    return new ReassignNode(varName, assignmentExpr, varNameToken);
+    return new ReassignNode(name, assignmentExpr, varNameToken);
   }
 
   private reference(): ASTNode {
@@ -400,22 +472,30 @@ export class Parser {
       node = this.attributeAccess(node); // For string methods like "hello".length()
       return node;
     }
-    this.error(`Unexpected token in factor: ${token.type} (${String(token.value)})`);
+    this.error(`Unexpected token: ${String(token.value)}`);
   }
 
   private attributeAccess(leftNode: ASTNode): ASTNode {
     let node = leftNode;
     while (this.currentToken.type === TokenType.DOT) {
       this.eat(TokenType.DOT);
-      const attrNameToken = this.eat(TokenType.STRING);
-      // After `eat(STRING)`, currentToken is updated.
-      // This comparison (this.currentToken.type as TokenType) === TokenType.LPAREN is valid.
-      if ((this.currentToken.type as TokenType) === TokenType.LPAREN) {
-        const methodNode = this.functionCall(attrNameToken);
-        node = new AttributeAccessNode(node, methodNode);
-      } else {
-        // Property access
-        node = new AttributeAccessNode(node, new IdentifierNode(attrNameToken));
+      // @ts-ignore - typescript bug with overlap?
+      if (this.currentToken.type === TokenType.STRING) {
+        const nextToken = this.lexer.peekToken();
+        if (nextToken && nextToken.type === TokenType.LPAREN) {
+          // It's a method call
+          const methodName = this.currentToken.value as string;
+          this.eat(TokenType.STRING);
+          node = new AttributeAccessNode(
+            node,
+            this.functionCall({ ...this.currentToken, value: methodName } as Token),
+          );
+        } else {
+          // It's a property access
+          const attrToken = this.currentToken;
+          this.eat(TokenType.STRING);
+          node = new AttributeAccessNode(node, new IdentifierNode(attrToken));
+        }
       }
     }
     return node;
@@ -445,4 +525,20 @@ export class Parser {
     }
     return node;
   }
+}
+
+export function parseExpression(text: string): {
+  lexer: Lexer;
+  parser: Parser;
+  ast: ASTNode | null;
+} {
+  const lexer = new Lexer(text);
+  const parser = new Parser(lexer);
+  const ast = parser.parse();
+
+  return {
+    lexer,
+    parser,
+    ast,
+  };
 }
