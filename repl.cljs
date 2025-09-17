@@ -280,8 +280,20 @@ c.to.hex()")
 
   (run-with-colormanager
    "variable c: Color.Hex = #FFF;
-c.to.hex()")
+variable f: Color.Hex = c.to.hex();
+variable s: Color.Rgb = f.to.rgb();
+s")
   ;; => #object[ColorSymbol #FFF]
+
+  (run-with-colormanager
+   "variable c: Color.Hex = #FFF;
+variable f: Color.Rgb = c.to.rgb();
+f.r")
+
+  (run-with-colormanager "variable c: Color.Rgb;
+c.r = 255;
+c.g = 255;
+c.to.rgb()")
 
   (run-with-colormanager "variable c: Color.Rgb;
 c.r = 255;

@@ -119,7 +119,12 @@ export class ColorManager {
           // If the result is not a ColorSymbol, wrap it in one with the target type
           const targetSpec = this.getSpec(targetUri);
           if (!targetSpec) {
-            throw new InterpreterError(`Conversion function crashed! No target spec found for ${targetUri}`, undefined, undefined, {result});
+            throw new InterpreterError(
+              `Conversion function crashed! No target spec found for ${targetUri}`,
+              undefined,
+              undefined,
+              { result },
+            );
           }
           return new ColorSymbol(result, targetSpec.name);
         }
