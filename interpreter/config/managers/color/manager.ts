@@ -91,15 +91,24 @@ export class ColorManager {
     const config = new Config({ colorManager });
 
     spec.initializers.forEach((spec) => {
-      const { ast } = parseExpression(spec.script.script);
-      const fn = (args: Array<ISymbolType>): ColorSymbol => {
-        const result = new Interpreter(ast, { references: { input: args }, config }).interpret();
-        if (!(result instanceof ColorSymbol)) {
-          throw new InterpreterError("Initializer crashed!");
-        }
-        return result as ColorSymbol;
-      };
-      this.initializers.set(spec.keyword.toLowerCase(), fn);
+      try {
+        const { lexer, parser, ast } = parseExpression(spec.script.script);
+        const fn = (args: Array<ISymbolType>): ColorSymbol => {
+          const result = new Interpreter(ast, { references: { input: args }, config }).interpret();
+          if (!(result instanceof ColorSymbol)) {
+            throw new InterpreterError("Initializer crashed!");
+          }
+          return result as ColorSymbol;
+        };
+        this.initializers.set(spec.keyword.toLowerCase(), fn);
+      } catch (error: any) {
+        throw new InterpreterError(
+          "Could not construct initializer from schema",
+          undefined,
+          undefined,
+          { error, spec, script: spec.script.script, config },
+        );
+      }
     });
   }
 

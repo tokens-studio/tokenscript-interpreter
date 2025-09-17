@@ -448,4 +448,13 @@ export class Lexer {
 
     return tempChar === null;
   }
+
+  public getSourceInfo(): { text: string; pos: number; line: number; column: number } {
+    return {
+      text: this.text,
+      pos: this.pos,
+      line: this.line,
+      column: this.column,
+    };
+  }
 }

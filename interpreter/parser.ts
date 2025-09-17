@@ -35,12 +35,59 @@ export class Parser {
     this.currentToken = this.lexer.nextToken();
   }
 
+  private formatError(message: string, token: Token = this.currentToken): string {
+    const { text: sourceText, line: currentLine, column: currentColumn } = this.lexer.getSourceInfo();
+    const lines = sourceText.split('\n');
+    const tokenLine = token.line;
+    const errorLineText = lines[tokenLine - 1] || "";
+    
+    // Find the column position of the token
+    let column = 1;
+    
+    if (currentLine === tokenLine) {
+      // If we're on the same line, use the current column position
+      column = currentColumn;
+    } else {
+      // If token is from a previous line, estimate the column by finding the token value
+      const tokenValue = String(token.value || "");
+      const tokenIndex = errorLineText.indexOf(tokenValue);
+      if (tokenIndex >= 0) {
+        column = tokenIndex + 1;
+      }
+    }
+    
+    // Show context lines (2 before, 2 after)
+    const contextLines = 2;
+    const startLine = Math.max(0, tokenLine - 1 - contextLines);
+    const endLine = Math.min(lines.length - 1, tokenLine - 1 + contextLines);
+    
+    let contextText = "";
+    for (let i = startLine; i <= endLine; i++) {
+      const lineNum = i + 1;
+      const lineText = lines[i] || "";
+      const isErrorLine = lineNum === tokenLine;
+      
+      // Add line number prefix
+      const linePrefix = `${lineNum.toString().padStart(3, ' ')} | `;
+      contextText += linePrefix + lineText + '\n';
+      
+      // Add pointer line for the error line
+      if (isErrorLine) {
+        const pointer = " ".repeat(linePrefix.length + Math.max(0, column - 1)) + "^";
+        contextText += pointer + '\n';
+      }
+    }
+    
+    return `${message}\n\n${contextText.trim()}`;
+  }
+
   private peekTokens(n: number): Token[] | null {
     return this.lexer.peekTokens(n);
   }
 
   private error(message = "Invalid syntax"): never {
-    throw new ParserError(message, this.currentToken?.line, this.currentToken);
+    const formattedMessage = this.formatError(message);
+    throw new ParserError(formattedMessage, this.currentToken?.line, this.currentToken);
   }
 
   private eat(tokenType: TokenType): Token {
@@ -421,7 +468,7 @@ export class Parser {
       node = this.attributeAccess(node); // For string methods like "hello".length()
       return node;
     }
-    this.error(`Unexpected token in factor: ${token.type} (${String(token.value)})`);
+    this.error(`Unexpected token: ${String(token.value)}`);
   }
 
   private attributeAccess(leftNode: ASTNode): ASTNode {

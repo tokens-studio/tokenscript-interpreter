@@ -240,12 +240,12 @@ return j;
 
 ;; Colors ----------------------------------------------------------------------
 
-(defn setup-color-manager []
-  (let [uri "./specifications/colors/rgb.json"
-        cm (ColorManager.)
-        spec (-> (fs/readFileSync uri "utf-8")
-                 (js/JSON.parse))]
-    (.register cm uri spec)
+(defn setup-color-manager [uris]
+  (let [cm (ColorManager.)]
+    (doseq [uri uris]
+      (let [spec (-> (fs/readFileSync uri "utf-8")
+                     (js/JSON.parse))]
+        (.register cm uri spec)))
     cm))
 
 (defn run-with-colormanager
@@ -253,7 +253,8 @@ return j;
   (try
     (let [lexer (Lexer. code)
           parser (Parser. lexer)
-          color-manager (setup-color-manager)
+          color-manager (setup-color-manager (or (:schema-uris opts)
+                                                 ["./specifications/colors/rgb.json"]))
           config  (Config. #js {:colorManager color-manager})
           interpreter (Interpreter. parser #js {:config config})
           result (.interpret interpreter)]
@@ -271,6 +272,12 @@ return j;
    "variable c: Color.Rgb = rgb(255, 255, 255);
 c.to.hex()")
   ;; => #object[ColorSymbol #ffffff]
+
+  (run-with-colormanager
+   "variable c: Color.Rgb = rgb(255, 255, 255);
+c.to.hex()"
+   {:schema-uris ["./specifications/colors/rgb.json"
+                  "./specifications/colors/hsl.json"]})
 
   (run-with-colormanager
    "variable c: Color.Rgb = rgb(255, 255);")

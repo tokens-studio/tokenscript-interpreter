@@ -1,0 +1,92 @@
+{
+  "name": "RGBA",
+  "type": "color",
+  "schema": {
+    "type": "object",
+    "required": [
+      "r",
+      "g",
+      "b",
+      "a"
+    ],
+    "order": [
+      "r",
+      "g",
+      "b",
+      "a"
+    ],
+    "properties": {
+      "a": {
+        "type": "number"
+      },
+      "b": {
+        "type": "number"
+      },
+      "g": {
+        "type": "number"
+      },
+      "r": {
+        "type": "number"
+      }
+    },
+    "additionalProperties": false
+  },
+  "initializers": [
+    {
+      "title": "function",
+      "keyword": "rgba",
+      "description": "Creates a RGBA color from string",
+      "schema": {
+        "type": "string",
+        "pattern": "^rgba\\((\\d{1,3}),\\s*(\\d{1,3}),\\s*(\\d{1,3}),\\s*([0-1](?:\\.\\d+)?)\\)$"
+      },
+      "script": {
+        "type": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/",
+        "script": "variable color_parts: List = {input}; \n variable output: Color.RGBA;\n output.r = color_parts.get(0);\n output.g = color_parts.get(1);\n output.b = color_parts.get(2);\n output.a = color_parts.get(3);\n return output;"
+      }
+    }
+  ],
+  "conversions": [
+    {
+      "script": {
+        "type": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/",
+        "script": " variable color_parts: List = {input}.split('#'); \n variable color: List = color_parts.get(1).split(); \n variable length: Number = color.length(); \n variable rgba: List = 0, 0, 0, 1; \n if(length == 3) [ \n rgba.update(0, parseint(color.get(0).concat(color.get(0)), 16)); \n rgba.update(1, parseint(color.get(1).concat(color.get(1)), 16)); \n rgba.update(2, parseint(color.get(2).concat(color.get(2)), 16)); \n ] else [ \n if(length == 6) [ \n rgba.update(0, parseint(color.get(0).concat(color.get(1)), 16)); \n rgba.update(1, parseint(color.get(2).concat(color.get(3)), 16)); \n rgba.update(2, parseint(color.get(4).concat(color.get(5)), 16)); \n ] else [ \n if(length == 8) [ \n rgba.update(0, parseint(color.get(0).concat(color.get(1)), 16)); \n rgba.update(1, parseint(color.get(2).concat(color.get(3)), 16)); \n rgba.update(2, parseint(color.get(4).concat(color.get(5)), 16)); \n rgba.update(3, parseint(color.get(6).concat(color.get(7)), 16) / 255); \n ] \n ] \n ]; \n \n variable output: Color.RGBA; \n output.r = rgba.get(0); \n output.g = rgba.get(1); \n output.b = rgba.get(2); \n output.a = rgba.get(3); \n \n return output; \n"
+      },
+      "source": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/hex-color/0/",
+      "target": "$self",
+      "lossless": true,
+      "description": "Converts HEX to RGBA"
+    },
+    {
+      "script": {
+        "type": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/",
+        "script": "variable rgba: List = {input}.r,{input}.g,{input}.b,{input}.a;\n    variable hex: String = \"#\";\n    variable i: Number = 0;\n    variable value: Number = 0;\n    // Convert RGBA to Hex\n    while( i < min(rgba.length(), 3)) [\n        value = rgba.get(i);\n        if(value < 16) [\n            hex = hex.concat(\"0\").concat(value.toString(16));\n        ] else [\n            hex = hex.concat(value.toString(16));\n        ];\n        i = i + 1;\n    ];\n    \n    if (rgba.length() == 4) [\n        value = rgba.get(3) * 255; // Convert alpha to 0-255 range\n        if(value < 16) [\n            hex = hex.concat(\"0\").concat(value.toString(16));\n        ] else [\n            hex = hex.concat(value.toString(16));\n        ];\n    ];\n    \n    return hex;"
+    },
+      "source": "$self",
+      "target": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/hex-color/0/",
+      "lossless": true,
+      "description": "Converts RGBA to HEX"
+    },
+    {
+      "script": {
+        "type": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/",
+        "script": "variable input: Color.RGB = {input};\nvariable output: Color.RGBA;\noutput.r = input.r;\noutput.g = input.g;\noutput.b = input.b;\noutput.a = 1;\nreturn output;"
+      },
+      "source": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/",
+      "target": "$self",
+      "lossless": true,
+      "description": "Converts RGB to RGBA"
+    },
+    {
+      "script": {
+        "type": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/",
+        "script": "variable output: Color.RGB;\noutput.r = {input}.r;\noutput.g = {input}.g;\noutput.b = {input}.b;\nreturn output;"
+      },
+      "source": "$self",
+      "target": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/",
+      "lossless": false,
+      "description": "Converts RGBA to RGB (drops alpha)"
+    }
+  ],
+  "description": "RGBA color with alpha transparency"
+}

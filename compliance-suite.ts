@@ -1,5 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
+import { Config } from "./interpreter/config/config";
+import { ColorManager } from "./interpreter/config/managers/color/manager";
 import { Interpreter } from "./interpreter/interpreter";
 import { Lexer } from "./interpreter/lexer";
 import { Parser } from "./interpreter/parser";
@@ -11,6 +13,7 @@ interface TestCase {
   expectedOutputType: string;
   inline: boolean;
   context?: Record<string, any>;
+  schemas?: string[];
 }
 
 interface TestResult {
@@ -28,6 +31,35 @@ interface ComplianceReport {
   passed: number;
   failed: number;
   results: TestResult[];
+}
+
+// Schema URI to local file mapping
+const SCHEMA_FILE_MAP: Record<string, string> = {
+  "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0/": "./specifications/colors/hsl.json",
+  "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0/": "./specifications/colors/srgb.json",
+  "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/": "./specifications/colors/rgb.json",
+  "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgba-color/0/": "./specifications/colors/rgba.json",
+  "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/lrgb-color/0/": "./specifications/colors/lrgb.json",
+};
+
+function loadSchemas(schemas: string[]): ColorManager {
+  const colorManager = new ColorManager();
+  
+  for (const schemaUri of schemas) {
+    const filePath = SCHEMA_FILE_MAP[schemaUri];
+    if (filePath && fs.existsSync(filePath)) {
+      try {
+        const specData = fs.readFileSync(filePath, "utf-8");
+        colorManager.register(schemaUri, specData);
+      } catch (error) {
+        console.warn(`Failed to load schema ${schemaUri} from ${filePath}:`, error);
+      }
+    } else {
+      console.warn(`No file mapping found for schema: ${schemaUri}`);
+    }
+  }
+  
+  return colorManager;
 }
 
 function getType(value: any): string {
@@ -89,7 +121,15 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
         const lexer = new Lexer(test.input);
         const parser = new Parser(lexer);
         const ast = parser.parse(test.inline);
-        const interpreter = new Interpreter(ast, { references: test.context || {} });
+        
+        // Load schemas if specified
+        let config: Config | undefined;
+        if (test.schemas && test.schemas.length > 0) {
+          const colorManager = loadSchemas(test.schemas);
+          config = new Config({ colorManager });
+        }
+        
+        const interpreter = new Interpreter(ast, { references: test.context || {}, config });
         const result = interpreter.interpret();
         // Always deeply normalize output for report and comparison
         function normalize(val: any): { value: any; type: string } {
