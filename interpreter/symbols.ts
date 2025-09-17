@@ -644,7 +644,7 @@ export class ColorSymbol extends BaseSymbolType {
     super(value);
 
     this.value = value;
-    this.subType = subType || null;
+    this.subType = isHex ? "Hex" : subType || null;
 
     this._SUPPORTED_METHODS = {
       tostring: {
