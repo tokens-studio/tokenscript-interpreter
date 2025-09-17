@@ -485,7 +485,7 @@ export class ListSymbol extends BaseSymbolType {
   deleteImpl(indexSymbol: NumberSymbol): ListSymbol {
     const index = indexSymbol.value as number;
     if (index < 0 || index >= this.elements.length)
-      throw new InterpreterError("Index out of range for delete.");
+      throw new InterpreterError("Index out of range for deletion.");
     this.elements.splice(index, 1);
     return this;
   }
