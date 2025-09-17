@@ -249,14 +249,15 @@ return j;
     cm))
 
 (defn run-with-colormanager
-  [code & {:as opts}]
+  [code & {:as opts :keys [references schema-uris]}]
   (try
     (let [lexer (Lexer. code)
           parser (Parser. lexer)
-          color-manager (setup-color-manager (or (:schema-uris opts)
+          color-manager (setup-color-manager (or schema-uris
                                                  ["./specifications/colors/rgb.json"]))
           config  (Config. #js {:colorManager color-manager})
-          interpreter (Interpreter. parser #js {:config config})
+          interpreter (Interpreter. parser #js {:config config
+                                                :references (some-> references (clj->js))})
           result (.interpret interpreter)]
       (reset! !result #js {:config config
                            :lexer lexer
@@ -269,15 +270,17 @@ return j;
 
 (comment
   (run-with-colormanager
-   "variable c: Color.Rgb = rgb(255, 255, 255);
-c.to.hex()")
+   "variable c: Color.HSL = hsl(0, 100, 50.0);
+c")
   ;; => #object[ColorSymbol #ffffff]
 
-  (run-with-colormanager
-   "variable c: Color.Rgb = rgb(255, 255, 255);
-c.to.hex()"
-   {:schema-uris ["./specifications/colors/rgb.json"
-                  "./specifications/colors/hsl.json"]})
+  (-> (run-with-colormanager
+       "variable c: Color = {COLOR};
+return c.to.hsl()"
+       {:references {:COLOR "#FF0000"}
+        :schema-uris ["./specifications/colors/rgb.json"
+                      "./specifications/colors/hsl.json"]}))
+  ;; => "HSL"
 
   (run-with-colormanager
    "variable c: Color.Rgb = rgb(255, 255);")
