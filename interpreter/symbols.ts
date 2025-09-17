@@ -611,6 +611,153 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
   }
 }
 
+export class DictionarySymbol extends BaseSymbolType {
+  type = "Dictionary";
+  static readonly type = "Dictionary";
+
+  public value: Record<string, ISymbolType> | null;
+
+  constructor(value: Record<string, ISymbolType> | DictionarySymbol | null) {
+    let safeValue: Record<string, ISymbolType> | null;
+    if (value instanceof DictionarySymbol) {
+      safeValue = value.value;
+    } else if (value === null) {
+      safeValue = {};
+    } else if (typeof value === "object" && !Array.isArray(value)) {
+      safeValue = value;
+    } else {
+      throw new InterpreterError(`Value must be dict, got ${typeof value}.`);
+    }
+    super(safeValue);
+    this.value = safeValue;
+
+    this._SUPPORTED_METHODS = {
+      get: {
+        function: this.getImpl,
+        args: [{ name: "key", type: StringSymbol, optional: false }],
+        returnType: BaseSymbolType,
+      },
+      set: {
+        function: this.setImpl,
+        args: [
+          { name: "key", type: StringSymbol, optional: false },
+          { name: "value", type: BaseSymbolType, optional: false },
+        ],
+        returnType: DictionarySymbol,
+      },
+      delete: {
+        function: this.deleteImpl,
+        args: [{ name: "key", type: StringSymbol, optional: false }],
+        returnType: DictionarySymbol,
+      },
+      keys: {
+        function: this.keysImpl,
+        args: [],
+        returnType: ListSymbol,
+      },
+      keyexists: {
+        function: this.keyExistsImpl,
+        args: [{ name: "key", type: StringSymbol, optional: false }],
+        returnType: BooleanSymbol,
+      },
+      key_exists: {
+        function: this.keyExistsImpl,
+        args: [{ name: "key", type: StringSymbol, optional: false }],
+        returnType: BooleanSymbol,
+      },
+      length: {
+        function: this.lengthImpl,
+        args: [],
+        returnType: NumberSymbol,
+      },
+      clear: {
+        function: this.clearImpl,
+        args: [],
+        returnType: DictionarySymbol,
+      },
+    };
+  }
+
+  validValue(val: any): boolean {
+    return typeof val === "object" && !Array.isArray(val) && val !== null;
+  }
+
+  expectSafeValue(val: any): asserts val is Record<string, ISymbolType> {
+    if (val === null || val === undefined) {
+      throw new InterpreterError("Dictionary value cannot be null.");
+    }
+  }
+
+  toString(): string {
+    this.expectSafeValue(this.value);
+    const entries = Object.entries(this.value)
+      .map(([key, value]) => `'${key}': '${value.toString()}'`)
+      .join(", ");
+    return `{${entries}}`;
+  }
+
+  private ensureKeyIsString(key: ISymbolType): string {
+    if (key instanceof StringSymbol && key.value !== null) {
+      return key.value;
+    }
+    if (typeof key === "string") {
+      return key;
+    }
+    throw new InterpreterError(`Key must be a string, got ${typeof key}.`);
+  }
+
+  getImpl(key: StringSymbol): ISymbolType {
+    this.expectSafeValue(this.value);
+    const keyStr = this.ensureKeyIsString(key);
+    return this.value[keyStr] || StringSymbol.empty();
+  }
+
+  setImpl(key: StringSymbol, value: ISymbolType): DictionarySymbol {
+    this.expectSafeValue(this.value);
+    const keyStr = this.ensureKeyIsString(key);
+    this.value[keyStr] = value;
+    return this;
+  }
+
+  deleteImpl(key: StringSymbol): DictionarySymbol {
+    this.expectSafeValue(this.value);
+    const keyStr = this.ensureKeyIsString(key);
+    if (keyStr in this.value) {
+      delete this.value[keyStr];
+    }
+    return this;
+  }
+
+  keysImpl(): ListSymbol {
+    this.expectSafeValue(this.value);
+    const keys = Object.keys(this.value).map((key) => new StringSymbol(key));
+    return new ListSymbol(keys);
+  }
+
+  keyExistsImpl(key: StringSymbol): BooleanSymbol {
+    this.expectSafeValue(this.value);
+    const keyStr = this.ensureKeyIsString(key);
+    return new BooleanSymbol(keyStr in this.value);
+  }
+
+  lengthImpl(): NumberSymbol {
+    this.expectSafeValue(this.value);
+    return new NumberSymbol(Object.keys(this.value).length);
+  }
+
+  clearImpl(): DictionarySymbol {
+    this.expectSafeValue(this.value);
+    for (const key in this.value) {
+      delete this.value[key];
+    }
+    return this;
+  }
+
+  static empty(): DictionarySymbol {
+    return new DictionarySymbol(null);
+  }
+}
+
 export type dynamicColorValue = Record<string, ISymbolType>;
 
 export class ColorSymbol extends BaseSymbolType {
@@ -715,9 +862,19 @@ export const jsValueToSymbolType = (value: any): ISymbolType => {
   if (typeof value === "boolean") return new BooleanSymbol(value);
   if (Array.isArray(value)) return new ListSymbol(value.map(jsValueToSymbolType));
 
+  // Convert NumberWithUnit object
   if (value instanceof NumberWithUnitSymbol) return value;
   const numberWithUnit = NumberWithUnitSymbol.fromRecord(value);
   if (numberWithUnit) return numberWithUnit;
+
+  // Convert plain object to dictionary
+  if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+    const dictValue: Record<string, ISymbolType> = {};
+    for (const key in value) {
+      dictValue[key] = jsValueToSymbolType(value[key]);
+    }
+    return new DictionarySymbol(dictValue);
+  }
 
   throw new InterpreterError(`Invalid value type: ${typeof value}`);
 };
@@ -729,6 +886,7 @@ export const basicSymbolTypes = {
   [ListSymbol.type.toLowerCase()]: ListSymbol,
   [NumberWithUnitSymbol.type.toLowerCase()]: NumberWithUnitSymbol,
   [ColorSymbol.type.toLowerCase()]: ColorSymbol,
+  [DictionarySymbol.type.toLowerCase()]: DictionarySymbol,
 } as const;
 
 export type BasicSymbolTypeConstructor = (typeof basicSymbolTypes)[keyof typeof basicSymbolTypes];

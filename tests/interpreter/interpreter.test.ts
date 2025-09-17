@@ -318,9 +318,10 @@ describe("Interpreter - References", () => {
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
-    expect(() => new Interpreter(parser, { references: { unsupported_ref: { unsupported_ref: 0.5 } } })).toThrow(
-      InterpreterError,
-    );
+    expect(() => {
+      const interpreter = new Interpreter(parser, { references: { unsupported_ref: new Set([1, 2, 3]) } });
+      interpreter.interpret();
+    }).toThrow(InterpreterError);
   });
 });
 
