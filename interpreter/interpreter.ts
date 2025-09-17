@@ -510,20 +510,23 @@ export class Interpreter {
   }
 
   private visitIfNode(node: IfNode): ISymbolType | null {
-    const conditionNode = this.visit(node.condition);
-    if (!(conditionNode instanceof BooleanSymbol)) {
-      throw new InterpreterError(
-        "If condition must be a boolean.",
-        (node.condition as any).token?.line,
-        (node.condition as any).token,
-      );
-    }
-    const validConditionNode = conditionNode as BooleanSymbol;
+    // Process each condition in order (if, elif, elif, ...)
+    for (const conditionNode of node.conditions) {
+      const condition = this.visit(conditionNode.condition);
+      if (!(condition instanceof BooleanSymbol)) {
+        throw new InterpreterError(
+          "If/elif condition must be a boolean.",
+          (conditionNode.condition as any).token?.line,
+          (conditionNode.condition as any).token,
+        );
+      }
 
-    if (validConditionNode.value) {
-      return this.visit(node.ifBody);
+      if (condition.value) {
+        return this.visit(conditionNode.body);
+      }
     }
 
+    // If no conditions were true, execute else body if it exists
     if (node.elseBody) {
       return this.visit(node.elseBody);
     }

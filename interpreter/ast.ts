@@ -215,11 +215,19 @@ export class WhileNode implements ASTNode {
   ) {}
 }
 
+export class IfConditionNode implements ASTNode {
+  nodeType = "IfConditionNode";
+  constructor(
+    public condition: ASTNode,
+    public body: StatementListNode,
+    public token?: Token,
+  ) {}
+}
+
 export class IfNode implements ASTNode {
   nodeType = "IfNode";
   constructor(
-    public condition: ASTNode,
-    public ifBody: StatementListNode,
+    public conditions: IfConditionNode[],
     public elseBody: StatementListNode | null,
     public token?: Token,
   ) {}

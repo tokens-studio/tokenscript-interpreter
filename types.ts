@@ -35,6 +35,7 @@ export enum ReservedKeyword {
   WHILE = "while",
   IF = "if",
   ELSE = "else",
+  ELIF = "elif",
   RETURN = "return",
   VARIABLE = "variable",
 }
