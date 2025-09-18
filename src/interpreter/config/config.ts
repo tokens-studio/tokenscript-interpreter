@@ -1,4 +1,4 @@
-import type { ISymbolType } from "@/types";
+import type { ISymbolType } from "@src/types";
 import { InterpreterError } from "../errors";
 import { basicSymbolTypes, ColorSymbol } from "../symbols";
 import { ColorManager } from "./managers/color/manager";

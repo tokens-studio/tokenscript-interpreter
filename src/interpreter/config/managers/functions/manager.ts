@@ -1,6 +1,6 @@
-import { InterpreterError } from "@/interpreter/errors";
-import { NumberSymbol, NumberWithUnitSymbol, StringSymbol } from "@/interpreter/symbols";
-import type { ISymbolType } from "@/types";
+import { InterpreterError } from "@interpreter/errors";
+import { NumberSymbol, NumberWithUnitSymbol, StringSymbol } from "@interpreter/symbols";
+import type { ISymbolType } from "@src/types";
 import { BaseManager } from "../base-manager";
 
 import { type FunctionSpecification, FunctionSpecificationSchema } from "./schema";

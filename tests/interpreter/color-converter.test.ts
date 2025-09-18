@@ -1,12 +1,12 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { Config } from "../../interpreter/config/config";
-import { ColorManager } from "../../interpreter/config/managers/color/manager";
-import { InterpreterError } from "../../interpreter/errors";
-import { Interpreter } from "../../interpreter/interpreter";
-import { Lexer } from "../../interpreter/lexer";
-import { Parser } from "../../interpreter/parser";
-import { ColorSymbol, ListSymbol as List, NumberSymbol } from "../../interpreter/symbols";
+import { Config } from "@interpreter/config/config";
+import { ColorManager } from "@interpreter/config/managers/color/manager";
+import { InterpreterError } from "@interpreter/errors";
+import { Interpreter } from "@interpreter/interpreter";
+import { Lexer } from "@interpreter/lexer";
+import { Parser } from "@interpreter/parser";
+import { ColorSymbol, ListSymbol as List, NumberSymbol } from "@interpreter/symbols";
 
 function setupColorManagerWithRgb(): ColorManager {
   const colorManager = new ColorManager();

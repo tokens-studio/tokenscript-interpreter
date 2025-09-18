@@ -1,4 +1,4 @@
-import type { Token } from "../types";
+import type { Token } from "@src/types";
 import type { InterpreterErrorType } from "./error-types";
 
 export class LanguageError extends Error {

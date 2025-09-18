@@ -38,9 +38,10 @@ jobs:
 
     - name: Test CLI functionality
       run: |
-        npm run cli:interactive -- --help || true
+        npm run cli -- --help
         npm run cli -- parse_tokenset --help
         npm run cli -- permutate_tokenset --help
+        npm run cli -- evaluate_standard_compliance --help
 
   build:
     name: Build Library
@@ -61,7 +62,12 @@ jobs:
       run: npm ci
       
     - name: Build library
-      run: npm run build:lib
+      run: npm run build
+      
+    - name: Test built CLI
+      run: |
+        ./dist/cli.js --help
+        ./dist/cli.js --version
       
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
@@ -105,7 +111,7 @@ jobs:
         mv package.tmp.json package.json
 
     - name: Build library
-      run: npm run build:lib
+      run: npm run build
 
     - name: Publish to GitHub Packages
       uses: JS-DevTools/npm-publish@v3

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { Lexer } from "../../interpreter/lexer";
-import { Parser } from "../../interpreter/parser";
-import { Interpreter } from "../../interpreter/interpreter";
-import { Config } from "../../interpreter/config/config";
-import { UnitManager } from "../../interpreter/config/managers/unit/manager";
+import { Lexer } from "@interpreter/lexer";
+import { Parser } from "@interpreter/parser";
+import { Interpreter } from "@interpreter/interpreter";
+import { Config } from "@interpreter/config/config";
+import { UnitManager } from "@interpreter/config/managers/unit/manager";
 
 function interpretExpression(text: string, config?: Config): any {
   const lexer = new Lexer(text);

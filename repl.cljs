@@ -1,4 +1,5 @@
-;; Run with
+;; Run with (after building):
+;; npm run build
 ;; bun run --bun nbb nrepl-server
 ;; Sadly cant use bun module for native api...
 ;; or to inspect with deno:
@@ -12,12 +13,7 @@
 ;; Imports ---------------------------------------------------------------------
 
 (require
- '["./interpreter/lexer.ts" :refer [Lexer]]
- '["./interpreter/interpreter.ts" :refer [Interpreter]]
- '["./interpreter/parser.ts" :refer [Parser]]
- '["./interpreter/config/config.ts" :refer [Config]]
- '["./interpreter/symbols.ts"]
- '["./interpreter/config/managers/color/manager.ts" :refer [ColorManager]]
+ '["./dist/lib/index.js" :refer [Lexer Interpreter Parser Config ColorManager]]
  :reload)
 
 ;; Runner ----------------------------------------------------------------------
@@ -273,6 +269,9 @@ return j;
    "variable c: Color.HSL = hsl(0, 100, 50.0);
 c")
   ;; => #object[ColorSymbol #ffffff]
+
+  (run "1rem + 10% + 1px")
+  (run-python! "1rem + 10% + 1px")
 
   (-> (run-with-colormanager
        "variable c: Color.Hsl = hsl(0,0,0);

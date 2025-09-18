@@ -1,4 +1,4 @@
-import { Operations, ReservedKeyword, SupportedFormats, type Token, TokenType } from "../types";
+import { Operations, ReservedKeyword, SupportedFormats, type Token, TokenType } from "@src/types";
 import { LexerError } from "./errors";
 import { CodePoint, isAlpha, isAlphaNumeric, isNumber, isSpace } from "./utils/string";
 

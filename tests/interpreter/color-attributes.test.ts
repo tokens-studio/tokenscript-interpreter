@@ -2,10 +2,10 @@ import { describe, expect, it, beforeEach } from "vitest";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-import { Interpreter } from "@/interpreter/interpreter";
-import { Lexer } from "@/interpreter/lexer";
-import { Parser } from "@/interpreter/parser";
-import { Config } from "@/interpreter/config/config";
+import { Interpreter } from "@interpreter/interpreter";
+import { Lexer } from "@interpreter/lexer";
+import { Parser } from "@interpreter/parser";
+import { Config } from "@interpreter/config/config";
 
 describe("Color Attributes - RGB Color Type", () => {
   let config: Config;

@@ -4,7 +4,7 @@ import {
   Operations,
   type ReferenceRecord,
   UNINTERPRETED_KEYWORDS,
-} from "../types";
+} from "@src/types";
 import {
   type AssignNode,
   AttributeAccessNode,

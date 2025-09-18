@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { InterpreterError } from "../../interpreter/errors";
-import { Interpreter } from "../../interpreter/interpreter";
-import { Lexer } from "../../interpreter/lexer";
-import { Parser } from "../../interpreter/parser";
+import { InterpreterError } from "@interpreter/errors";
+import { Interpreter } from "@interpreter/interpreter";
+import { Lexer } from "@interpreter/lexer";
+import { Parser } from "@interpreter/parser";
 
 describe("Variables - Assignment", () => {
   it("should handle variable assignment", () => {

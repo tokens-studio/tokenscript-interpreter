@@ -1,11 +1,14 @@
+import type { ASTNode } from "@interpreter/ast";
+import { Interpreter } from "@interpreter/interpreter";
+import { Lexer } from "@interpreter/lexer";
+import { Parser } from "@interpreter/parser";
+import { UNINTERPRETED_KEYWORDS } from "@src/types";
+import {
+  flattenTokens as flattenDTCGTokens,
+  hasNestedDTCGStructure,
+} from "@src/utils/dtcg-adapter";
+import { PerformanceTracker } from "@src/utils/performance-tracker";
 import chalk from "chalk";
-import type { ASTNode } from "./interpreter/ast";
-import { Interpreter } from "./interpreter/interpreter";
-import { Lexer } from "./interpreter/lexer";
-import { Parser } from "./interpreter/parser";
-import { UNINTERPRETED_KEYWORDS } from "./types";
-import { flattenTokens as flattenDTCGTokens, hasNestedDTCGStructure } from "./utils/dtcg-adapter";
-import { PerformanceTracker } from "./utils/performance-tracker";
 
 export interface TokenSetResolverOptions {
   maxIterations?: number;

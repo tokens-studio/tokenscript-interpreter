@@ -1,22 +1,20 @@
-#!/usr/bin/env node
-
 import * as fs from "node:fs";
-import chalk from "chalk";
-import { Command } from "commander";
-import * as readlineSync from "readline-sync";
-import * as yauzl from "yauzl";
-import { evaluateStandardCompliance } from "./compliance-suite";
-import { Interpreter } from "./interpreter/interpreter";
-import { Lexer } from "./interpreter/lexer";
-import { Parser } from "./interpreter/parser";
+import { Interpreter } from "@interpreter/interpreter";
+import { Lexer } from "@interpreter/lexer";
+import { Parser } from "@interpreter/parser";
+import { evaluateStandardCompliance } from "@src/compliance-suite";
 import {
   buildThemeTree,
   interpretTokens,
   interpretTokensets,
   permutateTokensets,
   processThemes,
-} from "./tokenset-processor";
-import type { ReferenceRecord } from "./types";
+} from "@src/tokenset-processor";
+import type { ReferenceRecord } from "@src/types";
+import chalk from "chalk";
+import { Command } from "commander";
+import * as readlineSync from "readline-sync";
+import * as yauzl from "yauzl";
 
 const program = new Command();
 
@@ -220,7 +218,7 @@ async function parseTokenset(tokensetPath: string, outputPath: string): Promise<
 
   try {
     // Clear any existing caches for fresh processing
-    const { clearFlatteningCaches } = await import("./utils/dtcg-adapter");
+    const { clearFlatteningCaches } = await import("@src/utils/dtcg-adapter");
     clearFlatteningCaches();
 
     // Load ZIP file contents

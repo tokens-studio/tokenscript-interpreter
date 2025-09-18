@@ -1,4 +1,4 @@
-import { type ISymbolType, SupportedFormats } from "../types";
+import { type ISymbolType, SupportedFormats } from "@src/types";
 import type { Config } from "./config/config";
 import { InterpreterError } from "./errors";
 import { isValidHex } from "./utils/color";

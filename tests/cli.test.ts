@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { Interpreter } from "../interpreter/interpreter";
-import { Lexer } from "../interpreter/lexer";
-import { Parser } from "../interpreter/parser";
-import { TokenSetResolver, buildThemeTree, processThemes } from "../tokenset-processor";
+import { Interpreter } from "@interpreter/interpreter";
+import { Lexer } from "@interpreter/lexer";
+import { Parser } from "@interpreter/parser";
+import { TokenSetResolver, buildThemeTree, processThemes } from "@src/tokenset-processor";
 
 describe("CLI Functionality", () => {
   describe("Expression Interpretation", () => {
