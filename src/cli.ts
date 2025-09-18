@@ -11,7 +11,7 @@ import {
   processThemes,
 } from "@src/tokenset-processor";
 import type { ReferenceRecord } from "@src/types";
-import chalk from "chalk";
+
 import { Command } from "commander";
 import * as readlineSync from "readline-sync";
 import * as yauzl from "yauzl";
@@ -94,14 +94,13 @@ program
     } else {
       console.log("\nDetailed Results:");
       report.results.forEach((result, index) => {
-        const status =
-          result.status === "passed" ? chalk.green("✅ PASSED") : chalk.red("❌ FAILED");
+        const status = result.status === "passed" ? "✅ PASSED" : "❌ FAILED";
         console.log(`\n${index + 1}. ${status} - ${result.name}`);
         console.log(`   Path: ${result.path}`);
         console.log(`   Expected: ${result.expectedOutput} (${result.expectedOutputType})`);
         console.log(`   Actual: ${result.actualOutput} (${result.actualOutputType})`);
         if (result.error) {
-          console.log(`   Error: ${chalk.yellow(result.error)}`);
+          console.log(`   Error: ${result.error}`);
         }
       });
     }
@@ -109,18 +108,18 @@ program
 
 // Interactive REPL mode
 async function interactiveMode(): Promise<void> {
-  console.log(chalk.cyan.bold("🚀 TokenScript Interactive Mode"));
-  console.log(chalk.gray('Type "exit" or "quit" to exit, "set_variables" to set token references'));
+  console.log("🚀 TokenScript Interactive Mode");
+  console.log('Type "exit" or "quit" to exit, "set_variables" to set token references');
   console.log("");
 
   let references: ReferenceRecord = {};
 
   while (true) {
     try {
-      const input = readlineSync.question(chalk.blue("Enter expression: "));
+      const input = readlineSync.question("Enter expression: ");
 
       if (input.toLowerCase() === "exit" || input.toLowerCase() === "quit") {
-        console.log(chalk.green("👋 Goodbye!"));
+        console.log("👋 Goodbye!");
         break;
       }
 
@@ -135,9 +134,9 @@ async function interactiveMode(): Promise<void> {
 
       // Parse and interpret the input
       const result = await interpretExpression(input, references);
-      console.log(chalk.green("✅ Result: ") + chalk.yellow(result));
+      console.log(`✅ Result: ${result}`);
     } catch (error: any) {
-      console.error(chalk.red("❌ Error: ") + chalk.redBright(error.message));
+      console.error(`❌ Error: ${error.message}`);
     }
   }
 }
@@ -148,10 +147,10 @@ async function setVariablesInteractively(
 ): Promise<ReferenceRecord> {
   const references = { ...currentReferences };
 
-  console.log(chalk.cyan('🔧 Setting variables (enter "done" to finish):'));
+  console.log('🔧 Setting variables (enter "done" to finish):');
 
   while (true) {
-    const input = readlineSync.question(chalk.blue('Enter variable (name=value) or "done": '));
+    const input = readlineSync.question('Enter variable (name=value) or "done": ');
 
     if (input.toLowerCase() === "done") {
       break;
@@ -160,7 +159,7 @@ async function setVariablesInteractively(
     try {
       const [name, value] = input.split("=").map((s) => s.trim());
       if (!name || value === undefined) {
-        console.log(chalk.yellow("⚠️  Invalid input. Please enter in the format name=value."));
+        console.log("⚠️  Invalid input. Please enter in the format name=value.");
         continue;
       }
 
@@ -172,14 +171,9 @@ async function setVariablesInteractively(
         references[name] = value;
       }
 
-      console.log(
-        chalk.green("✅ Set ") +
-          chalk.cyan(name) +
-          chalk.green(" = ") +
-          chalk.yellow(references[name]),
-      );
+      console.log(`✅ Set ${name} = ${references[name]}`);
     } catch (_error) {
-      console.log(chalk.yellow("⚠️  Invalid input. Please enter in the format name=value."));
+      console.log("⚠️  Invalid input. Please enter in the format name=value.");
     }
   }
 
@@ -214,7 +208,7 @@ async function interpretExpression(code: string, references: ReferenceRecord): P
 
 // Parse tokenset from ZIP file
 async function parseTokenset(tokensetPath: string, outputPath: string): Promise<void> {
-  console.log(chalk.cyan("📦 Parsing tokenset from: ") + chalk.yellow(tokensetPath));
+  console.log(`📦 Parsing tokenset from: ${tokensetPath}`);
 
   try {
     // Clear any existing caches for fresh processing
@@ -225,20 +219,20 @@ async function parseTokenset(tokensetPath: string, outputPath: string): Promise<
     const filesContent = await loadZipToMemory(tokensetPath);
 
     // Debug: show what files were loaded
-    console.log(chalk.blue(`📁 ${Object.keys(filesContent).length} Files loaded`));
+    console.log(`📁 ${Object.keys(filesContent).length} Files loaded`);
 
     // Load themes
     const themes = loadThemes(filesContent);
-    console.log(chalk.blue("🎨 Loaded themes: ") + chalk.magenta(Object.keys(themes).join(", ")));
+    console.log(`🎨 Loaded themes: ${Object.keys(themes).join(", ")}`);
 
     // Process themes
     const output = await processThemes(themes, { enablePerformanceTracking: true });
 
     // Write output
     await fs.promises.writeFile(outputPath, JSON.stringify(output, null, 2), "utf8");
-    console.log(chalk.green("💾 Output written to: ") + chalk.yellow(outputPath));
+    console.log(`💾 Output written to: ${outputPath}`);
   } catch (error: any) {
-    console.error(chalk.red("❌ Error parsing tokenset: ") + chalk.redBright(error.message));
+    console.error(`❌ Error parsing tokenset: ${error.message}`);
     process.exit(1);
   }
 }
@@ -250,9 +244,9 @@ async function permutateTokenset(
   permutateTo: string,
   outputPath: string,
 ): Promise<void> {
-  console.log(chalk.cyan("🔄 Permutating tokenset from: ") + chalk.yellow(tokensetPath));
-  console.log(chalk.blue("📋 Permutating on: ") + chalk.magenta(permutateOn.join(", ")));
-  console.log(chalk.blue("🎯 Permutating to: ") + chalk.magenta(permutateTo));
+  console.log(`🔄 Permutating tokenset from: ${tokensetPath}`);
+  console.log(`📋 Permutating on: ${permutateOn.join(", ")}`);
+  console.log(`🎯 Permutating to: ${permutateTo}`);
 
   try {
     // Load ZIP file contents
@@ -298,16 +292,16 @@ async function permutateTokenset(
 
     // Write output
     await fs.promises.writeFile(outputPath, JSON.stringify(output, null, 2), "utf8");
-    console.log(chalk.green("💾 Permutations written to: ") + chalk.yellow(outputPath));
+    console.log(`💾 Permutations written to: ${outputPath}`);
   } catch (error: any) {
-    console.error(chalk.red("❌ Error permutating tokenset: ") + chalk.redBright(error.message));
+    console.error(`❌ Error permutating tokenset: ${error.message}`);
     process.exit(1);
   }
 }
 
 // Parse DTCG JSON file - simple unified API
 async function parseJsonFile(jsonPath: string, outputPath: string): Promise<void> {
-  console.log(chalk.cyan("📄 Parsing JSON from: ") + chalk.yellow(jsonPath));
+  console.log(`📄 Parsing JSON from: ${jsonPath}`);
 
   try {
     // Read JSON file
@@ -319,9 +313,9 @@ async function parseJsonFile(jsonPath: string, outputPath: string): Promise<void
 
     // Write output
     await fs.promises.writeFile(outputPath, JSON.stringify(output, null, 2), "utf8");
-    console.log(chalk.green("💾 Output written to: ") + chalk.yellow(outputPath));
+    console.log(`💾 Output written to: ${outputPath}`);
   } catch (error: any) {
-    console.error(chalk.red("❌ Error parsing JSON: ") + chalk.redBright(error.message));
+    console.error(`❌ Error parsing JSON: ${error.message}`);
     process.exit(1);
   }
 }
@@ -478,9 +472,7 @@ function loadThemes(tokensets: Record<string, any>): Record<string, Record<strin
           const setId = tokenSetRef.id;
           const tokenSet = flattenedTokenSetsCache.get(setId);
           if (!tokenSet) {
-            console.warn(
-              chalk.yellow(`⚠️  Token set '${setId}' referenced in '${themeName}' not found.`),
-            );
+            console.warn(`⚠️  Token set '${setId}' referenced in '${themeName}' not found.`);
             continue;
           }
           tokenSetRefs.push(tokenSet);

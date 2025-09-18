@@ -8,7 +8,6 @@ import {
   hasNestedDTCGStructure,
 } from "@src/utils/dtcg-adapter";
 import { PerformanceTracker } from "@src/utils/performance-tracker";
-import chalk from "chalk";
 
 export interface TokenSetResolverOptions {
   maxIterations?: number;
@@ -189,11 +188,7 @@ export async function processThemes(
   performanceTracker?.startTracking();
 
   for (const [themeName, themeTokens] of Object.entries(themes)) {
-    console.log(
-      chalk.blue("🔄 Processing theme: ") +
-        chalk.cyan(themeName) +
-        chalk.gray(` (${Object.keys(themeTokens).length} tokens)`),
-    );
+    console.log(`🔄 Processing theme: ${themeName} (${Object.keys(themeTokens).length} tokens)`);
 
     const startTime = Date.now();
 
@@ -209,10 +204,10 @@ export async function processThemes(
 
     // Handle warnings and errors from the resolver
     for (const warning of result.warnings) {
-      console.warn(chalk.yellow(`⚠️  ${warning}`));
+      console.warn(`⚠️  ${warning}`);
     }
     for (const error of result.errors) {
-      console.error(chalk.red(`❌ ${error}`));
+      console.error(`❌ ${error}`);
     }
 
     const resolvedTokens = result.resolvedTokens;
@@ -297,7 +292,7 @@ export function permutateTokensets(
     throw new Error("No permutation available to process");
   }
 
-  console.log(chalk.blue("🔄 Permutating on: ") + chalk.magenta(currentPermutation));
+  console.log(`🔄 Permutating on: ${currentPermutation}`);
 
   for (const [themeName, themeTokens] of Object.entries(themeTree[currentPermutation])) {
     if (!themeTokens) {
@@ -421,9 +416,7 @@ function loadThemesFromJson(dtcgJson: Record<string, any>): Record<string, Recor
         if (tokenSetRef.status === "enabled" || tokenSetRef.status === "source") {
           const setId = tokenSetRef.id;
           if (!(setId in dtcgJson)) {
-            console.warn(
-              chalk.yellow(`⚠️  Token set '${setId}' referenced in '${themeName}' not found.`),
-            );
+            console.warn(`⚠️  Token set '${setId}' referenced in '${themeName}' not found.`);
             continue;
           }
           Object.assign(themeTokens[themeName], flattenDTCGTokens(dtcgJson[setId]));
