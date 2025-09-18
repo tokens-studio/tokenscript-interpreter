@@ -3,18 +3,8 @@
   "type": "color",
   "schema": {
     "type": "object",
-    "required": [
-      "r",
-      "g",
-      "b",
-      "a"
-    ],
-    "order": [
-      "r",
-      "g",
-      "b",
-      "a"
-    ],
+    "required": ["r", "g", "b", "a"],
+    "order": ["r", "g", "b", "a"],
     "properties": {
       "a": {
         "type": "number"
@@ -61,7 +51,7 @@
       "script": {
         "type": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/",
         "script": "variable rgba: List = {input}.r,{input}.g,{input}.b,{input}.a;\n    variable hex: String = \"#\";\n    variable i: Number = 0;\n    variable value: Number = 0;\n    // Convert RGBA to Hex\n    while( i < min(rgba.length(), 3)) [\n        value = rgba.get(i);\n        if(value < 16) [\n            hex = hex.concat(\"0\").concat(value.toString(16));\n        ] else [\n            hex = hex.concat(value.toString(16));\n        ];\n        i = i + 1;\n    ];\n    \n    if (rgba.length() == 4) [\n        value = rgba.get(3) * 255; // Convert alpha to 0-255 range\n        if(value < 16) [\n            hex = hex.concat(\"0\").concat(value.toString(16));\n        ] else [\n            hex = hex.concat(value.toString(16));\n        ];\n    ];\n    \n    return hex;"
-    },
+      },
       "source": "$self",
       "target": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/hex-color/0/",
       "lossless": true,

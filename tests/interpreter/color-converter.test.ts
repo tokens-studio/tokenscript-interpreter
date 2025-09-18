@@ -10,7 +10,7 @@ import { ColorSymbol, ListSymbol as List, NumberSymbol } from "@interpreter/symb
 
 function setupColorManagerWithRgb(): ColorManager {
   const colorManager = new ColorManager();
-  const rgbSpecUri = "./specifications/colors/rgb.json";
+  const rgbSpecUri = "./data/specifications/colors/rgb.json";
   const rgbSpec = JSON.parse(readFileSync(rgbSpecUri, "utf-8"));
   colorManager.register(rgbSpecUri, rgbSpec);
   return colorManager;
@@ -210,7 +210,7 @@ describe("Color Conversion - Manager Methods", () => {
     const colorManager = setupColorManagerWithRgb();
     
     const hexUri = "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/hex-color/0/";
-    const rgbUri = "./specifications/colors/rgb.json";
+    const rgbUri = "./data/specifications/colors/rgb.json";
     
     expect(colorManager.hasConversion(hexUri, rgbUri)).toBe(true);
     expect(colorManager.hasConversion(rgbUri, hexUri)).toBe(true);

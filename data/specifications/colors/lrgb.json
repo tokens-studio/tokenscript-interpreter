@@ -1,0 +1,48 @@
+{
+  "name": "LRGB",
+  "type": "color",
+  "description": "Linear RGB color",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "r": {
+        "type": "number"
+      },
+      "g": {
+        "type": "number"
+      },
+      "b": {
+        "type": "number"
+      }
+    },
+    "required": ["r", "g", "b"],
+    "order": ["r", "g", "b"],
+    "additionalProperties": false
+  },
+  "initializers": [
+    {
+      "keyword": "lrgb",
+      "description": "Creates a RGB color from string",
+      "schema": {
+        "type": "string",
+        "pattern": "^lrgb\\((\\d{1,3}),\\s*(\\d{1,3}),\\s*(\\d{1,3})\\)$"
+      },
+      "script": {
+        "type": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/",
+        "script": "variable color_parts: List = {input}; \n variable output: Color.RGB;\n output.r = color_parts.get(0);\n output.g = color_parts.get(1);\n output.b = color_parts.get(2);\n return output;"
+      }
+    }
+  ],
+  "conversions": [
+    {
+      "source": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/",
+      "target": "$self",
+      "description": "Converts RGB to LRGB",
+      "lossless": true,
+      "script": {
+        "type": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/",
+        "script": "\n    variable rgb: List = {input}.r, {input}.g, {input}.b;\n    variable rgb_linear: List = 0, 0, 0;\n    variable gamma: Number = 2.4;\n\n    // Convert RGB to linear RGB\n    variable r: Number = rgb.get(0) / 255;\n    variable g: Number = rgb.get(1) / 255;\n    variable b: Number = rgb.get(2) / 255;\n\n    // Process red channel\n    if(r <= 0.03928) [\n        rgb_linear.update(0, r / 12.92);\n    ] else [\n        rgb_linear.update(0, pow((r + 0.055) / 1.055, gamma));\n    ];\n\n    // Process green channel\n    if(g <= 0.03928) [\n        rgb_linear.update(1, g / 12.92);\n    ] else [\n        rgb_linear.update(1, pow((g + 0.055) / 1.055, gamma));\n    ];\n\n    // Process blue channel\n    if(b <= 0.03928) [\n        rgb_linear.update(2, b / 12.92);\n    ] else [\n        rgb_linear.update(2, pow((b + 0.055) / 1.055, gamma));\n    ];\n    variable output: Color.LRGB;\n    output.r = rgb_linear.get(0);\n    output.g = rgb_linear.get(1);\n    output.b = rgb_linear.get(2);\n    return output;\n    "
+      }
+    }
+  ]
+}

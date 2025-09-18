@@ -11,7 +11,7 @@ describe("Color Attributes - RGB Color Type", () => {
   let config: Config;
 
   beforeEach(() => {
-      const spec = fs.readFileSync(path.join(__dirname, "../../specifications/colors/rgb.json"), "utf-8");
+      const spec = fs.readFileSync(path.join(__dirname, "../../data/specifications/colors/rgb.json"), "utf-8");
       config = new Config()
       config.colorManager.register("test://rgb", spec)
   });

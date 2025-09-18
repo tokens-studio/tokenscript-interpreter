@@ -9,7 +9,7 @@ import * as path from "node:path";
 
 describe("ColorManager", () => {
   it("registers and retrieves the RGB color specification", () => {
-    const rgbSpecPath = path.join(__dirname, "../../specifications/colors/rgb.json");
+    const rgbSpecPath = path.join(__dirname, "../../data/specifications/colors/rgb.json");
     const rgbSpecString = fs.readFileSync(rgbSpecPath, "utf-8");
     const manager = new ColorManager();
 
@@ -28,7 +28,7 @@ describe("ColorManager", () => {
 
     beforeEach(() => {
       manager = new ColorManager();
-      rgbSpecPath = path.join(__dirname, "../../specifications/colors/rgb.json");
+      rgbSpecPath = path.join(__dirname, "../../data/specifications/colors/rgb.json");
       const rgbSpecString = fs.readFileSync(rgbSpecPath, "utf-8");
       manager.register(rgbSpecPath, JSON.parse(rgbSpecString));
     });
@@ -226,7 +226,7 @@ describe("ColorManager", () => {
     });
 
     it("should register RGB initializer from RGB specification", () => {
-      const rgbSpecPath = path.join(__dirname, "../../specifications/colors/rgb.json");
+      const rgbSpecPath = path.join(__dirname, "../../data/specifications/colors/rgb.json");
       const rgbSpecString = fs.readFileSync(rgbSpecPath, "utf-8");
       const rgbSpec = JSON.parse(rgbSpecString);
 
@@ -356,7 +356,7 @@ describe("ColorManager", () => {
     });
 
     it("should execute RGB initializer from specification", () => {
-      const rgbSpecPath = path.join(__dirname, "../../specifications/colors/rgb.json");
+      const rgbSpecPath = path.join(__dirname, "../../data/specifications/colors/rgb.json");
       const rgbSpecString = fs.readFileSync(rgbSpecPath, "utf-8");
       const rgbSpec = JSON.parse(rgbSpecString);
 

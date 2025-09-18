@@ -3,16 +3,8 @@
   "type": "color",
   "schema": {
     "type": "object",
-    "order": [
-      "r",
-      "g",
-      "b"
-    ],
-    "required": [
-      "r",
-      "g",
-      "b"
-    ],
+    "order": ["r", "g", "b"],
+    "required": ["r", "g", "b"],
     "properties": {
       "b": {
         "type": "number"
