@@ -228,6 +228,8 @@ describe("Color Conversion - Manager Methods", () => {
 
   it("should perform direct color conversion by type", () => {
     const colorManager = setupColorManagerWithRgb();
+    // Create a config to ensure the manager has proper context
+    const config = new Config({ colorManager });
     
     const hexColor = new ColorSymbol("#ff0000", "Hex");
     const rgbColor = colorManager.convertToByType(hexColor, "rgb");

@@ -5,7 +5,6 @@ import { parseExpression } from "@/interpreter/parser";
 import { ColorSymbol, type dynamicColorValue, typeEquals } from "@/interpreter/symbols";
 import { Interpreter } from "@/lib";
 import type { ISymbolType } from "@/types";
-import { Config } from "../../config";
 import { BaseManager } from "../base-manager";
 import {
   type ColorSpecification,
@@ -74,24 +73,22 @@ export class ColorManager extends BaseManager<ColorSpecification, ColorSymbol, C
    * Creates a clone of this class to be passed down to initializers and conversion functions
    * Links properties to the parent config.
    */
-  private clone() {
+  protected clone(): this {
     const colorManager = new ColorManager(new Map());
     colorManager.specs = this.specs;
     colorManager.specTypes = this.specTypes;
     colorManager.initializers = this.initializers;
     colorManager.conversions = this.conversions;
-    return colorManager;
+    return colorManager as this;
   }
 
   public registerRootInitializers(_uri: uriType, spec: ColorSpecification) {
-    const colorManager = this.clone();
-    const config = new Config({ colorManager });
-
     spec.initializers.forEach((spec) => {
       try {
         const { ast } = parseExpression(spec.script.script);
         const fn = (args: Array<ISymbolType>): ColorSymbol => {
-          const result = new Interpreter(ast, { references: { input: args }, config }).interpret();
+          const config = this.createInterpreterConfig({ input: args });
+          const result = new Interpreter(ast, config).interpret();
           if (!(result instanceof ColorSymbol)) {
             throw new InterpreterError("Initializer crashed!");
           }
@@ -103,16 +100,13 @@ export class ColorManager extends BaseManager<ColorSpecification, ColorSymbol, C
           "Could not construct initializer from schema",
           undefined,
           undefined,
-          { error, spec, script: spec.script.script, config },
+          { error, spec, script: spec.script.script },
         );
       }
     });
   }
 
   public registerConversions(uri: uriType, spec: ColorSpecification) {
-    const colorManager = this.clone();
-    const config = new Config({ colorManager });
-
     spec.conversions.forEach((conversion) => {
       // $self replacement
       const sourceUri = conversion.source === "$self" ? uri : conversion.source;
@@ -120,7 +114,8 @@ export class ColorManager extends BaseManager<ColorSpecification, ColorSymbol, C
 
       const { ast } = parseExpression(conversion.script.script);
       const fn = (color: ColorSymbol): ColorSymbol => {
-        const result = new Interpreter(ast, { references: { input: color }, config }).interpret();
+        const interpreterConfig = this.createInterpreterConfig({ input: color });
+        const result = new Interpreter(ast, interpreterConfig).interpret();
         if (!(result instanceof ColorSymbol)) {
           // If the result is not a ColorSymbol, wrap it in one with the target type
           const targetSpec = this.getSpec(targetUri);

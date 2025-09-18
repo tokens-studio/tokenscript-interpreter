@@ -30,6 +30,15 @@ export class Config {
     };
     this.colorManager = options?.colorManager || new ColorManager();
     this.unitManager = options?.unitManager || new UnitManager();
+
+    // Set parent config reference to avoid recursion issues
+    // Only set if not already set to prevent overriding existing parent references
+    if (!this.colorManager.getParentConfig()) {
+      this.colorManager.setParentConfig(this);
+    }
+    if (!this.unitManager.getParentConfig()) {
+      this.unitManager.setParentConfig(this);
+    }
   }
 
   getType(baseType: string, subType?: string): ISymbolType {

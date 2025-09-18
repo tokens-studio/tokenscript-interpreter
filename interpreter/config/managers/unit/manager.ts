@@ -98,15 +98,29 @@ export class UnitManager extends BaseManager<
     return specName(spec);
   }
 
+  /**
+   * Creates a clone of this class to be passed down to initializers and conversion functions
+   * Links properties to the parent config.
+   */
+  protected clone(): this {
+    const unitManager = new UnitManager(new Map());
+    unitManager.specs = this.specs;
+    unitManager.specTypes = this.specTypes;
+    unitManager.conversions = this.conversions;
+    unitManager.unitKeywords = this.unitKeywords;
+    return unitManager as this;
+  }
+
   public registerConversions(uri: uriType, spec: UnitSpecification) {
     spec.conversions?.forEach((conversion) => {
+      // $self replacement
       const sourceUri = conversion.source === "$self" ? uri : conversion.source;
       const targetUri = conversion.target === "$self" ? uri : conversion.target;
 
       const { ast } = parseExpression(conversion.script.script);
       const fn = (unit: NumberWithUnitSymbol): NumberWithUnitSymbol => {
-        // Use a simple interpreter without a full config to avoid circular dependency
-        const result = new Interpreter(ast, { references: { input: unit } }).interpret();
+        const config = this.createInterpreterConfig({ input: unit });
+        const result = new Interpreter(ast, config).interpret();
         if (!(result instanceof NumberWithUnitSymbol)) {
           throw new InterpreterError(
             "Unit conversion function must return a NumberWithUnitSymbol",

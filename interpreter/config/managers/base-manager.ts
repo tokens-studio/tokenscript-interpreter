@@ -1,3 +1,5 @@
+import type { Config } from "../config";
+
 type uri = string;
 type specType = string;
 
@@ -9,6 +11,7 @@ export abstract class BaseManager<TSpec, TInput, TOutput> {
   protected specs: Map<uri, TSpec> = new Map();
   protected specTypes: Map<uri, specType> = new Map();
   protected conversions: Map<uri, Map<uri, (input: TInput) => TOutput>> = new Map();
+  protected parentConfig?: Config;
 
   protected removeVersionFromUri(uri: uri): uri {
     return uri.replace(/\/\d+\/$/, "/");
@@ -131,4 +134,42 @@ export abstract class BaseManager<TSpec, TInput, TOutput> {
   public abstract register(uri: uri, spec: TSpec | specType): TSpec;
 
   protected abstract getSpecName(spec: TSpec): string;
+
+  /**
+   * Abstract method for creating a clone of the manager
+   */
+  protected abstract clone(): this;
+
+  /**
+   * Set the parent config reference
+   */
+  public setParentConfig(config: Config) {
+    this.parentConfig = config;
+  }
+
+  /**
+   * Get the parent config reference
+   */
+  public getParentConfig() {
+    return this.parentConfig;
+  }
+
+  /**
+   * Creates interpreter configuration with full context for conversion functions and initializers.
+   * Uses parent config if available to provide access to all managers and registrations.
+   */
+  protected createInterpreterConfig(references: Record<string, any>): {
+    references: Record<string, any>;
+    config?: Config;
+  } {
+    if (!this.parentConfig) {
+      return { references };
+    }
+
+    // Use the parent config directly to ensure all registrations are available
+    return {
+      references,
+      config: this.parentConfig,
+    };
+  }
 }
