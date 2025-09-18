@@ -1,5 +1,3 @@
-import chalk from "chalk";
-
 export interface PerformanceData {
   name: string;
   inputTokens: number;
@@ -85,21 +83,19 @@ export class PerformanceTracker {
   public displaySummary(): void {
     const summary = this.getSummary();
 
-    console.log(`\n${chalk.cyan("=".repeat(80))}`);
-    console.log(chalk.cyan.bold("🚀 PERFORMANCE SUMMARY"));
-    console.log(chalk.cyan("=".repeat(80)));
+    console.log(`\n${"=".repeat(80)}`);
+    console.log("🚀 PERFORMANCE SUMMARY");
+    console.log("=".repeat(80));
 
     // Table header
     console.log(
-      chalk.bold(
-        "Theme".padEnd(30) +
-          "Input".padStart(12) +
-          "Output".padStart(12) +
-          "Time (s)".padStart(12) +
-          "Tokens/s".padStart(14),
-      ),
+      "Theme".padEnd(30) +
+        "Input".padStart(12) +
+        "Output".padStart(12) +
+        "Time (s)".padStart(12) +
+        "Tokens/s".padStart(14),
     );
-    console.log(chalk.gray("-".repeat(80)));
+    console.log("-".repeat(80));
 
     // Table rows
     for (const data of summary.timingData) {
@@ -107,76 +103,41 @@ export class PerformanceTracker {
       const tokensPerSec =
         data.tokensPerSecond > 999999 ? "∞" : Math.round(data.tokensPerSecond).toLocaleString();
 
-      // Color code based on performance
-      const speedColor = this.getSpeedColor(data.tokensPerSecond);
-
       console.log(
-        chalk.cyan(name.padEnd(30)) +
-          chalk.blue(data.inputTokens.toLocaleString().padStart(12)) +
-          chalk.green(data.outputTokens.toLocaleString().padStart(12)) +
-          chalk.yellow(data.duration.toFixed(3).padStart(12)) +
-          speedColor(tokensPerSec.padStart(14)),
+        name.padEnd(30) +
+          data.inputTokens.toLocaleString().padStart(12) +
+          data.outputTokens.toLocaleString().padStart(12) +
+          data.duration.toFixed(3).padStart(12) +
+          tokensPerSec.padStart(14),
       );
     }
 
-    console.log(chalk.gray("-".repeat(80)));
+    console.log("-".repeat(80));
 
     // Summary statistics
-    const totalSpeedColor = this.getSpeedColor(summary.averageTokensPerSecond);
 
     console.log(
-      chalk.bold("TOTAL".padEnd(30)) +
-        chalk.blue(summary.totalInputTokens.toLocaleString().padStart(12)) +
-        chalk.green(summary.totalOutputTokens.toLocaleString().padStart(12)) +
-        chalk.yellow(summary.totalDuration.toFixed(3).padStart(12)) +
-        totalSpeedColor(Math.round(summary.averageTokensPerSecond).toLocaleString().padStart(14)),
+      "TOTAL".padEnd(30) +
+        summary.totalInputTokens.toLocaleString().padStart(12) +
+        summary.totalOutputTokens.toLocaleString().padStart(12) +
+        summary.totalDuration.toFixed(3).padStart(12) +
+        Math.round(summary.averageTokensPerSecond).toLocaleString().padStart(14),
     );
 
-    console.log(chalk.cyan("\n📊 Summary:"));
+    console.log("\n📊 Summary:");
+    console.log(`   • Total themes processed: ${summary.timingData.length}`);
+    console.log(`   • Total tokens resolved: ${summary.totalOutputTokens.toLocaleString()}`);
+    console.log(`   • Total processing time: ${summary.totalDuration.toFixed(3)}s`);
     console.log(
-      chalk.white("   • Total themes processed: ") + chalk.cyan(summary.timingData.length),
+      `   • Average throughput: ${Math.round(summary.averageTokensPerSecond).toLocaleString()} tokens/second`,
     );
     console.log(
-      chalk.white("   • Total tokens resolved: ") +
-        chalk.green(summary.totalOutputTokens.toLocaleString()),
+      `   • Fastest theme: ${summary.fastestTheme.name} (${Math.round(summary.fastestTheme.tokensPerSecond).toLocaleString()} tokens/s)`,
     );
     console.log(
-      chalk.white("   • Total processing time: ") +
-        chalk.yellow(`${summary.totalDuration.toFixed(3)}s`),
+      `   • Slowest theme: ${summary.slowestTheme.name} (${Math.round(summary.slowestTheme.tokensPerSecond).toLocaleString()} tokens/s)`,
     );
-    console.log(
-      chalk.white("   • Average throughput: ") +
-        totalSpeedColor(
-          `${Math.round(summary.averageTokensPerSecond).toLocaleString()} tokens/second`,
-        ),
-    );
-
-    console.log(
-      chalk.white("   • Fastest theme: ") +
-        chalk.green(summary.fastestTheme.name) +
-        chalk.gray(
-          ` (${Math.round(summary.fastestTheme.tokensPerSecond).toLocaleString()} tokens/s)`,
-        ),
-    );
-    console.log(
-      chalk.white("   • Slowest theme: ") +
-        chalk.red(summary.slowestTheme.name) +
-        chalk.gray(
-          ` (${Math.round(summary.slowestTheme.tokensPerSecond).toLocaleString()} tokens/s)`,
-        ),
-    );
-    console.log(chalk.cyan("=".repeat(80)));
-  }
-
-  /**
-   * Get color function based on performance speed
-   */
-  private getSpeedColor(tokensPerSecond: number): typeof chalk.green {
-    return tokensPerSecond > 20000
-      ? chalk.green
-      : tokensPerSecond > 10000
-        ? chalk.yellow
-        : chalk.red;
+    console.log("=".repeat(80));
   }
 
   /**
@@ -203,7 +164,7 @@ export class PerformanceTracker {
 
     // Write to file
     fs.writeFileSync(filePath, JSON.stringify(summary, null, 2));
-    console.log(chalk.green(`✅ Performance data saved to ${filePath}`));
+    console.log(`✅ Performance data saved to ${filePath}`);
   }
 }
 
