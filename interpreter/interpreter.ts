@@ -146,7 +146,7 @@ export class Interpreter {
         );
       }
 
-      return mathImpl(left, right);
+      return mathImpl(left, right, this.config);
     }
 
     const comparisonImpl = operations.COMPARISON_IMPLEMENTATIONS[opType];
@@ -169,13 +169,14 @@ export class Interpreter {
     return new StringSymbol(node.value);
   }
 
-  // Bare identifiers are treated as string literals if not found as variables
+  /**
+   * Bare identifiers are treated as string literals if not found as variables
+   * Check symbol table first (variables override references), then references
+   */
   private visitIdentifierNode(node: IdentifierNode): ISymbolType {
-    const value = this.symbolTable.get(node.name);
-    if (!value) {
-      return new StringSymbol(node.name);
-    }
-    return value;
+    return (
+      this.symbolTable.get(node.name) || this.getReference(node.name) || new StringSymbol(node.name)
+    );
   }
 
   private visitUnaryOpNode(node: UnaryOpNode): ISymbolType {
@@ -280,9 +281,11 @@ export class Interpreter {
     const fnName = node.name.toLowerCase();
     const args = node.args.map((arg) => this.visit(arg) as ISymbolType);
 
-    const defaultFn = operations.DEFAULT_FUNCTION_MAP[fnName];
-    if (defaultFn) {
-      return defaultFn(...args);
+    if (this.config.functionsManager.hasFunction(fnName)) {
+      const fn = this.config.functionsManager.getFunction(fnName);
+      if (fn) {
+        return fn(...args);
+      }
     }
 
     if (this.config.colorManager.hasInitializer(fnName)) {

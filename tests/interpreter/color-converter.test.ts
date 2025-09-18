@@ -228,6 +228,8 @@ describe("Color Conversion - Manager Methods", () => {
 
   it("should perform direct color conversion by type", () => {
     const colorManager = setupColorManagerWithRgb();
+    // Create a config to ensure the manager has proper context
+    const config = new Config({ colorManager });
     
     const hexColor = new ColorSymbol("#ff0000", "Hex");
     const rgbColor = colorManager.convertToByType(hexColor, "rgb");
@@ -257,9 +259,9 @@ describe("Color Conversion - Manager Methods", () => {
 });
 
 describe("Legacy Color Converter Tests", () => {
-  it.skip("should convert hex color to RGB (6 digit)", () => {
+  it("should convert hex color to RGB (6 digit)", () => {
     const text = `
-    variable color_parts: List = {COLOR}.split("#");
+    variable color_parts: List = {COLOR}.toString().split("#");
     variable color: List = color_parts.get(1).split();
     variable length: Number = color.length();
     variable rgb: List = 0, 0, 0;
@@ -284,9 +286,9 @@ describe("Legacy Color Converter Tests", () => {
     expect(result?.toString()).toBe("255, 87, 51");
   });
 
-  it.skip("should convert hex color to RGB (3 digit)", () => {
+  it("should convert hex color to RGB (3 digit)", () => {
     const text = `
-    variable color_parts: List = {COLOR}.split("#");
+    variable color_parts: List = {COLOR}.toString().split("#");
     variable color: List = color_parts.get(1).split();
     variable length: Number = color.length();
     variable rgb: List = 0, 0, 0;
