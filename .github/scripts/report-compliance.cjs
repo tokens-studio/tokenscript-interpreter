@@ -1,7 +1,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
-const REPORT_PATH = path.resolve(__dirname, "../compliance-report.json");
+const REPORT_PATH = path.resolve(__dirname, "../../compliance-report.json");
 
 function getFailingTests(results) {
   return results.filter((r) => r.status === "failed");

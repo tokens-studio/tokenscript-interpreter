@@ -50,7 +50,7 @@ jobs:
           fi
 
       - name: Report compliance results
-        run: node scripts/report-compliance.cjs
+        run: node .github/scripts/report-compliance.cjs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
