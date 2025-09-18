@@ -2,6 +2,7 @@ import type { ISymbolType } from "@/types";
 import { InterpreterError } from "../errors";
 import { basicSymbolTypes, ColorSymbol } from "../symbols";
 import { ColorManager } from "./managers/color/manager";
+import { FunctionsManager } from "./managers/functions/manager";
 import { UnitManager } from "./managers/unit/manager";
 
 export interface LanguageOptions {
@@ -12,6 +13,7 @@ export interface ConfigOptions {
   languageOptions?: LanguageOptions;
   colorManager?: ColorManager;
   unitManager?: UnitManager;
+  functionsManager?: FunctionsManager;
 }
 
 export const DEFAULT_LANGUAGE_OPTIONS: LanguageOptions = {
@@ -22,6 +24,7 @@ export class Config {
   public languageOptions: LanguageOptions;
   public colorManager: ColorManager;
   public unitManager: UnitManager;
+  public functionsManager: FunctionsManager;
 
   constructor(options?: ConfigOptions) {
     this.languageOptions = {
@@ -30,6 +33,7 @@ export class Config {
     };
     this.colorManager = options?.colorManager || new ColorManager();
     this.unitManager = options?.unitManager || new UnitManager();
+    this.functionsManager = options?.functionsManager || new FunctionsManager();
 
     // Set parent config reference to avoid recursion issues
     // Only set if not already set to prevent overriding existing parent references
@@ -38,6 +42,9 @@ export class Config {
     }
     if (!this.unitManager.getParentConfig()) {
       this.unitManager.setParentConfig(this);
+    }
+    if (!this.functionsManager.getParentConfig()) {
+      this.functionsManager.setParentConfig(this);
     }
   }
 
