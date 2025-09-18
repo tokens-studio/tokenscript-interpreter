@@ -20,7 +20,7 @@ describe("Config and ColorManager - Color Registration", () => {
 
   describe("ColorManager Registration", () => {
     it("should register RGB color specification from JSON file", () => {
-      const rgbSpecPath = path.join(__dirname, "../../specifications/colors/rgb.json");
+      const rgbSpecPath = path.join(__dirname, "../../data/specifications/colors/rgb.json");
       const rgbSpecString = fs.readFileSync(rgbSpecPath, "utf-8");
       const rgbSpec = JSON.parse(rgbSpecString);
 

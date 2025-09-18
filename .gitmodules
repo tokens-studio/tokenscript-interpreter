@@ -1,3 +1,3 @@
-[submodule "compliance-suite"]
-	path = compliance-suite
+[submodule "data/compliance-suite"]
+	path = data/compliance-suite
 	url = git@github.com:tokens-studio/tokenscript-compliance-suite.git

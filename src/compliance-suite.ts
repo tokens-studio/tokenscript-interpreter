@@ -36,15 +36,15 @@ interface ComplianceReport {
 
 const SCHEMA_FILE_MAP: Record<string, string> = {
   "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0/":
-    "./specifications/colors/hsl.json",
+    "./data/specifications/colors/hsl.json",
   "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0/":
-    "./specifications/colors/srgb.json",
+    "./data/specifications/colors/srgb.json",
   "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/":
-    "./specifications/colors/rgb.json",
+    "./data/specifications/colors/rgb.json",
   "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgba-color/0/":
-    "./specifications/colors/rgba.json",
+    "./data/specifications/colors/rgba.json",
   "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/lrgb-color/0/":
-    "./specifications/colors/lrgb.json",
+    "./data/specifications/colors/lrgb.json",
 };
 
 function loadSchemas(schemas: string[]): ColorManager {

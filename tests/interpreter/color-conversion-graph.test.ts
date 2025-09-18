@@ -19,7 +19,7 @@ describe("ColorManager Conversion Graph", () => {
   const runWithColorManager = (
     code: string, 
     schemaUris: Record<string, string> = {
-      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/": "./specifications/colors/rgb.json"
+      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/": "./data/specifications/colors/rgb.json"
     },
     references?: Record<string, any>
   ) => {
@@ -47,8 +47,8 @@ describe("ColorManager Conversion Graph", () => {
         variable rgb: Color.RGB = c.to.rgb();
         rgb.r
       `, {
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/": "./specifications/colors/rgb.json",
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0/": "./specifications/colors/srgb.json"
+        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/": "./data/specifications/colors/rgb.json",
+        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0/": "./data/specifications/colors/srgb.json"
       }, { COLOR: "#ff0000" });
 
       expect(result.value).toBe(255);
@@ -63,7 +63,7 @@ describe("ColorManager Conversion Graph", () => {
         variable hex: Color.Hex = rgb.to.hex();
         hex
       `, {
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/": "./specifications/colors/rgb.json"
+        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/": "./data/specifications/colors/rgb.json"
       });
 
       expect(result.toString()).toBe("#ff0000");
@@ -78,9 +78,9 @@ describe("ColorManager Conversion Graph", () => {
         return c.to.hsl()
       `, 
       {
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/": "./specifications/colors/rgb.json",
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0/": "./specifications/colors/srgb.json",
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0/": "./specifications/colors/hsl.json"
+        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/": "./data/specifications/colors/rgb.json",
+        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0/": "./data/specifications/colors/srgb.json",
+        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0/": "./data/specifications/colors/hsl.json"
       },
       { COLOR: "#ff0000" }
       );
@@ -100,9 +100,9 @@ describe("ColorManager Conversion Graph", () => {
         hex
       `, 
       {
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/": "./specifications/colors/rgb.json",
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0/": "./specifications/colors/srgb.json",
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0/": "./specifications/colors/hsl.json"
+        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/": "./data/specifications/colors/rgb.json",
+        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0/": "./data/specifications/colors/srgb.json",
+        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0/": "./data/specifications/colors/hsl.json"
       });
 
       expect(result.toString()).toMatch(/#ff0000/i);
@@ -118,9 +118,9 @@ describe("ColorManager Conversion Graph", () => {
 
       // Register schemas directly with the manager
       Object.entries({
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/": "./specifications/colors/rgb.json",
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0/": "./specifications/colors/srgb.json",
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0/": "./specifications/colors/hsl.json"
+        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/": "./data/specifications/colors/rgb.json",
+        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0/": "./data/specifications/colors/srgb.json",
+        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0/": "./data/specifications/colors/hsl.json"
       }).forEach(([uri, filePath]) => {
         const fullPath = path.resolve(__dirname, "..", "..", filePath);
         const spec = JSON.parse(fs.readFileSync(fullPath, "utf-8"));
@@ -141,9 +141,9 @@ describe("ColorManager Conversion Graph", () => {
         back
       `, 
       {
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/": "./specifications/colors/rgb.json",
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0/": "./specifications/colors/srgb.json",
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0/": "./specifications/colors/hsl.json"
+        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/": "./data/specifications/colors/rgb.json",
+        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0/": "./data/specifications/colors/srgb.json",
+        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0/": "./data/specifications/colors/hsl.json"
       },
       { COLOR: "#0080ff" });
 
@@ -159,8 +159,8 @@ describe("ColorManager Conversion Graph", () => {
         variable same: Color.Hex = hex.to.hex();
         same
       `, {
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/": "./specifications/colors/rgb.json",
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0/": "./specifications/colors/srgb.json"
+        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/": "./data/specifications/colors/rgb.json",
+        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0/": "./data/specifications/colors/srgb.json"
       },
       { COLOR: "#ffffff" });
 
@@ -170,7 +170,7 @@ describe("ColorManager Conversion Graph", () => {
     it("should return empty path when no conversion exists", () => {
       // Register schemas directly with the manager
       Object.entries({
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/": "./specifications/colors/rgb.json"
+        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/": "./data/specifications/colors/rgb.json"
       }).forEach(([uri, filePath]) => {
         const fullPath = path.resolve(__dirname, "..", "..", filePath);
         const spec = JSON.parse(fs.readFileSync(fullPath, "utf-8"));
@@ -192,7 +192,7 @@ describe("ColorManager Conversion Graph", () => {
           variable unknown: Color.Unknown = "#ff0000";
           unknown.to.rgb()
         `, {
-          "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/": "./specifications/colors/rgb.json"
+          "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/": "./data/specifications/colors/rgb.json"
         });
       }).toThrow();
     });
@@ -200,7 +200,7 @@ describe("ColorManager Conversion Graph", () => {
     it("should throw error when no conversion path exists", () => {
       // Register RGB schema
       Object.entries({
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/": "./specifications/colors/rgb.json"
+        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/": "./data/specifications/colors/rgb.json"
       }).forEach(([uri, filePath]) => {
         const fullPath = path.resolve(__dirname, "..", "..", filePath);
         const spec = JSON.parse(fs.readFileSync(fullPath, "utf-8"));
@@ -235,9 +235,9 @@ describe("ColorManager Conversion Graph", () => {
     it("should handle URIs with version numbers correctly", () => {
       // Register schemas directly with the manager
       Object.entries({
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/": "./specifications/colors/rgb.json",
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0/": "./specifications/colors/srgb.json",
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0/": "./specifications/colors/hsl.json"
+        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/": "./data/specifications/colors/rgb.json",
+        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0/": "./data/specifications/colors/srgb.json",
+        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0/": "./data/specifications/colors/hsl.json"
       }).forEach(([uri, filePath]) => {
         const fullPath = path.resolve(__dirname, "..", "..", filePath);
         const spec = JSON.parse(fs.readFileSync(fullPath, "utf-8"));
@@ -266,9 +266,9 @@ describe("ColorManager Conversion Graph", () => {
         end
       `, 
       {
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/": "./specifications/colors/rgb.json",
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0/": "./specifications/colors/srgb.json",
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0/": "./specifications/colors/hsl.json"
+        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/": "./data/specifications/colors/rgb.json",
+        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0/": "./data/specifications/colors/srgb.json",
+        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0/": "./data/specifications/colors/hsl.json"
       },
       { COLOR: "#ff8800" });
 
