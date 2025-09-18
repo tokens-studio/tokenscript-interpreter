@@ -42,7 +42,7 @@
     "lint:fix": "biome lint --write .",
     "format": "biome format --write .",
     "format:check": "biome format .",
-    "check": "biome ci .",
+    "check": "biome ci . --diagnostic-level=error",
     "check:errors": "biome ci . --diagnostic-level=error",
     "check:all": "npm run check && npm run test",
     "fix": "biome check --write .",
