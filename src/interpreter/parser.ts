@@ -1,4 +1,4 @@
-import { type ASTNode, Operations, ReservedKeyword, type Token, TokenType } from "../types";
+import { type ASTNode, Operations, ReservedKeyword, type Token, TokenType } from "@src/types";
 import {
   AssignNode,
   AttributeAccessNode,

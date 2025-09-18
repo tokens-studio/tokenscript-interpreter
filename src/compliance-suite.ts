@@ -1,11 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
-import { Config } from "./interpreter/config/config";
-import { ColorManager } from "./interpreter/config/managers/color/manager";
-import { Interpreter } from "./interpreter/interpreter";
-import { Lexer } from "./interpreter/lexer";
-import { Parser } from "./interpreter/parser";
-import { ColorSymbol } from "./interpreter/symbols";
+import { Config } from "@interpreter/config/config";
+import { ColorManager } from "@interpreter/config/managers/color/manager";
+import { Interpreter } from "@interpreter/interpreter";
+import { Lexer } from "@interpreter/lexer";
+import { Parser } from "@interpreter/parser";
+import { ColorSymbol } from "@interpreter/symbols";
 
 interface TestCase {
   name: string;

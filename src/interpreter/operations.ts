@@ -1,4 +1,4 @@
-import { type ISymbolType, Operations, type SupportedFormats } from "../types";
+import { type ISymbolType, Operations, type SupportedFormats } from "@src/types";
 import type { Config } from "./config/config";
 import { InterpreterError } from "./errors";
 import {

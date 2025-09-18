@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { TokenSetResolver } from "../../tokenset-processor";
+import { TokenSetResolver } from "@src/tokenset-processor";
 
 describe("Performance Benchmark", () => {
   it("should efficiently resolve large token sets", () => {

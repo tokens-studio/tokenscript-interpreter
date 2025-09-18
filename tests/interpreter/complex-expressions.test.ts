@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { Interpreter } from "../../interpreter/interpreter";
-import { Lexer } from "../../interpreter/lexer";
-import { Parser } from "../../interpreter/parser";
+import { Interpreter } from "@interpreter/interpreter";
+import { Lexer } from "@interpreter/lexer";
+import { Parser } from "@interpreter/parser";
 
 describe("Complex Expressions - Nested Operations", () => {
   it("should handle deeply nested parentheses", () => {

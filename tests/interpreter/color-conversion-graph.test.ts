@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { ColorManager } from "../../interpreter/config/managers/color/manager";
-import { Config } from "../../interpreter/config/config";
-import { Interpreter } from "../../interpreter/interpreter";
-import { Parser } from "../../interpreter/parser";
-import { Lexer } from "../../interpreter/lexer";
+import { ColorManager } from "@interpreter/config/managers/color/manager";
+import { Config } from "@interpreter/config/config";
+import { Interpreter } from "@interpreter/interpreter";
+import { Parser } from "@interpreter/parser";
+import { Lexer } from "@interpreter/lexer";
 import * as fs from "node:fs";
 import * as path from "node:path";
 

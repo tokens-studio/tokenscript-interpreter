@@ -22,7 +22,7 @@ import {
   isEqual,
   isNull,
   isUndefined,
-} from '@/interpreter/utils/type';
+} from '@interpreter/utils/type';
 
 describe('Type Guard Utilities', () => {
   describe('isSome', () => {

@@ -1,7 +1,7 @@
-import { InterpreterError } from "@/interpreter/errors";
-import { parseExpression } from "@/interpreter/parser";
-import { NumberSymbol, NumberWithUnitSymbol } from "@/interpreter/symbols";
-import { Interpreter } from "@/lib";
+import { InterpreterError } from "@interpreter/errors";
+import { parseExpression } from "@interpreter/parser";
+import { NumberSymbol, NumberWithUnitSymbol } from "@interpreter/symbols";
+import { Interpreter } from "@src/lib";
 import { BaseManager } from "../base-manager";
 import { specName, type UnitSpecification, UnitSpecificationSchema } from "./schema";
 

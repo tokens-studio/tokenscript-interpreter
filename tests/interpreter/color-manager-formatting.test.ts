@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { ColorManager } from "@/interpreter/config/managers/color/manager";
-import { ColorSymbol, NumberSymbol } from "@/interpreter/symbols";
-import type { ColorSpecification } from "@/interpreter/config/managers/color/schema";
+import { ColorManager } from "@interpreter/config/managers/color/manager";
+import { ColorSymbol, NumberSymbol } from "@interpreter/symbols";
+import type { ColorSpecification } from "@interpreter/config/managers/color/schema";
 
 describe("ColorManager.formatColorMethod", () => {
   describe("hex colors", () => {

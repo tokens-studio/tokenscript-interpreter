@@ -1,4 +1,4 @@
-import type { ISymbolType } from "../types";
+import type { ISymbolType } from "@src/types";
 export class SymbolTable {
   private symbols: Record<string, ISymbolType | null>;
 

@@ -1,7 +1,7 @@
-import type { ASTNode, Operations, SupportedFormats, Token, TokenType } from "../types";
+import type { ASTNode, Operations, SupportedFormats, Token, TokenType } from "@src/types";
 
 // Re-export ASTNode for external consumers
-export type { ASTNode } from "../types";
+export type { ASTNode } from "@src/types";
 
 export class BinOpNode implements ASTNode {
   nodeType = "BinOpNode";

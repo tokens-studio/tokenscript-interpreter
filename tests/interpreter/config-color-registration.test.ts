@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { Config } from "../../interpreter/config/config";
-import { ColorManager } from "../../interpreter/config/managers/color/manager";
-import { Interpreter } from "../../interpreter/interpreter";
-import { Lexer } from "../../interpreter/lexer";
-import { Parser } from "../../interpreter/parser";
-import { InterpreterError } from "../../interpreter/errors";
-import { ColorSymbol } from "../../interpreter/symbols";
+import { Config } from "@interpreter/config/config";
+import { ColorManager } from "@interpreter/config/managers/color/manager";
+import { Interpreter } from "@interpreter/interpreter";
+import { Lexer } from "@interpreter/lexer";
+import { Parser } from "@interpreter/parser";
+import { InterpreterError } from "@interpreter/errors";
+import { ColorSymbol } from "@interpreter/symbols";
 import * as fs from "node:fs";
 import * as path from "node:path";
 

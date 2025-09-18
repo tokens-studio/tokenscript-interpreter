@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { Lexer } from "../../interpreter/lexer";
-import { Operations, ReservedKeyword, SupportedFormats, TokenType } from "../../types";
+import { Lexer } from "@interpreter/lexer";
+import { Operations, ReservedKeyword, SupportedFormats, TokenType } from "@src/types";
 
 describe("Lexer", () => {
   it("should tokenize a simple number", () => {
