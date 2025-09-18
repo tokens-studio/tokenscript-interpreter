@@ -1,0 +1,30 @@
+@import './tokenscript-syntax.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.code-editor {
+  font-family: "Fira Code", "Monaco", "Courier New", monospace;
+}
+
+.output-area {
+  font-family: "Fira Code", "Monaco", "Courier New", monospace;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400;
+}

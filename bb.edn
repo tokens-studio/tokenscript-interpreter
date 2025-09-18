@@ -3,11 +3,23 @@
   {:doc "Formats the repo"
    :task (shell "steam-run npm run format")}
   fix
-  {:doc "Fixes all"
+  {:doc "Fixes interpreter"
    :task (do
-            (shell "steam-run npx biome check --fix --diagnostic-level=error")
+            (shell "steam-run npx biome check --write --unsafe --diagnostic-level=error")
             (shell "steam-run npm run format")
             (shell "steam-run npm run lint:fix -- --skip=suspicious"))}
+  fix:web
+  {:doc "Fixes web"
+   :task
+   (let [opts {:dir "./examples/web-repl"}]
+     (shell opts "steam-run npx biome check --write --unsafe --diagnostic-level=error")
+     (shell opts "steam-run npm run format")
+     (shell opts "steam-run npm run lint:fix -- --skip=suspicious"))}
+  fix:all
+  {:doc "Fixes all source code"
+   :task (do
+            (shell "bb fix")
+            (shell "bb fix:web"))}
   nrepl
   {:doc "Start nrepl server"
    :task (shell "bun run --bun nbb nrepl-server")}}}
