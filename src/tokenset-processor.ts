@@ -1,5 +1,5 @@
 import type { ASTNode } from "@interpreter/ast";
-import { Config } from "@interpreter/config";
+import type { Config } from "@interpreter/config";
 import { Interpreter } from "@interpreter/interpreter";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
@@ -30,7 +30,11 @@ export class TokenSetResolver {
   private warnings: string[] = [];
   private errors: string[] = [];
 
-  constructor(tokens: Record<string, string>, globalTokens: Record<string, any> = {}, config?: Config) {
+  constructor(
+    tokens: Record<string, string>,
+    globalTokens: Record<string, any> = {},
+    config?: Config,
+  ) {
     this.tokens = new Map(Object.entries(tokens));
     this.resolvedTokens = new Map(Object.entries(globalTokens));
 
@@ -180,7 +184,7 @@ export class TokenSetResolver {
 // Process themes and resolve tokens
 export async function processThemes(
   themes: Record<string, Record<string, any>>,
-  options?: { enablePerformanceTracking?: boolean },
+  options?: { enablePerformanceTracking?: boolean; config?: Config },
 ): Promise<Record<string, any>> {
   const outputTokens: Record<string, any> = {};
   const globalTokensCache: Record<string, any> = {};
@@ -199,7 +203,7 @@ export async function processThemes(
       stringTokens[key] = String(value);
     }
 
-    const tokenSet = new TokenSetResolver(stringTokens, {}, config);
+    const tokenSet = new TokenSetResolver(stringTokens, {}, options?.config);
     const result = tokenSet.resolve();
     const endTime = Date.now();
 
@@ -312,6 +316,7 @@ export function interpretTokensets(
   permutationTree: any,
   permutationDimensions: Array<{ name: string; options: string[] }>,
   tokens: Record<string, any>,
+  config?: Config,
 ): any {
   if (permutationDimensions.length === 0) {
     const relevantTokens = Object.keys(tokens);
@@ -322,7 +327,7 @@ export function interpretTokensets(
       stringTokens[key] = String(value);
     }
 
-    const tokenSet = new TokenSetResolver(stringTokens);
+    const tokenSet = new TokenSetResolver(stringTokens, {}, config);
     const result = tokenSet.resolve();
 
     const relevantTokensExtracted: Record<string, any> = {};
@@ -338,7 +343,7 @@ export function interpretTokensets(
 
   const output: any = {};
   for (const theme of currentPermutation.options) {
-    output[theme] = interpretTokensets(permutationTree[theme], remainingDimensions, tokens);
+    output[theme] = interpretTokensets(permutationTree[theme], remainingDimensions, tokens, config);
   }
 
   return output;
@@ -346,7 +351,10 @@ export function interpretTokensets(
 
 // Simple function to process any DTCG JSON blob - the main API users want
 // Pure in-memory processing - no file system operations
-export function interpretTokens(tokenInput: Record<string, any>, config?: Config): Record<string, any> {
+export function interpretTokens(
+  tokenInput: Record<string, any>,
+  config?: Config,
+): Record<string, any> {
   if (!tokenInput || typeof tokenInput !== "object") {
     throw new Error("Invalid JSON input: Expected an object");
   }
@@ -386,13 +394,19 @@ export function interpretTokens(tokenInput: Record<string, any>, config?: Config
 }
 
 // Keep the original functions for backward compatibility
-export function processTokensFromJson(dtcgJson: Record<string, any>): Record<string, any> {
-  return interpretTokens(dtcgJson);
+export function processTokensFromJson(
+  dtcgJson: Record<string, any>,
+  config?: Config,
+): Record<string, any> {
+  return interpretTokens(dtcgJson, config);
 }
 
-export function processSingleTokenSet(tokens: Record<string, any>): Record<string, any> {
+export function processSingleTokenSet(
+  tokens: Record<string, any>,
+  config?: Config,
+): Record<string, any> {
   // This function is now just a wrapper around interpretTokens for backward compatibility
-  return interpretTokens(tokens);
+  return interpretTokens(tokens, config);
 }
 
 // Load themes from DTCG JSON object (similar to loadThemes but for JSON input)
@@ -440,7 +454,10 @@ function loadThemesFromJson(dtcgJson: Record<string, any>): Record<string, Recor
 }
 
 // Synchronous version of processThemes for in-memory processing
-function processThemesSync(themes: Record<string, Record<string, any>>, config?: Config): Record<string, any> {
+function processThemesSync(
+  themes: Record<string, Record<string, any>>,
+  config?: Config,
+): Record<string, any> {
   const outputTokens: Record<string, any> = {};
 
   for (const [themeName, themeTokens] of Object.entries(themes)) {
@@ -450,7 +467,7 @@ function processThemesSync(themes: Record<string, Record<string, any>>, config?:
       stringTokens[key] = String(value);
     }
 
-    const tokenSet = new TokenSetResolver(stringTokens);
+    const tokenSet = new TokenSetResolver(stringTokens, {}, config);
     const result = tokenSet.resolve();
 
     // Convert Symbol objects to strings
