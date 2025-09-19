@@ -10,7 +10,7 @@ const ScriptBlockSchema = z.object({
 // Schema ----------------------------------------------------------------------
 
 const InitializerSchema = z.object({
-  title: z.string(),
+  title: z.string().optional(),
   keyword: z.string(),
   description: z.string().optional(),
   // schema: z.record(z.any()),
