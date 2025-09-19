@@ -1,30 +1,16 @@
 import Prism from "prismjs";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import "prismjs/themes/prism.css";
-import "./tokenscript-prism";
 
-export interface ErrorInfo {
-  message: string;
-  line?: number;
-  token?: any;
-}
-
-interface SyntaxHighlightedEditorProps {
+interface JsonEditorProps {
   value: string;
   onChange: (value: string) => void;
   onKeyDown?: (event: KeyboardEvent) => void;
   className?: string;
-  error?: ErrorInfo;
+  error?: string;
 }
 
-function SyntaxHighlightedEditor({
-  value,
-  onChange,
-  onKeyDown,
-  className = "",
-  error,
-}: SyntaxHighlightedEditorProps) {
+function JsonEditor({ value, onChange, onKeyDown, className = "", error }: JsonEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const highlightRef = useRef<HTMLPreElement>(null);
   const [highlightedCode, setHighlightedCode] = useState("");
@@ -40,32 +26,18 @@ function SyntaxHighlightedEditor({
   // Highlight code whenever value changes
   useEffect(() => {
     try {
-      const highlighted = Prism.highlight(value, Prism.languages.tokenscript, "tokenscript");
-
-      // Add error highlighting if there's an error with a line number
-      if (error?.line) {
-        const lines = highlighted.split("\n");
-        const errorLineIndex = error.line - 1; // Convert to 0-based index
-
-        if (errorLineIndex >= 0 && errorLineIndex < lines.length) {
-          lines[errorLineIndex] =
-            `<span class="tokenscript-error-line">${lines[errorLineIndex]}</span>`;
-        }
-
-        setHighlightedCode(lines.join("\n"));
-      } else {
-        setHighlightedCode(highlighted);
-      }
+      const highlighted = Prism.highlight(value, Prism.languages.json, "json");
+      setHighlightedCode(highlighted);
 
       // Sync scroll after highlighting update
       setTimeout(() => syncScroll(), 0);
     } catch (err) {
       // Fallback to plain text if highlighting fails
-      console.warn("Syntax highlighting failed:", err);
+      console.warn("JSON syntax highlighting failed:", err);
       setHighlightedCode(value);
       setTimeout(() => syncScroll(), 0);
     }
-  }, [value, error, syncScroll]);
+  }, [value, syncScroll]);
 
   // Setup keyboard event listener
   useEffect(() => {
@@ -113,8 +85,11 @@ function SyntaxHighlightedEditor({
   return (
     <div className={`flex flex-col bg-white rounded-lg border shadow-sm ${className}`}>
       <div className="border-b bg-gray-50 px-4 py-2 rounded-t-lg flex-shrink-0">
-        <div className="flex items-center">
-          <span className="text-sm text-gray-600 font-mono">tokenscript</span>
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-gray-600 font-mono">json</span>
+          {error && (
+            <span className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded">Invalid JSON</span>
+          )}
         </div>
       </div>
 
@@ -122,10 +97,10 @@ function SyntaxHighlightedEditor({
         {/* Syntax highlighting layer */}
         <pre
           ref={highlightRef}
-          className="tokenscript-editor-font tokenscript-highlight-overlay"
+          className="json-editor-font json-highlight-overlay"
         >
           <code
-            className="language-tokenscript"
+            className="language-json"
             // biome-ignore lint/security/noDangerouslySetInnerHtml: Prism.js output is sanitized and safe
             dangerouslySetInnerHTML={{ __html: highlightedCode }}
           />
@@ -141,8 +116,8 @@ function SyntaxHighlightedEditor({
           onInput={syncScroll}
           onSelect={syncScroll}
           onClick={syncScroll}
-          className="tokenscript-editor-font tokenscript-input-area focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset rounded-b-lg scrollbar-thin"
-          placeholder="Enter your TokenScript code here..."
+          className="json-editor-font json-input-area focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset rounded-b-lg scrollbar-thin"
+          placeholder="Enter your JSON tokens here..."
           spellCheck={false}
         />
       </div>
@@ -150,4 +125,4 @@ function SyntaxHighlightedEditor({
   );
 }
 
-export default SyntaxHighlightedEditor;
+export default JsonEditor;

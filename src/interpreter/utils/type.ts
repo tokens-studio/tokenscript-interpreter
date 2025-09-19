@@ -27,7 +27,7 @@ export const isString = (v: unknown): v is string => {
 };
 
 export const isNumber = (v: unknown): v is number => {
-  return typeof v === "number" && !isNaN(v);
+  return typeof v === "number" && !Number.isNaN(v);
 };
 
 export const isBoolean = (v: unknown): v is boolean => {
@@ -43,7 +43,7 @@ export const isFunction = (v: unknown): v is (...args: unknown[]) => unknown => 
 };
 
 export const isDate = (v: unknown): v is Date => {
-  return v instanceof Date && !isNaN(v.getTime());
+  return v instanceof Date && !Number.isNaN(v.getTime());
 };
 
 // Object ----------------------------------------------------------------------
@@ -79,7 +79,7 @@ export const safeParseInt = (v: unknown): number | null => {
   if (isNumber(v)) return Math.floor(v);
   if (isString(v)) {
     const parsed = parseInt(v, 10);
-    return isNaN(parsed) ? null : parsed;
+    return Number.isNaN(parsed) ? null : parsed;
   }
   return null;
 };
@@ -88,7 +88,7 @@ export const safeParseFloat = (v: unknown): number | null => {
   if (isNumber(v)) return v;
   if (isString(v)) {
     const parsed = parseFloat(v);
-    return isNaN(parsed) ? null : parsed;
+    return Number.isNaN(parsed) ? null : parsed;
   }
   return null;
 };

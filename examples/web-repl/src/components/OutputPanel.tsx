@@ -1,4 +1,5 @@
 import type { ExecutionResult } from "../App";
+import JsonOutput from "./JsonOutput";
 
 function isColorSymbol(obj: any): boolean {
   return (
@@ -94,9 +95,10 @@ function tryColorConversions(colorObj: any, colorManager?: any): { [key: string]
 interface OutputPanelProps {
   result: ExecutionResult;
   className?: string;
+  inputMode?: "tokenscript" | "json";
 }
 
-function OutputPanel({ result, className = "" }: OutputPanelProps) {
+function OutputPanel({ result, className = "", inputMode = "tokenscript" }: OutputPanelProps) {
   const { output, error, executionTime } = result;
 
   const renderContent = () => {
@@ -110,6 +112,16 @@ function OutputPanel({ result, className = "" }: OutputPanelProps) {
     }
 
     if (result.output) {
+      // For JSON mode, always show syntax-highlighted JSON
+      if (inputMode === "json") {
+        return (
+          <JsonOutput
+            json={output}
+            title="processed tokens"
+          />
+        );
+      }
+
       // Check if this might be a color object by trying to parse the raw result
       // We need to check the actual result object, not just the string output
       const rawResult = (result as any).rawResult;
@@ -199,12 +211,23 @@ function OutputPanel({ result, className = "" }: OutputPanelProps) {
         );
       }
 
-      // Regular text output
-      return (
-        <div className="text-gray-800">
-          <pre className="whitespace-pre-wrap text-sm font-mono">{output}</pre>
-        </div>
-      );
+      // Try to render as JSON if it looks like JSON, otherwise as regular text
+      try {
+        const _parsed = JSON.parse(output);
+        return (
+          <JsonOutput
+            json={output}
+            title="result"
+          />
+        );
+      } catch {
+        // Regular text output
+        return (
+          <div className="text-gray-800">
+            <pre className="whitespace-pre-wrap text-sm font-mono">{output}</pre>
+          </div>
+        );
+      }
     }
 
     return <div className="text-gray-500 italic">Run some code to see the output here...</div>;

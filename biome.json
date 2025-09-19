@@ -17,7 +17,7 @@
       "!tsconfig*.json",
       "!**/*.test.ts",
       "!**/*.test.tsx",
-      "!compliance-suite",
+      "!data",
       "!specifications"
     ]
   },

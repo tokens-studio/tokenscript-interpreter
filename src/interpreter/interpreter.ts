@@ -398,8 +398,11 @@ export class Interpreter {
 
   private visitAttributeAccessNode(node: AttributeAccessNode): ISymbolType {
     // TODO Clean up this messy implementation for the color conversion
-    // Special case: Handle color conversion syntax like c.to.hex()
-    if (node.left instanceof AttributeAccessNode && node.left.left instanceof IdentifierNode) {
+    // Special case: Handle color conversion syntax like c.to.hex() or rgb(255,255,255).to.hex()
+    if (
+      node.left instanceof AttributeAccessNode &&
+      (node.left.left instanceof IdentifierNode || node.left.left instanceof FunctionCallNode)
+    ) {
       const nestedLeft = this.visit(node.left.left) as ISymbolType;
       const nestedRight = node.left.right;
 

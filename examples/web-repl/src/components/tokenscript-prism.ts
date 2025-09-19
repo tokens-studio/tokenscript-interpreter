@@ -60,7 +60,96 @@ Prism.languages.tokenscript = {
   variable: /\b[a-zA-Z_$][\w$]*\b/,
 };
 
+// Enhanced JSON language grammar with token-specific highlighting
+Prism.languages.json = {
+  // Token types (Design Token Community Group standard)
+  "token-type": {
+    pattern:
+      /("?\$type"?\s*:\s*)("(?:color|dimension|fontFamily|fontWeight|duration|cubicBezier|number|string|boolean|border|borderRadius|shadow|gradient|typography|transition|strokeStyle|textDecoration)")/,
+    inside: {
+      property: /"\$type"/,
+      punctuation: /[:"]/,
+      string:
+        /"(?:color|dimension|fontFamily|fontWeight|duration|cubicBezier|number|string|boolean|border|borderRadius|shadow|gradient|typography|transition|strokeStyle|textDecoration)"/,
+    },
+  },
+
+  // Token values with type-specific highlighting
+  "token-value": {
+    pattern: /("?\$value"?\s*:\s*)("(?:[^"\\]|\\[\s\S])*"|[^,}\]]+)/,
+    inside: {
+      property: /"\$value"/,
+      punctuation: /[:"]/,
+      "color-value": {
+        pattern:
+          /"(?:#(?:[0-9a-fA-F]{3}){1,2}|(?:rgb|hsl)a?\([^)]+\)|(?:lch|lab|oklab|oklch)\([^)]+\))"/,
+        alias: "string",
+      },
+      "dimension-value": {
+        pattern: /"[0-9]*\.?[0-9]+(?:px|em|rem|%|pt|pc|in|cm|mm|vw|vh|vmin|vmax)"/,
+        alias: "number",
+      },
+      "reference-value": {
+        pattern: /"\{[^}]+\}"/,
+        alias: "variable",
+      },
+      string: /"(?:[^"\\]|\\[\s\S])*"/,
+      number: /\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b/,
+    },
+  },
+
+  // Token references (e.g., {color.primary})
+  "token-reference": {
+    pattern: /"\{[^}]+\}"/,
+    alias: "variable",
+  },
+
+  // Color values (hex, rgb, hsl, etc.)
+  color: {
+    pattern:
+      /"(?:#(?:[0-9a-fA-F]{3}){1,2}|(?:rgb|hsl)a?\([^)]+\)|(?:lch|lab|oklab|oklch)\([^)]+\))"/,
+    alias: "string",
+  },
+
+  // Dimension values (numbers with units)
+  dimension: {
+    pattern: /"[0-9]*\.?[0-9]+(?:px|em|rem|%|pt|pc|in|cm|mm|vw|vh|vmin|vmax)"/,
+    alias: "number",
+  },
+
+  // Property names
+  property: {
+    pattern: /"(?:\\.|[^\\"])*"(?=\s*:)/,
+    greedy: true,
+  },
+
+  // Strings
+  string: {
+    pattern: /"(?:\\.|[^\\"])*"(?!\s*:)/,
+    greedy: true,
+  },
+
+  // Numbers
+  number: /\b-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b/,
+
+  // Punctuation
+  punctuation: /[{}[\](),.:]/,
+
+  // Operators
+  operator: /:/,
+
+  // Boolean values
+  boolean: /\b(?:true|false)\b/,
+
+  // Null
+  null: {
+    pattern: /\bnull\b/,
+    alias: "keyword",
+  },
+};
+
 // Add alias for convenience
 Prism.languages.ts = Prism.languages.tokenscript;
 
+export { Prism };
 export default Prism.languages.tokenscript;

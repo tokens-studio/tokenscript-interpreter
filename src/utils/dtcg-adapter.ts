@@ -31,10 +31,15 @@ export function flattenTokens(
 
     if (typeof node === "object" && node !== null && !Array.isArray(node)) {
       if ("$value" in node) {
-        // This is a token with a value - extract it
+        // Standard DTCG format with $value
         const name = prefix ? `${prefix}.${key}` : key;
         // Ensure the value is always a string for the resolver
         flattenedTokens[name] = String((node as any).$value);
+      } else if ("value" in node) {
+        // Non-standard format with "value" (for compatibility)
+        const name = prefix ? `${prefix}.${key}` : key;
+        // Ensure the value is always a string for the resolver
+        flattenedTokens[name] = String((node as any).value);
       } else {
         // This is a nested group - recurse
         const nested = flattenTokens(
