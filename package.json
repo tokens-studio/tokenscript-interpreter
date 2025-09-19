@@ -51,7 +51,8 @@
     "postversion": "git push && git push --tags",
     "release:patch": "npm version patch && npm publish",
     "release:minor": "npm version minor && npm publish",
-    "release:major": "npm version major && npm publish"
+    "release:major": "npm version major && npm publish",
+    "dev:repl": "cd examples/web-repl && npm run dev:watch"
   },
   "dependencies": {
     "commander": "^14.0.1",

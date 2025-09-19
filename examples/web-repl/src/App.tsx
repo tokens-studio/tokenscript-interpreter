@@ -142,7 +142,7 @@ function App() {
         // JSON token processing
         const colorManager = setupColorManager();
         const config = new Config({ colorManager });
-        
+
         const jsonTokens = JSON.parse(jsonInput);
         const output = interpretTokens(jsonTokens, config);
         const executionTime = performance.now() - startTime;

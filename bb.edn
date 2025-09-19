@@ -23,7 +23,7 @@
   dev:web
   {:doc "Fixes web"
    :task
-   (shell {:dir "./examples/web-repl"} "npm run dev")}
+   (shell {:dir "./examples/web-repl"} "npm run dev:watch")}
   nrepl
   {:doc "Start nrepl server"
    :task (shell "bun run --bun nbb nrepl-server")}}}
