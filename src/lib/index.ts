@@ -10,11 +10,12 @@ export * from "@interpreter/operations";
 export { Parser } from "@interpreter/parser";
 export * from "@interpreter/symbols";
 export * from "@interpreter/symbolTable";
-export type { TokenSetResolverOptions } from "@src/tokenset-processor";
+export type { TokenSetResolverOptions, TokenProcessingResult } from "@src/tokenset-processor";
 // Tokenset processing utilities
 export {
   buildThemeTree,
   interpretTokens, // Main API for JSON blob input
+  interpretTokensWithMetadata, // Enhanced API that preserves metadata
   interpretTokensets,
   permutateTokensets,
   processSingleTokenSet, // Backward compatibility

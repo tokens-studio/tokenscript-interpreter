@@ -6,6 +6,7 @@ import { Parser } from "@interpreter/parser";
 import { UNINTERPRETED_KEYWORDS } from "@src/types";
 import {
   flattenTokens as flattenDTCGTokens,
+  flattenTokensWithMetadata,
   hasNestedDTCGStructure,
 } from "@src/utils/dtcg-adapter";
 import { PerformanceTracker } from "@src/utils/performance-tracker";
@@ -18,6 +19,12 @@ export interface TokenSetResolverResult {
   resolvedTokens: Record<string, any>;
   warnings: string[];
   errors: string[];
+}
+
+// Extended result type that includes metadata
+export interface TokenProcessingResult {
+  tokens: Record<string, any>;
+  metadata: Record<string, Record<string, any>>;
 }
 
 export class TokenSetResolver {
@@ -349,6 +356,64 @@ export function interpretTokensets(
   return output;
 }
 
+// Enhanced token interpretation that preserves DTCG metadata alongside computed values
+export function interpretTokensWithMetadata(
+  tokenInput: Record<string, any>,
+  config?: Config,
+): TokenProcessingResult {
+  if (!tokenInput || typeof tokenInput !== "object") {
+    throw new Error("Invalid JSON input: Expected an object");
+  }
+
+  // Check if this is a complete DTCG file with themes
+  if (tokenInput.$themes && Array.isArray(tokenInput.$themes)) {
+    // This is a complete DTCG file with themes - process like a ZIP file
+    const themes = loadThemesFromJson(tokenInput);
+    return processThemesSyncWithMetadata(themes, tokenInput, config);
+  } else {
+    // 1. ADAPT: Normalize input to flat format with metadata
+    let flatTokens: Record<string, string>;
+    let metadata: Record<string, Record<string, any>> = {};
+
+    if (hasNestedDTCGStructure(tokenInput)) {
+      // This is a DTCG structure without themes - flatten it with metadata
+      const result = flattenTokensWithMetadata(tokenInput);
+      flatTokens = result.flatTokens;
+      metadata = result.metadata;
+    } else {
+      // This is already a flat token set - ensure all values are strings
+      flatTokens = {};
+      for (const [key, value] of Object.entries(tokenInput)) {
+        flatTokens[key] = String(value);
+      }
+      // No metadata for flat tokens
+    }
+
+    // 2. CORE: Resolve the flat tokens
+    const resolver = new TokenSetResolver(flatTokens, {}, config);
+    const result = resolver.resolve();
+
+    // 3. Create enhanced output format with metadata
+    const enhancedTokens: Record<string, any> = {};
+    for (const [key, value] of Object.entries(result.resolvedTokens)) {
+      const computedValue = value?.toString() ?? value;
+      enhancedTokens[key] = computedValue;
+      
+      // Add metadata properties if they exist
+      if (metadata[key]) {
+        for (const [metaKey, metaValue] of Object.entries(metadata[key])) {
+          enhancedTokens[`${key}.${metaKey}`] = metaValue;
+        }
+      }
+    }
+
+    return { 
+      tokens: enhancedTokens, 
+      metadata 
+    };
+  }
+}
+
 // Simple function to process any DTCG JSON blob - the main API users want
 // Pure in-memory processing - no file system operations
 export function interpretTokens(
@@ -383,7 +448,7 @@ export function interpretTokens(
     const resolver = new TokenSetResolver(flatTokens, {}, config);
     const result = resolver.resolve();
 
-    // 3. Stringify for clean output
+    // 3. Stringify for clean output - backward compatible, values only
     const stringifiedTokens: Record<string, any> = {};
     for (const [key, value] of Object.entries(result.resolvedTokens)) {
       stringifiedTokens[key] = value?.toString() ?? value;
@@ -484,4 +549,82 @@ function processThemesSync(
   }
 
   return outputTokens;
+}
+
+// Enhanced theme processing that preserves metadata
+function processThemesSyncWithMetadata(
+  themes: Record<string, Record<string, any>>, 
+  originalDtcgJson: Record<string, any>,
+  config?: Config,
+): TokenProcessingResult {
+  const outputTokens: Record<string, any> = {};
+
+  for (const [themeName, themeTokens] of Object.entries(themes)) {
+    // Extract metadata for this theme by re-processing the original DTCG structure
+    const themeMetadata: Record<string, Record<string, any>> = {};
+    
+    // Get the theme definition to understand which token sets are included
+    const themeDefinition = originalDtcgJson.$themes?.find((t: any) => 
+      t.$id === themeName || t.name === themeName || t.$name === themeName
+    );
+    if (themeDefinition) {
+      const selectedTokenSets = themeDefinition.selectedTokenSets;
+      
+      if (Array.isArray(selectedTokenSets)) {
+        // New format: array of objects with id and status
+        for (const tokenSetRef of selectedTokenSets) {
+          if (tokenSetRef.status === "enabled" || tokenSetRef.status === "source") {
+            const setId = tokenSetRef.id;
+            if (setId in originalDtcgJson) {
+              const result = flattenTokensWithMetadata(originalDtcgJson[setId]);
+              Object.assign(themeMetadata, result.metadata);
+            }
+          }
+        }
+      } else {
+        // Old format: object with key-value pairs
+        for (const [setName, status] of Object.entries(selectedTokenSets)) {
+          if (status === "enabled" || status === "source") {
+            if (setName in originalDtcgJson) {
+              const result = flattenTokensWithMetadata(originalDtcgJson[setName]);
+              Object.assign(themeMetadata, result.metadata);
+            }
+          }
+        }
+      }
+    }
+
+    // Process tokens as usual
+    const stringTokens: Record<string, string> = {};
+    for (const [key, value] of Object.entries(themeTokens)) {
+      stringTokens[key] = String(value);
+    }
+
+    const tokenSet = new TokenSetResolver(stringTokens, {}, config);
+    const result = tokenSet.resolve();
+
+    // Create enhanced output with metadata
+    const enhancedTokens: Record<string, any> = {};
+    for (const [key, value] of Object.entries(result.resolvedTokens)) {
+      const computedValue = value?.toString() ?? value;
+      enhancedTokens[key] = computedValue;
+      
+      // Add metadata properties if they exist
+      if (themeMetadata[key]) {
+        for (const [metaKey, metaValue] of Object.entries(themeMetadata[key])) {
+          enhancedTokens[`${key}.${metaKey}`] = metaValue;
+        }
+      }
+    }
+
+    outputTokens[themeName] = { 
+      tokens: enhancedTokens, 
+      metadata: themeMetadata 
+    };
+  }
+
+  return { 
+    tokens: outputTokens,
+    metadata: {} // Will be populated per theme
+  };
 }

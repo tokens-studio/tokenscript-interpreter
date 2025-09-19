@@ -54,6 +54,88 @@ export function flattenTokens(
   return flattenedTokens;
 }
 
+/**
+ * Flattens a DTCG-structured tokens object while preserving all metadata.
+ * Returns both flat tokens for processing and metadata for reconstruction.
+ *
+ * @param tokenset - The DTCG tokens object to flatten
+ * @param prefix - Internal parameter for recursion (dot-separated path)
+ * @returns Object with flat tokens and metadata
+ *
+ * @example
+ * Input:  { "color": { "red": { "$value": "#FF0000", "$type": "color", "$description": "Red color" } } }
+ * Output: { 
+ *   flatTokens: { "color.red": "#FF0000" },
+ *   metadata: { "color.red": { "$type": "color", "$description": "Red color" } }
+ * }
+ */
+export function flattenTokensWithMetadata(
+  tokenset: Record<string, unknown>,
+  prefix = "",
+): { flatTokens: Record<string, string>; metadata: Record<string, Record<string, any>> } {
+  const flatTokens: Record<string, string> = {};
+  const metadata: Record<string, Record<string, any>> = {};
+
+  for (const [key, node] of Object.entries(tokenset)) {
+    // Skip DTCG metadata keys
+    if (key.startsWith("$")) continue;
+
+    if (typeof node === "object" && node !== null && !Array.isArray(node)) {
+      if ("$value" in node) {
+        // This is a token with a value - extract both value and metadata
+        const name = prefix ? `${prefix}.${key}` : key;
+        const nodeObj = node as Record<string, any>;
+        
+        // Extract the value for processing
+        flatTokens[name] = String(nodeObj.$value);
+        
+        // Extract all metadata (everything except $value)
+        const tokenMetadata: Record<string, any> = {};
+        for (const [metaKey, metaValue] of Object.entries(nodeObj)) {
+          if (metaKey !== "$value") {
+            tokenMetadata[metaKey] = metaValue;
+          }
+        }
+        
+        // Only store metadata if there is any
+        if (Object.keys(tokenMetadata).length > 0) {
+          metadata[name] = tokenMetadata;
+        }
+      } else if ("value" in node) {
+        // Non-standard format with "value" - extract both value and metadata
+        const name = prefix ? `${prefix}.${key}` : key;
+        const nodeObj = node as Record<string, any>;
+        
+        // Extract the value for processing
+        flatTokens[name] = String(nodeObj.value);
+        
+        // Extract all metadata (everything except value)
+        const tokenMetadata: Record<string, any> = {};
+        for (const [metaKey, metaValue] of Object.entries(nodeObj)) {
+          if (metaKey !== "value") {
+            tokenMetadata[metaKey] = metaValue;
+          }
+        }
+        
+        // Only store metadata if there is any
+        if (Object.keys(tokenMetadata).length > 0) {
+          metadata[name] = tokenMetadata;
+        }
+      } else {
+        // This is a nested group - recurse
+        const nested = flattenTokensWithMetadata(
+          node as Record<string, unknown>,
+          prefix ? `${prefix}.${key}` : key,
+        );
+        Object.assign(flatTokens, nested.flatTokens);
+        Object.assign(metadata, nested.metadata);
+      }
+    }
+  }
+
+  return { flatTokens, metadata };
+}
+
 // Cache for flattened tokens and metadata to avoid redundant processing
 const flattenedTokensCache = new Map<string, Record<string, string>>();
 
