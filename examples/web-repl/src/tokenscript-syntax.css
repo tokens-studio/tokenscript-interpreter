@@ -114,7 +114,6 @@
   color: var(--tokenscript-color-token-color);
   background-color: var(--tokenscript-color-token-bg);
   border-radius: 2px;
-  padding: 0 2px;
 }
 
 .language-tokenscript .token.property {
