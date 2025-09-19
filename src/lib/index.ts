@@ -14,8 +14,14 @@ export type { TokenSetResolverOptions, TokenProcessingResult } from "@src/tokens
 // Tokenset processing utilities
 export {
   buildThemeTree,
+  createCustomTransform, // Transform system
+  createCustomTransformForObjects, // Transform system for token objects
+  createFigmaColorTransform, // Built-in Figma transform
+  createFigmaColorTransformForObjects, // Built-in Figma transform for token objects
   interpretTokens, // Main API for JSON blob input
+  interpretTokensAsObjects, // Token objects API
   interpretTokensWithMetadata, // Enhanced API that preserves metadata
+  interpretTokensWithTransforms, // Enhanced API with transform support
   interpretTokensets,
   permutateTokensets,
   processSingleTokenSet, // Backward compatibility
