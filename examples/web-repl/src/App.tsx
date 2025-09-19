@@ -13,7 +13,7 @@ import rgbSpec from "../../../data/specifications/colors/rgb.json";
 import rgbaSpec from "../../../data/specifications/colors/rgba.json";
 import srgbSpec from "../../../data/specifications/colors/srgb.json";
 import OutputPanel from "./components/OutputPanel";
-import SyntaxHighlightedEditor from "./components/SyntaxHighlightedEditor";
+import SyntaxHighlightedEditor, { type ErrorInfo } from "./components/SyntaxHighlightedEditor";
 
 const DEFAULT_CODE = `// Example TokenScript code - try editing!
 variable primary: Color.Hsl = hsl(220, 100, 50);
@@ -27,6 +27,7 @@ return primary;`;
 export interface ExecutionResult {
   output?: string;
   error?: string;
+  errorInfo?: ErrorInfo;
   executionTime?: number;
   rawResult?: any;
   colorManager?: any;
@@ -103,8 +104,28 @@ function App() {
       });
     } catch (error) {
       const executionTime = performance.now() - startTime;
+
+      // Extract error information including line number if available
+      const errorInfo: ErrorInfo = {
+        message: error instanceof Error ? error.message : String(error),
+      };
+
+      if (error && typeof error === "object") {
+        if ("line" in error && typeof error.line === "number") {
+          errorInfo.line = error.line;
+        }
+        if ("token" in error) {
+          errorInfo.token = error.token;
+          // If token has line but error doesn't
+          if (!errorInfo.line && error.token?.line) {
+            errorInfo.line = error.token.line;
+          }
+        }
+      }
+
       setResult({
-        error: error instanceof Error ? error.message : String(error),
+        error: errorInfo.message,
+        errorInfo,
         executionTime: Math.round(executionTime * 100) / 100,
       });
     }
@@ -173,6 +194,7 @@ function App() {
               onChange={setCode}
               onKeyDown={handleKeyDown}
               className="flex-1"
+              error={result.errorInfo}
             />
           </div>
 

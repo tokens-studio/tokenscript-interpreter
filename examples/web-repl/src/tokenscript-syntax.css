@@ -141,6 +141,24 @@
   color: var(--tokenscript-type-annotation-color);
 }
 
+.tokenscript-error-line {
+  position: relative;
+  background-color: rgba(255, 0, 0, 0.05);
+}
+
+.tokenscript-error-line::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="6" height="3">%3Cpath%20d%3D%22m0%202.5%20l2%20-1.5%20l1%200%20l2%201.5%20l1%200%22%20stroke%3D%22%23d11%22%20fill%3D%22none%22%20stroke-width%3D%22.7%22%2F%3E</svg>');
+  background-repeat: repeat-x;
+  background-size: 6px 4px;
+  background-position: 0 bottom;
+}
+
 /* Custom scrollbar for better aesthetics */
 .scrollbar-thin {
   scrollbar-width: thin;

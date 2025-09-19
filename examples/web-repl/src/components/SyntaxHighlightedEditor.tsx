@@ -4,11 +4,18 @@ import { useEffect, useRef, useState } from "react";
 import "prismjs/themes/prism.css";
 import "./tokenscript-prism";
 
+export interface ErrorInfo {
+  message: string;
+  line?: number;
+  token?: any;
+}
+
 interface SyntaxHighlightedEditorProps {
   value: string;
   onChange: (value: string) => void;
   onKeyDown?: (event: KeyboardEvent) => void;
   className?: string;
+  error?: ErrorInfo;
 }
 
 function SyntaxHighlightedEditor({
@@ -16,6 +23,7 @@ function SyntaxHighlightedEditor({
   onChange,
   onKeyDown,
   className = "",
+  error,
 }: SyntaxHighlightedEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const highlightRef = useRef<HTMLPreElement>(null);
@@ -33,16 +41,31 @@ function SyntaxHighlightedEditor({
   useEffect(() => {
     try {
       const highlighted = Prism.highlight(value, Prism.languages.tokenscript, "tokenscript");
-      setHighlightedCode(highlighted);
+
+      // Add error highlighting if there's an error with a line number
+      if (error?.line) {
+        const lines = highlighted.split("\n");
+        const errorLineIndex = error.line - 1; // Convert to 0-based index
+
+        if (errorLineIndex >= 0 && errorLineIndex < lines.length) {
+          lines[errorLineIndex] =
+            `<span class="tokenscript-error-line">${lines[errorLineIndex]}</span>`;
+        }
+
+        setHighlightedCode(lines.join("\n"));
+      } else {
+        setHighlightedCode(highlighted);
+      }
+
       // Sync scroll after highlighting update
       setTimeout(() => syncScroll(), 0);
-    } catch (error) {
+    } catch (err) {
       // Fallback to plain text if highlighting fails
-      console.warn("Syntax highlighting failed:", error);
+      console.warn("Syntax highlighting failed:", err);
       setHighlightedCode(value);
       setTimeout(() => syncScroll(), 0);
     }
-  }, [value, syncScroll]);
+  }, [value, error]);
 
   // Setup keyboard event listener
   useEffect(() => {
