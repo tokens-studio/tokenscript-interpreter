@@ -29,18 +29,14 @@ RUN npm run build
 FROM nginx:alpine AS runtime
 WORKDIR /usr/share/nginx/html
 
-# Set default port (can be overridden by Cloud Run)
-ENV PORT=8080
-
 # Remove default nginx static assets
 RUN rm -rf ./*
 # Copy built assets
 COPY --from=build /app/examples/web-repl/dist .
-# Copy custom nginx config template
-COPY config/nginx/nginx.conf.template /etc/nginx/conf.d/default.conf.template
+# Copy custom nginx config
+COPY config/nginx/nginx.conf /etc/nginx/conf.d/default.conf
 
-EXPOSE $PORT
-HEALTHCHECK --interval=30s --timeout=3s CMD wget -qO- http://localhost:$PORT/healthz || exit 1
+EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=3s CMD wget -qO- http://localhost:8000/ || exit 1
 
-# Substitute environment variables in nginx config and start nginx
-CMD envsubst '${PORT}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g "daemon off;"
+CMD ["nginx", "-g", "daemon off;"]
