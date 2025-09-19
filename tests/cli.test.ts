@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { Interpreter } from "@interpreter/interpreter";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
-import { TokenSetResolver, buildThemeTree, processThemes } from "@src/tokenset-processor";
+import { TokenSetResolver, buildThemeTree, processThemes, interpretTokens } from "@src/tokenset-processor";
 
 describe("CLI Functionality", () => {
   describe("Expression Interpretation", () => {
@@ -228,6 +228,122 @@ describe("CLI Functionality", () => {
       expect(themeTree.Mode).toHaveProperty("Dark");
       expect(themeTree.Mode.Light).toHaveProperty("spacing.base");
       expect(themeTree.Mode.Light).toHaveProperty("color.primary");
+    });
+  });
+
+  describe("Format Compatibility Integration", () => {
+    it("should work with the original README example using standard DTCG format", () => {
+      const tokens = {
+        "primary-color": {
+          "$value": "#ff6b35",
+          "$type": "color"
+        },
+        "base-spacing": {
+          "$value": "16px",
+          "$type": "dimension"
+        },
+        "large-spacing": {
+          "$value": "{base-spacing} * 2",
+          "$type": "dimension"
+        }
+      };
+
+      const result = interpretTokens(tokens);
+
+      expect(result).toEqual({
+        "primary-color": "#ff6b35",
+        "base-spacing": "16px",
+        "large-spacing": "32px"
+      });
+    });
+
+    it("should work with the original README example using non-standard format", () => {
+      const tokens = {
+        "primary-color": {
+          "value": "#ff6b35",
+          "type": "color"
+        },
+        "base-spacing": {
+          "value": "16px",
+          "type": "dimension"
+        },
+        "large-spacing": {
+          "value": "{base-spacing} * 2",
+          "type": "dimension"
+        }
+      };
+
+      const result = interpretTokens(tokens);
+
+      expect(result).toEqual({
+        "primary-color": "#ff6b35",
+        "base-spacing": "16px",
+        "large-spacing": "32px"
+      });
+    });
+
+    it("should resolve complex token chains in both formats", () => {
+      const standardTokens = {
+        "base": {
+          "$value": "4px",
+          "$type": "dimension"
+        },
+        "small": {
+          "$value": "{base} * 2",
+          "$type": "dimension"
+        },
+        "medium": {
+          "$value": "{small} * 2",
+          "$type": "dimension"
+        },
+        "large": {
+          "$value": "{medium} * 2",
+          "$type": "dimension"
+        }
+      };
+
+      const nonStandardTokens = {
+        "base": {
+          "value": "4px",
+          "type": "dimension"
+        },
+        "small": {
+          "value": "{base} * 2",
+          "type": "dimension"
+        },
+        "medium": {
+          "value": "{small} * 2",
+          "type": "dimension"
+        },
+        "large": {
+          "value": "{medium} * 2",
+          "type": "dimension"
+        }
+      };
+
+      const standardResult = interpretTokens(standardTokens);
+      const nonStandardResult = interpretTokens(nonStandardTokens);
+
+      const expectedResult = {
+        "base": "4px",
+        "small": "8px", 
+        "medium": "16px",
+        "large": "32px"
+      };
+
+      expect(standardResult).toEqual(expectedResult);
+      expect(nonStandardResult).toEqual(expectedResult);
+    });
+
+    it("should handle empty token sets gracefully in both formats", () => {
+      const emptyStandard = {};
+      const emptyNonStandard = {};
+
+      const standardResult = interpretTokens(emptyStandard);
+      const nonStandardResult = interpretTokens(emptyNonStandard);
+
+      expect(standardResult).toEqual({});
+      expect(nonStandardResult).toEqual({});
     });
   });
 });

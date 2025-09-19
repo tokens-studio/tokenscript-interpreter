@@ -1,6 +1,6 @@
 import Prism from "prismjs";
 import type React from "react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import "prismjs/themes/prism.css";
 import "./tokenscript-prism";
 
@@ -30,12 +30,12 @@ function SyntaxHighlightedEditor({
   const [highlightedCode, setHighlightedCode] = useState("");
 
   // Sync scroll between textarea and highlight layer
-  const syncScroll = () => {
+  const syncScroll = useCallback(() => {
     if (textareaRef.current && highlightRef.current) {
       highlightRef.current.scrollTop = textareaRef.current.scrollTop;
       highlightRef.current.scrollLeft = textareaRef.current.scrollLeft;
     }
-  };
+  }, []);
 
   // Highlight code whenever value changes
   useEffect(() => {
@@ -65,7 +65,7 @@ function SyntaxHighlightedEditor({
       setHighlightedCode(value);
       setTimeout(() => syncScroll(), 0);
     }
-  }, [value, error]);
+  }, [value, error, syncScroll]);
 
   // Setup keyboard event listener
   useEffect(() => {

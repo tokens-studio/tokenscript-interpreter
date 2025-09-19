@@ -2,6 +2,7 @@ import {
   ColorManager,
   Config,
   Interpreter,
+  interpretTokens,
   Lexer,
   Parser,
 } from "@tokens-studio/tokenscript-interpreter";
@@ -23,6 +24,35 @@ variable primary: Color.Hsl = hsl(220, 100, 50);
 // variable rgb_color: Color.Rgb = rgb(255, 0, 128);
 
 return primary;`;
+
+const DEFAULT_JSON = `{
+  "colors": {
+    "primary": {
+      "$type": "color",
+      "$value": "#ff6b35"
+    },
+    "secondary": {
+      "$type": "color", 
+      "$value": "hsl(220, 100%, 50%)"
+    },
+    "accent": {
+      "$type": "color",
+      "$value": "{colors.primary}"
+    }
+  },
+  "spacing": {
+    "base": {
+      "$type": "dimension",
+      "$value": "8px"
+    },
+    "large": {
+      "$type": "dimension", 
+      "$value": "{spacing.base} * 2"
+    }
+  }
+}`;
+
+type InputMode = "tokenscript" | "json";
 
 export interface ExecutionResult {
   output?: string;
@@ -62,12 +92,16 @@ function setupColorManager(): ColorManager {
 
 function App() {
   const [code, setCode] = useState(DEFAULT_CODE);
+  const [jsonInput, setJsonInput] = useState(DEFAULT_JSON);
+  const [inputMode, setInputMode] = useState<InputMode>("tokenscript");
   const [result, setResult] = useState<ExecutionResult>({});
   const [autoRun, setAutoRun] = useState(true);
 
   const executeCode = useCallback(async () => {
-    // If code is empty or just whitespace, clear the output
-    if (!code.trim()) {
+    const currentInput = inputMode === "tokenscript" ? code : jsonInput;
+
+    // If input is empty or just whitespace, clear the output
+    if (!currentInput.trim()) {
       setResult({});
       return;
     }
@@ -75,33 +109,51 @@ function App() {
     const startTime = performance.now();
 
     try {
-      const colorManager = setupColorManager();
-      const config = new Config({ colorManager });
+      if (inputMode === "tokenscript") {
+        // Original TokenScript execution
+        const colorManager = setupColorManager();
+        const config = new Config({ colorManager });
 
-      const lexer = new Lexer(code);
-      const ast = new Parser(lexer).parse();
-      const interpreter = new Interpreter(ast, { config });
+        const lexer = new Lexer(code);
+        const ast = new Parser(lexer).parse();
+        const interpreter = new Interpreter(ast, { config });
 
-      const output = interpreter.interpret();
-      const executionTime = performance.now() - startTime;
+        const output = interpreter.interpret();
+        const executionTime = performance.now() - startTime;
 
-      console.log("Output", { ast, interpreter, output, executionTime });
+        console.log("TokenScript Output", { ast, interpreter, output, executionTime });
 
-      let outputString: string;
-      if (output && typeof output.toString === "function") {
-        outputString = output.toString();
-      } else if (typeof output === "string") {
-        outputString = output;
+        let outputString: string;
+        if (output && typeof output.toString === "function") {
+          outputString = output.toString();
+        } else if (typeof output === "string") {
+          outputString = output;
+        } else {
+          outputString = JSON.stringify(output, null, 2);
+        }
+
+        setResult({
+          output: outputString,
+          executionTime: Math.round(executionTime * 100) / 100,
+          rawResult: output,
+          colorManager,
+        });
       } else {
-        outputString = JSON.stringify(output, null, 2);
-      }
+        // JSON token processing
+        const jsonTokens = JSON.parse(jsonInput);
+        const output = interpretTokens(jsonTokens);
+        const executionTime = performance.now() - startTime;
 
-      setResult({
-        output: outputString,
-        executionTime: Math.round(executionTime * 100) / 100,
-        rawResult: output,
-        colorManager,
-      });
+        console.log("JSON Tokens Output", { input: jsonTokens, output, executionTime });
+
+        const outputString = JSON.stringify(output, null, 2);
+
+        setResult({
+          output: outputString,
+          executionTime: Math.round(executionTime * 100) / 100,
+          rawResult: output,
+        });
+      }
     } catch (error) {
       const executionTime = performance.now() - startTime;
 
@@ -129,7 +181,7 @@ function App() {
         executionTime: Math.round(executionTime * 100) / 100,
       });
     }
-  }, [code]);
+  }, [code, jsonInput, inputMode]);
 
   useEffect(() => {
     if (!autoRun) return;
@@ -188,14 +240,56 @@ function App() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[calc(100vh-12rem)]">
           <div className="flex flex-col">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Code Editor</h2>
-            <SyntaxHighlightedEditor
-              value={code}
-              onChange={setCode}
-              onKeyDown={handleKeyDown}
-              className="flex-1"
-              error={result.errorInfo}
-            />
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">
+                {inputMode === "tokenscript" ? "TokenScript Editor" : "JSON Token Input"}
+              </h2>
+              <div className="flex bg-gray-100 rounded-md p-1">
+                <button
+                  type="button"
+                  onClick={() => setInputMode("tokenscript")}
+                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                    inputMode === "tokenscript"
+                      ? "bg-white text-blue-600 shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  TokenScript
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInputMode("json")}
+                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                    inputMode === "json"
+                      ? "bg-white text-blue-600 shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  JSON Tokens
+                </button>
+              </div>
+            </div>
+
+            {inputMode === "tokenscript" ? (
+              <SyntaxHighlightedEditor
+                value={code}
+                onChange={setCode}
+                onKeyDown={handleKeyDown}
+                className="flex-1"
+                error={result.errorInfo}
+              />
+            ) : (
+              <div className="flex-1 border border-gray-300 rounded-md overflow-hidden">
+                <textarea
+                  value={jsonInput}
+                  onChange={(e) => setJsonInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className="w-full h-full p-4 font-mono text-sm border-none outline-none resize-none"
+                  placeholder="Enter your JSON tokens here..."
+                  spellCheck={false}
+                />
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col">
