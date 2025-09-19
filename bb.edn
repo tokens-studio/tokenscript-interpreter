@@ -20,6 +20,10 @@
    :task (do
             (shell "bb fix")
             (shell "bb fix:web"))}
+  dev:web
+  {:doc "Fixes web"
+   :task
+   (shell {:dir "./examples/web-repl"} "npm run dev")}
   nrepl
   {:doc "Start nrepl server"
    :task (shell "bun run --bun nbb nrepl-server")}}}
