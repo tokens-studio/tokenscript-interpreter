@@ -9,24 +9,18 @@ ARG VITE_WS_URL
 
 WORKDIR /app
 
+# Copy the entire repository to maintain relative paths
+COPY . .
+
 # Install root dependencies first (leverage Docker layer caching)
-COPY package.json package-lock.json* .npmrc* ./
 RUN npm install --no-audit --no-fund
 
 # Build the main interpreter library
-COPY src ./src
-COPY tsconfig.json tsconfig.build.json tsup.config.ts biome.json ./
 RUN npm run build
 
 # Install web-repl dependencies
 WORKDIR /app/examples/web-repl
-COPY examples/web-repl/package.json examples/web-repl/package-lock.json* ./
 RUN npm install --no-audit --no-fund
-
-# Copy web-repl source
-COPY examples/web-repl/src ./src
-COPY examples/web-repl/index.html examples/web-repl/vite.config.ts examples/web-repl/tsconfig.json examples/web-repl/tsconfig.node.json ./
-COPY examples/web-repl/tailwind.config.js examples/web-repl/postcss.config.js examples/web-repl/biome.json ./
 
 # Build web-repl
 RUN npm run build
