@@ -1,4 +1,5 @@
 import type { ASTNode } from "@interpreter/ast";
+import { Config } from "@interpreter/config";
 import { Interpreter } from "@interpreter/interpreter";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
@@ -29,13 +30,13 @@ export class TokenSetResolver {
   private warnings: string[] = [];
   private errors: string[] = [];
 
-  constructor(tokens: Record<string, string>, globalTokens: Record<string, any> = {}) {
+  constructor(tokens: Record<string, string>, globalTokens: Record<string, any> = {}, config?: Config) {
     this.tokens = new Map(Object.entries(tokens));
     this.resolvedTokens = new Map(Object.entries(globalTokens));
 
     // CRITICAL: Pass the resolvedTokens Map directly to the Interpreter.
     // The interpreter now holds a LIVE REFERENCE to this map.
-    this.referenceCache = new Interpreter(null, { references: this.resolvedTokens });
+    this.referenceCache = new Interpreter(null, { references: this.resolvedTokens, config });
   }
 
   private buildRequirementsGraph(): void {
@@ -198,7 +199,7 @@ export async function processThemes(
       stringTokens[key] = String(value);
     }
 
-    const tokenSet = new TokenSetResolver(stringTokens);
+    const tokenSet = new TokenSetResolver(stringTokens, {}, config);
     const result = tokenSet.resolve();
     const endTime = Date.now();
 
@@ -345,7 +346,7 @@ export function interpretTokensets(
 
 // Simple function to process any DTCG JSON blob - the main API users want
 // Pure in-memory processing - no file system operations
-export function interpretTokens(tokenInput: Record<string, any>): Record<string, any> {
+export function interpretTokens(tokenInput: Record<string, any>, config?: Config): Record<string, any> {
   if (!tokenInput || typeof tokenInput !== "object") {
     throw new Error("Invalid JSON input: Expected an object");
   }
@@ -354,7 +355,7 @@ export function interpretTokens(tokenInput: Record<string, any>): Record<string,
   if (tokenInput.$themes && Array.isArray(tokenInput.$themes)) {
     // This is a complete DTCG file with themes - process like a ZIP file
     const themes = loadThemesFromJson(tokenInput);
-    return processThemesSync(themes);
+    return processThemesSync(themes, config);
   } else {
     // 1. ADAPT: Normalize input to flat format
     let flatTokens: Record<string, string>;
@@ -371,7 +372,7 @@ export function interpretTokens(tokenInput: Record<string, any>): Record<string,
     }
 
     // 2. CORE: Resolve the flat tokens
-    const resolver = new TokenSetResolver(flatTokens);
+    const resolver = new TokenSetResolver(flatTokens, {}, config);
     const result = resolver.resolve();
 
     // 3. Stringify for clean output
@@ -439,7 +440,7 @@ function loadThemesFromJson(dtcgJson: Record<string, any>): Record<string, Recor
 }
 
 // Synchronous version of processThemes for in-memory processing
-function processThemesSync(themes: Record<string, Record<string, any>>): Record<string, any> {
+function processThemesSync(themes: Record<string, Record<string, any>>, config?: Config): Record<string, any> {
   const outputTokens: Record<string, any> = {};
 
   for (const [themeName, themeTokens] of Object.entries(themes)) {

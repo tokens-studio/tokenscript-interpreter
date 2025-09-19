@@ -140,8 +140,11 @@ function App() {
         });
       } else {
         // JSON token processing
+        const colorManager = setupColorManager();
+        const config = new Config({ colorManager });
+        
         const jsonTokens = JSON.parse(jsonInput);
-        const output = interpretTokens(jsonTokens);
+        const output = interpretTokens(jsonTokens, config);
         const executionTime = performance.now() - startTime;
 
         console.log("JSON Tokens Output", { input: jsonTokens, output, executionTime });
@@ -152,6 +155,7 @@ function App() {
           output: outputString,
           executionTime: Math.round(executionTime * 100) / 100,
           rawResult: output,
+          colorManager,
         });
       }
     } catch (error) {
