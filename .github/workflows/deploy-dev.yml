@@ -1,0 +1,65 @@
+name: Deploy to Dev
+run-name: Deploy to Dev - 100%
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  BASE_DOMAIN: ${{ vars.BASE_DOMAIN }}
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: write
+  issues: write
+  statuses: write
+  deployments: write
+
+jobs:
+  get-sha:
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.sha.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v3
+      - id: sha
+        run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+  build:
+    name: Build Image
+    uses: tokens-studio/terraform/.github/workflows/app-cloudrun-build.yaml@main
+    with:
+      environment: dev
+
+    secrets: inherit
+
+  deploy:
+    name: Deploy Dev - 100%
+    needs: [get-sha, build]
+    uses: tokens-studio/terraform/.github/workflows/app-deploy-to.yaml@main
+    with:
+      environment: dev
+      image-tag: ${{ needs.build.outputs.image-tag }}
+      deployment-tag: dev-${{ needs.get-sha.outputs.sha }}
+      deployment-env: dev
+      version: ${{ needs.get-sha.outputs.sha }}
+      tag-only: false
+    secrets: inherit
+
+  create-deployment:
+    name: Report Deployment Status
+    needs: [deploy, get-sha]
+    runs-on: ubuntu-latest
+    environment: dev
+    if: always()
+    steps:
+      - uses: actions/checkout@v3
+      - name: Create Sentry release
+        uses: getsentry/action-release@v3
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+        with:
+          environment: 'dev'
+          version: ${{ needs.get-sha.outputs.sha }}
