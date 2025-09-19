@@ -111,14 +111,14 @@ function App() {
       };
 
       if (error && typeof error === "object") {
-        if ("line" in error && typeof error.line === "number") {
-          errorInfo.line = error.line;
+        if ("line" in error && typeof (error as any).line === "number") {
+          errorInfo.line = (error as any).line;
         }
         if ("token" in error) {
-          errorInfo.token = error.token;
+          errorInfo.token = (error as any).token;
           // If token has line but error doesn't
-          if (!errorInfo.line && error.token?.line) {
-            errorInfo.line = error.token.line;
+          if (!errorInfo.line && (error as any).token?.line) {
+            errorInfo.line = (error as any).token.line;
           }
         }
       }
