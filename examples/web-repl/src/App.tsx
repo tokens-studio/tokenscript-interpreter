@@ -13,6 +13,7 @@ import lrgbSpec from "../../../data/specifications/colors/lrgb.json";
 import rgbSpec from "../../../data/specifications/colors/rgb.json";
 import rgbaSpec from "../../../data/specifications/colors/rgba.json";
 import srgbSpec from "../../../data/specifications/colors/srgb.json";
+import JsonEditor from "./components/JsonEditor";
 import OutputPanel from "./components/OutputPanel";
 import SyntaxHighlightedEditor, { type ErrorInfo } from "./components/SyntaxHighlightedEditor";
 
@@ -96,6 +97,7 @@ function App() {
   const [inputMode, setInputMode] = useState<InputMode>("tokenscript");
   const [result, setResult] = useState<ExecutionResult>({});
   const [autoRun, setAutoRun] = useState(true);
+  const [jsonError, setJsonError] = useState<string>();
 
   const executeCode = useCallback(async () => {
     const currentInput = inputMode === "tokenscript" ? code : jsonInput;
@@ -103,6 +105,7 @@ function App() {
     // If input is empty or just whitespace, clear the output
     if (!currentInput.trim()) {
       setResult({});
+      setJsonError(undefined);
       return;
     }
 
@@ -138,12 +141,21 @@ function App() {
           rawResult: output,
           colorManager,
         });
+        setJsonError(undefined);
       } else {
-        // JSON token processing
+        // JSON token processing - validate JSON first
+        let jsonTokens: any;
+        try {
+          jsonTokens = JSON.parse(jsonInput);
+          setJsonError(undefined);
+        } catch (jsonErr) {
+          setJsonError(jsonErr instanceof Error ? jsonErr.message : String(jsonErr));
+          throw jsonErr;
+        }
+
         const colorManager = setupColorManager();
         const config = new Config({ colorManager });
 
-        const jsonTokens = JSON.parse(jsonInput);
         const output = interpretTokens(jsonTokens, config);
         const executionTime = performance.now() - startTime;
 
@@ -283,16 +295,13 @@ function App() {
                 error={result.errorInfo}
               />
             ) : (
-              <div className="flex-1 border border-gray-300 rounded-md overflow-hidden">
-                <textarea
-                  value={jsonInput}
-                  onChange={(e) => setJsonInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  className="w-full h-full p-4 font-mono text-sm border-none outline-none resize-none"
-                  placeholder="Enter your JSON tokens here..."
-                  spellCheck={false}
-                />
-              </div>
+              <JsonEditor
+                value={jsonInput}
+                onChange={setJsonInput}
+                onKeyDown={handleKeyDown}
+                className="flex-1"
+                error={jsonError}
+              />
             )}
           </div>
 
@@ -301,6 +310,7 @@ function App() {
             <OutputPanel
               result={result}
               className="flex-1"
+              inputMode={inputMode}
             />
           </div>
         </div>
