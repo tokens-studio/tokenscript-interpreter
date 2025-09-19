@@ -45,21 +45,3 @@ jobs:
       version: ${{ needs.get-sha.outputs.sha }}
       tag-only: false
     secrets: inherit
-
-  create-deployment:
-    name: Report Deployment Status
-    needs: [deploy, get-sha]
-    runs-on: ubuntu-latest
-    environment: dev
-    if: always()
-    steps:
-      - uses: actions/checkout@v3
-      - name: Create Sentry release
-        uses: getsentry/action-release@v3
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
-          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
-        with:
-          environment: 'dev'
-          version: ${{ needs.get-sha.outputs.sha }}
