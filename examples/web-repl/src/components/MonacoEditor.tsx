@@ -2,6 +2,7 @@ import Editor, { useMonaco } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
 import { useEffect, useRef } from "react";
 import { tokenscriptLanguageConfig, tokenscriptLanguageDefinition } from "./monaco-tokenscript-lang";
+import { TokenScriptCompletionProvider } from "./tokenscript-completion-provider";
 
 export interface ErrorInfo {
   message: string;
@@ -20,6 +21,7 @@ interface MonacoEditorProps {
 function MonacoEditor({ value, onChange, onKeyDown, className = "", error }: MonacoEditorProps) {
   const monaco = useMonaco();
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  const completionProviderRef = useRef<TokenScriptCompletionProvider | null>(null);
 
   // Register TokenScript language
   useEffect(() => {
@@ -32,6 +34,18 @@ function MonacoEditor({ value, onChange, onKeyDown, className = "", error }: Mon
 
       // Set the tokenizer
       monaco.languages.setMonarchTokensProvider("tokenscript", tokenscriptLanguageDefinition);
+
+      // Register completion provider
+      if (!completionProviderRef.current) {
+        completionProviderRef.current = new TokenScriptCompletionProvider();
+        
+        monaco.languages.registerCompletionItemProvider("tokenscript", {
+          provideCompletionItems: (model, position) => {
+            return completionProviderRef.current!.provideCompletionItems(model, position);
+          },
+          triggerCharacters: ['.', ' '], // Trigger completions on dot and space
+        });
+      }
 
       // Optional: Define a theme for TokenScript
       monaco.editor.defineTheme("tokenscript-theme", {
