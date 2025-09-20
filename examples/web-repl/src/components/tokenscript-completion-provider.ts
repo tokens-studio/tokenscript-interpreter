@@ -274,10 +274,30 @@ export class TokenScriptCompletionProvider {
   }
 
   /**
+   * Create variable completions from defined variables
+   */
+  private createVariableCompletions(variables: VariableInfo[], range: editor.IRange): languages.CompletionItem[] {
+    return variables.map(variable => ({
+      label: variable.name,
+      kind: languages.CompletionItemKind.Variable,
+      insertText: variable.name,
+      detail: `${variable.type} variable`,
+      documentation: `Variable '${variable.name}' of type ${variable.type} (defined on line ${variable.line})`,
+      range,
+      sortText: `0_${variable.name}`, // Prioritize variables
+    }));
+  }
+
+  /**
    * Create basic TokenScript completions (keywords, functions, etc.)
    */
-  private createBasicCompletions(range: editor.IRange): languages.CompletionItem[] {
+  private createBasicCompletions(range: editor.IRange, variables?: VariableInfo[]): languages.CompletionItem[] {
     const completions: languages.CompletionItem[] = [];
+    
+    // Add variable completions if available
+    if (variables && variables.length > 0) {
+      completions.push(...this.createVariableCompletions(variables, range));
+    }
     
     // TokenScript keywords
     const keywords = ['variable', 'return', 'if', 'else', 'for', 'in', 'while', 'do'];
@@ -339,10 +359,10 @@ export class TokenScriptCompletionProvider {
   ): languages.ProviderResult<languages.CompletionList> {
     const code = model.getValue();
     const wordInfo = this.getWordAtPosition(model, position);
+    const variables = this.extractVariables(code);
     
     // If we're accessing an attribute (e.g., "variable.")
     if (wordInfo.isAttributeAccess && wordInfo.variableName) {
-      const variables = this.extractVariables(code);
       const variable = variables.find(v => v.name === wordInfo.variableName);
       
       if (variable) {
@@ -359,8 +379,8 @@ export class TokenScriptCompletionProvider {
       }
     }
     
-    // Provide basic completions for other cases
-    const basicCompletions = this.createBasicCompletions(wordInfo.range);
+    // Provide basic completions including variables for other cases
+    const basicCompletions = this.createBasicCompletions(wordInfo.range, variables);
     
     return {
       suggestions: basicCompletions,
