@@ -13,9 +13,9 @@ import lrgbSpec from "../../../data/specifications/colors/lrgb.json";
 import rgbSpec from "../../../data/specifications/colors/rgb.json";
 import rgbaSpec from "../../../data/specifications/colors/rgba.json";
 import srgbSpec from "../../../data/specifications/colors/srgb.json";
-import JsonEditor from "./components/JsonEditor";
+// import JsonEditor from "./components/JsonEditor";
+import MonacoEditor, { type ErrorInfo } from "./components/MonacoEditor";
 import OutputPanel from "./components/OutputPanel";
-import SyntaxHighlightedEditor, { type ErrorInfo } from "./components/SyntaxHighlightedEditor";
 
 const DEFAULT_CODE = `// Example TokenScript code - try editing!
 variable primary: Color.Hsl = hsl(220, 100, 50);
@@ -287,7 +287,7 @@ function App() {
             </div>
 
             {inputMode === "tokenscript" ? (
-              <SyntaxHighlightedEditor
+              <MonacoEditor
                 value={code}
                 onChange={setCode}
                 onKeyDown={handleKeyDown}
@@ -295,13 +295,14 @@ function App() {
                 error={result.errorInfo}
               />
             ) : (
-              <JsonEditor
-                value={jsonInput}
-                onChange={setJsonInput}
-                onKeyDown={handleKeyDown}
-                className="flex-1"
-                error={jsonError}
-              />
+              <div />
+              // <JsonEditor
+              //   value={jsonInput}
+              //   onChange={setJsonInput}
+              //   onKeyDown={handleKeyDown}
+              //   className="flex-1"
+              //   error={jsonError}
+              // />
             )}
           </div>
 

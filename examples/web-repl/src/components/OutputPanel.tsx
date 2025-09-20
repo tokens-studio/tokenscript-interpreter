@@ -1,5 +1,5 @@
 import type { ExecutionResult } from "../App";
-import JsonOutput from "./JsonOutput";
+// import JsonOutput from "./JsonOutput";
 
 function isColorSymbol(obj: any): boolean {
   return (
@@ -114,12 +114,12 @@ function OutputPanel({ result, className = "", inputMode = "tokenscript" }: Outp
     if (result.output) {
       // For JSON mode, always show syntax-highlighted JSON
       if (inputMode === "json") {
-        return (
-          <JsonOutput
-            json={output}
-            title="processed tokens"
-          />
-        );
+        // return (
+        //   // <JsonOutput
+        //   //   json={output}
+        //   //   title="processed tokens"
+        //   // />
+        // );
       }
 
       // Check if this might be a color object by trying to parse the raw result
@@ -214,12 +214,12 @@ function OutputPanel({ result, className = "", inputMode = "tokenscript" }: Outp
       // Try to render as JSON if it looks like JSON, otherwise as regular text
       try {
         const _parsed = JSON.parse(output);
-        return (
-          <JsonOutput
-            json={output}
-            title="result"
-          />
-        );
+        // return (
+        //   // <JsonOutput
+        //   //   json={output}
+        //   //   title="result"
+        //   // />
+        // );
       } catch {
         // Regular text output
         return (
