@@ -22,21 +22,23 @@ function MonacoEditor({ value, onChange, onKeyDown, className = "", error }: Mon
   const monaco = useMonaco();
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const completionProviderRef = useRef<TokenScriptCompletionProvider | null>(null);
+  const themeRegisteredRef = useRef<boolean>(false);
 
   // Register TokenScript language
   useEffect(() => {
     if (monaco) {
-      // Register the language
-      monaco.languages.register({ id: "tokenscript" });
+      // Register language only once
+      if (!themeRegisteredRef.current) {
+        // Register the language
+        monaco.languages.register({ id: "tokenscript" });
 
-      // Set the language configuration
-      monaco.languages.setLanguageConfiguration("tokenscript", tokenscriptLanguageConfig);
+        // Set the language configuration
+        monaco.languages.setLanguageConfiguration("tokenscript", tokenscriptLanguageConfig);
 
-      // Set the tokenizer
-      monaco.languages.setMonarchTokensProvider("tokenscript", tokenscriptLanguageDefinition);
+        // Set the tokenizer
+        monaco.languages.setMonarchTokensProvider("tokenscript", tokenscriptLanguageDefinition);
 
-      // Register completion provider
-      if (!completionProviderRef.current) {
+        // Register completion provider
         completionProviderRef.current = new TokenScriptCompletionProvider();
         
         monaco.languages.registerCompletionItemProvider("tokenscript", {
@@ -47,27 +49,70 @@ function MonacoEditor({ value, onChange, onKeyDown, className = "", error }: Mon
         });
       }
 
-      // Optional: Define a theme for TokenScript
+      // Define a comprehensive theme for TokenScript
       monaco.editor.defineTheme("tokenscript-theme", {
         base: "vs",
         inherit: true,
         rules: [
-          { token: "keyword", foreground: "0066cc", fontStyle: "bold" },
-          { token: "string", foreground: "008000" },
-          { token: "number", foreground: "cc6600" },
-          { token: "number.hex", foreground: "cc6600" },
-          { token: "number.unit", foreground: "cc6600" },
-          { token: "comment", foreground: "808080", fontStyle: "italic" },
-          { token: "operator", foreground: "000000" },
-          { token: "identifier", foreground: "000000" },
+          // Keywords (variable, if, else, etc.)
+          { token: "keyword", foreground: "0000FF", fontStyle: "bold" },
+          
+          // Types (String, Number, Color, etc.)
+          { token: "type", foreground: "267f99", fontStyle: "bold" },
+          
+          // Functions (rgb, hsl, lighten, etc.)
+          { token: "function", foreground: "795da3", fontStyle: "bold" },
+          
+          // Variables and identifiers
+          { token: "variable.name", foreground: "001080" },
+          { token: "identifier", foreground: "001080" },
+          
+          // References (curly braces like {variable.name})
+          { token: "reference", foreground: "E31837", fontStyle: "italic", fontWeight: "bold" },
+          
+          // Strings
+          { token: "string", foreground: "a31515" },
+          { token: "string.invalid", foreground: "cd3131" },
+          
+          // Numbers
+          { token: "number", foreground: "098658" },
+          { token: "number.float", foreground: "098658" },
+          
+          // Hex colors
+          { token: "number.hex", foreground: "E07B39", fontStyle: "bold" },
+          
+          // Numbers with units (like 12px, 1.5em)
+          { token: "number.unit", foreground: "098658", fontStyle: "bold" },
+          
+          // Comments
+          { token: "comment", foreground: "999999", fontStyle: "italic" },
+          
+          // Operators (+, -, *, /, =, etc.)
+          { token: "operator", foreground: "D73A49", fontStyle: "bold" },
+          
+          // Delimiters (parentheses, brackets, semicolons, etc.)
+          { token: "delimiter", foreground: "24292e" },
         ],
         colors: {
           "editor.background": "#ffffff",
           "editor.foreground": "#000000",
-          "editor.lineHighlightBackground": "#f8f8f8",
+          "editor.lineHighlightBackground": "#f8f8ff",
           "editor.selectionBackground": "#add6ff",
+          "editorLineNumber.foreground": "#666666",
+          "editorLineNumber.activeForeground": "#333333",
+          "editorGutter.background": "#fafafa",
+          "editorGutter.border": "#e8e8e8",
+          "scrollbar.shadow": "#00000010",
+          "scrollbarSlider.background": "#c0c0c040",
+          "scrollbarSlider.hoverBackground": "#c0c0c060",
+          "scrollbarSlider.activeBackground": "#c0c0c080",
         },
       });
+
+      // Set the theme on the editor immediately after defining it
+      monaco.editor.setTheme("tokenscript-theme");
+      
+      themeRegisteredRef.current = true;
     }
   }, [monaco]);
 
@@ -121,6 +166,11 @@ function MonacoEditor({ value, onChange, onKeyDown, className = "", error }: Mon
   const handleEditorDidMount = (editor: editor.IStandaloneCodeEditor) => {
     editorRef.current = editor;
 
+    // Force theme application
+    if (monaco) {
+      monaco.editor.setTheme("tokenscript-theme");
+    }
+
     // Set focus to editor
     editor.focus();
 
@@ -128,6 +178,7 @@ function MonacoEditor({ value, onChange, onKeyDown, className = "", error }: Mon
     editor.updateOptions({
       fontSize: 14,
       lineNumbers: "on",
+      lineNumbersMinChars: 2,
       minimap: { enabled: false },
       overviewRulerBorder: false,
       overviewRulerLanes: 0,
@@ -138,6 +189,16 @@ function MonacoEditor({ value, onChange, onKeyDown, className = "", error }: Mon
       tabSize: 2,
       insertSpaces: true,
       detectIndentation: false,
+      scrollbar: {
+        verticalScrollbarSize: 8,
+        horizontalScrollbarSize: 8,
+        arrowSize: 0,
+
+        useShadows: false,
+        verticalHasArrows: false,
+        horizontalHasArrows: false,
+        handleMouseWheel: true,
+      },
     });
   };
 
@@ -173,6 +234,7 @@ function MonacoEditor({ value, onChange, onKeyDown, className = "", error }: Mon
           options={{
             fontSize: 14,
             lineNumbers: "on",
+            lineNumbersMinChars: 2,
             minimap: { enabled: false },
             overviewRulerBorder: false,
             overviewRulerLanes: 0,
@@ -186,6 +248,15 @@ function MonacoEditor({ value, onChange, onKeyDown, className = "", error }: Mon
             bracketPairColorization: { enabled: true },
             matchBrackets: "always",
             renderWhitespace: "selection",
+            scrollbar: {
+              verticalScrollbarSize: 8,
+              horizontalScrollbarSize: 8,
+              arrowSize: 0,
+              useShadows: false,
+              verticalHasArrows: false,
+              horizontalHasArrows: false,
+              handleMouseWheel: true,
+            },
           }}
         />
       </div>

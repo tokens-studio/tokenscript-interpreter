@@ -4,23 +4,47 @@ import type { languages } from "monaco-editor";
 export const tokenscriptLanguageDefinition: languages.IMonarchLanguage = {
   // Keywords and operators
   keywords: [
+    "variable",
     "if",
     "else",
-    "for",
-    "in",
+    "elif", 
     "while",
-    "do",
-    "break",
-    "continue",
-    "function",
+    "for",
     "return",
-    "var",
-    "let",
-    "const",
     "true",
     "false",
     "null",
     "undefined",
+  ],
+
+  // TokenScript types
+  types: [
+    "String",
+    "Number", 
+    "NumberWithUnit",
+    "Color",
+    "List",
+    "Dictionary",
+    "Boolean",
+  ],
+
+  // Color functions and methods
+  colorFunctions: [
+    "rgb",
+    "rgba", 
+    "hsl",
+    "hsla",
+    "lighten",
+    "darken",
+    "saturate",
+    "desaturate",
+    "spin",
+    "mix",
+  ],
+
+  // Units
+  units: [
+    "px", "em", "rem", "vh", "vw", "%", "pt", "in", "cm", "mm", "deg", "rad", "turn"
   ],
 
   operators: [
@@ -69,12 +93,35 @@ export const tokenscriptLanguageDefinition: languages.IMonarchLanguage = {
   // Define token patterns
   tokenizer: {
     root: [
+      // TokenScript references with curly braces
+      [/\{[^}]+\}/, "reference"],
+
+      // Hex colors
+      [/#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/, "number.hex"],
+
+      // Numbers with units - must come before plain numbers
+      [/\d+(\.\d+)?([a-zA-Z%]+)\b/, 
+        {
+          cases: {
+            "$2@units": "number.unit",
+            "@default": "number"
+          }
+        }
+      ],
+
+      // Float numbers
+      [/\d*\.\d+([eE][-+]?\d+)?/, "number.float"],
+      
+      // Integer numbers  
+      [/\d+/, "number"],
+
       // Identifiers and keywords
-      [
-        /[a-zA-Z_$][\w$]*/,
+      [/[a-zA-Z_$][\w$]*/,
         {
           cases: {
             "@keywords": "keyword",
+            "@types": "type", 
+            "@colorFunctions": "function",
             "@default": "identifier",
           },
         },
@@ -84,23 +131,13 @@ export const tokenscriptLanguageDefinition: languages.IMonarchLanguage = {
       { include: "@whitespace" },
 
       // Delimiters and operators
-      [/[{}()[\]]/, "@brackets"],
+      [/[{}()[\]]/, "delimiter"],
       [/[<>]=?/, "operator"],
+      [/[=!]=?/, "operator"],
+      [/&&|\|\|/, "operator"],
+      [/[+\-*/^]/, "operator"],
+      [/[;:,.]/, "delimiter"],
       [/@symbols/, "operator"],
-
-      // Numbers
-      [/\d*\.\d+([eE][-+]?\d+)?/, "number.float"],
-      [/\d+/, "number"],
-
-      // Color values (hex, rgb, hsl, etc.)
-      [/#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})/, "number.hex"],
-      [/rgb\(/, { token: "keyword", next: "@colorFunction" }],
-      [/rgba\(/, { token: "keyword", next: "@colorFunction" }],
-      [/hsl\(/, { token: "keyword", next: "@colorFunction" }],
-      [/hsla\(/, { token: "keyword", next: "@colorFunction" }],
-
-      // Units
-      [/\d+(\.\d+)?(px|em|rem|vh|vw|%|deg|rad|turn)/, "number.unit"],
 
       // Strings
       [/"([^"\\]|\\.)*$/, "string.invalid"], // non-terminated string
@@ -112,11 +149,7 @@ export const tokenscriptLanguageDefinition: languages.IMonarchLanguage = {
       [/`/, "string", "@template"],
     ],
 
-    // Color function handling
-    colorFunction: [
-      [/[^)]+/, "number"],
-      [/\)/, { token: "keyword", next: "@pop" }],
-    ],
+
 
     // String handling
     string_double: [
