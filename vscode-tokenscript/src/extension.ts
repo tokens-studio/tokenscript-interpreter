@@ -1,15 +1,15 @@
-import * as vscode from 'vscode';
+import type * as vscode from "vscode";
 
-export function activate(context: vscode.ExtensionContext) {
-  console.log('TokenScript extension is now active!');
-  
+export function activate(_context: vscode.ExtensionContext) {
+  console.log("TokenScript extension is now active!");
+
   // Future: Add language server features here
   // - Hover providers
-  // - Completion providers  
+  // - Completion providers
   // - Diagnostic providers
   // - Definition providers
 }
 
 export function deactivate() {
-  console.log('TokenScript extension is now deactivated!');
+  console.log("TokenScript extension is now deactivated!");
 }

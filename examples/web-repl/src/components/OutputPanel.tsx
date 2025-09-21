@@ -1,4 +1,5 @@
 import type { ExecutionResult } from "../App";
+
 // import JsonOutput from "./JsonOutput";
 
 function isColorSymbol(obj: any): boolean {

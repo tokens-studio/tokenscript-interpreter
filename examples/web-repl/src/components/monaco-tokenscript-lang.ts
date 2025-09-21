@@ -7,7 +7,7 @@ export const tokenscriptLanguageDefinition: languages.IMonarchLanguage = {
     "variable",
     "if",
     "else",
-    "elif", 
+    "elif",
     "while",
     "for",
     "return",
@@ -18,20 +18,12 @@ export const tokenscriptLanguageDefinition: languages.IMonarchLanguage = {
   ],
 
   // TokenScript types
-  types: [
-    "String",
-    "Number", 
-    "NumberWithUnit",
-    "Color",
-    "List",
-    "Dictionary",
-    "Boolean",
-  ],
+  types: ["String", "Number", "NumberWithUnit", "Color", "List", "Dictionary", "Boolean"],
 
   // Color functions and methods
   colorFunctions: [
     "rgb",
-    "rgba", 
+    "rgba",
     "hsl",
     "hsla",
     "lighten",
@@ -43,9 +35,7 @@ export const tokenscriptLanguageDefinition: languages.IMonarchLanguage = {
   ],
 
   // Units
-  units: [
-    "px", "em", "rem", "vh", "vw", "%", "pt", "in", "cm", "mm", "deg", "rad", "turn"
-  ],
+  units: ["px", "em", "rem", "vh", "vw", "%", "pt", "in", "cm", "mm", "deg", "rad", "turn"],
 
   operators: [
     "=",
@@ -100,27 +90,29 @@ export const tokenscriptLanguageDefinition: languages.IMonarchLanguage = {
       [/#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/, "number.hex"],
 
       // Numbers with units - must come before plain numbers
-      [/\d+(\.\d+)?([a-zA-Z%]+)\b/, 
+      [
+        /\d+(\.\d+)?([a-zA-Z%]+)\b/,
         {
           cases: {
             "$2@units": "number.unit",
-            "@default": "number"
-          }
-        }
+            "@default": "number",
+          },
+        },
       ],
 
       // Float numbers
       [/\d*\.\d+([eE][-+]?\d+)?/, "number.float"],
-      
-      // Integer numbers  
+
+      // Integer numbers
       [/\d+/, "number"],
 
       // Identifiers and keywords
-      [/[a-zA-Z_$][\w$]*/,
+      [
+        /[a-zA-Z_$][\w$]*/,
         {
           cases: {
             "@keywords": "keyword",
-            "@types": "type", 
+            "@types": "type",
             "@colorFunctions": "function",
             "@default": "identifier",
           },
@@ -148,8 +140,6 @@ export const tokenscriptLanguageDefinition: languages.IMonarchLanguage = {
       // Template literals
       [/`/, "string", "@template"],
     ],
-
-
 
     // String handling
     string_double: [
@@ -219,8 +209,8 @@ export const tokenscriptLanguageConfig: languages.LanguageConfiguration = {
   ],
   folding: {
     markers: {
-      start: new RegExp("^\\s*//\\s*#?region\\b"),
-      end: new RegExp("^\\s*//\\s*#?endregion\\b"),
+      start: /^\s*\/\/\s*#?region\b/,
+      end: /^\s*\/\/\s*#?endregion\b/,
     },
   },
   wordPattern: /(-?\d*\.\d\w*)|([a-zA-Z_$][\w$]*)/g,

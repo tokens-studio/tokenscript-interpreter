@@ -1,7 +1,10 @@
 import Editor, { useMonaco } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
 import { useEffect, useRef } from "react";
-import { tokenscriptLanguageConfig, tokenscriptLanguageDefinition } from "./monaco-tokenscript-lang";
+import {
+  tokenscriptLanguageConfig,
+  tokenscriptLanguageDefinition,
+} from "./monaco-tokenscript-lang";
 import { TokenScriptCompletionProvider } from "./tokenscript-completion-provider";
 
 export interface ErrorInfo {
@@ -40,12 +43,12 @@ function MonacoEditor({ value, onChange, onKeyDown, className = "", error }: Mon
 
         // Register completion provider
         completionProviderRef.current = new TokenScriptCompletionProvider();
-        
+
         monaco.languages.registerCompletionItemProvider("tokenscript", {
           provideCompletionItems: (model, position) => {
-            return completionProviderRef.current!.provideCompletionItems(model, position);
+            return completionProviderRef.current?.provideCompletionItems(model, position);
           },
-          triggerCharacters: ['.', ' '], // Trigger completions on dot and space
+          triggerCharacters: [".", " "], // Trigger completions on dot and space
         });
       }
 
@@ -56,40 +59,40 @@ function MonacoEditor({ value, onChange, onKeyDown, className = "", error }: Mon
         rules: [
           // Keywords (variable, if, else, etc.)
           { token: "keyword", foreground: "0000FF", fontStyle: "bold" },
-          
+
           // Types (String, Number, Color, etc.)
           { token: "type", foreground: "267f99", fontStyle: "bold" },
-          
+
           // Functions (rgb, hsl, lighten, etc.)
           { token: "function", foreground: "795da3", fontStyle: "bold" },
-          
+
           // Variables and identifiers
           { token: "variable.name", foreground: "001080" },
           { token: "identifier", foreground: "001080" },
-          
+
           // References (curly braces like {variable.name})
           { token: "reference", foreground: "E31837", fontStyle: "italic", fontWeight: "bold" },
-          
+
           // Strings
           { token: "string", foreground: "a31515" },
           { token: "string.invalid", foreground: "cd3131" },
-          
+
           // Numbers
           { token: "number", foreground: "098658" },
           { token: "number.float", foreground: "098658" },
-          
+
           // Hex colors
           { token: "number.hex", foreground: "E07B39", fontStyle: "bold" },
-          
+
           // Numbers with units (like 12px, 1.5em)
           { token: "number.unit", foreground: "098658", fontStyle: "bold" },
-          
+
           // Comments
           { token: "comment", foreground: "999999", fontStyle: "italic" },
-          
+
           // Operators (+, -, *, /, =, etc.)
           { token: "operator", foreground: "D73A49", fontStyle: "bold" },
-          
+
           // Delimiters (parentheses, brackets, semicolons, etc.)
           { token: "delimiter", foreground: "24292e" },
         ],
@@ -111,7 +114,7 @@ function MonacoEditor({ value, onChange, onKeyDown, className = "", error }: Mon
 
       // Set the theme on the editor immediately after defining it
       monaco.editor.setTheme("tokenscript-theme");
-      
+
       themeRegisteredRef.current = true;
     }
   }, [monaco]);

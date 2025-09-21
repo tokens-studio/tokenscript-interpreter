@@ -93,11 +93,11 @@ function setupColorManager(): ColorManager {
 
 function App() {
   const [code, setCode] = useState(DEFAULT_CODE);
-  const [jsonInput, setJsonInput] = useState(DEFAULT_JSON);
+  const [jsonInput, _setJsonInput] = useState(DEFAULT_JSON);
   const [inputMode, setInputMode] = useState<InputMode>("tokenscript");
   const [result, setResult] = useState<ExecutionResult>({});
   const [autoRun, setAutoRun] = useState(true);
-  const [jsonError, setJsonError] = useState<string>();
+  const [_jsonError, setJsonError] = useState<string>();
 
   const executeCode = useCallback(async () => {
     const currentInput = inputMode === "tokenscript" ? code : jsonInput;
