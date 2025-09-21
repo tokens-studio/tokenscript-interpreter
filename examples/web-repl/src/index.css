@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+* {
+  text-wrap: balance
+}
+
 .code-editor {
   font-family: "Fira Code", "Monaco", "Courier New", monospace;
 }

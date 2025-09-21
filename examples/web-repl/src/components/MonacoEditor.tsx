@@ -205,7 +205,7 @@ function MonacoEditor({ value, onChange, onKeyDown, className = "", error }: Mon
   return (
     <div className={`flex flex-col bg-white rounded-lg border shadow-sm ${className}`}>
       <div className="border-b bg-gray-50 px-4 py-2 rounded-t-lg flex-shrink-0 h-10">
-        <div className="flex items-center h-full">
+        <div className="flex items-center justify-between h-full">
           <span className="text-sm text-gray-600 font-mono">tokenscript</span>
           <div className="ml-2 min-w-0">
             {error && (
