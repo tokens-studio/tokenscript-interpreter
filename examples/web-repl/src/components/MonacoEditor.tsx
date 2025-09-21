@@ -21,6 +21,32 @@ interface MonacoEditorProps {
   error?: ErrorInfo;
 }
 
+const options = {
+  fontSize: 14,
+  lineNumbers: "on",
+  lineNumbersMinChars: 2,
+  minimap: { enabled: false },
+  overviewRulerBorder: false,
+  overviewRulerLanes: 0,
+  hideCursorInOverviewRuler: true,
+  scrollBeyondLastLine: false,
+  wordWrap: "on",
+  automaticLayout: true,
+  tabSize: 2,
+  insertSpaces: true,
+  detectIndentation: false,
+  scrollbar: {
+    verticalScrollbarSize: 8,
+    horizontalScrollbarSize: 8,
+    arrowSize: 0,
+
+    useShadows: false,
+    verticalHasArrows: false,
+    horizontalHasArrows: false,
+    handleMouseWheel: true,
+  },
+};
+
 function MonacoEditor({ value, onChange, onKeyDown, className = "", error }: MonacoEditorProps) {
   const monaco = useMonaco();
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
@@ -30,29 +56,20 @@ function MonacoEditor({ value, onChange, onKeyDown, className = "", error }: Mon
   // Register TokenScript language
   useEffect(() => {
     if (monaco) {
-      // Register language only once
       if (!themeRegisteredRef.current) {
-        // Register the language
         monaco.languages.register({ id: "tokenscript" });
-
-        // Set the language configuration
         monaco.languages.setLanguageConfiguration("tokenscript", tokenscriptLanguageConfig);
-
-        // Set the tokenizer
         monaco.languages.setMonarchTokensProvider("tokenscript", tokenscriptLanguageDefinition);
 
-        // Register completion provider
         completionProviderRef.current = new TokenScriptCompletionProvider();
-
         monaco.languages.registerCompletionItemProvider("tokenscript", {
           provideCompletionItems: (model, position) => {
             return completionProviderRef.current?.provideCompletionItems(model, position);
           },
-          triggerCharacters: [".", " "], // Trigger completions on dot and space
+          triggerCharacters: [".", " "],
         });
       }
 
-      // Define a comprehensive theme for TokenScript
       monaco.editor.defineTheme("tokenscript-theme", {
         base: "vs",
         inherit: true,
@@ -112,9 +129,7 @@ function MonacoEditor({ value, onChange, onKeyDown, className = "", error }: Mon
         },
       });
 
-      // Set the theme on the editor immediately after defining it
       monaco.editor.setTheme("tokenscript-theme");
-
       themeRegisteredRef.current = true;
     }
   }, [monaco]);
@@ -178,31 +193,7 @@ function MonacoEditor({ value, onChange, onKeyDown, className = "", error }: Mon
     editor.focus();
 
     // Configure editor options
-    editor.updateOptions({
-      fontSize: 14,
-      lineNumbers: "on",
-      lineNumbersMinChars: 2,
-      minimap: { enabled: false },
-      overviewRulerBorder: false,
-      overviewRulerLanes: 0,
-      hideCursorInOverviewRuler: true,
-      scrollBeyondLastLine: false,
-      wordWrap: "on",
-      automaticLayout: true,
-      tabSize: 2,
-      insertSpaces: true,
-      detectIndentation: false,
-      scrollbar: {
-        verticalScrollbarSize: 8,
-        horizontalScrollbarSize: 8,
-        arrowSize: 0,
-
-        useShadows: false,
-        verticalHasArrows: false,
-        horizontalHasArrows: false,
-        handleMouseWheel: true,
-      },
-    });
+    editor.updateOptions(options);
   };
 
   const handleEditorChange = (newValue: string | undefined) => {
@@ -234,33 +225,7 @@ function MonacoEditor({ value, onChange, onKeyDown, className = "", error }: Mon
           value={value}
           onChange={handleEditorChange}
           onMount={handleEditorDidMount}
-          options={{
-            fontSize: 14,
-            lineNumbers: "on",
-            lineNumbersMinChars: 2,
-            minimap: { enabled: false },
-            overviewRulerBorder: false,
-            overviewRulerLanes: 0,
-            hideCursorInOverviewRuler: true,
-            scrollBeyondLastLine: false,
-            wordWrap: "on",
-            automaticLayout: true,
-            tabSize: 2,
-            insertSpaces: true,
-            detectIndentation: false,
-            bracketPairColorization: { enabled: true },
-            matchBrackets: "always",
-            renderWhitespace: "selection",
-            scrollbar: {
-              verticalScrollbarSize: 8,
-              horizontalScrollbarSize: 8,
-              arrowSize: 0,
-              useShadows: false,
-              verticalHasArrows: false,
-              horizontalHasArrows: false,
-              handleMouseWheel: true,
-            },
-          }}
+          options={options}
         />
       </div>
     </div>
