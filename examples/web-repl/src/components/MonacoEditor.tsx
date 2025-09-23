@@ -21,7 +21,7 @@ interface MonacoEditorProps {
   error?: ErrorInfo;
 }
 
-const options = {
+export const options = {
   fontSize: 14,
   lineNumbers: "on",
   lineNumbersMinChars: 2,

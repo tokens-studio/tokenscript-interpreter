@@ -13,9 +13,9 @@ import lrgbSpec from "../../../data/specifications/colors/lrgb.json";
 import rgbSpec from "../../../data/specifications/colors/rgb.json";
 import rgbaSpec from "../../../data/specifications/colors/rgba.json";
 import srgbSpec from "../../../data/specifications/colors/srgb.json";
-// import JsonEditor from "./components/JsonEditor";
-import MonacoEditor, { type ErrorInfo } from "./components/MonacoEditor";
-import OutputPanel from "./components/OutputPanel";
+import JsonTokenEditor from "./components/JsonTokenEditor";
+import TokenScriptEditor from "./components/TokenScriptEditor";
+import UnifiedOutputPanel, { type UnifiedExecutionResult } from "./components/UnifiedOutputPanel";
 
 const DEFAULT_CODE = `// Example TokenScript code - try editing!
 variable primary: Color.Hsl = hsl(220, 100, 50);
@@ -54,15 +54,6 @@ const DEFAULT_JSON = `{
 }`;
 
 type InputMode = "tokenscript" | "json";
-
-export interface ExecutionResult {
-  output?: string;
-  error?: string;
-  errorInfo?: ErrorInfo;
-  executionTime?: number;
-  rawResult?: any;
-  colorManager?: any;
-}
 
 function setupColorManager(): ColorManager {
   const colorManager = new ColorManager();
@@ -103,18 +94,18 @@ function formatOutput(output: any): string {
 
 function App() {
   const [code, setCode] = useState(DEFAULT_CODE);
-  const [jsonInput, _setJsonInput] = useState(DEFAULT_JSON);
+  const [jsonInput, setJsonInput] = useState(DEFAULT_JSON);
   const [inputMode, setInputMode] = useState<InputMode>("tokenscript");
-  const [result, setResult] = useState<ExecutionResult>({});
+  const [result, setResult] = useState<UnifiedExecutionResult>({ type: "tokenscript" });
   const [autoRun, setAutoRun] = useState(true);
-  const [_jsonError, setJsonError] = useState<string>();
+  const [jsonError, setJsonError] = useState<string>();
 
   const executeCode = useCallback(async () => {
     const currentInput = inputMode === "tokenscript" ? code : jsonInput;
 
     // If input is empty or just whitespace, clear the output
     if (!currentInput.trim()) {
-      setResult({});
+      setResult({ type: inputMode });
       setJsonError(undefined);
       return;
     }
@@ -135,6 +126,7 @@ function App() {
         // console.log("TokenScript Output", { ast, interpreter, output, executionTime });
 
         setResult({
+          type: "tokenscript",
           output: formatOutput(output),
           executionTime: Math.round(executionTime * 100) / 100,
           rawResult: output,
@@ -163,6 +155,7 @@ function App() {
         const outputString = JSON.stringify(output, null, 2);
 
         setResult({
+          type: "json",
           output: outputString,
           executionTime: Math.round(executionTime * 100) / 100,
           rawResult: output,
@@ -173,8 +166,10 @@ function App() {
       const executionTime = performance.now() - startTime;
 
       // Extract error information including line number if available
-      const errorInfo: ErrorInfo = {
+      const errorInfo = {
         message: error instanceof Error ? error.message : String(error),
+        line: undefined as number | undefined,
+        token: undefined as any,
       };
 
       if (error && typeof error === "object") {
@@ -191,6 +186,7 @@ function App() {
       }
 
       setResult({
+        type: inputMode,
         error: errorInfo.message,
         errorInfo,
         executionTime: Math.round(executionTime * 100) / 100,
@@ -313,7 +309,7 @@ function App() {
             </div>
 
             {inputMode === "tokenscript" ? (
-              <MonacoEditor
+              <TokenScriptEditor
                 value={code}
                 onChange={setCode}
                 onKeyDown={handleKeyDown}
@@ -321,14 +317,13 @@ function App() {
                 error={result.errorInfo}
               />
             ) : (
-              <div />
-              // <JsonEditor
-              //   value={jsonInput}
-              //   onChange={setJsonInput}
-              //   onKeyDown={handleKeyDown}
-              //   className="flex-1"
-              //   error={jsonError}
-              // />
+              <JsonTokenEditor
+                value={jsonInput}
+                onChange={setJsonInput}
+                onKeyDown={handleKeyDown}
+                className="flex-1"
+                error={jsonError}
+              />
             )}
           </div>
 
@@ -342,10 +337,9 @@ function App() {
             >
               Output
             </h2>
-            <OutputPanel
+            <UnifiedOutputPanel
               result={result}
               className="flex-1"
-              inputMode={inputMode}
             />
           </div>
         </div>

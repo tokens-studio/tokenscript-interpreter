@@ -158,4 +158,111 @@ test.describe("TokenScript Web REPL", () => {
     const newTime = await page.getByTestId("execution-time").textContent();
     expect(newTime).toMatch(/^\d+(\.\d+)?ms$/);
   });
+
+  test("should process JSON tokens and display formatted output", async ({ page }) => {
+    // Switch to JSON mode
+    await page.getByTestId("json-mode-button").click();
+    await expect(page.getByTestId("editor-panel-title")).toHaveText("JSON Token Input");
+
+    // Wait for JSON editor to be visible
+    await expect(page.getByTestId("json-editor")).toBeVisible();
+    await expect(page.getByTestId("json-editor-language")).toHaveText("json");
+
+    // Disable auto-run to control execution timing
+    await page.getByTestId("auto-run-checkbox").uncheck();
+
+    // Clear the JSON editor and add test JSON tokens
+    await page.locator(".monaco-editor textarea").focus();
+    await page.keyboard.press("Control+A");
+    await page.keyboard.press("Delete");
+
+    const testJson = `{
+  "colors": {
+    "primary": {
+      "$type": "color",
+      "$value": "#3366ff"
+    },
+    "secondary": {
+      "$type": "color", 
+      "$value": "hsl(120, 100%, 50%)"
+    }
+  },
+  "spacing": {
+    "base": {
+      "$type": "dimension",
+      "$value": "16px"
+    }
+  }
+}`;
+
+    // Insert text by pasting
+    await page.locator(".monaco-editor textarea").evaluate(async (element, evalText) => {
+      const clipboardData = new DataTransfer();
+      clipboardData.setData('text/plain', evalText);
+      const clipboardEvent = new ClipboardEvent('paste', {
+        clipboardData,
+      });
+      element.dispatchEvent(clipboardEvent);
+    }, testJson);
+
+    // Click run to execute
+    await page.getByTestId("run-code-button").click();
+
+    // Wait for execution to complete
+    await expect(page.getByTestId("execution-time")).toBeVisible();
+
+    // Should show JSON output (not empty or error)
+    await expect(page.getByTestId("empty-output")).not.toBeVisible();
+    await expect(page.getByTestId("error-output")).not.toBeVisible();
+    await expect(page.getByTestId("json-output")).toBeVisible();
+
+    // Verify the output contains processed token data
+    const outputContent = await page.getByTestId("json-output").textContent();
+    expect(outputContent).toBeTruthy();
+    expect(outputContent).toContain("colors");
+    expect(outputContent).toContain("primary");
+    expect(outputContent).toContain("secondary");
+    expect(outputContent).toContain("spacing");
+
+    // Verify execution time is displayed with correct format
+    const executionTime = await page.getByTestId("execution-time").textContent();
+    expect(executionTime).toMatch(/^\d+(\.\d+)?ms$/);
+  });
+
+  test("should handle invalid JSON gracefully in JSON mode", async ({ page }) => {
+    // Switch to JSON mode
+    await page.getByTestId("json-mode-button").click();
+    await expect(page.getByTestId("json-editor")).toBeVisible();
+
+    // Disable auto-run
+    await page.getByTestId("auto-run-checkbox").uncheck();
+
+    // Clear the editor and add invalid JSON
+    await page.locator(".monaco-editor textarea").focus();
+    await page.keyboard.press("Control+A");
+    await page.keyboard.press("Delete");
+
+    // Add invalid JSON using fill to avoid intermediate parsing
+    const invalidJson = '{ "invalid": json, missing quotes }';
+    await page.locator(".monaco-editor textarea").fill(invalidJson);
+
+    // Wait for validation
+    await page.waitForTimeout(500);
+
+    // Should show JSON error indicator in header
+    await expect(page.getByTestId("json-editor-error")).toBeVisible();
+    await expect(page.getByTestId("json-editor-error")).toHaveText("Invalid JSON");
+
+    // Click run button
+    await page.getByTestId("run-code-button").click();
+
+    // Should show error output
+    await expect(page.getByTestId("error-output")).toBeVisible();
+    await expect(page.getByTestId("error-message")).toBeVisible();
+
+    // Verify error message contains JSON-related text
+    const errorText = await page.getByTestId("error-message").textContent();
+    expect(errorText).toBeTruthy();
+    expect(errorText?.toLowerCase()).toContain("json");
+  });
 });
