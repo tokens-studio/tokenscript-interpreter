@@ -319,7 +319,6 @@ function App() {
                   value={code}
                   onChange={setCode}
                   onKeyDown={handleKeyDown}
-                  className="h-full"
                   error={result.errorInfo}
                 />
               ) : (
@@ -327,7 +326,6 @@ function App() {
                   value={jsonInput}
                   onChange={setJsonInput}
                   onKeyDown={handleKeyDown}
-                  className="h-full"
                   error={jsonError}
                 />
               )}
@@ -335,13 +333,20 @@ function App() {
           </div>
 
           <div
-            className="grid grid-rows-[1fr] gap-2 sm:gap-4 min-h-0 lg:min-h-0"
-            data-testid="app-output-panel"
+            className="grid grid-rows-[auto_1fr] gap-2 sm:gap-4 min-h-0 lg:min-h-0"
+            data-testid="output-panel"
           >
+            <div className="min-h-[2.5rem] flex items-center">
+              <h2
+                className="text-base sm:text-lg font-semibold text-gray-900"
+                data-testid="output-panel-title"
+              >
+                Output
+              </h2>
+            </div>
             <div className="min-h-[250px] lg:min-h-0 overflow-hidden">
               <OutputPanel
                 result={result}
-                className="h-full"
               />
             </div>
           </div>

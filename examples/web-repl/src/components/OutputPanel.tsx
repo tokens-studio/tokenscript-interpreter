@@ -194,7 +194,7 @@ function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
 
   return (
     <div
-      className={`flex flex-col bg-white rounded-lg border shadow-sm h-full ${className}`}
+      className={`flex flex-col bg-white rounded-lg border shadow-sm ${className}`}
       data-testid="output-panel"
     >
       <div className="border-b bg-gray-50 px-3 sm:px-4 py-2 rounded-t-lg flex-shrink-0 h-10">
@@ -225,7 +225,7 @@ function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
         className="flex-1 min-h-0 rounded-b-lg overflow-auto"
         data-testid="output-panel-content"
       >
-        <div className="p-3 sm:p-4 h-full overflow-auto">
+        <div className="p-3 sm:p-4 overflow-auto">
           <Output result={result} />
         </div>
       </div>
