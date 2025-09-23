@@ -1,3 +1,10 @@
+import Prism from "prismjs";
+import { useEffect } from "react";
+
+import "prismjs/themes/prism.css";
+import "prismjs/components/prism-json";
+import { tokenscriptThemeColors } from "./shared-theme";
+
 export interface UnifiedExecutionResult {
   output?: any; // Can be string, Color object, parsed JSON, etc.
   error?: string;
@@ -208,15 +215,33 @@ function renderColorOutput(colorObj: any, colorManager?: any) {
   );
 }
 
-function renderJsonOutput(obj: any) {
-  const jsonString = typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
+function JsonOutput({ value }: { value: any }) {
+  const jsonString = typeof value === "string" ? value : JSON.stringify(value, null, 2);
+
+  useEffect(() => {
+    // Ensure theme colors are applied to CSS custom properties
+    const root = document.documentElement;
+    root.style.setProperty("--tokenscript-json-string", tokenscriptThemeColors.jsonString);
+    root.style.setProperty("--tokenscript-json-number", tokenscriptThemeColors.jsonNumber);
+    root.style.setProperty("--tokenscript-json-boolean", tokenscriptThemeColors.jsonBoolean);
+    root.style.setProperty("--tokenscript-json-null", tokenscriptThemeColors.jsonNull);
+    root.style.setProperty("--tokenscript-json-property", tokenscriptThemeColors.jsonProperty);
+    root.style.setProperty(
+      "--tokenscript-json-punctuation",
+      tokenscriptThemeColors.jsonPunctuation,
+    );
+
+    Prism.highlightAll();
+  }, []);
 
   return (
     <div
       className="bg-gray-50 rounded p-3 text-sm font-mono overflow-auto"
       data-testid="json-output"
     >
-      <pre className="whitespace-pre-wrap">{jsonString}</pre>
+      <pre className="whitespace-pre-wrap">
+        <code className="language-json">{jsonString}</code>
+      </pre>
     </div>
   );
 }
@@ -284,7 +309,7 @@ function UnifiedOutputPanel({ result, className = "" }: UnifiedOutputPanelProps)
     // For JSON mode or JSON-like objects
     if (type === "json" || isJsonObject(output) || isJsonObject(rawResult)) {
       const objectToRender = rawResult || output;
-      return renderJsonOutput(objectToRender);
+      return <JsonOutput value={objectToRender} />;
     }
 
     // For string output
@@ -292,7 +317,7 @@ function UnifiedOutputPanel({ result, className = "" }: UnifiedOutputPanelProps)
       // Try to parse as JSON first
       try {
         const parsed = JSON.parse(output);
-        return renderJsonOutput(parsed);
+        return <JsonOutput value={parsed} />;
       } catch {
         // Regular string output
         return renderStringOutput(output);

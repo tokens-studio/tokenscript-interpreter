@@ -5,6 +5,7 @@ import {
   tokenscriptLanguageConfig,
   tokenscriptLanguageDefinition,
 } from "./monaco-tokenscript-lang";
+import { monacoThemeDefinition } from "./shared-theme";
 import { TokenScriptCompletionProvider } from "./tokenscript-completion-provider";
 
 export interface ErrorInfo {
@@ -71,64 +72,7 @@ function MonacoEditor({ value, onChange, onKeyDown, className = "", error }: Mon
         });
       }
 
-      monaco.editor.defineTheme("tokenscript-theme", {
-        base: "vs",
-        inherit: true,
-        rules: [
-          // Keywords (variable, if, else, etc.)
-          { token: "keyword", foreground: "0000FF", fontStyle: "bold" },
-
-          // Types (String, Number, Color, etc.)
-          { token: "type", foreground: "267f99", fontStyle: "bold" },
-
-          // Functions (rgb, hsl, lighten, etc.)
-          { token: "function", foreground: "795da3", fontStyle: "bold" },
-
-          // Variables and identifiers
-          { token: "variable.name", foreground: "001080" },
-          { token: "identifier", foreground: "001080" },
-
-          // References (curly braces like {variable.name})
-          { token: "reference", foreground: "E31837", fontStyle: "italic", fontWeight: "bold" },
-
-          // Strings
-          { token: "string", foreground: "a31515" },
-          { token: "string.invalid", foreground: "cd3131" },
-
-          // Numbers
-          { token: "number", foreground: "098658" },
-          { token: "number.float", foreground: "098658" },
-
-          // Hex colors
-          { token: "number.hex", foreground: "E07B39", fontStyle: "bold" },
-
-          // Numbers with units (like 12px, 1.5em)
-          { token: "number.unit", foreground: "098658", fontStyle: "bold" },
-
-          // Comments
-          { token: "comment", foreground: "999999", fontStyle: "italic" },
-
-          // Operators (+, -, *, /, =, etc.)
-          { token: "operator", foreground: "D73A49", fontStyle: "bold" },
-
-          // Delimiters (parentheses, brackets, semicolons, etc.)
-          { token: "delimiter", foreground: "24292e" },
-        ],
-        colors: {
-          "editor.background": "#ffffff",
-          "editor.foreground": "#000000",
-          "editor.lineHighlightBackground": "#f8f8ff",
-          "editor.selectionBackground": "#add6ff",
-          "editorLineNumber.foreground": "#666666",
-          "editorLineNumber.activeForeground": "#333333",
-          "editorGutter.background": "#fafafa",
-          "editorGutter.border": "#e8e8e8",
-          "scrollbar.shadow": "#00000010",
-          "scrollbarSlider.background": "#c0c0c040",
-          "scrollbarSlider.hoverBackground": "#c0c0c060",
-          "scrollbarSlider.activeBackground": "#c0c0c080",
-        },
-      });
+      monaco.editor.defineTheme("tokenscript-theme", monacoThemeDefinition);
 
       monaco.editor.setTheme("tokenscript-theme");
       themeRegisteredRef.current = true;

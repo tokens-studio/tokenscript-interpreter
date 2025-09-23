@@ -23,7 +23,9 @@
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
     "@tokens-studio/tokenscript-interpreter": "file:../../",
+    "@types/prismjs": "^1.26.5",
     "monaco-editor": "^0.53.0",
+    "prismjs": "^1.30.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

@@ -38,3 +38,61 @@ body,
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   @apply bg-gray-400;
 }
+
+/* CSS custom properties for shared theme colors */
+:root {
+  --tokenscript-keyword: #0000FF;
+  --tokenscript-type: #267f99;
+  --tokenscript-function: #795da3;
+  --tokenscript-variable: #001080;
+  --tokenscript-reference: #E31837;
+  --tokenscript-string: #a31515;
+  --tokenscript-number: #098658;
+  --tokenscript-hex-color: #E07B39;
+  --tokenscript-comment: #999999;
+  --tokenscript-operator: #D73A49;
+  --tokenscript-delimiter: #24292e;
+  
+  --tokenscript-json-string: #a31515;
+  --tokenscript-json-number: #098658;
+  --tokenscript-json-boolean: #795da3;
+  --tokenscript-json-null: #D73A49;
+  --tokenscript-json-property: #267f99;
+  --tokenscript-json-punctuation: #24292e;
+}
+
+/* JSON syntax highlighting using shared theme colors */
+.token.string {
+  color: var(--tokenscript-json-string);
+}
+
+.token.number {
+  color: var(--tokenscript-json-number);
+}
+
+.token.boolean {
+  color: var(--tokenscript-json-boolean);
+}
+
+.token.null {
+  color: var(--tokenscript-json-null);
+}
+
+.token.property {
+  color: var(--tokenscript-json-property);
+}
+
+.token.punctuation {
+  color: var(--tokenscript-json-punctuation);
+}
+
+/* Override Prism's background for better integration */
+pre[class*="language-"] {
+  background: transparent !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+code[class*="language-"] {
+  background: transparent !important;
+}
