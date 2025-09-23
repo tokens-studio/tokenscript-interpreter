@@ -330,10 +330,10 @@ function UnifiedOutputPanel({ result, className = "" }: UnifiedOutputPanelProps)
       testId="output-panel"
     >
       <div
-        className="p-4 h-full overflow-auto scrollbar-thin"
+        className="p-3 sm:p-4 h-full overflow-auto"
         data-testid="output-content"
       >
-        <div style={{ minHeight: "400px" }}>{renderContent()}</div>
+        {renderContent()}
       </div>
     </PanelShell>
   );

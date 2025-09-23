@@ -212,11 +212,11 @@ function App() {
 
   return (
     <div
-      className="min-h-screen bg-gray-50"
+      className="h-screen bg-gray-50 flex flex-col"
       data-testid="app-container"
     >
       <header
-        className="bg-white shadow-sm border-b"
+        className="bg-white shadow-sm border-b flex-shrink-0"
         data-testid="app-header"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -251,10 +251,22 @@ function App() {
               <button
                 type="button"
                 onClick={executeCode}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-10 h-10 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
                 data-testid="run-code-button"
+                title="Run Code (Ctrl+Enter)"
               >
-                Run Code
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M8 5.14v13.72L19 12L8 5.14z"
+                    fill="currentColor"
+                  />
+                </svg>
               </button>
             </div>
           </div>
@@ -262,29 +274,29 @@ function App() {
       </header>
 
       <main
-        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+        className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 overflow-auto lg:overflow-hidden w-full"
         data-testid="app-main"
       >
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[calc(100vh-12rem)]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8 min-h-[600px] lg:h-full lg:min-h-[400px]">
           <div
-            className="grid grid-rows-[auto_1fr] gap-4"
+            className="grid grid-rows-[auto_1fr] gap-2 sm:gap-4 min-h-0 lg:min-h-0"
             data-testid="editor-panel"
           >
-            <div className="flex items-center justify-between min-h-[2.5rem]">
+            <div className="flex items-center justify-between min-h-[2.5rem] flex-wrap gap-2">
               <h2
-                className="text-lg font-semibold text-gray-900"
+                className="text-base sm:text-lg font-semibold text-gray-900 truncate"
                 data-testid="editor-panel-title"
               >
                 {inputMode === "tokenscript" ? "TokenScript Editor" : "JSON Token Input"}
               </h2>
               <div
-                className="flex bg-gray-100 rounded-md p-1"
+                className="flex bg-gray-100 rounded-md p-1 flex-shrink-0"
                 data-testid="input-mode-toggle"
               >
                 <button
                   type="button"
                   onClick={() => setInputMode("tokenscript")}
-                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                  className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-medium transition-colors ${
                     inputMode === "tokenscript"
                       ? "bg-white text-blue-600 shadow-sm"
                       : "text-gray-600 hover:text-gray-900"
@@ -296,7 +308,7 @@ function App() {
                 <button
                   type="button"
                   onClick={() => setInputMode("json")}
-                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                  className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-medium transition-colors ${
                     inputMode === "json"
                       ? "bg-white text-blue-600 shadow-sm"
                       : "text-gray-600 hover:text-gray-900"
@@ -308,7 +320,7 @@ function App() {
               </div>
             </div>
 
-            <div className="min-h-0">
+            <div className="min-h-[300px] lg:min-h-0 overflow-hidden">
               {inputMode === "tokenscript" ? (
                 <TokenScriptEditor
                   value={code}
@@ -330,18 +342,18 @@ function App() {
           </div>
 
           <div
-            className="grid grid-rows-[auto_1fr] gap-4"
+            className="grid grid-rows-[auto_1fr] gap-2 sm:gap-4 min-h-0 lg:min-h-0"
             data-testid="output-panel"
           >
             <div className="min-h-[2.5rem] flex items-center">
               <h2
-                className="text-lg font-semibold text-gray-900"
+                className="text-base sm:text-lg font-semibold text-gray-900"
                 data-testid="output-panel-title"
               >
                 Output
               </h2>
             </div>
-            <div className="min-h-0">
+            <div className="min-h-[250px] lg:min-h-0 overflow-hidden">
               <UnifiedOutputPanel
                 result={result}
                 className="h-full"

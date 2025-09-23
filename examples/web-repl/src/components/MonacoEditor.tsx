@@ -23,7 +23,7 @@ interface MonacoEditorProps {
 }
 
 export const options = {
-  fontSize: 14,
+  fontSize: 13,
   lineNumbers: "on",
   lineNumbersMinChars: 2,
   minimap: { enabled: false },
@@ -36,11 +36,12 @@ export const options = {
   tabSize: 2,
   insertSpaces: true,
   detectIndentation: false,
+  folding: true,
+  glyphMargin: false,
   scrollbar: {
-    verticalScrollbarSize: 8,
-    horizontalScrollbarSize: 8,
+    verticalScrollbarSize: 6,
+    horizontalScrollbarSize: 6,
     arrowSize: 0,
-
     useShadows: false,
     verticalHasArrows: false,
     horizontalHasArrows: false,
