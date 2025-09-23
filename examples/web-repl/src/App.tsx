@@ -91,6 +91,16 @@ function setupColorManager(): ColorManager {
   return colorManager;
 }
 
+function formatOutput(output: any): string {
+  if (output && typeof output.toString === "function") {
+    return output.toString();
+  }
+  if (typeof output === "string") {
+    return output;
+  }
+  return JSON.stringify(output, null, 2);
+}
+
 function App() {
   const [code, setCode] = useState(DEFAULT_CODE);
   const [jsonInput, _setJsonInput] = useState(DEFAULT_JSON);
@@ -113,30 +123,19 @@ function App() {
 
     try {
       if (inputMode === "tokenscript") {
-        // Original TokenScript execution
         const colorManager = setupColorManager();
         const config = new Config({ colorManager });
 
         const lexer = new Lexer(code);
         const ast = new Parser(lexer).parse();
         const interpreter = new Interpreter(ast, { config });
-
         const output = interpreter.interpret();
         const executionTime = performance.now() - startTime;
 
-        console.log("TokenScript Output", { ast, interpreter, output, executionTime });
-
-        let outputString: string;
-        if (output && typeof output.toString === "function") {
-          outputString = output.toString();
-        } else if (typeof output === "string") {
-          outputString = output;
-        } else {
-          outputString = JSON.stringify(output, null, 2);
-        }
+        // console.log("TokenScript Output", { ast, interpreter, output, executionTime });
 
         setResult({
-          output: outputString,
+          output: formatOutput(output),
           executionTime: Math.round(executionTime * 100) / 100,
           rawResult: output,
           colorManager,
