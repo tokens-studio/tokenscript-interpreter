@@ -5,7 +5,7 @@ import "prismjs/themes/prism.css";
 import "prismjs/components/prism-json";
 import { tokenscriptThemeColors } from "./shared-theme";
 
-export interface UnifiedExecutionResult {
+export interface OutputResult {
   output?: any; // Can be string, Color object, parsed JSON, etc.
   error?: string;
   errorInfo?: {
@@ -283,11 +283,11 @@ function renderEmptyOutput() {
 }
 
 interface UnifiedOutputPanelProps {
-  result: UnifiedExecutionResult;
+  result: OutputResult;
   className?: string;
 }
 
-function UnifiedOutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
+function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
   const { output, error, executionTime, rawResult, colorManager, type } = result;
 
   const renderContent = () => {
@@ -372,4 +372,4 @@ function UnifiedOutputPanel({ result, className = "" }: UnifiedOutputPanelProps)
   );
 }
 
-export default UnifiedOutputPanel;
+export default OutputPanel;

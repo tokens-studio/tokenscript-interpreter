@@ -14,8 +14,8 @@ import rgbSpec from "../../../data/specifications/colors/rgb.json";
 import rgbaSpec from "../../../data/specifications/colors/rgba.json";
 import srgbSpec from "../../../data/specifications/colors/srgb.json";
 import JsonTokenEditor from "./components/JsonTokenEditor";
+import OutputPanel from "./components/OutputPanel";
 import TokenScriptEditor from "./components/TokenScriptEditor";
-import UnifiedOutputPanel, { type UnifiedExecutionResult } from "./components/UnifiedOutputPanel";
 
 const DEFAULT_CODE = `// Example TokenScript code - try editing!
 variable primary: Color.Hsl = hsl(220, 100, 50);
@@ -346,7 +346,7 @@ function App() {
             data-testid="app-output-panel"
           >
             <div className="min-h-[250px] lg:min-h-0 overflow-hidden">
-              <UnifiedOutputPanel
+              <OutputPanel
                 result={result}
                 className="h-full"
               />
