@@ -7,6 +7,7 @@ import {
   Parser,
 } from "@tokens-studio/tokenscript-interpreter";
 import { useCallback, useEffect, useState } from "react";
+import cssColorSpec from "../../../data/specifications/colors/css-color.json";
 import hslSpec from "../../../data/specifications/colors/hsl.json";
 import lrgbSpec from "../../../data/specifications/colors/lrgb.json";
 
@@ -77,6 +78,10 @@ function setupColorManager(): ColorManager {
   colorManager.register(
     "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/lrgb-color/0/",
     lrgbSpec as any,
+  );
+  colorManager.register(
+    "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/css-color/0/",
+    cssColorSpec as any,
   );
 
   return colorManager;

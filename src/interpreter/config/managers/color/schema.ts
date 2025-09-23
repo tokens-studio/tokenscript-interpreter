@@ -25,7 +25,7 @@ const ConversionSchema = z.object({
   script: ScriptBlockSchema,
 });
 
-export const validSchemaTypes = ["number", "string"];
+export const validSchemaTypes = ["number", "string", "color"];
 
 const SpecSchemaSchema = z.object({
   type: z.literal("object"),

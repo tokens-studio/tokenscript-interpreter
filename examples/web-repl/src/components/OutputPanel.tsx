@@ -3,7 +3,11 @@ import { useEffect } from "react";
 
 import "prismjs/themes/prism.css";
 import "prismjs/components/prism-json";
-import { BaseSymbolType } from "@tokens-studio/tokenscript-interpreter";
+import {
+  BaseSymbolType,
+  type ColorManager,
+  type ColorSymbol,
+} from "@tokens-studio/tokenscript-interpreter";
 import { tokenscriptThemeColors } from "./shared-theme";
 
 export interface OutputResult {
@@ -19,131 +23,23 @@ export interface OutputResult {
   type: "tokenscript" | "json" | "error";
 }
 
-// Type guard functions
-function isColorSymbol(obj: any): boolean {
-  return (
-    obj && typeof obj === "object" && obj.type === "Color" && typeof obj.toString === "function"
-  );
-}
-
-function _isJsonObject(obj: any): boolean {
-  return obj && typeof obj === "object" && !isColorSymbol(obj);
-}
-
-// Helper functions for color objects
-function getColorProperties(colorObj: any): { [key: string]: any } {
-  const props: { [key: string]: any } = {};
-  const commonProps = ["r", "g", "b", "a", "h", "s", "l", "value"];
-
-  for (const prop of commonProps) {
-    if (
-      colorObj.value &&
-      typeof colorObj.value === "object" &&
-      colorObj.value[prop] !== undefined
-    ) {
-      props[prop] = colorObj.value[prop];
-    }
-  }
-
-  return props;
-}
-
-function tryColorConversions(colorObj: any, colorManager?: any): { [key: string]: string } {
-  const conversions: { [key: string]: string } = {};
-
+const toCssColor = (color: ColorSymbol, colorManager: ColorManager): string | undefined => {
   try {
-    // Use ColorManager's formatColorMethod if available
-    if (colorManager && typeof colorManager.formatColorMethod === "function") {
-      try {
-        const formatted = colorManager.formatColorMethod(colorObj);
-        conversions["Current Format"] = formatted;
-      } catch (_e) {
-        if (typeof colorObj.toString === "function") {
-          conversions["Current Format"] = colorObj.toString();
-        }
-      }
-    } else if (typeof colorObj.toString === "function") {
-      conversions["Current Format"] = colorObj.toString();
-    }
-
-    // Try hex conversion
-    if (colorObj.to && typeof colorObj.to.hex === "function") {
-      try {
-        const hexResult = colorObj.to.hex();
-        if (hexResult) {
-          if (colorManager && typeof colorManager.formatColorMethod === "function") {
-            conversions.Hex = colorManager.formatColorMethod(hexResult);
-          } else if (typeof hexResult.toString === "function") {
-            conversions.Hex = hexResult.toString();
-          }
-        }
-      } catch (_e) {}
-    }
-
-    if (colorObj.to && typeof colorObj.to.rgb === "function") {
-      try {
-        const rgbResult = colorObj.to.rgb();
-        if (rgbResult) {
-          if (colorManager && typeof colorManager.formatColorMethod === "function") {
-            conversions.RGB = colorManager.formatColorMethod(rgbResult);
-          } else if (typeof rgbResult.toString === "function") {
-            conversions.RGB = rgbResult.toString();
-          }
-        }
-      } catch (_e) {}
-    }
-
-    if (colorObj.to && typeof colorObj.to.hsl === "function") {
-      try {
-        const hslResult = colorObj.to.hsl();
-        if (hslResult) {
-          if (colorManager && typeof colorManager.formatColorMethod === "function") {
-            conversions.HSL = colorManager.formatColorMethod(hslResult);
-          } else if (typeof hslResult.toString === "function") {
-            conversions.HSL = hslResult.toString();
-          }
-        }
-      } catch (_e) {}
-    }
+    // @ts-expect-error - Unwraps result -> CssColor -> String
+    return colorManager.convertToByType(color, "CssColor").value.value.value as string;
   } catch (_e) {
-    conversions.Value = String(colorObj);
+    console.error("Error converting to css color", _e, color, colorManager);
   }
+};
 
-  return conversions;
-}
-
-function getCssColorFromColorObject(colorObj: any): string {
-  const colorTypeName = colorObj.getTypeName ? colorObj.getTypeName() : colorObj.type;
-  const colorType = colorTypeName?.toLowerCase() || "";
-
-  if (colorType.includes("rgb") && colorObj.value) {
-    const { r, g, b, a } = colorObj.value;
-    if (r !== undefined && g !== undefined && b !== undefined) {
-      if (a !== undefined) {
-        return `rgba(${r}, ${g}, ${b}, ${a})`;
-      } else {
-        return `rgb(${r}, ${g}, ${b})`;
-      }
-    }
-  } else if (colorType.includes("hsl") && colorObj.value) {
-    const { h, s, l } = colorObj.value;
-    if (h !== undefined && s !== undefined && l !== undefined) {
-      return `hsl(${h}, ${s}%, ${l}%)`;
-    }
-  } else if (colorType.includes("hex") && colorObj.value) {
-    if (typeof colorObj.value === "string" && colorObj.value.startsWith("#")) {
-      return colorObj.value;
-    }
-  }
-
-  return "#999"; // fallback
-}
-
-const ColorOutput = ({ colorObj, colorManager }: { colorObj: any; colorManager?: any }) => {
-  const properties = getColorProperties(colorObj);
-  const conversions = tryColorConversions(colorObj, colorManager);
-  const colorValue = colorObj.toString();
-  const cssColor = getCssColorFromColorObject(colorObj);
+const ColorOutput = ({
+  color,
+  colorManager,
+}: {
+  color: ColorSymbol;
+  colorManager: ColorManager;
+}) => {
+  const cssColor = toCssColor(color, colorManager);
 
   return (
     <div
@@ -157,7 +53,7 @@ const ColorOutput = ({ colorObj, colorManager }: { colorObj: any; colorManager?:
         <div
           className="w-16 h-16 rounded-lg border-2 border-gray-200 shadow-inner"
           style={{ backgroundColor: cssColor }}
-          title={`Color: ${colorValue}`}
+          title={`Color: ${cssColor}`}
           data-testid="color-swatch"
         />
         <div>
@@ -171,17 +67,16 @@ const ColorOutput = ({ colorObj, colorManager }: { colorObj: any; colorManager?:
             className="text-sm text-gray-600"
             data-testid="color-type-value"
           >
-            Type: {colorObj.getTypeName ? colorObj.getTypeName() : colorObj.type}
+            Type: {color.getTypeName()}
           </div>
         </div>
       </div>
 
-      {/* Properties */}
-      {Object.keys(properties).length > 0 && (
+      {color.value && typeof color.value === "object" && Object.keys(color.value).length > 0 && (
         <div>
           <div className="font-semibold text-gray-900 mb-2">Properties:</div>
           <div className="bg-gray-50 rounded p-3 text-sm font-mono space-y-1">
-            {Object.entries(properties).map(([key, value]) => (
+            {Object.entries(color.value).map(([key, value]) => (
               <div
                 key={key}
                 className="flex justify-between"
@@ -193,22 +88,6 @@ const ColorOutput = ({ colorObj, colorManager }: { colorObj: any; colorManager?:
           </div>
         </div>
       )}
-
-      {/* Format Conversions */}
-      <div>
-        <div className="font-semibold text-gray-900 mb-2">Formats:</div>
-        <div className="bg-gray-50 rounded p-3 text-sm font-mono space-y-1">
-          {Object.entries(conversions).map(([format, value]) => (
-            <div
-              key={format}
-              className="flex justify-between"
-            >
-              <span className="text-purple-600">{format}:</span>
-              <span className="text-gray-800">{value}</span>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 };
@@ -294,7 +173,7 @@ const Output = ({ result }: { result: OutputResult }) => {
       case "Color":
         return (
           <ColorOutput
-            colorObj={output}
+            color={output as ColorSymbol}
             colorManager={colorManager}
           />
         );

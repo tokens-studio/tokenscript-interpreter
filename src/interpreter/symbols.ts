@@ -456,6 +456,11 @@ export class ListSymbol extends BaseSymbolType {
         ],
         returnType: ListSymbol,
       },
+      join: {
+        function: this.joinImpl,
+        args: [{ name: "separator", type: StringSymbol, optional: true }],
+        returnType: StringSymbol,
+      },
     };
   }
 
@@ -523,6 +528,17 @@ export class ListSymbol extends BaseSymbolType {
       throw new InterpreterError("Index out of range for update.");
     this.elements[index] = item;
     return this;
+  }
+
+  joinImpl(separator?: StringSymbol): StringSymbol {
+    const sep = separator?.value || "";
+    const stringElements = this.elements.map((element) => {
+      if (element.value === null) {
+        return "null";
+      }
+      return element.toString();
+    });
+    return new StringSymbol(stringElements.join(sep));
   }
 
   static empty(): ListSymbol {
