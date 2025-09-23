@@ -190,7 +190,7 @@ const Output = ({ result }: { result: OutputResult }) => {
 };
 
 function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
-  const { executionTime } = result;
+  const { executionTime, error } = result;
 
   return (
     <div
@@ -204,7 +204,7 @@ function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
             data-testid="output-panel-title"
           >
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+              <div className={`w-3 h-3 bg-blue-500 rounded-full ${error ?  "bg-red-500":"bg-blue-500" }`}></div>
               <span>Output</span>
             </div>
           </div>
