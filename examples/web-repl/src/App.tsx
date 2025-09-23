@@ -345,9 +345,7 @@ function App() {
               </h2>
             </div>
             <div className="min-h-[250px] lg:min-h-0 overflow-hidden">
-              <OutputPanel
-                result={result}
-              />
+              <OutputPanel result={result} />
             </div>
           </div>
         </div>

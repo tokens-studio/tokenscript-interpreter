@@ -2,16 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+.text-box * {
+  text-box: trim-both cap alphabetic;
+}
+
 html,
 body,
 #root {
   height: 100%;
   margin: 0;
   padding: 0;
-}
-
-* {
-  text-wrap: balance
 }
 
 .code-editor {
