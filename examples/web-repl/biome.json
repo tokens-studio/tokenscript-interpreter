@@ -5,6 +5,15 @@
   },
 
   "files": {
-    "includes": ["**/*", "!src/index.css", "!node_modules", "!dist", "!.next", "!build", "!.vite"]
+    "includes": [
+      "**/*",
+      "!src/index.css",
+      "!node_modules",
+      "!dist",
+      "!.next",
+      "!build",
+      "!.vite",
+      "!**/*.spec.ts"
+    ]
   }
 }

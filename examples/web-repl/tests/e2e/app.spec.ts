@@ -144,7 +144,7 @@ test.describe("TokenScript Web REPL", () => {
     await expect(page.getByTestId("execution-time")).toBeVisible();
 
     // Store initial execution time
-    const initialTime = await page.getByTestId("execution-time").textContent();
+    const initialTime = await page.getByTestId("execution-time")?.textContent();
 
     // Change the code to trigger a new execution
     await page.locator(".monaco-editor textarea").focus();
@@ -152,7 +152,7 @@ test.describe("TokenScript Web REPL", () => {
     await page.keyboard.type("variable newColor: Color.Rgb = rgb(255, 0, 0); return newColor;");
 
     // Wait for new execution to complete and time to update
-    await expect(page.getByTestId("execution-time")).not.toHaveText(initialTime!);
+    await expect(page.getByTestId("execution-time")).not.toHaveText(initialTime);
 
     // Verify it still shows a valid time format
     const newTime = await page.getByTestId("execution-time").textContent();
