@@ -334,7 +334,7 @@ function App() {
 
           <div
             className="grid grid-rows-[auto_1fr] gap-2 sm:gap-4 min-h-0 lg:min-h-0"
-            data-testid="output-panel"
+            data-testid="app-output-panel"
           >
             <div className="min-h-[2.5rem] flex items-center">
               <h2

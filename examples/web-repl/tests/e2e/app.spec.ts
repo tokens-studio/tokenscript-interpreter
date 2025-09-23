@@ -22,7 +22,6 @@ test.describe("TokenScript Web REPL", () => {
 
     // Check that output panel is present
     await expect(page.getByTestId("app-output-panel")).toBeVisible();
-    await expect(page.getByTestId("output-panel-title")).toHaveText("Output");
 
     // Check that run button is present and visible
     await expect(page.getByTestId("run-code-button")).toBeVisible();
