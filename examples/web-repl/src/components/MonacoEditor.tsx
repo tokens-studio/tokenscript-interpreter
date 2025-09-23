@@ -53,30 +53,50 @@ function MonacoEditor({ value, onChange, onKeyDown, className = "", error }: Mon
   const monaco = useMonaco();
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const completionProviderRef = useRef<TokenScriptCompletionProvider | null>(null);
-  const themeRegisteredRef = useRef<boolean>(false);
+  const languageRegisteredRef = useRef<boolean>(false);
+  const completionProviderDisposableRef = useRef<{ dispose(): void } | null>(null);
 
   // Register TokenScript language
   useEffect(() => {
-    if (monaco) {
-      if (!themeRegisteredRef.current) {
-        monaco.languages.register({ id: "tokenscript" });
-        monaco.languages.setLanguageConfiguration("tokenscript", tokenscriptLanguageConfig);
-        monaco.languages.setMonarchTokensProvider("tokenscript", tokenscriptLanguageDefinition);
-
-        completionProviderRef.current = new TokenScriptCompletionProvider();
-        monaco.languages.registerCompletionItemProvider("tokenscript", {
-          provideCompletionItems: (model, position) => {
-            return completionProviderRef.current?.provideCompletionItems(model, position);
-          },
-          triggerCharacters: [".", " "],
-        });
-      }
-
+    if (monaco && !languageRegisteredRef.current) {
+      monaco.languages.register({ id: "tokenscript" });
+      monaco.languages.setLanguageConfiguration("tokenscript", tokenscriptLanguageConfig);
+      monaco.languages.setMonarchTokensProvider("tokenscript", tokenscriptLanguageDefinition);
       monaco.editor.defineTheme("tokenscript-theme", monacoThemeDefinition);
 
-      monaco.editor.setTheme("tokenscript-theme");
-      themeRegisteredRef.current = true;
+      languageRegisteredRef.current = true;
     }
+  }, [monaco]);
+
+  // Register completion provider
+  useEffect(() => {
+    if (monaco) {
+      // Dispose existing provider first
+      if (completionProviderDisposableRef.current) {
+        completionProviderDisposableRef.current.dispose();
+      }
+
+      // Register new provider
+      completionProviderRef.current = new TokenScriptCompletionProvider();
+      const disposable = monaco.languages.registerCompletionItemProvider("tokenscript", {
+        provideCompletionItems: (model, position) => {
+          return completionProviderRef.current?.provideCompletionItems(model, position);
+        },
+        triggerCharacters: [".", " "],
+      });
+      completionProviderDisposableRef.current = disposable;
+
+      // Set theme each time
+      monaco.editor.setTheme("tokenscript-theme");
+    }
+
+    // Cleanup function to dispose completion provider
+    return () => {
+      if (completionProviderDisposableRef.current) {
+        completionProviderDisposableRef.current.dispose();
+        completionProviderDisposableRef.current = null;
+      }
+    };
   }, [monaco]);
 
   // Handle error markers
