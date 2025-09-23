@@ -35,12 +35,7 @@ export function PanelShell({
         </div>
       </div>
 
-      <div
-        className="flex-1 min-h-0 rounded-b-lg overflow-auto"
-        data-testid={testId ? `${testId}-content` : undefined}
-      >
-        {children}
-      </div>
+      <div className="flex-1 min-h-0 rounded-b-lg overflow-auto">{children}</div>
     </div>
   );
 }

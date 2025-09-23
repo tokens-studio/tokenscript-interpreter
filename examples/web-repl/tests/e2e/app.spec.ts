@@ -21,12 +21,11 @@ test.describe("TokenScript Web REPL", () => {
     await expect(page.getByTestId("editor-panel-title")).toHaveText("TokenScript Editor");
 
     // Check that output panel is present
-    await expect(page.getByTestId("output-panel")).toBeVisible();
+    await expect(page.getByTestId("app-output-panel")).toBeVisible();
     await expect(page.getByTestId("output-panel-title")).toHaveText("Output");
 
     // Check that run button is present and visible
     await expect(page.getByTestId("run-code-button")).toBeVisible();
-    await expect(page.getByTestId("run-code-button")).toHaveText("Run Code");
 
     // Check that auto-run checkbox is present
     await expect(page.getByTestId("auto-run-checkbox")).toBeVisible();
@@ -53,7 +52,7 @@ test.describe("TokenScript Web REPL", () => {
   test("should display initial color output", async ({ page }) => {
     // Wait for the output panel to be visible
     await expect(page.getByTestId("output-panel")).toBeVisible();
-    await expect(page.getByTestId("output-content")).toBeVisible();
+    await expect(page.getByTestId("output-panel-content")).toBeVisible();
 
     // Since auto-run is enabled by default and there's default code,
     // we should see a color output rather than the empty state

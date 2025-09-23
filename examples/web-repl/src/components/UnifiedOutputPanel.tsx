@@ -257,8 +257,6 @@ function renderEmptyOutput() {
   );
 }
 
-import { PanelShell } from "./PanelShell";
-
 interface UnifiedOutputPanelProps {
   result: UnifiedExecutionResult;
   className?: string;
@@ -318,24 +316,34 @@ function UnifiedOutputPanel({ result, className = "" }: UnifiedOutputPanelProps)
   const titleWithIcon = (
     <div className="flex items-center space-x-2">
       <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-      <span>output</span>
+      <span>Output</span>
     </div>
   );
 
   return (
-    <PanelShell
-      title={titleWithIcon}
-      className={className}
-      headerRight={headerRight}
-      testId="output-panel"
+    <div
+      className={`flex flex-col bg-white rounded-lg border shadow-sm h-full ${className}`}
+      data-testid="output-panel"
     >
-      <div
-        className="p-3 sm:p-4 h-full overflow-auto"
-        data-testid="output-content"
-      >
-        {renderContent()}
+      <div className="border-b bg-gray-50 px-3 sm:px-4 py-2 rounded-t-lg flex-shrink-0 h-10">
+        <div className="flex items-center justify-between h-full w-full">
+          <div
+            className="text-xs sm:text-sm text-gray-600 font-mono truncate pr-2"
+            data-testid="output-panel-title"
+          >
+            {titleWithIcon}
+          </div>
+          {headerRight && <div className="ml-2 min-w-0 flex-shrink-0">{headerRight}</div>}
+        </div>
       </div>
-    </PanelShell>
+
+      <div
+        className="flex-1 min-h-0 rounded-b-lg overflow-auto"
+        data-testid="output-panel-content"
+      >
+        <div className="p-3 sm:p-4 h-full overflow-auto">{renderContent()}</div>
+      </div>
+    </div>
   );
 }
 
