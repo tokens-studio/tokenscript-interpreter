@@ -167,15 +167,7 @@ export const tokenscriptLanguageDefinition: languages.IMonarchLanguage = {
     // Whitespace and comments
     whitespace: [
       [/[ \t\r\n]+/, "white"],
-      [/\/\*/, "comment", "@comment"],
       [/\/\/.*$/, "comment"],
-    ],
-
-    comment: [
-      [/[^/*]+/, "comment"],
-      [/\/\*/, "comment", "@push"], // nested comment
-      ["\\*/", "comment", "@pop"],
-      [/[/*]/, "comment"],
     ],
   },
 };
@@ -184,7 +176,6 @@ export const tokenscriptLanguageDefinition: languages.IMonarchLanguage = {
 export const tokenscriptLanguageConfig: languages.LanguageConfiguration = {
   comments: {
     lineComment: "//",
-    blockComment: ["/*", "*/"],
   },
   brackets: [
     ["{", "}"],

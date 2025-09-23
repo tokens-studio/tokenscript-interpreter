@@ -17,11 +17,6 @@
         {
           "name": "comment.line.double-slash.tokenscript",
           "match": "//.*$"
-        },
-        {
-          "name": "comment.block.tokenscript",
-          "begin": "/\\*",
-          "end": "\\*/"
         }
       ]
     },
