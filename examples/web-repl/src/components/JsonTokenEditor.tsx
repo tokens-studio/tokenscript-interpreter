@@ -1,7 +1,8 @@
 import Editor, { useMonaco } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
 import { useEffect, useRef } from "react";
-import { options } from './MonacoEditor';
+import { options } from "./MonacoEditor";
+import { PanelShell } from "./PanelShell";
 
 export interface JsonErrorInfo {
   message: string;
@@ -103,51 +104,33 @@ function JsonTokenEditor({
     }
   };
 
-  return (
-    <div
-      className={`flex flex-col bg-white rounded-lg border shadow-sm ${className}`}
-      data-testid="json-editor"
+  const headerRight = error ? (
+    <span
+      className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded"
+      data-testid="json-editor-error"
     >
-      <div
-        className="border-b bg-gray-50 px-4 py-2 rounded-t-lg flex-shrink-0 h-10"
-        data-testid="json-editor-header"
-      >
-        <div className="flex items-center justify-between h-full">
-          <span
-            className="text-sm text-gray-600 font-mono"
-            data-testid="json-editor-language"
-          >
-            json
-          </span>
-          <div className="ml-2 min-w-0">
-            {error && (
-              <span
-                className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded"
-                data-testid="json-editor-error"
-              >
-                Invalid JSON
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
+      Invalid JSON
+    </span>
+  ) : undefined;
 
-      <div
-        className="flex-1 min-h-0 rounded-b-lg overflow-hidden"
-        data-testid="json-editor-container"
-      >
-        <Editor
-          height="100%"
-          language="json"
-          theme="tokenscript-theme"
-          value={value}
-          onChange={handleEditorChange}
-          onMount={handleEditorDidMount}
-          options={options}
-          data-testid="json-editor-instance"
-        />
-      </div>
-    </div>
+  return (
+    <PanelShell
+      title="json"
+      className={className}
+      headerRight={headerRight}
+      testId="json-editor"
+    >
+      <Editor
+        height="100%"
+        language="json"
+        theme="tokenscript-theme"
+        value={value}
+        onChange={handleEditorChange}
+        onMount={handleEditorDidMount}
+        options={options}
+        data-testid="json-editor-instance"
+      />
+    </PanelShell>
   );
 }
 

@@ -257,6 +257,8 @@ function renderEmptyOutput() {
   );
 }
 
+import { PanelShell } from "./PanelShell";
+
 interface UnifiedOutputPanelProps {
   result: UnifiedExecutionResult;
   className?: string;
@@ -303,29 +305,37 @@ function UnifiedOutputPanel({ result, className = "" }: UnifiedOutputPanelProps)
     return renderStringOutput(String(output || rawResult));
   };
 
-  return (
-    <div className={`bg-white rounded-lg border shadow-sm ${className}`}>
-      <div className="border-b bg-gray-50 px-4 py-2 rounded-t-lg flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-          <span className="text-sm text-gray-600 font-mono">output</span>
-        </div>
-        {executionTime !== undefined && (
-          <div
-            className="text-sm text-gray-500"
-            data-testid="execution-time"
-          >
-            {executionTime}ms
-          </div>
-        )}
+  const headerRight =
+    executionTime !== undefined ? (
+      <div
+        className="text-sm text-gray-500"
+        data-testid="execution-time"
+      >
+        {executionTime}ms
       </div>
+    ) : undefined;
+
+  const titleWithIcon = (
+    <div className="flex items-center space-x-2">
+      <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+      <span>output</span>
+    </div>
+  );
+
+  return (
+    <PanelShell
+      title={titleWithIcon}
+      className={className}
+      headerRight={headerRight}
+      testId="output-panel"
+    >
       <div
         className="p-4 h-full overflow-auto scrollbar-thin"
         data-testid="output-content"
       >
         <div style={{ minHeight: "400px" }}>{renderContent()}</div>
       </div>
-    </div>
+    </PanelShell>
   );
 }
 
