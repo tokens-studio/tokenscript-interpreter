@@ -267,10 +267,10 @@ function App() {
       >
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[calc(100vh-12rem)]">
           <div
-            className="flex flex-col"
+            className="grid grid-rows-[auto_1fr] gap-4"
             data-testid="editor-panel"
           >
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between min-h-[2.5rem]">
               <h2
                 className="text-lg font-semibold text-gray-900"
                 data-testid="editor-panel-title"
@@ -308,39 +308,45 @@ function App() {
               </div>
             </div>
 
-            {inputMode === "tokenscript" ? (
-              <TokenScriptEditor
-                value={code}
-                onChange={setCode}
-                onKeyDown={handleKeyDown}
-                className="flex-1"
-                error={result.errorInfo}
-              />
-            ) : (
-              <JsonTokenEditor
-                value={jsonInput}
-                onChange={setJsonInput}
-                onKeyDown={handleKeyDown}
-                className="flex-1"
-                error={jsonError}
-              />
-            )}
+            <div className="min-h-0">
+              {inputMode === "tokenscript" ? (
+                <TokenScriptEditor
+                  value={code}
+                  onChange={setCode}
+                  onKeyDown={handleKeyDown}
+                  className="h-full"
+                  error={result.errorInfo}
+                />
+              ) : (
+                <JsonTokenEditor
+                  value={jsonInput}
+                  onChange={setJsonInput}
+                  onKeyDown={handleKeyDown}
+                  className="h-full"
+                  error={jsonError}
+                />
+              )}
+            </div>
           </div>
 
           <div
-            className="flex flex-col"
+            className="grid grid-rows-[auto_1fr] gap-4"
             data-testid="output-panel"
           >
-            <h2
-              className="text-lg font-semibold text-gray-900 mb-4"
-              data-testid="output-panel-title"
-            >
-              Output
-            </h2>
-            <UnifiedOutputPanel
-              result={result}
-              className="flex-1"
-            />
+            <div className="min-h-[2.5rem] flex items-center">
+              <h2
+                className="text-lg font-semibold text-gray-900"
+                data-testid="output-panel-title"
+              >
+                Output
+              </h2>
+            </div>
+            <div className="min-h-0">
+              <UnifiedOutputPanel
+                result={result}
+                className="h-full"
+              />
+            </div>
           </div>
         </div>
       </main>
