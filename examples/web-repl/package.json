@@ -14,17 +14,24 @@
     "lint": "biome lint --max-diagnostics=none .",
     "lint:fix": "biome lint --write .",
     "format": "biome format --write .",
-    "format:check": "biome format ."
+    "format:check": "biome format .",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:ui": "playwright test --ui",
+    "playwright:install": "playwright install"
   },
   "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
     "@tokens-studio/tokenscript-interpreter": "file:../../",
     "@types/prismjs": "^1.26.5",
+    "monaco-editor": "^0.53.0",
     "prismjs": "^1.30.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.4",
+    "@playwright/test": "^1.49.1",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",

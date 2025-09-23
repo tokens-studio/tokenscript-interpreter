@@ -7,15 +7,16 @@ import {
   Parser,
 } from "@tokens-studio/tokenscript-interpreter";
 import { useCallback, useEffect, useState } from "react";
+import cssColorSpec from "../../../data/specifications/colors/css-color.json";
 import hslSpec from "../../../data/specifications/colors/hsl.json";
 import lrgbSpec from "../../../data/specifications/colors/lrgb.json";
 
 import rgbSpec from "../../../data/specifications/colors/rgb.json";
 import rgbaSpec from "../../../data/specifications/colors/rgba.json";
 import srgbSpec from "../../../data/specifications/colors/srgb.json";
-import JsonEditor from "./components/JsonEditor";
+import JsonTokenEditor from "./components/JsonTokenEditor";
 import OutputPanel from "./components/OutputPanel";
-import SyntaxHighlightedEditor, { type ErrorInfo } from "./components/SyntaxHighlightedEditor";
+import TokenScriptEditor from "./components/TokenScriptEditor";
 
 const DEFAULT_CODE = `// Example TokenScript code - try editing!
 variable primary: Color.Hsl = hsl(220, 100, 50);
@@ -55,15 +56,6 @@ const DEFAULT_JSON = `{
 
 type InputMode = "tokenscript" | "json";
 
-export interface ExecutionResult {
-  output?: string;
-  error?: string;
-  errorInfo?: ErrorInfo;
-  executionTime?: number;
-  rawResult?: any;
-  colorManager?: any;
-}
-
 function setupColorManager(): ColorManager {
   const colorManager = new ColorManager();
 
@@ -87,6 +79,10 @@ function setupColorManager(): ColorManager {
     "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/lrgb-color/0/",
     lrgbSpec as any,
   );
+  colorManager.register(
+    "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/css-color/0/",
+    cssColorSpec as any,
+  );
 
   return colorManager;
 }
@@ -95,7 +91,7 @@ function App() {
   const [code, setCode] = useState(DEFAULT_CODE);
   const [jsonInput, setJsonInput] = useState(DEFAULT_JSON);
   const [inputMode, setInputMode] = useState<InputMode>("tokenscript");
-  const [result, setResult] = useState<ExecutionResult>({});
+  const [result, setResult] = useState<UnifiedExecutionResult>({ type: "tokenscript" });
   const [autoRun, setAutoRun] = useState(true);
   const [jsonError, setJsonError] = useState<string>();
 
@@ -104,7 +100,7 @@ function App() {
 
     // If input is empty or just whitespace, clear the output
     if (!currentInput.trim()) {
-      setResult({});
+      setResult({ type: inputMode });
       setJsonError(undefined);
       return;
     }
@@ -113,32 +109,21 @@ function App() {
 
     try {
       if (inputMode === "tokenscript") {
-        // Original TokenScript execution
         const colorManager = setupColorManager();
         const config = new Config({ colorManager });
 
         const lexer = new Lexer(code);
         const ast = new Parser(lexer).parse();
         const interpreter = new Interpreter(ast, { config });
-
         const output = interpreter.interpret();
         const executionTime = performance.now() - startTime;
 
-        console.log("TokenScript Output", { ast, interpreter, output, executionTime });
-
-        let outputString: string;
-        if (output && typeof output.toString === "function") {
-          outputString = output.toString();
-        } else if (typeof output === "string") {
-          outputString = output;
-        } else {
-          outputString = JSON.stringify(output, null, 2);
-        }
+        // console.log("TokenScript Output", { ast, interpreter, output, executionTime });
 
         setResult({
-          output: outputString,
+          type: "tokenscript",
           executionTime: Math.round(executionTime * 100) / 100,
-          rawResult: output,
+          output,
           colorManager,
         });
         setJsonError(undefined);
@@ -161,12 +146,12 @@ function App() {
 
         console.log("JSON Tokens Output", { input: jsonTokens, output, executionTime });
 
-        const outputString = JSON.stringify(output, null, 2);
+        const _outputString = JSON.stringify(output, null, 2);
 
         setResult({
-          output: outputString,
+          type: "json",
           executionTime: Math.round(executionTime * 100) / 100,
-          rawResult: output,
+          output,
           colorManager,
         });
       }
@@ -174,8 +159,10 @@ function App() {
       const executionTime = performance.now() - startTime;
 
       // Extract error information including line number if available
-      const errorInfo: ErrorInfo = {
+      const errorInfo = {
         message: error instanceof Error ? error.message : String(error),
+        line: undefined as number | undefined,
+        token: undefined as any,
       };
 
       if (error && typeof error === "object") {
@@ -192,6 +179,7 @@ function App() {
       }
 
       setResult({
+        type: inputMode,
         error: errorInfo.message,
         errorInfo,
         executionTime: Math.round(executionTime * 100) / 100,
@@ -216,12 +204,23 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
+    <div
+      className="h-screen bg-gray-50 flex flex-col"
+      data-testid="app-container"
+    >
+      <header
+        className="bg-white shadow-sm border-b flex-shrink-0"
+        data-testid="app-header"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">TokenScript Web REPL</h1>
+              <h1
+                className="text-2xl font-bold text-gray-900"
+                data-testid="app-title"
+              >
+                TokenScript Web REPL
+              </h1>
               <p className="text-sm text-gray-600 mt-1">
                 Interactive environment for TokenScript code
               </p>
@@ -233,6 +232,7 @@ function App() {
                   checked={autoRun}
                   onChange={(e) => setAutoRun(e.target.checked)}
                   className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                  data-testid="auto-run-checkbox"
                 />
                 <label
                   htmlFor="auto-run"
@@ -244,74 +244,106 @@ function App() {
               <button
                 type="button"
                 onClick={executeCode}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-10 h-10 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                data-testid="run-code-button"
+                title="Run Code (Ctrl+Enter)"
               >
-                Run Code
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M8 5.14v13.72L19 12L8 5.14z"
+                    fill="currentColor"
+                  />
+                </svg>
               </button>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[calc(100vh-12rem)]">
-          <div className="flex flex-col">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">
+      <main
+        className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 overflow-auto lg:overflow-hidden w-full"
+        data-testid="app-main"
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8 min-h-[600px] lg:h-full lg:min-h-[400px]">
+          <div
+            className="grid grid-rows-[auto_1fr] gap-2 sm:gap-4 min-h-0 lg:min-h-0"
+            data-testid="editor-panel"
+          >
+            <div className="flex items-center justify-between min-h-[2.5rem] flex-wrap gap-2">
+              <h2
+                className="text-base sm:text-lg font-semibold text-gray-900 truncate"
+                data-testid="editor-panel-title"
+              >
                 {inputMode === "tokenscript" ? "TokenScript Editor" : "JSON Token Input"}
               </h2>
-              <div className="flex bg-gray-100 rounded-md p-1">
+              <div
+                className="flex bg-gray-100 rounded-md p-1 flex-shrink-0"
+                data-testid="input-mode-toggle"
+              >
                 <button
                   type="button"
                   onClick={() => setInputMode("tokenscript")}
-                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                  className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-medium transition-colors ${
                     inputMode === "tokenscript"
                       ? "bg-white text-blue-600 shadow-sm"
                       : "text-gray-600 hover:text-gray-900"
                   }`}
+                  data-testid="tokenscript-mode-button"
                 >
                   TokenScript
                 </button>
                 <button
                   type="button"
                   onClick={() => setInputMode("json")}
-                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                  className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-medium transition-colors ${
                     inputMode === "json"
                       ? "bg-white text-blue-600 shadow-sm"
                       : "text-gray-600 hover:text-gray-900"
                   }`}
+                  data-testid="json-mode-button"
                 >
                   JSON Tokens
                 </button>
               </div>
             </div>
 
-            {inputMode === "tokenscript" ? (
-              <SyntaxHighlightedEditor
-                value={code}
-                onChange={setCode}
-                onKeyDown={handleKeyDown}
-                className="flex-1"
-                error={result.errorInfo}
-              />
-            ) : (
-              <JsonEditor
-                value={jsonInput}
-                onChange={setJsonInput}
-                onKeyDown={handleKeyDown}
-                className="flex-1"
-                error={jsonError}
-              />
-            )}
+            <div className="min-h-[300px] lg:min-h-0 overflow-hidden">
+              {inputMode === "tokenscript" ? (
+                <TokenScriptEditor
+                  value={code}
+                  onChange={setCode}
+                  onKeyDown={handleKeyDown}
+                  className="h-full"
+                  error={result.errorInfo}
+                />
+              ) : (
+                <JsonTokenEditor
+                  value={jsonInput}
+                  onChange={setJsonInput}
+                  onKeyDown={handleKeyDown}
+                  className="h-full"
+                  error={jsonError}
+                />
+              )}
+            </div>
           </div>
 
-          <div className="flex flex-col">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Output</h2>
-            <OutputPanel
-              result={result}
-              className="flex-1"
-              inputMode={inputMode}
-            />
+          <div
+            className="grid grid-rows-[1fr] gap-2 sm:gap-4 min-h-0 lg:min-h-0"
+            data-testid="app-output-panel"
+          >
+            <div className="min-h-[250px] lg:min-h-0 overflow-hidden">
+              <OutputPanel
+                result={result}
+                className="h-full"
+              />
+            </div>
           </div>
         </div>
       </main>
