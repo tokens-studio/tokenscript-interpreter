@@ -105,9 +105,17 @@ function OutputPanel({ result, className = "", inputMode = "tokenscript" }: Outp
   const renderContent = () => {
     if (error) {
       return (
-        <div className="text-red-600">
+        <div
+          className="text-red-600"
+          data-testid="error-output"
+        >
           <div className="font-semibold mb-2">Error:</div>
-          <pre className="whitespace-pre-wrap text-sm">{error}</pre>
+          <pre
+            className="whitespace-pre-wrap text-sm"
+            data-testid="error-message"
+          >
+            {error}
+          </pre>
         </div>
       );
     }
@@ -159,17 +167,32 @@ function OutputPanel({ result, className = "", inputMode = "tokenscript" }: Outp
         }
 
         return (
-          <div className="space-y-4">
+          <div
+            className="space-y-4"
+            data-testid="color-output"
+          >
             {/* Color Preview */}
-            <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
+            <div
+              className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg"
+              data-testid="color-preview-section"
+            >
               <div
                 className="w-16 h-16 rounded-lg border-2 border-gray-200 shadow-inner"
                 style={{ backgroundColor: cssColor }}
                 title={`Color: ${colorValue}`}
+                data-testid="color-swatch"
               />
               <div>
-                <div className="font-semibold text-gray-900">Color Object</div>
-                <div className="text-sm text-gray-600">
+                <div
+                  className="font-semibold text-gray-900"
+                  data-testid="color-type-label"
+                >
+                  Color Object
+                </div>
+                <div
+                  className="text-sm text-gray-600"
+                  data-testid="color-type-value"
+                >
                   Type: {rawResult.getTypeName ? rawResult.getTypeName() : rawResult.type}
                 </div>
               </div>
@@ -231,7 +254,14 @@ function OutputPanel({ result, className = "", inputMode = "tokenscript" }: Outp
       }
     }
 
-    return <div className="text-gray-500 italic">Run some code to see the output here...</div>;
+    return (
+      <div
+        className="text-gray-500 italic"
+        data-testid="empty-output"
+      >
+        Run some code to see the output here...
+      </div>
+    );
   };
 
   return (
@@ -242,10 +272,18 @@ function OutputPanel({ result, className = "", inputMode = "tokenscript" }: Outp
           <span className="text-sm text-gray-600 font-mono">output</span>
         </div>
         {executionTime !== undefined && (
-          <div className="text-sm text-gray-500">{executionTime}ms</div>
+          <div
+            className="text-sm text-gray-500"
+            data-testid="execution-time"
+          >
+            {executionTime}ms
+          </div>
         )}
       </div>
-      <div className="p-4 h-full overflow-auto scrollbar-thin">
+      <div
+        className="p-4 h-full overflow-auto scrollbar-thin"
+        data-testid="output-content"
+      >
         <div style={{ minHeight: "400px" }}>{renderContent()}</div>
       </div>
     </div>

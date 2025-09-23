@@ -215,12 +215,23 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
+    <div
+      className="min-h-screen bg-gray-50"
+      data-testid="app-container"
+    >
+      <header
+        className="bg-white shadow-sm border-b"
+        data-testid="app-header"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">TokenScript Web REPL</h1>
+              <h1
+                className="text-2xl font-bold text-gray-900"
+                data-testid="app-title"
+              >
+                TokenScript Web REPL
+              </h1>
               <p className="text-sm text-gray-600 mt-1">
                 Interactive environment for TokenScript code
               </p>
@@ -232,6 +243,7 @@ function App() {
                   checked={autoRun}
                   onChange={(e) => setAutoRun(e.target.checked)}
                   className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                  data-testid="auto-run-checkbox"
                 />
                 <label
                   htmlFor="auto-run"
@@ -244,6 +256,7 @@ function App() {
                 type="button"
                 onClick={executeCode}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                data-testid="run-code-button"
               >
                 Run Code
               </button>
@@ -252,14 +265,26 @@ function App() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+        data-testid="app-main"
+      >
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[calc(100vh-12rem)]">
-          <div className="flex flex-col">
+          <div
+            className="flex flex-col"
+            data-testid="editor-panel"
+          >
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2
+                className="text-lg font-semibold text-gray-900"
+                data-testid="editor-panel-title"
+              >
                 {inputMode === "tokenscript" ? "TokenScript Editor" : "JSON Token Input"}
               </h2>
-              <div className="flex bg-gray-100 rounded-md p-1">
+              <div
+                className="flex bg-gray-100 rounded-md p-1"
+                data-testid="input-mode-toggle"
+              >
                 <button
                   type="button"
                   onClick={() => setInputMode("tokenscript")}
@@ -268,6 +293,7 @@ function App() {
                       ? "bg-white text-blue-600 shadow-sm"
                       : "text-gray-600 hover:text-gray-900"
                   }`}
+                  data-testid="tokenscript-mode-button"
                 >
                   TokenScript
                 </button>
@@ -279,6 +305,7 @@ function App() {
                       ? "bg-white text-blue-600 shadow-sm"
                       : "text-gray-600 hover:text-gray-900"
                   }`}
+                  data-testid="json-mode-button"
                 >
                   JSON Tokens
                 </button>
@@ -305,8 +332,16 @@ function App() {
             )}
           </div>
 
-          <div className="flex flex-col">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Output</h2>
+          <div
+            className="flex flex-col"
+            data-testid="output-panel"
+          >
+            <h2
+              className="text-lg font-semibold text-gray-900 mb-4"
+              data-testid="output-panel-title"
+            >
+              Output
+            </h2>
             <OutputPanel
               result={result}
               className="flex-1"

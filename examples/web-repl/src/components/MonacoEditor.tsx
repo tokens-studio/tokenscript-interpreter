@@ -203,13 +203,27 @@ function MonacoEditor({ value, onChange, onKeyDown, className = "", error }: Mon
   };
 
   return (
-    <div className={`flex flex-col bg-white rounded-lg border shadow-sm ${className}`}>
-      <div className="border-b bg-gray-50 px-4 py-2 rounded-t-lg flex-shrink-0 h-10">
+    <div
+      className={`flex flex-col bg-white rounded-lg border shadow-sm ${className}`}
+      data-testid="monaco-editor"
+    >
+      <div
+        className="border-b bg-gray-50 px-4 py-2 rounded-t-lg flex-shrink-0 h-10"
+        data-testid="monaco-editor-header"
+      >
         <div className="flex items-center justify-between h-full">
-          <span className="text-sm text-gray-600 font-mono">tokenscript</span>
+          <span
+            className="text-sm text-gray-600 font-mono"
+            data-testid="monaco-editor-language"
+          >
+            tokenscript
+          </span>
           <div className="ml-2 min-w-0">
             {error && (
-              <span className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
+              <span
+                className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded"
+                data-testid="monaco-editor-error"
+              >
                 Error on line {error.line}
               </span>
             )}
@@ -217,7 +231,10 @@ function MonacoEditor({ value, onChange, onKeyDown, className = "", error }: Mon
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 rounded-b-lg overflow-hidden">
+      <div
+        className="flex-1 min-h-0 rounded-b-lg overflow-hidden"
+        data-testid="monaco-editor-container"
+      >
         <Editor
           height="100%"
           language="tokenscript"
@@ -226,6 +243,7 @@ function MonacoEditor({ value, onChange, onKeyDown, className = "", error }: Mon
           onChange={handleEditorChange}
           onMount={handleEditorDidMount}
           options={options}
+          data-testid="monaco-editor-instance"
         />
       </div>
     </div>
