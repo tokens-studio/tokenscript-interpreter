@@ -3,10 +3,10 @@ import { useEffect } from "react";
 
 import "prismjs/themes/prism.css";
 import "prismjs/components/prism-json";
+import { BaseSymbolType } from "@tokens-studio/tokenscript-interpreter";
 import { tokenscriptThemeColors } from "./shared-theme";
 
 export interface OutputResult {
-  output?: any; // Can be string, Color object, parsed JSON, etc.
   error?: string;
   errorInfo?: {
     message: string;
@@ -14,7 +14,7 @@ export interface OutputResult {
     token?: any;
   };
   executionTime?: number;
-  rawResult?: any;
+  output: any;
   colorManager?: any;
   type: "tokenscript" | "json" | "error";
 }
@@ -26,7 +26,7 @@ function isColorSymbol(obj: any): boolean {
   );
 }
 
-function isJsonObject(obj: any): boolean {
+function _isJsonObject(obj: any): boolean {
   return obj && typeof obj === "object" && !isColorSymbol(obj);
 }
 
@@ -139,8 +139,7 @@ function getCssColorFromColorObject(colorObj: any): string {
   return "#999"; // fallback
 }
 
-// Component rendering functions
-function renderColorOutput(colorObj: any, colorManager?: any) {
+const ColorOutput = ({ colorObj, colorManager }: { colorObj: any; colorManager?: any }) => {
   const properties = getColorProperties(colorObj);
   const conversions = tryColorConversions(colorObj, colorManager);
   const colorValue = colorObj.toString();
@@ -151,7 +150,6 @@ function renderColorOutput(colorObj: any, colorManager?: any) {
       className="space-y-4"
       data-testid="color-output"
     >
-      {/* Color Preview */}
       <div
         className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg"
         data-testid="color-preview-section"
@@ -213,7 +211,7 @@ function renderColorOutput(colorObj: any, colorManager?: any) {
       </div>
     </div>
   );
-}
+};
 
 function JsonOutput({ value }: { value: any }) {
   const jsonString = typeof value === "string" ? value : JSON.stringify(value, null, 2);
@@ -246,104 +244,74 @@ function JsonOutput({ value }: { value: any }) {
   );
 }
 
-function renderStringOutput(str: string) {
-  return (
-    <div className="text-gray-800">
-      <pre className="whitespace-pre-wrap text-sm font-mono">{str}</pre>
-    </div>
-  );
-}
+const StringOutput = ({ str }: { str: string }) => (
+  <div className="text-gray-800">
+    <pre className="whitespace-pre-wrap text-sm font-mono">{str}</pre>
+  </div>
+);
 
-function renderErrorOutput(error: string) {
-  return (
-    <div
-      className="text-red-600"
-      data-testid="error-output"
+const ErrorOutput = ({ error }: { error: string }) => (
+  <div
+    className="text-red-600"
+    data-testid="error-output"
+  >
+    <div className="font-semibold mb-2">Error:</div>
+    <pre
+      className="whitespace-pre-wrap text-sm"
+      data-testid="error-message"
     >
-      <div className="font-semibold mb-2">Error:</div>
-      <pre
-        className="whitespace-pre-wrap text-sm"
-        data-testid="error-message"
-      >
-        {error}
-      </pre>
-    </div>
-  );
-}
+      {error}
+    </pre>
+  </div>
+);
 
-function renderEmptyOutput() {
-  return (
-    <div
-      className="text-gray-500 italic"
-      data-testid="empty-output"
-    >
-      Run some code to see the output here...
-    </div>
-  );
-}
+const EmptyOutput = () => (
+  <div
+    className="text-gray-500 italic"
+    data-testid="empty-output"
+  >
+    Run some code to see the output here...
+  </div>
+);
 
 interface UnifiedOutputPanelProps {
   result: OutputResult;
   className?: string;
 }
 
+const Output = ({ result }: { result: OutputResult }) => {
+  const { output, error, colorManager, type } = result;
+  if (error) {
+    return <ErrorOutput error={error} />;
+  }
+
+  if (!output) {
+    return <EmptyOutput />;
+  }
+
+  if (type === "tokenscript" && output instanceof BaseSymbolType) {
+    switch (output.type) {
+      case "Color":
+        return (
+          <ColorOutput
+            colorObj={output}
+            colorManager={colorManager}
+          />
+        );
+      default:
+        return <StringOutput str={output.toString()} />;
+    }
+  }
+
+  if (type === "json") {
+    return <JsonOutput value={output} />;
+  }
+
+  return null;
+};
+
 function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
-  const { output, error, executionTime, rawResult, colorManager, type } = result;
-
-  const renderContent = () => {
-    // Handle errors first
-    if (error) {
-      return renderErrorOutput(error);
-    }
-
-    // Handle empty output
-    if (!output && !rawResult) {
-      return renderEmptyOutput();
-    }
-
-    // For TokenScript mode, check if we have a color object
-    if (type === "tokenscript" && rawResult && isColorSymbol(rawResult)) {
-      return renderColorOutput(rawResult, colorManager);
-    }
-
-    // For JSON mode or JSON-like objects
-    if (type === "json" || isJsonObject(output) || isJsonObject(rawResult)) {
-      const objectToRender = rawResult || output;
-      return <JsonOutput value={objectToRender} />;
-    }
-
-    // For string output
-    if (typeof output === "string") {
-      // Try to parse as JSON first
-      try {
-        const parsed = JSON.parse(output);
-        return <JsonOutput value={parsed} />;
-      } catch {
-        // Regular string output
-        return renderStringOutput(output);
-      }
-    }
-
-    // Fallback for other types
-    return renderStringOutput(String(output || rawResult));
-  };
-
-  const headerRight =
-    executionTime !== undefined ? (
-      <div
-        className="text-sm text-gray-500"
-        data-testid="execution-time"
-      >
-        {executionTime}ms
-      </div>
-    ) : undefined;
-
-  const titleWithIcon = (
-    <div className="flex items-center space-x-2">
-      <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-      <span>Output</span>
-    </div>
-  );
+  const { executionTime } = result;
 
   return (
     <div
@@ -356,9 +324,21 @@ function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
             className="text-xs sm:text-sm text-gray-600 font-mono truncate pr-2"
             data-testid="output-panel-title"
           >
-            {titleWithIcon}
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+              <span>Output</span>
+            </div>
           </div>
-          {headerRight && <div className="ml-2 min-w-0 flex-shrink-0">{headerRight}</div>}
+          {executionTime && (
+            <div className="ml-2 min-w-0 flex-shrink-0">
+              <div
+                className="text-sm text-gray-500"
+                data-testid="execution-time"
+              >
+                {executionTime}ms
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -366,7 +346,9 @@ function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
         className="flex-1 min-h-0 rounded-b-lg overflow-auto"
         data-testid="output-panel-content"
       >
-        <div className="p-3 sm:p-4 h-full overflow-auto">{renderContent()}</div>
+        <div className="p-3 sm:p-4 h-full overflow-auto">
+          <Output result={result} />
+        </div>
       </div>
     </div>
   );

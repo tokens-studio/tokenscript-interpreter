@@ -82,16 +82,6 @@ function setupColorManager(): ColorManager {
   return colorManager;
 }
 
-function formatOutput(output: any): string {
-  if (output && typeof output.toString === "function") {
-    return output.toString();
-  }
-  if (typeof output === "string") {
-    return output;
-  }
-  return JSON.stringify(output, null, 2);
-}
-
 function App() {
   const [code, setCode] = useState(DEFAULT_CODE);
   const [jsonInput, setJsonInput] = useState(DEFAULT_JSON);
@@ -127,9 +117,8 @@ function App() {
 
         setResult({
           type: "tokenscript",
-          output: formatOutput(output),
           executionTime: Math.round(executionTime * 100) / 100,
-          rawResult: output,
+          output,
           colorManager,
         });
         setJsonError(undefined);
@@ -152,13 +141,12 @@ function App() {
 
         console.log("JSON Tokens Output", { input: jsonTokens, output, executionTime });
 
-        const outputString = JSON.stringify(output, null, 2);
+        const _outputString = JSON.stringify(output, null, 2);
 
         setResult({
           type: "json",
-          output: outputString,
           executionTime: Math.round(executionTime * 100) / 100,
-          rawResult: output,
+          output,
           colorManager,
         });
       }
