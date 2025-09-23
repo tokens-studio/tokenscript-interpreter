@@ -34,7 +34,7 @@ RUN rm -rf ./*
 # Copy built assets
 COPY --from=build /app/examples/web-repl/dist .
 # Copy custom nginx config
-COPY config/nginx/nginx.conf /etc/nginx/conf.d/default.conf
+COPY .github/config/nginx/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=3s CMD wget -qO- http://localhost:8000/ || exit 1
