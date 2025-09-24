@@ -1,6 +1,7 @@
 import Editor, { useMonaco } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
 import { useEffect, useRef } from "react";
+import EditorModeTitle from "./EditorModeTitle";
 import {
   tokenscriptLanguageConfig,
   tokenscriptLanguageDefinition,
@@ -21,6 +22,8 @@ interface MonacoEditorProps {
   onKeyDown?: (event: KeyboardEvent) => void;
   className?: string;
   error?: ErrorInfo;
+  inputMode?: "tokenscript" | "json";
+  onInputModeChange?: (mode: "tokenscript" | "json") => void;
 }
 
 export const options = {
@@ -50,7 +53,15 @@ export const options = {
   },
 };
 
-function MonacoEditor({ value, onChange, onKeyDown, className = "", error }: MonacoEditorProps) {
+function MonacoEditor({
+  value,
+  onChange,
+  onKeyDown,
+  className = "",
+  error,
+  inputMode,
+  onInputModeChange,
+}: MonacoEditorProps) {
   const monaco = useMonaco();
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const completionProviderRef = useRef<TokenScriptCompletionProvider | null>(null);
@@ -177,9 +188,18 @@ function MonacoEditor({ value, onChange, onKeyDown, className = "", error }: Mon
     </span>
   ) : undefined;
 
+  const title = (
+    <EditorModeTitle
+      inputMode={inputMode}
+      onInputModeChange={onInputModeChange}
+      testId={inputMode && onInputModeChange ? "input-mode-dropdown" : "monaco-editor-language"}
+      defaultLabel="tokenscript"
+    />
+  );
+
   return (
     <ShellPanel
-      title={<span data-testid="monaco-editor-language">tokenscript</span>}
+      title={title}
       headerRight={headerRight}
       className={`h-full ${className}`}
       data-testid="monaco-editor"

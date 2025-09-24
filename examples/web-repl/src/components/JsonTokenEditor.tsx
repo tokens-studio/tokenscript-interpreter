@@ -1,6 +1,7 @@
 import Editor, { useMonaco } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
 import { useEffect, useRef } from "react";
+import EditorModeTitle from "./EditorModeTitle";
 import { options } from "./MonacoEditor";
 import ShellPanel from "./ShellPanel";
 
@@ -15,6 +16,8 @@ interface JsonTokenEditorProps {
   onKeyDown?: (event: KeyboardEvent) => void;
   className?: string;
   error?: string;
+  inputMode?: "tokenscript" | "json";
+  onInputModeChange?: (mode: "tokenscript" | "json") => void;
 }
 
 function JsonTokenEditor({
@@ -23,6 +26,8 @@ function JsonTokenEditor({
   onKeyDown,
   className = "",
   error,
+  inputMode,
+  onInputModeChange,
 }: JsonTokenEditorProps) {
   const monaco = useMonaco();
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
@@ -113,9 +118,18 @@ function JsonTokenEditor({
     </span>
   ) : undefined;
 
+  const title = (
+    <EditorModeTitle
+      inputMode={inputMode}
+      onInputModeChange={onInputModeChange}
+      testId={inputMode && onInputModeChange ? "input-mode-dropdown" : "json-editor-language"}
+      defaultLabel="json"
+    />
+  );
+
   return (
     <ShellPanel
-      title={<span data-testid="json-editor-language">json</span>}
+      title={title}
       headerRight={headerRight}
       className={`h-full ${className}`}
       data-testid="json-editor"

@@ -6,6 +6,8 @@ interface TokenScriptEditorProps {
   onKeyDown?: (event: KeyboardEvent) => void;
   className?: string;
   error?: ErrorInfo;
+  inputMode?: "tokenscript" | "json";
+  onInputModeChange?: (mode: "tokenscript" | "json") => void;
 }
 
 function TokenScriptEditor({
@@ -14,6 +16,8 @@ function TokenScriptEditor({
   onKeyDown,
   className = "",
   error,
+  inputMode,
+  onInputModeChange,
 }: TokenScriptEditorProps) {
   return (
     <MonacoEditor
@@ -22,6 +26,8 @@ function TokenScriptEditor({
       onKeyDown={onKeyDown}
       className={className}
       error={error}
+      inputMode={inputMode}
+      onInputModeChange={onInputModeChange}
     />
   );
 }

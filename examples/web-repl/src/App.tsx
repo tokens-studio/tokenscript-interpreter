@@ -16,6 +16,7 @@ import rgbaSpec from "../../../data/specifications/colors/rgba.json";
 import srgbSpec from "../../../data/specifications/colors/srgb.json";
 import JsonTokenEditor from "./components/JsonTokenEditor";
 import OutputPanel from "./components/OutputPanel";
+import ShellPanel from "./components/ShellPanel";
 import TokenScriptEditor from "./components/TokenScriptEditor";
 
 const DEFAULT_CODE = `// Example TokenScript code - try editing!
@@ -94,6 +95,7 @@ function App() {
   const [result, setResult] = useState<UnifiedExecutionResult>({ type: "tokenscript" });
   const [autoRun, setAutoRun] = useState(true);
   const [jsonError, setJsonError] = useState<string>();
+  const [schemaPanelCollapsed, setSchemaPanelCollapsed] = useState(false);
 
   const executeCode = useCallback(async () => {
     const currentInput = inputMode === "tokenscript" ? code : jsonInput;
@@ -267,81 +269,79 @@ function App() {
         className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 overflow-auto lg:overflow-hidden w-full"
         data-testid="app-main"
       >
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8 min-h-[600px] lg:h-full lg:min-h-[400px]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8 h-full lg:min-h-[400px]">
+          {/* Editor Panel */}
           <div
-            className="grid grid-rows-[auto_1fr] gap-2 sm:gap-4 min-h-0 lg:min-h-0"
+            className="min-h-[300px] lg:min-h-0 lg:max-h-[600px] overflow-hidden"
             data-testid="editor-panel"
           >
-            <div className="flex items-center justify-between min-h-[2.5rem] flex-wrap gap-2">
-              <h2
-                className="text-base sm:text-lg font-semibold text-gray-900 truncate"
-                data-testid="editor-panel-title"
-              >
-                Input
-              </h2>
-              <div
-                className="flex bg-gray-100 rounded-md p-1 flex-shrink-0"
-                data-testid="input-mode-toggle"
-              >
-                <button
-                  type="button"
-                  onClick={() => setInputMode("tokenscript")}
-                  className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-medium transition-colors ${
-                    inputMode === "tokenscript"
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                  data-testid="tokenscript-mode-button"
-                >
-                  TokenScript
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setInputMode("json")}
-                  className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-medium transition-colors ${
-                    inputMode === "json"
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                  data-testid="json-mode-button"
-                >
-                  JSON Tokens
-                </button>
-              </div>
-            </div>
-
-            <div className="min-h-[300px] lg:min-h-0 overflow-hidden">
-              {inputMode === "tokenscript" ? (
-                <TokenScriptEditor
-                  value={code}
-                  onChange={setCode}
-                  onKeyDown={handleKeyDown}
-                  error={result.errorInfo}
-                />
-              ) : (
-                <JsonTokenEditor
-                  value={jsonInput}
-                  onChange={setJsonInput}
-                  onKeyDown={handleKeyDown}
-                  error={jsonError}
-                />
-              )}
-            </div>
+            {inputMode === "tokenscript" ? (
+              <TokenScriptEditor
+                value={code}
+                onChange={setCode}
+                onKeyDown={handleKeyDown}
+                error={result.errorInfo}
+                inputMode={inputMode}
+                onInputModeChange={setInputMode}
+              />
+            ) : (
+              <JsonTokenEditor
+                value={jsonInput}
+                onChange={setJsonInput}
+                onKeyDown={handleKeyDown}
+                error={jsonError}
+                inputMode={inputMode}
+                onInputModeChange={setInputMode}
+              />
+            )}
           </div>
 
-          <div
-            className="grid grid-rows-[auto_1fr] gap-2 sm:gap-4 min-h-0 lg:min-h-0"
-            data-testid="app-output-panel"
-          >
-            <div className="min-h-[2.5rem] flex items-center">
-              <h2
-                className="text-base sm:text-lg font-semibold text-gray-900"
-                data-testid="output-panel-title"
+          {/* Right Column: Schema Panel + Output Panel */}
+          <div className="grid grid-rows-[auto_1fr] gap-4">
+            {/* Schema Panel */}
+            <div data-testid="schema-panel">
+              <ShellPanel
+                title="Schemas & Settings"
+                headerRight={
+                  <button
+                    type="button"
+                    onClick={() => setSchemaPanelCollapsed(!schemaPanelCollapsed)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    data-testid="schema-panel-toggle"
+                    aria-label={
+                      schemaPanelCollapsed ? "Expand schema panel" : "Collapse schema panel"
+                    }
+                  >
+                    <svg
+                      className={`w-4 h-4 ${schemaPanelCollapsed ? "rotate-180" : ""}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </button>
+                }
+                className={`transition-all duration-200 ${schemaPanelCollapsed ? "h-10" : ""}`}
+                data-testid="schema-shell-panel"
               >
-                Output
-              </h2>
+                {!schemaPanelCollapsed && (
+                  <div className="p-4 text-gray-500 text-sm min-h-[150px]">
+                    Schema and settings panel coming soon...
+                  </div>
+                )}
+              </ShellPanel>
             </div>
-            <div className="min-h-[250px] lg:min-h-0 overflow-hidden">
+
+            <div
+              className="min-h-[250px] lg:min-h-0 overflow-hidden"
+              data-testid="app-output-panel"
+            >
               <OutputPanel result={result} />
             </div>
           </div>
