@@ -14,6 +14,7 @@ import lrgbSpec from "../../../data/specifications/colors/lrgb.json";
 import rgbSpec from "../../../data/specifications/colors/rgb.json";
 import rgbaSpec from "../../../data/specifications/colors/rgba.json";
 import srgbSpec from "../../../data/specifications/colors/srgb.json";
+import { ArrowDown } from "./components/icons";
 import JsonTokenEditor from "./components/JsonTokenEditor";
 import OutputPanel from "./components/OutputPanel";
 import ShellPanel from "./components/ShellPanel";
@@ -301,7 +302,7 @@ function App() {
             {/* Schema Panel */}
             <div data-testid="schema-panel">
               <ShellPanel
-                title="Schemas & Settings"
+                title="Settings"
                 headerRight={
                   <button
                     type="button"
@@ -312,19 +313,7 @@ function App() {
                       schemaPanelCollapsed ? "Expand schema panel" : "Collapse schema panel"
                     }
                   >
-                    <svg
-                      className={`w-4 h-4 ${schemaPanelCollapsed ? "rotate-180" : ""}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
+                    <ArrowDown className={`${schemaPanelCollapsed ? "rotate-180" : ""}`} />
                   </button>
                 }
                 className={`transition-all duration-200 ${schemaPanelCollapsed ? "h-10" : ""}`}

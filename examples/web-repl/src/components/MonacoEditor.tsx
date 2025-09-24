@@ -203,6 +203,7 @@ function MonacoEditor({
       headerRight={headerRight}
       className={`h-full ${className}`}
       data-testid="monaco-editor"
+      ShellTitle={({ children }) => children}
     >
       <div
         className="h-full"

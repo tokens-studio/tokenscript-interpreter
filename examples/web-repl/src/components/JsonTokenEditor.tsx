@@ -133,6 +133,7 @@ function JsonTokenEditor({
       headerRight={headerRight}
       className={`h-full ${className}`}
       data-testid="json-editor"
+      ShellTitle={({ children }) => children}
     >
       <Editor
         height="100%"
