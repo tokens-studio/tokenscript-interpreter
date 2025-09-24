@@ -216,14 +216,11 @@ function App() {
           <div className="flex items-center justify-between">
             <div>
               <h1
-                className="text-2xl font-bold text-gray-900"
+                className="text-xl font-bold text-gray-900"
                 data-testid="app-title"
               >
-                TokenScript Web REPL
+                Tokenscript REPL
               </h1>
-              <p className="text-sm text-gray-600 mt-1">
-                Interactive environment for TokenScript code
-              </p>
             </div>
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
