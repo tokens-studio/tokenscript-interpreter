@@ -280,7 +280,7 @@ function App() {
                 className="text-base sm:text-lg font-semibold text-gray-900 truncate"
                 data-testid="editor-panel-title"
               >
-                {inputMode === "tokenscript" ? "TokenScript Editor" : "JSON Token Input"}
+                Input
               </h2>
               <div
                 className="flex bg-gray-100 rounded-md p-1 flex-shrink-0"
