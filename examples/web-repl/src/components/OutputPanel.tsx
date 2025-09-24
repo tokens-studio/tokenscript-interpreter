@@ -8,6 +8,7 @@ import {
   type ColorManager,
   type ColorSymbol,
 } from "@tokens-studio/tokenscript-interpreter";
+import ShellPanel from "./ShellPanel";
 import { tokenscriptThemeColors } from "./shared-theme";
 
 export interface OutputResult {
@@ -192,46 +193,39 @@ const Output = ({ result }: { result: OutputResult }) => {
 function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
   const { executionTime, error } = result;
 
-  return (
+  const title = (
     <div
-      className={`flex flex-col bg-white rounded-lg border shadow-sm ${className}`}
+      className="flex items-center space-x-2"
+      data-testid="output-panel-title"
+    >
+      <div className={`w-3 h-3 bg-blue-500 rounded-full ${error ? "bg-red-500" : "bg-blue-500"}`} />
+      <span>Output</span>
+    </div>
+  );
+
+  const headerRight = executionTime && (
+    <div
+      className="text-sm text-gray-500"
+      data-testid="execution-time"
+    >
+      {executionTime}ms
+    </div>
+  );
+
+  return (
+    <ShellPanel
+      title={title}
+      headerRight={headerRight}
+      className={className}
       data-testid="output-panel"
     >
-      <div className="border-b bg-gray-50 px-3 sm:px-4 py-2 rounded-t-lg flex-shrink-0 h-10">
-        <div className="flex items-center justify-between h-full w-full">
-          <div
-            className="text-xs sm:text-sm text-gray-600 font-mono truncate pr-2"
-            data-testid="output-panel-title"
-          >
-            <div className="flex items-center space-x-2">
-              <div
-                className={`w-3 h-3 bg-blue-500 rounded-full ${error ? "bg-red-500" : "bg-blue-500"}`}
-              ></div>
-              <span>Output</span>
-            </div>
-          </div>
-          {executionTime && (
-            <div className="ml-2 min-w-0 flex-shrink-0">
-              <div
-                className="text-sm text-gray-500"
-                data-testid="execution-time"
-              >
-                {executionTime}ms
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
       <div
-        className="flex-1 min-h-0 rounded-b-lg overflow-auto"
+        className="p-3 sm:p-4 overflow-auto"
         data-testid="output-panel-content"
       >
-        <div className="p-3 sm:p-4 overflow-auto">
-          <Output result={result} />
-        </div>
+        <Output result={result} />
       </div>
-    </div>
+    </ShellPanel>
   );
 }
 

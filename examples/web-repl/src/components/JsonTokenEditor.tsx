@@ -2,6 +2,7 @@ import Editor, { useMonaco } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
 import { useEffect, useRef } from "react";
 import { options } from "./MonacoEditor";
+import ShellPanel from "./ShellPanel";
 
 export interface JsonErrorInfo {
   message: string;
@@ -113,35 +114,23 @@ function JsonTokenEditor({
   ) : undefined;
 
   return (
-    <div
-      className={`flex flex-col bg-white rounded-lg border shadow-sm h-full ${className}`}
+    <ShellPanel
+      title={<span data-testid="json-editor-language">json</span>}
+      headerRight={headerRight}
+      className={`h-full ${className}`}
       data-testid="json-editor"
     >
-      <div className="border-b bg-gray-50 px-3 sm:px-4 py-2 rounded-t-lg flex-shrink-0 h-10">
-        <div className="flex items-center justify-between h-full w-full">
-          <div
-            className="text-xs sm:text-sm text-gray-600 font-mono truncate pr-2"
-            data-testid="json-editor-language"
-          >
-            json
-          </div>
-          {headerRight && <div className="ml-2 min-w-0 flex-shrink-0">{headerRight}</div>}
-        </div>
-      </div>
-
-      <div className="flex-1 min-h-0 rounded-b-lg overflow-auto">
-        <Editor
-          height="100%"
-          language="json"
-          theme="tokenscript-theme"
-          value={value}
-          onChange={handleEditorChange}
-          onMount={handleEditorDidMount}
-          options={options}
-          data-testid="json-editor-instance"
-        />
-      </div>
-    </div>
+      <Editor
+        height="100%"
+        language="json"
+        theme="tokenscript-theme"
+        value={value}
+        onChange={handleEditorChange}
+        onMount={handleEditorDidMount}
+        options={options}
+        data-testid="json-editor-instance"
+      />
+    </ShellPanel>
   );
 }
 
