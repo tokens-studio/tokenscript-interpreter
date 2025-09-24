@@ -2,10 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-.text-box * {
-  text-box: trim-both cap alphabetic;
-}
-
 html,
 body,
 #root {
