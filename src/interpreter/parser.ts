@@ -78,12 +78,12 @@ export class Parser {
 
       // Add pointer line for the error line
       if (isErrorLine) {
-        const pointer = `${" ".repeat(linePrefix.length + Math.max(0, column - 1))}^`;
+        const pointer = `${" ".repeat(linePrefix.length - 1 + Math.max(0, column - 1))}^`;
         contextText += `${pointer}\n`;
       }
     }
 
-    return `${message}\n\n${contextText.trim()}`;
+    return `${message}\n\n${contextText}`;
   }
 
   private peekTokens(n: number): Token[] | null {
