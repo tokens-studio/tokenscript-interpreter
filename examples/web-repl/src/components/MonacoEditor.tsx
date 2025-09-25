@@ -16,14 +16,25 @@ export interface ErrorInfo {
   token?: any;
 }
 
+export interface ValidationError {
+  message: string;
+  path?: string;
+  line?: number;
+  column?: number;
+}
+
 interface MonacoEditorProps {
   value: string;
   onChange: (value: string) => void;
   onKeyDown?: (event: KeyboardEvent) => void;
   className?: string;
   error?: ErrorInfo;
+  validationErrors?: ValidationError[];
   inputMode?: "tokenscript" | "json";
   onInputModeChange?: (mode: "tokenscript" | "json") => void;
+  language?: string;
+  theme?: string;
+  options?: any;
 }
 
 export const options = {
@@ -59,8 +70,12 @@ function MonacoEditor({
   onKeyDown,
   className = "",
   error,
+  validationErrors = [],
   inputMode,
   onInputModeChange,
+  language = "tokenscript",
+  theme = "tokenscript-theme",
+  options: customOptions,
 }: MonacoEditorProps) {
   const monaco = useMonaco();
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
@@ -111,7 +126,7 @@ function MonacoEditor({
     };
   }, [monaco]);
 
-  // Handle error markers
+  // Handle error markers and validation errors
   useEffect(() => {
     if (monaco && editorRef.current) {
       const model = editorRef.current.getModel();
@@ -119,24 +134,42 @@ function MonacoEditor({
         // Always clear existing markers first
         monaco.editor.setModelMarkers(model, "tokenscript", []);
 
+        const markers: editor.IMarkerData[] = [];
+
         // Add error marker only if error exists with line number
         if (error?.line) {
-          const markers: editor.IMarkerData[] = [
-            {
-              severity: monaco.MarkerSeverity.Error,
-              message: error.message,
-              startLineNumber: error.line,
-              startColumn: 1,
-              endLineNumber: error.line,
-              endColumn: Number.MAX_SAFE_INTEGER,
-            },
-          ];
+          markers.push({
+            severity: monaco.MarkerSeverity.Error,
+            message: error.message,
+            startLineNumber: error.line,
+            startColumn: 1,
+            endLineNumber: error.line,
+            endColumn: Number.MAX_SAFE_INTEGER,
+          });
+        }
 
+        // Add validation error markers
+        for (const validationError of validationErrors) {
+          if (validationError.line) {
+            markers.push({
+              severity: monaco.MarkerSeverity.Error,
+              message: validationError.message,
+              startLineNumber: validationError.line,
+              startColumn: validationError.column || 1,
+              endLineNumber: validationError.line,
+              endColumn: validationError.column
+                ? validationError.column + 10
+                : Number.MAX_SAFE_INTEGER,
+            });
+          }
+        }
+
+        if (markers.length > 0) {
           monaco.editor.setModelMarkers(model, "tokenscript", markers);
         }
       }
     }
-  }, [monaco, error]);
+  }, [monaco, error, validationErrors]);
 
   // Setup keyboard event listener
   useEffect(() => {
@@ -211,12 +244,12 @@ function MonacoEditor({
       >
         <Editor
           height="100%"
-          language="tokenscript"
-          theme="tokenscript-theme"
+          language={language}
+          theme={theme}
           value={value}
           onChange={handleEditorChange}
           onMount={handleEditorDidMount}
-          options={options}
+          options={customOptions || options}
           data-testid="monaco-editor-instance"
         />
       </div>

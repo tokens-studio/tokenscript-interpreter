@@ -2,7 +2,7 @@
 
 // AST and symbol exports
 export * from "@interpreter/ast";
-export { ColorManager, Config } from "@interpreter/config";
+export * from "@interpreter/config";
 export * from "@interpreter/errors";
 export { Interpreter } from "@interpreter/interpreter";
 export { Lexer } from "@interpreter/lexer";

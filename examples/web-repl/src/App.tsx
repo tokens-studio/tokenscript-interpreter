@@ -8,19 +8,27 @@ import {
 } from "@tokens-studio/tokenscript-interpreter";
 import { useAtom } from "jotai";
 import { useCallback, useEffect, useState } from "react";
-import cssColorSpec from "../../../data/specifications/colors/css-color.json";
-import hslSpec from "../../../data/specifications/colors/hsl.json";
-import lrgbSpec from "../../../data/specifications/colors/lrgb.json";
-
-import rgbSpec from "../../../data/specifications/colors/rgb.json";
-import rgbaSpec from "../../../data/specifications/colors/rgba.json";
-import srgbSpec from "../../../data/specifications/colors/srgb.json";
 import { ArrowDown } from "./components/icons";
 import JsonTokenEditor from "./components/JsonTokenEditor";
 import OutputPanel from "./components/OutputPanel";
+import SchemaManager from "./components/SchemaManager";
 import ShellPanel from "./components/ShellPanel";
 import TokenScriptEditor from "./components/TokenScriptEditor";
-import { autoRunAtom, schemaPanelCollapsedAtom } from "./store/atoms";
+import { autoRunAtom, colorSchemasAtom, schemaPanelCollapsedAtom } from "./store/atoms";
+import { DEFAULT_COLOR_SCHEMAS } from "./utils/default-schemas";
+
+type UnifiedExecutionResult = {
+  type: "tokenscript" | "json";
+  error?: string;
+  errorInfo?: {
+    message: string;
+    line?: number;
+    token?: any;
+  };
+  executionTime?: number;
+  output?: any;
+  colorManager: ColorManager;
+};
 
 const DEFAULT_CODE = `// Example TokenScript code - try editing!
 variable primary: Color.Hsl = hsl(220, 100, 50);
@@ -60,33 +68,16 @@ const DEFAULT_JSON = `{
 
 type InputMode = "tokenscript" | "json";
 
-function setupColorManager(): ColorManager {
+function setupColorManager(schemas: typeof DEFAULT_COLOR_SCHEMAS): ColorManager {
   const colorManager = new ColorManager();
 
-  colorManager.register(
-    "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/",
-    rgbSpec as any,
-  );
-  colorManager.register(
-    "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0/",
-    hslSpec as any,
-  );
-  colorManager.register(
-    "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0/",
-    srgbSpec as any,
-  );
-  colorManager.register(
-    "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgba-color/0/",
-    rgbaSpec as any,
-  );
-  colorManager.register(
-    "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/lrgb-color/0/",
-    lrgbSpec as any,
-  );
-  colorManager.register(
-    "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/css-color/0/",
-    cssColorSpec as any,
-  );
+  for (const [uri, spec] of schemas.entries()) {
+    try {
+      colorManager.register(uri, spec);
+    } catch (error) {
+      console.warn(`Failed to register schema ${uri}:`, error);
+    }
+  }
 
   return colorManager;
 }
@@ -99,13 +90,24 @@ function App() {
   const [autoRun, setAutoRun] = useAtom(autoRunAtom);
   const [jsonError, setJsonError] = useState<string>();
   const [schemaPanelCollapsed, setSchemaPanelCollapsed] = useAtom(schemaPanelCollapsedAtom);
+  const [colorSchemas, setColorSchemas] = useAtom(colorSchemasAtom);
+
+  // Initialize default schemas only on first ever launch
+  useEffect(() => {
+    const lsKey = "repl:colorSchemas";
+    const appearsFirstLaunch = localStorage.getItem(lsKey) === null;
+    if (appearsFirstLaunch && colorSchemas.length === 0) {
+      setColorSchemas(DEFAULT_COLOR_SCHEMAS);
+    }
+  }, [colorSchemas.length, setColorSchemas]);
 
   const executeCode = useCallback(async () => {
     const currentInput = inputMode === "tokenscript" ? code : jsonInput;
+    const colorManager = setupColorManager(colorSchemas);
 
     // If input is empty or just whitespace, clear the output
     if (!currentInput.trim()) {
-      setResult({ type: inputMode });
+      setResult({ type: inputMode, colorManager });
       setJsonError(undefined);
       return;
     }
@@ -114,7 +116,6 @@ function App() {
 
     try {
       if (inputMode === "tokenscript") {
-        const colorManager = setupColorManager();
         const config = new Config({ colorManager });
 
         const lexer = new Lexer(code);
@@ -143,7 +144,6 @@ function App() {
           throw jsonErr;
         }
 
-        const colorManager = setupColorManager();
         const config = new Config({ colorManager });
 
         const output = interpretTokens(jsonTokens, config);
@@ -188,9 +188,10 @@ function App() {
         error: errorInfo.message,
         errorInfo,
         executionTime: Math.round(executionTime * 100) / 100,
+        colorManager,
       });
     }
-  }, [code, jsonInput, inputMode]);
+  }, [code, jsonInput, inputMode, colorSchemas]);
 
   useEffect(() => {
     if (!autoRun) return;
@@ -324,11 +325,7 @@ function App() {
                 className={`transition-all duration-200 ${schemaPanelCollapsed ? "h-10" : ""} overflow-hidden`}
                 data-testid="schema-shell-panel"
               >
-                {!schemaPanelCollapsed && (
-                  <div className="p-4 text-gray-500 text-sm min-h-[150px]">
-                    Schema and settings panel coming soon...
-                  </div>
-                )}
+                {!schemaPanelCollapsed && <SchemaManager />}
               </ShellPanel>
             </div>
 
