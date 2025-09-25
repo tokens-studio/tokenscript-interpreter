@@ -6,7 +6,7 @@ import {
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { ZodError } from "zod";
-import MonacoEditor, { type ValidationError } from "./MonacoEditor";
+import MonacoEditor, { jsonEditorOptions, type ValidationError } from "./MonacoEditor";
 
 interface SchemaEditorModalProps {
   isOpen: boolean;
@@ -355,12 +355,7 @@ export default function SchemaEditorModal({
               className="w-full h-full min-h-[160px] max-h-[480px]"
               language="json"
               theme="vs-light"
-              options={{
-                minimap: { enabled: false },
-                scrollBeyondLastLine: false,
-                wordWrap: "on",
-                automaticLayout: true,
-              }}
+              options={jsonEditorOptions}
             />
           </div>
         </div>

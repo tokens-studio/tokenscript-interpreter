@@ -64,6 +64,11 @@ export const options = {
   },
 };
 
+export const jsonEditorOptions = {
+  ...options,
+  stickyScroll: { enabled: false },
+};
+
 function MonacoEditor({
   value,
   onChange,
