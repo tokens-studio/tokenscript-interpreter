@@ -36,7 +36,7 @@ function ShellPanel({
       {...rest}
     >
       <div className="border-b bg-gray-50 rounded-t-lg flex-shrink-0 h-10">
-        <div className="flex items-center justify-between h-full w-full">
+        <div className="flex items-center justify-between h-full w-full select-none">
           <ShellTitle>{title}</ShellTitle>
           {headerRight && <div className="ml-2 min-w-0 flex-shrink-0 px-3">{headerRight}</div>}
         </div>
