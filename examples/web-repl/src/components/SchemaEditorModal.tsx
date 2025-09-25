@@ -336,63 +336,59 @@ export default function SchemaEditorModal({
         </div>
 
         <div className="p-4 border-b space-y-4">
-          <div className="flex items-center gap-2">
+          <div>
             <label
               htmlFor={`${uniqueId}-schema-url`}
               className="block text-sm font-medium text-gray-700 mb-1"
             >
               Schema URL *
             </label>
-            <button
-              type="button"
-              disabled={fetchState.status === "loading"}
-              onClick={handleFetchSchema}
-              className={`ml-2 px-3 py-1 rounded-md text-sm border border-blue-500 ${fetchState.status === "loading" ? "bg-blue-200 text-blue-900 border-blue-200 cursor-not-allowed" : "bg-blue-50 text-blue-800 hover:bg-blue-100"}`}
-              data-testid="fetch-schema-button"
-            >
-              {fetchState.status === "loading" ? "Fetching..." : "Fetch"}
-            </button>
-            {fetchState.status === "loading" && (
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <input
+                  id={`${uniqueId}-schema-url`}
+                  type="text"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  placeholder="https://schema.example.com/color/v1/"
+                  className="h-10 w-full pr-10 px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  data-testid="schema-url-input"
+                  disabled={fetchState.status === "loading"}
+                />
+                {fetchState.status === "success" && (
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-green-600 pointer-events-none">
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </span>
+                )}
+              </div>
               <button
                 type="button"
-                className="ml-1 px-2 py-1 rounded-md text-xs border border-gray-400 text-gray-800 bg-gray-100 hover:bg-gray-200"
-                onClick={handleAbortFetch}
-                data-testid="abort-fetch-button"
+                onClick={fetchState.status === "loading" ? handleAbortFetch : handleFetchSchema}
+                className={`h-10 px-3 rounded-md text-sm border flex items-center justify-center gap-1 min-w-[80px] ${
+                  fetchState.status === "success"
+                    ? "bg-green-50 text-green-800 border-green-500"
+                    : fetchState.status === "loading"
+                      ? "bg-orange-50 text-orange-800 border-orange-500 hover:bg-orange-100"
+                      : "bg-blue-50 text-blue-800 border-blue-500 hover:bg-blue-100"
+                }`}
+                data-testid="fetch-schema-button"
               >
-                Stop
+                {fetchState.status === "loading" ? "Stop" : "Fetch"}
               </button>
-            )}
-            {fetchState.status === "success" && (
-              <div
-                className="ml-2 flex items-center text-green-600"
-                data-testid="fetch-success-icon"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-            )}
+            </div>
           </div>
-          <input
-            id={`${uniqueId}-schema-url`}
-            type="text"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://schema.example.com/color/v1/"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            data-testid="schema-url-input"
-            disabled={fetchState.status === "loading"}
-          />
 
           {fetchState.status === "error" && (
             <div
