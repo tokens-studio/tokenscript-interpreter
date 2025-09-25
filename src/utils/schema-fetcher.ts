@@ -17,17 +17,23 @@ export type TokenScriptSchemaContent = z.infer<typeof ColorSpecificationSchema>;
 export interface SchemaFetcherOptions {
   timeout?: number;
   headers?: Record<string, string>;
+  signal?: AbortSignal;
 }
 
 export async function fetchTokenScriptSchema(
   schemaUri: string,
   options: SchemaFetcherOptions = {},
 ): Promise<TokenScriptSchemaResponse> {
-  const { timeout = 10000, headers = {} } = options;
+  const { timeout = 10000, headers = {}, signal } = options;
 
-  // Create AbortController for timeout
-  const controller = new AbortController();
+  // Create AbortController for timeout, or use provided signal
+  const controller = signal ? new AbortController() : new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  // If external signal is provided, listen for its abort event
+  if (signal) {
+    signal.addEventListener("abort", () => controller.abort());
+  }
 
   try {
     const response = await fetch(schemaUri, {

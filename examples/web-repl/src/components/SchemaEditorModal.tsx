@@ -6,6 +6,7 @@ import {
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { ZodError } from "zod";
+import { fetchTokenScriptSchema } from "../utils/schema-fetcher";
 import MonacoEditor, { jsonEditorOptions, type ValidationError } from "./MonacoEditor";
 
 interface SchemaEditorModalProps {
@@ -29,6 +30,12 @@ export default function SchemaEditorModal({
   const [error, setError] = useState<string>();
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [monacoValidationErrors, setMonacoValidationErrors] = useState<ValidationError[]>([]);
+  const [fetchState, setFetchState] = useState<
+    | { status: "idle" }
+    | { status: "loading"; controller: AbortController }
+    | { status: "success" }
+    | { status: "error"; error: string }
+  >({ status: "idle" });
   const uniqueId = useId();
 
   // Reset form when modal opens/closes or schema changes
@@ -39,6 +46,11 @@ export default function SchemaEditorModal({
       setError(undefined);
       setValidationErrors([]);
       setMonacoValidationErrors([]);
+      // If dialog reopening or schema changing, abort any pending fetch
+      if (fetchState.status === "loading") {
+        fetchState.controller.abort();
+      }
+      setFetchState({ status: "idle" });
     } else if (isOpen && !schema) {
       // New schema
       setUrl("");
@@ -46,8 +58,21 @@ export default function SchemaEditorModal({
       setError(undefined);
       setValidationErrors([]);
       setMonacoValidationErrors([]);
+      if (fetchState.status === "loading") {
+        fetchState.controller.abort();
+      }
+      setFetchState({ status: "idle" });
+    } else if (!isOpen && fetchState.status === "loading") {
+      // Closing: abort fetch
+      fetchState.controller.abort();
+      setFetchState({ status: "idle" });
     }
-  }, [isOpen, schema]);
+  }, [
+    isOpen,
+    schema,
+    fetchState.status,
+    fetchState.status === "loading" && fetchState.controller.abort,
+  ]);
 
   // Helper function to find line/column for a JSON path
   const findJsonPathPosition = useCallback(
@@ -247,6 +272,39 @@ export default function SchemaEditorModal({
 
   if (!isOpen) return null;
 
+  // Fetch from schema url
+  const handleFetchSchema = async () => {
+    if (!url.trim()) {
+      setFetchState({ status: "error", error: "Schema URL is required" });
+      return;
+    }
+
+    const controller = new AbortController();
+    setFetchState({ status: "loading", controller });
+    setError(undefined);
+    setValidationErrors([]);
+    setMonacoValidationErrors([]);
+
+    try {
+      const resp = await fetchTokenScriptSchema(url.trim(), { signal: controller.signal });
+      setSchemaJson(JSON.stringify(resp.content, null, 2));
+      setFetchState({ status: "success" });
+    } catch (e) {
+      if (controller.signal.aborted) {
+        setFetchState({ status: "error", error: "Schema fetch aborted" });
+      } else {
+        setFetchState({ status: "error", error: e instanceof Error ? e.message : String(e) });
+      }
+    }
+  };
+
+  // Stop button
+  const handleAbortFetch = () => {
+    if (fetchState.status === "loading") {
+      fetchState.controller.abort();
+    }
+  };
+
   return createPortal(
     <dialog
       ref={dialogRef}
@@ -296,23 +354,72 @@ export default function SchemaEditorModal({
         </div>
 
         <div className="p-4 border-b space-y-4">
-          <div>
+          <div className="flex items-center gap-2">
             <label
               htmlFor={`${uniqueId}-schema-url`}
               className="block text-sm font-medium text-gray-700 mb-1"
             >
               Schema URL *
             </label>
-            <input
-              id={`${uniqueId}-schema-url`}
-              type="text"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://schema.example.com/color/v1/"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              data-testid="schema-url-input"
-            />
+            <button
+              type="button"
+              disabled={fetchState.status === "loading"}
+              onClick={handleFetchSchema}
+              className={`ml-2 px-3 py-1 rounded-md text-sm border border-blue-500 ${fetchState.status === "loading" ? "bg-blue-200 text-blue-900 border-blue-200 cursor-not-allowed" : "bg-blue-50 text-blue-800 hover:bg-blue-100"}`}
+              data-testid="fetch-schema-button"
+            >
+              {fetchState.status === "loading" ? "Fetching..." : "Fetch"}
+            </button>
+            {fetchState.status === "loading" && (
+              <button
+                type="button"
+                className="ml-1 px-2 py-1 rounded-md text-xs border border-gray-400 text-gray-800 bg-gray-100 hover:bg-gray-200"
+                onClick={handleAbortFetch}
+                data-testid="abort-fetch-button"
+              >
+                Stop
+              </button>
+            )}
+            {fetchState.status === "success" && (
+              <div
+                className="ml-2 flex items-center text-green-600"
+                data-testid="fetch-success-icon"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+            )}
           </div>
+          <input
+            id={`${uniqueId}-schema-url`}
+            type="text"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="https://schema.example.com/color/v1/"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            data-testid="schema-url-input"
+            disabled={fetchState.status === "loading"}
+          />
+
+          {fetchState.status === "error" && (
+            <div
+              className="text-red-600 text-sm"
+              data-testid="schema-fetch-error"
+            >
+              {fetchState.error}
+            </div>
+          )}
 
           {error && (
             <div
@@ -356,6 +463,7 @@ export default function SchemaEditorModal({
               language="json"
               theme="vs-light"
               options={jsonEditorOptions}
+              disabled={fetchState.status === "loading"}
             />
           </div>
         </div>
@@ -366,15 +474,16 @@ export default function SchemaEditorModal({
             onClick={onClose}
             className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
             data-testid="cancel-button"
+            disabled={fetchState.status === "loading"}
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={handleSave}
-            disabled={validationErrors.length > 0}
+            disabled={validationErrors.length > 0 || fetchState.status === "loading"}
             className={`px-4 py-2 rounded-md ${
-              validationErrors.length > 0
+              validationErrors.length > 0 || fetchState.status === "loading"
                 ? "bg-gray-400 text-gray-700 cursor-not-allowed"
                 : "bg-blue-600 text-white hover:bg-blue-700"
             }`}
