@@ -316,6 +316,31 @@ export class TokenScriptCompletionProvider {
   }
 
   /**
+   * Get regular type attributes based on the symbol type
+   */
+  private getRegularTypeAttributes(variableType: string): Array<{
+    name: string;
+    type: string;
+    description: string;
+  }> {
+    const attributes: Array<{ name: string; type: string; description: string }> = [];
+
+    // Add common attributes based on type
+    switch (variableType) {
+      case "Number":
+      case "NumberWithUnit":
+        attributes.push({
+          name: "value",
+          type: "Number",
+          description: "The numeric value of the number",
+        });
+        break;
+    }
+
+    return attributes;
+  }
+
+  /**
    * Create completion items for attributes and methods
    */
   private createAttributeAndMethodCompletions(
@@ -339,6 +364,20 @@ export class TokenScriptCompletionProvider {
         insertTextRules: languages.CompletionItemInsertTextRule.InsertAsSnippet,
         range,
         sortText: `1_${method.name}`,
+      });
+    });
+
+    // Add attributes for regular types
+    const regularAttributes = this.getRegularTypeAttributes(variableType);
+    regularAttributes.forEach((attr) => {
+      completions.push({
+        label: attr.name,
+        kind: languages.CompletionItemKind.Property,
+        detail: `${attr.type} property`,
+        documentation: attr.description,
+        insertText: attr.name,
+        range,
+        sortText: `0_${attr.name}`,
       });
     });
 
@@ -402,6 +441,27 @@ export class TokenScriptCompletionProvider {
         insertText: keyword,
         range,
         sortText: `1_${keyword}`,
+      });
+    });
+
+    // Regular symbol types
+    const regularTypes = [
+      { name: "String", desc: "Text/string type" },
+      { name: "Number", desc: "Numeric type" },
+      { name: "Boolean", desc: "Boolean true/false type" },
+      { name: "List", desc: "Array/list type" },
+      { name: "Dictionary", desc: "Key-value object type" },
+      { name: "NumberWithUnit", desc: "Number with unit type (e.g., 10px)" },
+    ];
+    regularTypes.forEach((type) => {
+      completions.push({
+        label: type.name,
+        kind: languages.CompletionItemKind.Class,
+        insertText: type.name,
+        detail: type.desc,
+        documentation: `${type.name} symbol type`,
+        range,
+        sortText: `2_${type.name}`,
       });
     });
 
