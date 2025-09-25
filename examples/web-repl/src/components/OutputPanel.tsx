@@ -218,7 +218,7 @@ function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
       title={
         <OutputPanelTitle
           error={error}
-          output={output instanceof BaseSymbolType && output}
+          output={output instanceof BaseSymbolType ? output : undefined}
         />
       }
       headerRight={headerRight}
