@@ -300,8 +300,7 @@ export default function SchemaEditorModal({
           onClose();
         }
       }}
-      className="modal m-0 bg-transparent p-0 max-w-none border-none outline-none z-50 flex items-center justify-center"
-      style={{ width: "100vw", height: "100vh", background: "rgba(0,0,0,0.5)" }}
+      className="modal m-0 h-screen w-screen bg-black/60 p-0 max-w-none max-h-none border-none outline-none z-50 flex items-center justify-center"
       aria-modal="true"
     >
       <div
