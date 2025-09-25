@@ -6,6 +6,7 @@ import {
   Lexer,
   Parser,
 } from "@tokens-studio/tokenscript-interpreter";
+import { useAtom } from "jotai";
 import { useCallback, useEffect, useState } from "react";
 import cssColorSpec from "../../../data/specifications/colors/css-color.json";
 import hslSpec from "../../../data/specifications/colors/hsl.json";
@@ -18,6 +19,7 @@ import { ArrowDown } from "./components/icons";
 import JsonTokenEditor from "./components/JsonTokenEditor";
 import OutputPanel from "./components/OutputPanel";
 import ShellPanel from "./components/ShellPanel";
+import { autoRunAtom, schemaPanelCollapsedAtom } from "./store/atoms";
 import TokenScriptEditor from "./components/TokenScriptEditor";
 
 const DEFAULT_CODE = `// Example TokenScript code - try editing!
@@ -94,9 +96,9 @@ function App() {
   const [jsonInput, setJsonInput] = useState(DEFAULT_JSON);
   const [inputMode, setInputMode] = useState<InputMode>("tokenscript");
   const [result, setResult] = useState<UnifiedExecutionResult>({ type: "tokenscript" });
-  const [autoRun, setAutoRun] = useState(true);
+  const [autoRun, setAutoRun] = useAtom(autoRunAtom);
   const [jsonError, setJsonError] = useState<string>();
-  const [schemaPanelCollapsed, setSchemaPanelCollapsed] = useState(false);
+  const [schemaPanelCollapsed, setSchemaPanelCollapsed] = useAtom(schemaPanelCollapsedAtom);
 
   const executeCode = useCallback(async () => {
     const currentInput = inputMode === "tokenscript" ? code : jsonInput;
