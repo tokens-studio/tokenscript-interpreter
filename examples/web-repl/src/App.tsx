@@ -302,6 +302,13 @@ function App() {
 
           {/* Right Column: Schema Panel + Output Panel */}
           <div className="flex flex-col gap-4 min-h-[400px] lg:overflow-hidden">
+            <div
+              className="lg:max-h-full lg:overflow-hidden rounded-lg shadow-sm"
+              data-testid="app-output-panel"
+            >
+              <OutputPanel result={result} />
+            </div>
+
             {/* Schema Panel */}
             <div
               data-testid="schema-panel"
@@ -327,13 +334,6 @@ function App() {
               >
                 {!schemaPanelCollapsed && <SchemaManager />}
               </ShellPanel>
-            </div>
-
-            <div
-              className="lg:max-h-full lg:overflow-hidden rounded-lg shadow-sm"
-              data-testid="app-output-panel"
-            >
-              <OutputPanel result={result} />
             </div>
           </div>
         </div>
