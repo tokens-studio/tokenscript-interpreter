@@ -307,7 +307,7 @@ function App() {
               className="flex-shrink-0"
             >
               <ShellPanel
-                title="Settings"
+                title="Schemas"
                 headerRight={
                   <button
                     type="button"
