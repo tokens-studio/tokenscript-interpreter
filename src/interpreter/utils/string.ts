@@ -30,6 +30,5 @@ export const isSpace = (char: string | null) => {
   return /\s/.test(char);
 };
 
-export const capitalize = function(str: string): string {
-  return `${str.charAt(0).toUpperCase()}${str.slice(1).toLowerCase()}`;
-};
+export const capitalize = (str: string): string =>
+  `${str.charAt(0).toUpperCase()}${str.slice(1).toLowerCase()}`;

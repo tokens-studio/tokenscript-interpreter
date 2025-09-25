@@ -141,4 +141,5 @@ export const isEqual = (a: unknown, b: unknown): boolean => {
 
 // Conversion ------------------------------------------------------------------
 
-export const nullToUndefined = <T>(v: T | null | undefined): T | undefined => (isNull(v) ? undefined : v);
+export const nullToUndefined = <T>(v: T | null | undefined): T | undefined =>
+  isNull(v) ? undefined : v;

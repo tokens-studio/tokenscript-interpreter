@@ -2,15 +2,15 @@ import { type ISymbolType, SupportedFormats } from "@src/types";
 import type { Config } from "./config/config";
 import { InterpreterError } from "./errors";
 import { isValidHex } from "./utils/color";
-import { isNull, isObject, isString, isUndefined, nullToUndefined } from "./utils/type";
 import { capitalize } from "./utils/string";
+import { isNull, isObject, isString, isUndefined, nullToUndefined } from "./utils/type";
 
 // Utilities -------------------------------------------------------------------
 
 export const typeEquals = (typeA: string, typeB: string) =>
   typeA.toLowerCase() === typeB.toLowerCase();
 
-const typeName = function(base: string, sub?: string): string {
+const typeName = (base: string, sub?: string): string => {
   const baseStr = capitalize(base);
   if (sub) {
     const subStr = capitalize(sub);
@@ -18,7 +18,6 @@ const typeName = function(base: string, sub?: string): string {
   }
   return baseStr;
 };
-
 
 // Base Type -------------------------------------------------------------------
 
@@ -554,6 +553,10 @@ export class ListSymbol extends BaseSymbolType {
 
   static empty(): ListSymbol {
     return new ListSymbol(null);
+  }
+
+  getTypeName(): string {
+    return this.isImplicit ? typeName(this.type, "Implicit") : typeName(this.type);
   }
 }
 
