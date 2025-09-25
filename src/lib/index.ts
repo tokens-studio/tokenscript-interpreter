@@ -1,6 +1,5 @@
-// Core interpreter exports
+// Core interpreter exports ----------------------------------------------------
 
-// AST and symbol exports
 export * from "@interpreter/ast";
 export * from "@interpreter/config";
 export * from "@interpreter/errors";
@@ -11,7 +10,9 @@ export { Parser } from "@interpreter/parser";
 export * from "@interpreter/symbols";
 export * from "@interpreter/symbolTable";
 export type { TokenSetResolverOptions } from "@src/tokenset-processor";
-// Tokenset processing utilities
+
+// Tokenset processing utilities -----------------------------------------------
+
 export {
   buildThemeTree,
   interpretTokens, // Main API for JSON blob input
@@ -22,19 +23,23 @@ export {
   processTokensFromJson, // Backward compatibility
 } from "@src/tokenset-processor";
 
-// Type definitions
+// Type definitions ------------------------------------------------------------
+
 export * from "@src/types";
+
+// Performance tracking utilities ----------------------------------------------
+
 export type {
   PerformanceData,
   PerformanceSummary,
 } from "@src/utils/performance-tracker";
-// Performance tracking utilities
 export {
   PerformanceTracker,
   trackPerformance,
 } from "@src/utils/performance-tracker";
 
-// Schema fetching utilities
+// Schema fetching utilities ---------------------------------------------------
+
 export type {
   SchemaFetcherOptions,
   TokenScriptSchemaContent,
