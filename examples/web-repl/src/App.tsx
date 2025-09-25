@@ -273,7 +273,7 @@ function App() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8 h-full lg:min-h-[400px]">
           {/* Editor Panel */}
           <div
-            className="min-h-[300px] lg:min-h-0 lg:max-h-[600px] overflow-hidden"
+            className="min-h-[300px] lg:min-h-0 lg:max-h-[600px] overflow-hidden rounded-lg shadow-sm"
             data-testid="editor-panel"
           >
             {inputMode === "tokenscript" ? (
@@ -316,7 +316,7 @@ function App() {
                     <ArrowDown className={`${schemaPanelCollapsed ? "rotate-180" : ""}`} />
                   </button>
                 }
-                className={`transition-all duration-200 ${schemaPanelCollapsed ? "h-10" : ""}`}
+                className={`transition-all duration-200 ${schemaPanelCollapsed ? "h-10" : ""} overflow-hidden`}
                 data-testid="schema-shell-panel"
               >
                 {!schemaPanelCollapsed && (
