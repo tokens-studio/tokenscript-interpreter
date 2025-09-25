@@ -436,15 +436,13 @@ export default function SchemaEditorModal({
 
         <div className="flex-1 p-4 flex flex-col min-h-[180px] max-h-full overflow-y-auto">
           <span className="block text-sm font-medium text-gray-700 mb-2">Schema JSON</span>
-          <div className="flex-1 min-h-[160px] max-h-[480px] h-full">
+          <div className="h-full flex-1 min-h-[160px] h-full border rounded-md">
             <MonacoEditor
               value={schemaJson}
               onChange={setSchemaJson}
               onKeyDown={handleKeyDown}
               validationErrors={monacoValidationErrors}
-              className="w-full h-full min-h-[160px] max-h-[480px]"
               language="json"
-              theme="vs-light"
               options={jsonEditorOptions}
               disabled={fetchState.status === "loading"}
             />
