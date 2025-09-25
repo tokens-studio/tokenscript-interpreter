@@ -190,18 +190,19 @@ const Output = ({ result }: { result: OutputResult }) => {
   return null;
 };
 
-function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
-  const { executionTime, error } = result;
+const OutputPanelTitle = ({ error, output }: { error?: string, output?: BaseSymbolType }) => (
+  <div
+    className="flex items-center space-x-2"
+    data-testid="output-panel-title"
+  >
+    <div className={`w-3 h-3 bg-blue-500 rounded-full ${error ? "bg-red-500" : "bg-blue-500"}`} />
+    <span className="font-bold">Output</span>
+    {output?.type && <span>{output.type}</span>}
+  </div>
+);
 
-  const title = (
-    <div
-      className="flex items-center space-x-2"
-      data-testid="output-panel-title"
-    >
-      <div className={`w-3 h-3 bg-blue-500 rounded-full ${error ? "bg-red-500" : "bg-blue-500"}`} />
-      <span>Output</span>
-    </div>
-  );
+function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
+  const { executionTime, error, output } = result;
 
   const headerRight = executionTime && (
     <div
@@ -214,7 +215,7 @@ function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
 
   return (
     <ShellPanel
-      title={title}
+      title={<OutputPanelTitle error={error} output={(output instanceof BaseSymbolType) && output} />}
       headerRight={headerRight}
       className={className}
       data-testid="output-panel"
