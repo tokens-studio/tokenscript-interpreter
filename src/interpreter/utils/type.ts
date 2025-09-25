@@ -113,6 +113,10 @@ export const optional = <T, R>(value: T | null | undefined, fn: (v: T) => R): R 
   return isSome(value) ? fn(value) : undefined;
 };
 
+export const when = <A, B>(a: A, b: B): B | undefined => {
+  return a !== undefined && a !== null && a !== false ? b : undefined;
+};
+
 export const withDefault = <T>(v: T | null | undefined, defaultValue: T): T => {
   return isSome(v) ? v : defaultValue;
 };

@@ -265,17 +265,12 @@ const OutputPanelTitle = ({ error, output }: { error?: string; output?: BaseSymb
   </div>
 );
 
+export const when = <A, B>(a: A, b: B): B | undefined => {
+  return a !== undefined && a !== null && a !== false ? b : undefined;
+};
+
 function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
   const { executionTime, error, output } = result;
-
-  const headerRight = executionTime !== undefined  && (
-    <div
-      className="text-sm text-gray-500"
-      data-testid="execution-time"
-    >
-      {executionTime}ms
-    </div>
-  );
 
   return (
     <ShellPanel
@@ -285,7 +280,15 @@ function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
           output={output instanceof BaseSymbolType ? output : undefined}
         />
       }
-      headerRight={headerRight}
+      headerRight={when(
+        executionTime,
+        <div
+          className="text-sm text-gray-500"
+          data-testid="execution-time"
+        >
+          {executionTime}ms
+        </div>,
+      )}
       className={`lg:h-full ${className}`}
       data-testid="output-panel"
     >
