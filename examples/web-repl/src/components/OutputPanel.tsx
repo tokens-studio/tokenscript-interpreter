@@ -268,7 +268,7 @@ const OutputPanelTitle = ({ error, output }: { error?: string; output?: BaseSymb
 function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
   const { executionTime, error, output } = result;
 
-  const headerRight = executionTime && (
+  const headerRight = executionTime !== undefined  && (
     <div
       className="text-sm text-gray-500"
       data-testid="execution-time"
