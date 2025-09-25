@@ -1,5 +1,4 @@
-import { ArrowDown } from "./icons";
-import { DefaultShellTitle } from "./ShellPanel";
+import TitleBarSelect from "./TitleBarSelect";
 
 interface EditorModeTitleProps {
   inputMode?: "tokenscript" | "json";
@@ -7,6 +6,11 @@ interface EditorModeTitleProps {
   testId?: string;
   defaultLabel: string;
 }
+
+const INPUT_MODE_OPTIONS = [
+  { value: "tokenscript", label: "Tokenscript" },
+  { value: "json", label: "JSON" },
+];
 
 function EditorModeTitle({
   inputMode,
@@ -16,25 +20,13 @@ function EditorModeTitle({
 }: EditorModeTitleProps) {
   if (inputMode && onInputModeChange) {
     return (
-      <div className="flex h-full items-center">
-        <DefaultShellTitle>Input</DefaultShellTitle>
-        <div className="relative flex items-center h-full hover:bg-gray-100 border-l border-r border-solid border-gray-200">
-          <DefaultShellTitle className="px-0">
-            <select
-              value={inputMode}
-              onChange={(e) => onInputModeChange(e.target.value as "tokenscript" | "json")}
-              className="h-full appearance-none font-bold bg-transparent border-none outline-none truncate cursor-pointer px-3 pr-10"
-              data-testid={testId || "editor-mode-dropdown"}
-            >
-              <option value="tokenscript">Tokenscript</option>
-              <option value="json">JSON</option>
-            </select>
-            <span className="pointer-events-none absolute right-1 pr-1">
-              <ArrowDown />
-            </span>
-          </DefaultShellTitle>
-        </div>
-      </div>
+      <TitleBarSelect
+        label="Input"
+        value={inputMode}
+        onChange={onInputModeChange}
+        options={INPUT_MODE_OPTIONS}
+        testId={testId || "editor-mode-dropdown"}
+      />
     );
   }
   return <span data-testid={testId || "editor-mode-language"}>{defaultLabel}</span>;

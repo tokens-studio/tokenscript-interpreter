@@ -1,12 +1,10 @@
 import Editor, { useMonaco } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
 import { useEffect, useRef } from "react";
-import EditorModeTitle from "./EditorModeTitle";
 import {
   tokenscriptLanguageConfig,
   tokenscriptLanguageDefinition,
 } from "./monaco-tokenscript-lang";
-import ShellPanel from "./ShellPanel";
 import { monacoThemeDefinition } from "./shared-theme";
 import { TokenScriptCompletionProvider } from "./tokenscript-completion-provider";
 
@@ -30,11 +28,10 @@ interface MonacoEditorProps {
   className?: string;
   error?: ErrorInfo;
   validationErrors?: ValidationError[];
-  inputMode?: "tokenscript" | "json";
-  onInputModeChange?: (mode: "tokenscript" | "json") => void;
   language?: string;
   theme?: string;
   options?: any;
+  disabled?: boolean;
 }
 
 export const options = {
@@ -76,11 +73,10 @@ function MonacoEditor({
   className = "",
   error,
   validationErrors = [],
-  inputMode,
-  onInputModeChange,
   language = "tokenscript",
   theme = "tokenscript-theme",
   options: customOptions,
+  disabled = false,
 }: MonacoEditorProps) {
   const monaco = useMonaco();
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
@@ -217,48 +213,25 @@ function MonacoEditor({
     }
   };
 
-  const headerRight = error ? (
-    <span
-      className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded"
-      data-testid="monaco-editor-error"
-    >
-      Error on line {error.line}
-    </span>
-  ) : undefined;
-
-  const title = (
-    <EditorModeTitle
-      inputMode={inputMode}
-      onInputModeChange={onInputModeChange}
-      testId={inputMode && onInputModeChange ? "input-mode-dropdown" : "monaco-editor-language"}
-      defaultLabel="tokenscript"
-    />
-  );
-
   return (
-    <ShellPanel
-      title={title}
-      headerRight={headerRight}
+    <div
       className={`h-full ${className}`}
       data-testid="monaco-editor"
-      ShellTitle={({ children }) => children}
     >
-      <div
-        className="h-full"
-        data-testid="monaco-editor-container"
-      >
-        <Editor
-          height="100%"
-          language={language}
-          theme={theme}
-          value={value}
-          onChange={handleEditorChange}
-          onMount={handleEditorDidMount}
-          options={customOptions || options}
-          data-testid="monaco-editor-instance"
-        />
-      </div>
-    </ShellPanel>
+      <Editor
+        height="100%"
+        language={language}
+        theme={theme}
+        value={value}
+        onChange={handleEditorChange}
+        onMount={handleEditorDidMount}
+        options={{
+          ...(customOptions || options),
+          readOnly: disabled,
+        }}
+        data-testid="monaco-editor-instance"
+      />
+    </div>
   );
 }
 
