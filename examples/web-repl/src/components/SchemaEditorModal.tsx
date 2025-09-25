@@ -10,7 +10,6 @@ import { fetchTokenScriptSchema } from "../utils/schema-fetcher";
 import MonacoEditor, { jsonEditorOptions, type ValidationError } from "./MonacoEditor";
 
 interface SchemaEditorModalProps {
-  isOpen: boolean;
   onClose: () => void;
   schema: { url: string; spec: ColorSpecification } | null;
   onSave: (url: string, spec: ColorSpecification) => void;
@@ -18,7 +17,6 @@ interface SchemaEditorModalProps {
 }
 
 export default function SchemaEditorModal({
-  isOpen,
   onClose,
   schema,
   onSave,
@@ -38,41 +36,30 @@ export default function SchemaEditorModal({
   >({ status: "idle" });
   const uniqueId = useId();
 
-  // Reset form when modal opens/closes or schema changes
+  // Initialize form when component mounts
   useEffect(() => {
-    if (isOpen && schema) {
+    if (schema) {
       setUrl(schema.url);
       setSchemaJson(JSON.stringify(schema.spec, null, 2));
-      setError(undefined);
-      setValidationErrors([]);
-      setMonacoValidationErrors([]);
-      // If dialog reopening or schema changing, abort any pending fetch
-      if (fetchState.status === "loading") {
-        fetchState.controller.abort();
-      }
-      setFetchState({ status: "idle" });
-    } else if (isOpen && !schema) {
+    } else {
       // New schema
       setUrl("");
       setSchemaJson(JSON.stringify(MINIMAL_COLOR_SPECIFICATION, null, 2));
-      setError(undefined);
-      setValidationErrors([]);
-      setMonacoValidationErrors([]);
+    }
+    setError(undefined);
+    setValidationErrors([]);
+    setMonacoValidationErrors([]);
+    setFetchState({ status: "idle" });
+  }, [schema]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
       if (fetchState.status === "loading") {
         fetchState.controller.abort();
       }
-      setFetchState({ status: "idle" });
-    } else if (!isOpen && fetchState.status === "loading") {
-      // Closing: abort fetch
-      fetchState.controller.abort();
-      setFetchState({ status: "idle" });
-    }
-  }, [
-    isOpen,
-    schema,
-    fetchState.status,
-    fetchState.status === "loading" && fetchState.controller.abort,
-  ]);
+    };
+  }, [fetchState]);
 
   // Helper function to find line/column for a JSON path
   const findJsonPathPosition = useCallback(
@@ -251,12 +238,10 @@ export default function SchemaEditorModal({
 
   useEffect(() => {
     const dialog = dialogRef.current;
-    if (isOpen && dialog && !dialog.open) {
+    if (dialog && !dialog.open) {
       dialog.showModal();
-    } else if (!isOpen && dialog && dialog.open) {
-      dialog.close();
     }
-  }, [isOpen]);
+  }, []);
 
   // Listen for Esc and background click via <dialog>
   useEffect(() => {
@@ -269,8 +254,6 @@ export default function SchemaEditorModal({
     dialog.addEventListener("cancel", handleCancel);
     return () => dialog.removeEventListener("cancel", handleCancel);
   }, [onClose]);
-
-  if (!isOpen) return null;
 
   // Fetch from schema url
   const handleFetchSchema = async () => {

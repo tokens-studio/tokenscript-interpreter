@@ -166,13 +166,14 @@ export default function SchemaManager() {
         </div>
       )}
 
-      <SchemaEditorModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        schema={editingSchema}
-        onSave={handleSave}
-        existingSchemas={schemas}
-      />
+      {isModalOpen && (
+        <SchemaEditorModal
+          onClose={() => setIsModalOpen(false)}
+          schema={editingSchema}
+          onSave={handleSave}
+          existingSchemas={schemas}
+        />
+      )}
     </div>
   );
 }
