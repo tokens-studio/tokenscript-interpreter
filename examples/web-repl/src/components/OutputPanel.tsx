@@ -21,7 +21,7 @@ export interface OutputResult {
   };
   executionTime?: number;
   output: any;
-  colorManager?: any;
+  colorManager: ColorManager;
   type: "tokenscript" | "json" | "error";
 }
 
@@ -160,7 +160,7 @@ interface UnifiedOutputPanelProps {
   className?: string;
 }
 
-const ListOutput = ({ list, colorManager }: { list: ListSymbol; colorManager?: ColorManager }) => {
+const ListOutput = ({ list, colorManager }: { list: ListSymbol; colorManager: ColorManager }) => {
   if (list.elements.length === 0) {
     return (
       <div
@@ -206,14 +206,14 @@ const SymbolOutput = ({
   colorManager,
 }: {
   symbol: BaseSymbolType;
-  colorManager?: ColorManager;
+  colorManager: ColorManager;
 }) => {
   switch (symbol.type.toLowerCase()) {
     case "color":
       return (
         <ColorOutput
           color={symbol as ColorSymbol}
-          colorManager={colorManager!}
+          colorManager={colorManager}
         />
       );
     case "list":
