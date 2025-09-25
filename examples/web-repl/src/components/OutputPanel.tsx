@@ -190,14 +190,14 @@ const Output = ({ result }: { result: OutputResult }) => {
   return null;
 };
 
-const OutputPanelTitle = ({ error, output }: { error?: string, output?: BaseSymbolType }) => (
+const OutputPanelTitle = ({ error, output }: { error?: string; output?: BaseSymbolType }) => (
   <div
     className="flex items-center space-x-2"
     data-testid="output-panel-title"
   >
     <div className={`w-3 h-3 bg-blue-500 rounded-full ${error ? "bg-red-500" : "bg-blue-500"}`} />
     <span className="font-bold">Output</span>
-    {output?.type && <span>{output.type}</span>}
+    {output?.type && <span>{output.getTypeName()}</span>}
   </div>
 );
 
@@ -215,7 +215,12 @@ function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
 
   return (
     <ShellPanel
-      title={<OutputPanelTitle error={error} output={(output instanceof BaseSymbolType) && output} />}
+      title={
+        <OutputPanelTitle
+          error={error}
+          output={output instanceof BaseSymbolType && output}
+        />
+      }
       headerRight={headerRight}
       className={className}
       data-testid="output-panel"

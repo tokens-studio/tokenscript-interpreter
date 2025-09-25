@@ -138,3 +138,7 @@ export const isEqual = (a: unknown, b: unknown): boolean => {
 
   return false;
 };
+
+// Conversion ------------------------------------------------------------------
+
+export const nullToUndefined = <T>(v: T | null | undefined): T | undefined => (isNull(v) ? undefined : v);

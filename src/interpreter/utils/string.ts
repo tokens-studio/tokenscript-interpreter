@@ -29,3 +29,7 @@ export const isSpace = (char: string | null) => {
   if (char === null) return false;
   return /\s/.test(char);
 };
+
+export const capitalize = function(str: string): string {
+  return `${str.charAt(0).toUpperCase()}${str.slice(1).toLowerCase()}`;
+};

@@ -19,8 +19,8 @@ import { ArrowDown } from "./components/icons";
 import JsonTokenEditor from "./components/JsonTokenEditor";
 import OutputPanel from "./components/OutputPanel";
 import ShellPanel from "./components/ShellPanel";
-import { autoRunAtom, schemaPanelCollapsedAtom } from "./store/atoms";
 import TokenScriptEditor from "./components/TokenScriptEditor";
+import { autoRunAtom, schemaPanelCollapsedAtom } from "./store/atoms";
 
 const DEFAULT_CODE = `// Example TokenScript code - try editing!
 variable primary: Color.Hsl = hsl(220, 100, 50);

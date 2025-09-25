@@ -2,12 +2,23 @@ import { type ISymbolType, SupportedFormats } from "@src/types";
 import type { Config } from "./config/config";
 import { InterpreterError } from "./errors";
 import { isValidHex } from "./utils/color";
-import { isNull, isObject, isString, isUndefined } from "./utils/type";
+import { isNull, isObject, isString, isUndefined, nullToUndefined } from "./utils/type";
+import { capitalize } from "./utils/string";
 
 // Utilities -------------------------------------------------------------------
 
 export const typeEquals = (typeA: string, typeB: string) =>
   typeA.toLowerCase() === typeB.toLowerCase();
+
+const typeName = function(base: string, sub?: string): string {
+  const baseStr = capitalize(base);
+  if (sub) {
+    const subStr = capitalize(sub);
+    return `${baseStr}.${subStr}`;
+  }
+  return baseStr;
+};
+
 
 // Base Type -------------------------------------------------------------------
 
@@ -647,6 +658,10 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
     }
     throw new InterpreterError(`Attribute '${attributeName}' not found on NumberWithUnit.`);
   }
+
+  getTypeName(): string {
+    return typeName(this.type, this.unit);
+  }
 }
 
 export class DictionarySymbol extends BaseSymbolType {
@@ -881,10 +896,7 @@ export class ColorSymbol extends BaseSymbolType {
   }
 
   getTypeName(): string {
-    if (this.subType) {
-      return `Color.${this.subType.charAt(0).toUpperCase() + this.subType.slice(1).toLowerCase()}`;
-    }
-    return this.type;
+    return typeName(this.type, nullToUndefined(this.subType));
   }
 }
 
