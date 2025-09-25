@@ -26,4 +26,7 @@
    (shell {:dir "./examples/web-repl"} "npm run dev:watch")}
   nrepl
   {:doc "Start nrepl server"
-   :task (shell "bun run --bun nbb nrepl-server")}}}
+   :task (shell "bun run --bun nbb nrepl-server")}
+  precommit
+  {:doc "Precommit hook"
+   :task (shell "bb fix:all")}}}
