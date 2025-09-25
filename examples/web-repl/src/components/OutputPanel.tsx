@@ -286,11 +286,11 @@ function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
         />
       }
       headerRight={headerRight}
-      className={className}
+      className={`lg:h-full ${className}`}
       data-testid="output-panel"
     >
       <div
-        className="p-3 sm:p-4 overflow-auto"
+        className="p-3 sm:p-4"
         data-testid="output-panel-content"
       >
         <Output result={result} />

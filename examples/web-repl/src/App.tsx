@@ -269,13 +269,13 @@ function App() {
       </header>
 
       <main
-        className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 overflow-auto lg:overflow-hidden w-full"
+        className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 w-full overflow-auto lg:overflow-hidden"
         data-testid="app-main"
       >
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8 h-full lg:min-h-[400px]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8 lg:h-full">
           {/* Editor Panel */}
           <div
-            className="min-h-[300px] lg:min-h-0 lg:max-h-[600px] overflow-hidden rounded-lg shadow-sm"
+            className="min-h-[400px] lg:min-h-[300px] lg:max-h-[60vh] rounded-lg shadow-sm lg:overflow-hidden"
             data-testid="editor-panel"
           >
             {inputMode === "tokenscript" ? (
@@ -300,9 +300,12 @@ function App() {
           </div>
 
           {/* Right Column: Schema Panel + Output Panel */}
-          <div className="grid grid-rows-[auto_1fr] gap-4">
+          <div className="flex flex-col gap-4 min-h-[400px] lg:overflow-hidden">
             {/* Schema Panel */}
-            <div data-testid="schema-panel">
+            <div
+              data-testid="schema-panel"
+              className="flex-shrink-0"
+            >
               <ShellPanel
                 title="Settings"
                 headerRight={
@@ -330,7 +333,7 @@ function App() {
             </div>
 
             <div
-              className="min-h-[250px] lg:min-h-0 overflow-hidden"
+              className="lg:max-h-full lg:overflow-hidden rounded-lg shadow-sm"
               data-testid="app-output-panel"
             >
               <OutputPanel result={result} />
