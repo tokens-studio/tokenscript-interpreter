@@ -7,6 +7,7 @@ import {
   BaseSymbolType,
   type ColorManager,
   type ColorSymbol,
+  type ListSymbol,
 } from "@tokens-studio/tokenscript-interpreter";
 import ShellPanel from "./ShellPanel";
 import { tokenscriptThemeColors } from "./shared-theme";
@@ -159,6 +160,74 @@ interface UnifiedOutputPanelProps {
   className?: string;
 }
 
+const ListOutput = ({ list, colorManager }: { list: ListSymbol; colorManager?: ColorManager }) => {
+  if (list.elements.length === 0) {
+    return (
+      <div
+        className="text-gray-500 italic"
+        data-testid="empty-list"
+      >
+        Empty list
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="space-y-3"
+      data-testid="list-output"
+    >
+      <div className="flex items-center space-x-2 mb-3">
+        <div className="font-semibold text-gray-900">List</div>
+        <span className="text-sm text-gray-600">({list.elements.length} items)</span>
+      </div>
+
+      <div className="space-y-2">
+        {list.elements.map((element, index) => (
+          <div
+            key={index}
+            className="border-l-2 border-gray-200 pl-4 py-2"
+            data-testid={`list-item-${index}`}
+          >
+            <div className="text-xs text-gray-500 mb-1">Item {index + 1}</div>
+            <SymbolOutput
+              symbol={element}
+              colorManager={colorManager}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const SymbolOutput = ({
+  symbol,
+  colorManager,
+}: {
+  symbol: BaseSymbolType;
+  colorManager?: ColorManager;
+}) => {
+  switch (symbol.type.toLowerCase()) {
+    case "color":
+      return (
+        <ColorOutput
+          color={symbol as ColorSymbol}
+          colorManager={colorManager!}
+        />
+      );
+    case "list":
+      return (
+        <ListOutput
+          list={symbol as ListSymbol}
+          colorManager={colorManager}
+        />
+      );
+    default:
+      return <StringOutput str={symbol.toString()} />;
+  }
+};
+
 const Output = ({ result }: { result: OutputResult }) => {
   const { output, error, colorManager, type } = result;
   if (error) {
@@ -170,17 +239,12 @@ const Output = ({ result }: { result: OutputResult }) => {
   }
 
   if (type === "tokenscript" && output instanceof BaseSymbolType) {
-    switch (output.type) {
-      case "Color":
-        return (
-          <ColorOutput
-            color={output as ColorSymbol}
-            colorManager={colorManager}
-          />
-        );
-      default:
-        return <StringOutput str={output.toString()} />;
-    }
+    return (
+      <SymbolOutput
+        symbol={output}
+        colorManager={colorManager}
+      />
+    );
   }
 
   if (type === "json") {
