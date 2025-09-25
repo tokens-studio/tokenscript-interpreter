@@ -33,3 +33,11 @@ export {
   PerformanceTracker,
   trackPerformance,
 } from "@src/utils/performance-tracker";
+
+// Schema fetching utilities
+export type {
+  SchemaFetcherOptions,
+  TokenScriptSchemaContent,
+  TokenScriptSchemaResponse,
+} from "@src/utils/schema-fetcher";
+export { fetchTokenScriptSchema } from "@src/utils/schema-fetcher";
