@@ -218,19 +218,23 @@ function MonacoEditor({
       className={`h-full ${className}`}
       data-testid="monaco-editor"
     >
-      <Editor
-        height="100%"
-        language={language}
-        theme={theme}
-        value={value}
-        onChange={handleEditorChange}
-        onMount={handleEditorDidMount}
-        options={{
-          ...(customOptions || options),
-          readOnly: disabled,
-        }}
-        data-testid="monaco-editor-instance"
-      />
+      <div
+        className="h-full"
+        data-testid="monaco-editor-container"
+      >
+        <Editor
+          height="100%"
+          language={language}
+          theme={theme}
+          value={value}
+          onChange={handleEditorChange}
+          onMount={handleEditorDidMount}
+          options={{
+            ...(customOptions || options),
+            readOnly: disabled,
+          }}
+        />
+      </div>
     </div>
   );
 }

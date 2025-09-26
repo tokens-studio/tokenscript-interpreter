@@ -11,14 +11,13 @@ test.describe("TokenScript Web REPL", () => {
 
     // Check that the header is present with correct title
     await expect(page.getByTestId("app-header")).toBeVisible();
-    await expect(page.getByTestId("app-title")).toHaveText("TokenScript Web REPL");
 
     // Check that main content area is visible
     await expect(page.getByTestId("app-main")).toBeVisible();
 
     // Check that editor panel is present
     await expect(page.getByTestId("editor-panel")).toBeVisible();
-    await expect(page.getByTestId("editor-panel-title")).toHaveText("TokenScript Editor");
+    await expect(page.getByTestId("input-mode-dropdown")).toHaveValue("tokenscript");
 
     // Check that output panel is present
     await expect(page.getByTestId("app-output-panel")).toBeVisible();
@@ -37,9 +36,6 @@ test.describe("TokenScript Web REPL", () => {
 
     // Check that the Monaco editor instance is present (Monaco adds specific classes/elements)
     await expect(page.locator(".monaco-editor")).toBeVisible();
-
-    // Check that editor shows the language indicator
-    await expect(page.getByTestId("monaco-editor-language")).toHaveText("tokenscript");
 
     // Check that the editor is not showing any error state in its header
     await expect(page.getByTestId("monaco-editor-error")).not.toBeVisible();
@@ -73,24 +69,15 @@ test.describe("TokenScript Web REPL", () => {
 
   test("should switch between input modes", async ({ page }) => {
     // Initially should be in TokenScript mode
-    await expect(page.getByTestId("tokenscript-mode-button")).toHaveClass(
-      /bg-white text-blue-600 shadow-sm/,
-    );
-    await expect(page.getByTestId("editor-panel-title")).toHaveText("TokenScript Editor");
+    await expect(page.getByTestId("input-mode-dropdown")).toHaveValue("tokenscript");
 
     // Switch to JSON mode
-    await page.getByTestId("json-mode-button").click();
-    await expect(page.getByTestId("json-mode-button")).toHaveClass(
-      /bg-white text-blue-600 shadow-sm/,
-    );
-    await expect(page.getByTestId("editor-panel-title")).toHaveText("JSON Token Input");
+    await page.getByTestId("input-mode-dropdown").selectOption("json");
+    await expect(page.getByTestId("input-mode-dropdown")).toHaveValue("json");
 
     // Switch back to TokenScript mode
-    await page.getByTestId("tokenscript-mode-button").click();
-    await expect(page.getByTestId("tokenscript-mode-button")).toHaveClass(
-      /bg-white text-blue-600 shadow-sm/,
-    );
-    await expect(page.getByTestId("editor-panel-title")).toHaveText("TokenScript Editor");
+    await page.getByTestId("input-mode-dropdown").selectOption("tokenscript");
+    await expect(page.getByTestId("input-mode-dropdown")).toHaveValue("tokenscript");
   });
 
   test("should execute code manually when run button is clicked", async ({ page }) => {
@@ -159,12 +146,12 @@ test.describe("TokenScript Web REPL", () => {
 
   test("should process JSON tokens and display formatted output", async ({ page }) => {
     // Switch to JSON mode
-    await page.getByTestId("json-mode-button").click();
-    await expect(page.getByTestId("editor-panel-title")).toHaveText("JSON Token Input");
+    await page.getByTestId("input-mode-dropdown").selectOption("json");
+    await expect(page.getByTestId("input-mode-dropdown")).toHaveValue("json");
+
 
     // Wait for JSON editor to be visible
     await expect(page.getByTestId("json-editor")).toBeVisible();
-    await expect(page.getByTestId("json-editor-language")).toHaveText("json");
 
     // Disable auto-run to control execution timing
     await page.getByTestId("auto-run-checkbox").uncheck();
@@ -229,7 +216,7 @@ test.describe("TokenScript Web REPL", () => {
 
   test("should handle invalid JSON gracefully in JSON mode", async ({ page }) => {
     // Switch to JSON mode
-    await page.getByTestId("json-mode-button").click();
+    await page.getByTestId("input-mode-dropdown").selectOption("json");
     await expect(page.getByTestId("json-editor")).toBeVisible();
 
     // Disable auto-run
