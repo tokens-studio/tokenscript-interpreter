@@ -3,6 +3,7 @@ import { useEffect } from "react";
 
 import "prismjs/themes/prism.css";
 import "prismjs/components/prism-json";
+import { when } from "@interpreter/utils/type";
 import {
   BaseSymbolType,
   type ColorManager,
@@ -264,12 +265,6 @@ const OutputPanelTitle = ({ error, output }: { error?: string; output?: BaseSymb
     {output?.type && <span>{output.getTypeName()}</span>}
   </div>
 );
-
-// TODO: Extract to shared helpers
-// Add comment about why ?? and && suck
-export const when = <A, B>(a: A, b: B): B | undefined => {
-  return a !== undefined && a !== null && a !== false ? b : undefined;
-};
 
 function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
   const { executionTime, error, output } = result;
