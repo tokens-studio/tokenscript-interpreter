@@ -10,6 +10,11 @@ import { isNull, isObject, isString, isUndefined, nullToUndefined } from "./util
 export const typeEquals = (typeA: string, typeB: string) =>
   typeA.toLowerCase() === typeB.toLowerCase();
 
+/**
+ * Constructs captialized type name from `base` and `sub?`
+ * E.g.: base = color, sub = hex => Color.Hex
+ *       base = COLOR => Color
+ */
 const typeName = (base: string, sub?: string): string => {
   const baseStr = capitalize(base);
   if (sub) {

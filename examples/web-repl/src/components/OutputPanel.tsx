@@ -265,6 +265,8 @@ const OutputPanelTitle = ({ error, output }: { error?: string; output?: BaseSymb
   </div>
 );
 
+// TODO: Extract to shared helpers
+// Add comment about why ?? and && suck
 export const when = <A, B>(a: A, b: B): B | undefined => {
   return a !== undefined && a !== null && a !== false ? b : undefined;
 };

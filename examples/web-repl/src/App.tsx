@@ -15,7 +15,7 @@ import SchemaManager from "./components/SchemaManager";
 import ShellPanel from "./components/ShellPanel";
 import TokenScriptEditor from "./components/TokenScriptEditor";
 import { autoRunAtom, colorSchemasAtom, schemaPanelCollapsedAtom } from "./store/atoms";
-import { DEFAULT_COLOR_SCHEMAS } from "./utils/default-schemas";
+import type { DEFAULT_COLOR_SCHEMAS } from "./utils/default-schemas";
 
 type UnifiedExecutionResult = {
   type: "tokenscript" | "json";
@@ -90,16 +90,7 @@ function App() {
   const [autoRun, setAutoRun] = useAtom(autoRunAtom);
   const [jsonError, setJsonError] = useState<string>();
   const [schemaPanelCollapsed, setSchemaPanelCollapsed] = useAtom(schemaPanelCollapsedAtom);
-  const [colorSchemas, setColorSchemas] = useAtom(colorSchemasAtom);
-
-  // Initialize default schemas only on first ever launch
-  useEffect(() => {
-    const lsKey = "repl:colorSchemas";
-    const appearsFirstLaunch = localStorage.getItem(lsKey) === null;
-    if (appearsFirstLaunch && colorSchemas.length === 0) {
-      setColorSchemas(DEFAULT_COLOR_SCHEMAS);
-    }
-  }, [colorSchemas.length, setColorSchemas]);
+  const [colorSchemas, _setColorSchemas] = useAtom(colorSchemasAtom);
 
   const executeCode = useCallback(async () => {
     const currentInput = inputMode === "tokenscript" ? code : jsonInput;
