@@ -61,6 +61,7 @@ export default function SchemaManager() {
 
   const handleLoadDefaults = useCallback(() => {
     setSchemas(new Map(DEFAULT_COLOR_SCHEMAS));
+    setDeletedSchemas([]);
   }, [setSchemas]);
 
   const formatUrl = (url: string) => {
