@@ -22,12 +22,14 @@ export default function SchemaEditorModal({
   onSave,
   existingSchemas = new Map(),
 }: SchemaEditorModalProps) {
-  const [url, setUrl] = useState(schema?.url || "");
+  const [url, setUrl] = useState<string | undefined>(schema?.url);
 
   const [schemaJson, setSchemaJson] = useState(
     JSON.stringify(schema?.spec || MINIMAL_COLOR_SPECIFICATION, null, 2),
   );
-  const [error, setError] = useState<string>();
+  type ErrorType = "empty" | "invalid" | "duplicate";
+  type SchemaEditorError = { type: ErrorType; message: string } | undefined;
+  const [error, setError] = useState<SchemaEditorError>();
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const [fetchState, setFetchState] = useState<
     | { status: "idle" }
@@ -159,11 +161,14 @@ export default function SchemaEditorModal({
     }
   }, [schemaJson, validateSchema]);
 
-  const handleSave = useCallback(() => {
-    const trimmedUrl = url.trim();
+  // Validate URL when it changes
+  useEffect(() => {
+    if (url === undefined) return;
 
-    if (!trimmedUrl) {
-      setError("URL is required");
+    const trimmedUrl = (url as string).trim();
+
+    if (url === "") {
+      setError({ type: "empty", message: "URL is required" });
       return;
     }
 
@@ -171,40 +176,49 @@ export default function SchemaEditorModal({
     try {
       new URL(trimmedUrl);
     } catch {
-      setError("Please enter a valid URL");
+      setError({ type: "invalid", message: "Please enter a valid URL" });
       return;
     }
 
     // Check for duplicate URLs
     if (existingSchemas.has(trimmedUrl) && schema?.url !== trimmedUrl) {
       const duplicateSpec = existingSchemas.get(trimmedUrl);
-      setError(`URL already exists in schema: ${duplicateSpec?.name || trimmedUrl}`);
+      setError({
+        type: "duplicate",
+        message: `URL already exists in schema: ${duplicateSpec?.name || trimmedUrl}`,
+      });
       return;
     }
 
-    // Validate the schema
+    setError(undefined);
+  }, [url, existingSchemas, schema?.url]);
+
+  const handleSave = useCallback(() => {
+    if (error || validationErrors.length > 0) return;
+    if (!url) return;
+
+    const trimmedUrl = url.trim();
     const validatedSpec = validateSchema(schemaJson);
     if (!validatedSpec) {
-      setError("Please fix the schema validation errors before saving");
       return;
     }
 
     onSave(trimmedUrl, validatedSpec);
     onClose();
-  }, [url, schemaJson, schema, onSave, onClose, existingSchemas, validateSchema]);
+  }, [error, validationErrors.length, url, schemaJson, onSave, onClose, validateSchema]);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key === "s") {
         event.preventDefault();
-        if (validationErrors.length === 0) {
+        if (!error && validationErrors.length === 0) {
           handleSave();
         }
       } else if (event.key === "Escape") {
         onClose();
       }
     },
-    [handleSave, onClose, validationErrors.length],
+    [handleSave, onClose, error, validationErrors.length],
   );
 
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -230,6 +244,7 @@ export default function SchemaEditorModal({
 
   // Fetch from schema url
   const handleFetchSchema = async () => {
+    if (!url) return;
     if (!url.trim()) {
       setFetchState({ status: "error", error: "Schema URL is required" });
       return;
@@ -320,7 +335,7 @@ export default function SchemaEditorModal({
                 <input
                   id={`${uniqueId}-schema-url`}
                   type="text"
-                  value={url}
+                  value={url || ""}
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="https://schema.example.com/color/v1/"
                   className="h-10 w-full pr-10 px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -349,13 +364,26 @@ export default function SchemaEditorModal({
                 type="button"
                 onClick={fetchState.status === "loading" ? handleAbortFetch : handleFetchSchema}
                 className={`h-10 px-3 rounded-md text-sm border flex items-center justify-center gap-1 min-w-[80px] ${
-                  fetchState.status === "success"
-                    ? "bg-green-50 text-green-800 border-green-500"
-                    : fetchState.status === "loading"
-                      ? "bg-orange-50 text-orange-800 border-orange-500 hover:bg-orange-100"
-                      : "bg-blue-50 text-blue-800 border-blue-500 hover:bg-blue-100"
+                  url === undefined ||
+                  url === "" ||
+                  error?.type === "empty" ||
+                  error?.type === "invalid" ||
+                  fetchState.status === "loading"
+                    ? "bg-gray-200 text-gray-400 border-gray-300 cursor-not-allowed"
+                    : fetchState.status === "success"
+                      ? "bg-green-50 text-green-800 border-green-500"
+                      : fetchState.status === "loading"
+                        ? "bg-orange-50 text-orange-800 border-orange-500 hover:bg-orange-100"
+                        : "bg-blue-50 text-blue-800 border-blue-500 hover:bg-blue-100"
                 }`}
                 data-testid="fetch-schema-button"
+                disabled={
+                  url === undefined ||
+                  url === "" ||
+                  error?.type === "empty" ||
+                  error?.type === "invalid" ||
+                  fetchState.status === "loading"
+                }
               >
                 {fetchState.status === "loading" ? "Stop" : "Fetch"}
               </button>
@@ -376,7 +404,7 @@ export default function SchemaEditorModal({
               className="text-red-600 text-sm"
               data-testid="schema-error"
             >
-              {error}
+              {error.message}
             </div>
           )}
 
@@ -429,9 +457,9 @@ export default function SchemaEditorModal({
           <button
             type="button"
             onClick={handleSave}
-            disabled={validationErrors.length > 0 || fetchState.status === "loading"}
+            disabled={!!error || validationErrors.length > 0 || fetchState.status === "loading"}
             className={`px-4 py-2 rounded-md ${
-              validationErrors.length > 0 || fetchState.status === "loading"
+              !!error || validationErrors.length > 0 || fetchState.status === "loading"
                 ? "bg-gray-400 text-gray-700 cursor-not-allowed"
                 : "bg-blue-600 text-white hover:bg-blue-700"
             }`}
