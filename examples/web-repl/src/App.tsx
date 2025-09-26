@@ -261,10 +261,10 @@ function App() {
       </header>
 
       <main
-        className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 w-full overflow-auto lg:overflow-hidden"
+        className="flex-1 px-4 sm:px-6 lg:px-8 py-4 sm:py-8 w-full overflow-auto"
         data-testid="app-main"
       >
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8 lg:h-full">
+        <div className="mx-auto grid grid-cols-1 max-w-7xl lg:grid-cols-2 gap-4 lg:gap-8 lg:h-full">
           {/* Editor Panel */}
           <div
             className="min-h-[400px] lg:min-h-[300px] lg:max-h-[60vh] rounded-lg shadow-sm lg:overflow-hidden"
@@ -292,9 +292,9 @@ function App() {
           </div>
 
           {/* Right Column: Schema Panel + Output Panel */}
-          <div className="flex flex-col gap-4 min-h-[400px] lg:overflow-hidden">
+          <div className="flex flex-col gap-4">
             <div
-              className="lg:max-h-full lg:overflow-hidden rounded-lg shadow-sm"
+              className="rounded-lg shadow-sm"
               data-testid="app-output-panel"
             >
               <OutputPanel result={result} />
@@ -303,7 +303,7 @@ function App() {
             {/* Schema Panel */}
             <div
               data-testid="schema-panel"
-              className="flex-shrink-0"
+              className="flex-shrink-0 lg:max-h-full"
             >
               <ShellPanel
                 title="Schemas"
@@ -320,7 +320,7 @@ function App() {
                     <ArrowDown className={`${schemaPanelCollapsed ? "rotate-180" : ""}`} />
                   </button>
                 }
-                className={`transition-all duration-200 ${schemaPanelCollapsed ? "h-10" : ""} overflow-hidden`}
+                className={`transition-all duration-200 ${schemaPanelCollapsed && "h-10"}`}
                 data-testid="schema-shell-panel"
               >
                 {!schemaPanelCollapsed && <SchemaManager />}
