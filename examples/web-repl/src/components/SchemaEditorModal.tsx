@@ -28,8 +28,7 @@ export default function SchemaEditorModal({
     JSON.stringify(schema?.spec || MINIMAL_COLOR_SPECIFICATION, null, 2),
   );
   const [error, setError] = useState<string>();
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
-  const [monacoValidationErrors, setMonacoValidationErrors] = useState<ValidationError[]>([]);
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const [fetchState, setFetchState] = useState<
     | { status: "idle" }
     | { status: "loading"; controller: AbortController }
@@ -52,7 +51,6 @@ export default function SchemaEditorModal({
       if (path.length === 0) return { line: 1, column: 1 };
 
       const lines = jsonString.split("\n");
-      const _currentPath: (string | number)[] = [];
 
       for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
         const line = lines[lineIndex];
@@ -102,12 +100,10 @@ export default function SchemaEditorModal({
   const validateSchema = useCallback(
     (jsonString: string): ColorSpecification | null => {
       setValidationErrors([]);
-      setMonacoValidationErrors([]);
 
       if (!jsonString.trim()) {
         const errorMsg = "Schema cannot be empty";
-        setValidationErrors([errorMsg]);
-        setMonacoValidationErrors([{ message: errorMsg, line: 1, column: 1 }]);
+        setValidationErrors([{ message: errorMsg, line: 1, column: 1 }]);
         return null;
       }
 
@@ -116,13 +112,12 @@ export default function SchemaEditorModal({
         parsedJson = JSON.parse(jsonString);
       } catch (err) {
         const errorMsg = `Invalid JSON: ${err instanceof Error ? err.message : "Unknown error"}`;
-        setValidationErrors([errorMsg]);
 
         // Try to extract line number from JSON parse error
         const lineMatch = err instanceof Error ? err.message.match(/line (\d+)/i) : null;
         const line = lineMatch ? parseInt(lineMatch[1], 10) : 1;
 
-        setMonacoValidationErrors([{ message: errorMsg, line, column: 1 }]);
+        setValidationErrors([{ message: errorMsg, line, column: 1 }]);
         return null;
       }
 
@@ -131,14 +126,8 @@ export default function SchemaEditorModal({
       } catch (err) {
         if (err instanceof Error && "issues" in err) {
           const zodError = err as ZodError;
-          const errors = zodError.issues.map((issue) => {
-            const path = issue.path.length > 0 ? `${issue.path.join(".")}: ` : "";
-            return `${path}${issue.message}`;
-          });
-          setValidationErrors(errors);
-
-          // Map Zod errors to Monaco validation errors with line/column positions
-          const monacoErrors: ValidationError[] = zodError.issues.map((issue) => {
+          // Map Zod errors to ValidationError structure with line/column positions
+          const errors: ValidationError[] = zodError.issues.map((issue) => {
             const position = findJsonPathPosition(jsonString, issue.path);
             const pathStr = issue.path.length > 0 ? `${issue.path.join(".")}: ` : "";
 
@@ -150,11 +139,10 @@ export default function SchemaEditorModal({
             };
           });
 
-          setMonacoValidationErrors(monacoErrors);
+          setValidationErrors(errors);
         } else {
           const errorMsg = `Schema validation failed: ${err instanceof Error ? err.message : "Unknown error"}`;
-          setValidationErrors([errorMsg]);
-          setMonacoValidationErrors([{ message: errorMsg, line: 1, column: 1 }]);
+          setValidationErrors([{ message: errorMsg, line: 1, column: 1 }]);
         }
         return null;
       }
@@ -251,7 +239,6 @@ export default function SchemaEditorModal({
     setFetchState({ status: "loading", controller });
     setError(undefined);
     setValidationErrors([]);
-    setMonacoValidationErrors([]);
 
     try {
       const resp = await fetchTokenScriptSchema(url.trim(), { signal: controller.signal });
@@ -400,13 +387,13 @@ export default function SchemaEditorModal({
             >
               <div className="text-red-800 text-sm font-medium mb-2">Schema Validation Errors:</div>
               <ul className="text-red-700 text-sm space-y-1">
-                {validationErrors.map((errorMsg, index) => (
+                {validationErrors.map((error, index) => (
                   <li
                     key={index}
                     className="flex items-start"
                   >
                     <span className="text-red-500 mr-2">•</span>
-                    <span>{errorMsg}</span>
+                    <span>{error.message}</span>
                   </li>
                 ))}
               </ul>
@@ -421,7 +408,7 @@ export default function SchemaEditorModal({
               value={schemaJson}
               onChange={setSchemaJson}
               onKeyDown={handleKeyDown}
-              validationErrors={monacoValidationErrors}
+              validationErrors={validationErrors}
               language="json"
               options={jsonEditorOptions}
               disabled={fetchState.status === "loading"}
