@@ -22,9 +22,11 @@ export default function SchemaEditorModal({
   onSave,
   existingSchemas = new Map(),
 }: SchemaEditorModalProps) {
-  const [url, setUrl] = useState("");
+  const [url, setUrl] = useState(schema?.url || "");
 
-  const [schemaJson, setSchemaJson] = useState("");
+  const [schemaJson, setSchemaJson] = useState(
+    JSON.stringify(schema?.spec || MINIMAL_COLOR_SPECIFICATION, null, 2),
+  );
   const [error, setError] = useState<string>();
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [monacoValidationErrors, setMonacoValidationErrors] = useState<ValidationError[]>([]);
@@ -36,23 +38,6 @@ export default function SchemaEditorModal({
   >({ status: "idle" });
   const uniqueId = useId();
 
-  // Initialize form when component mounts
-  useEffect(() => {
-    if (schema) {
-      setUrl(schema.url);
-      setSchemaJson(JSON.stringify(schema.spec, null, 2));
-    } else {
-      // New schema
-      setUrl("");
-      setSchemaJson(JSON.stringify(MINIMAL_COLOR_SPECIFICATION, null, 2));
-    }
-    setError(undefined);
-    setValidationErrors([]);
-    setMonacoValidationErrors([]);
-    setFetchState({ status: "idle" });
-  }, [schema]);
-
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (fetchState.status === "loading") {
