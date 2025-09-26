@@ -14,12 +14,24 @@ export interface ErrorInfo {
   token?: any;
 }
 
+export interface ValidationError {
+  message: string;
+  path?: string;
+  line?: number;
+  column?: number;
+}
+
 interface MonacoEditorProps {
   value: string;
   onChange: (value: string) => void;
   onKeyDown?: (event: KeyboardEvent) => void;
   className?: string;
   error?: ErrorInfo;
+  validationErrors?: ValidationError[];
+  language?: string;
+  theme?: string;
+  options?: any;
+  disabled?: boolean;
 }
 
 export const options = {
@@ -49,7 +61,23 @@ export const options = {
   },
 };
 
-function MonacoEditor({ value, onChange, onKeyDown, className = "", error }: MonacoEditorProps) {
+export const jsonEditorOptions = {
+  ...options,
+  stickyScroll: { enabled: false },
+};
+
+function MonacoEditor({
+  value,
+  onChange,
+  onKeyDown,
+  className = "",
+  error,
+  validationErrors = [],
+  language = "tokenscript",
+  theme = "tokenscript-theme",
+  options: customOptions,
+  disabled = false,
+}: MonacoEditorProps) {
   const monaco = useMonaco();
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const completionProviderRef = useRef<TokenScriptCompletionProvider | null>(null);
@@ -99,7 +127,7 @@ function MonacoEditor({ value, onChange, onKeyDown, className = "", error }: Mon
     };
   }, [monaco]);
 
-  // Handle error markers
+  // Handle error markers and validation errors
   useEffect(() => {
     if (monaco && editorRef.current) {
       const model = editorRef.current.getModel();
@@ -107,24 +135,42 @@ function MonacoEditor({ value, onChange, onKeyDown, className = "", error }: Mon
         // Always clear existing markers first
         monaco.editor.setModelMarkers(model, "tokenscript", []);
 
+        const markers: editor.IMarkerData[] = [];
+
         // Add error marker only if error exists with line number
         if (error?.line) {
-          const markers: editor.IMarkerData[] = [
-            {
-              severity: monaco.MarkerSeverity.Error,
-              message: error.message,
-              startLineNumber: error.line,
-              startColumn: 1,
-              endLineNumber: error.line,
-              endColumn: Number.MAX_SAFE_INTEGER,
-            },
-          ];
+          markers.push({
+            severity: monaco.MarkerSeverity.Error,
+            message: error.message,
+            startLineNumber: error.line,
+            startColumn: 1,
+            endLineNumber: error.line,
+            endColumn: Number.MAX_SAFE_INTEGER,
+          });
+        }
 
+        // Add validation error markers
+        for (const validationError of validationErrors) {
+          if (validationError.line) {
+            markers.push({
+              severity: monaco.MarkerSeverity.Error,
+              message: validationError.message,
+              startLineNumber: validationError.line,
+              startColumn: validationError.column || 1,
+              endLineNumber: validationError.line,
+              endColumn: validationError.column
+                ? validationError.column + 10
+                : Number.MAX_SAFE_INTEGER,
+            });
+          }
+        }
+
+        if (markers.length > 0) {
           monaco.editor.setModelMarkers(model, "tokenscript", markers);
         }
       }
     }
-  }, [monaco, error]);
+  }, [monaco, error, validationErrors]);
 
   // Setup keyboard event listener
   useEffect(() => {
@@ -167,45 +213,26 @@ function MonacoEditor({ value, onChange, onKeyDown, className = "", error }: Mon
     }
   };
 
-  const headerRight = error ? (
-    <span
-      className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded"
-      data-testid="monaco-editor-error"
-    >
-      Error on line {error.line}
-    </span>
-  ) : undefined;
-
   return (
     <div
-      className={`flex flex-col bg-white rounded-lg border shadow-sm h-full ${className}`}
+      className={`h-full ${className}`}
       data-testid="monaco-editor"
     >
-      <div className="border-b bg-gray-50 px-3 sm:px-4 py-2 rounded-t-lg flex-shrink-0 h-10 text-box">
-        <div className="flex items-center justify-between h-full w-full">
-          <div
-            className="text-xs sm:text-sm text-gray-600 font-mono truncate pr-2"
-            data-testid="monaco-editor-language"
-          >
-            tokenscript
-          </div>
-          {headerRight && <div className="ml-2 min-w-0 flex-shrink-0">{headerRight}</div>}
-        </div>
-      </div>
-
       <div
-        className="flex-1 min-h-0 rounded-b-lg overflow-auto"
+        className="h-full"
         data-testid="monaco-editor-container"
       >
         <Editor
           height="100%"
-          language="tokenscript"
-          theme="tokenscript-theme"
+          language={language}
+          theme={theme}
           value={value}
           onChange={handleEditorChange}
           onMount={handleEditorDidMount}
-          options={options}
-          data-testid="monaco-editor-instance"
+          options={{
+            ...(customOptions || options),
+            readOnly: disabled,
+          }}
         />
       </div>
     </div>

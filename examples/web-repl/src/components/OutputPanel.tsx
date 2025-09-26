@@ -3,11 +3,14 @@ import { useEffect } from "react";
 
 import "prismjs/themes/prism.css";
 import "prismjs/components/prism-json";
+import { when } from "@interpreter/utils/type";
 import {
   BaseSymbolType,
   type ColorManager,
   type ColorSymbol,
+  type ListSymbol,
 } from "@tokens-studio/tokenscript-interpreter";
+import ShellPanel from "./ShellPanel";
 import { tokenscriptThemeColors } from "./shared-theme";
 
 export interface OutputResult {
@@ -19,7 +22,7 @@ export interface OutputResult {
   };
   executionTime?: number;
   output: any;
-  colorManager?: any;
+  colorManager: ColorManager;
   type: "tokenscript" | "json" | "error";
 }
 
@@ -158,6 +161,74 @@ interface UnifiedOutputPanelProps {
   className?: string;
 }
 
+const ListOutput = ({ list, colorManager }: { list: ListSymbol; colorManager: ColorManager }) => {
+  if (list.elements.length === 0) {
+    return (
+      <div
+        className="text-gray-500 italic"
+        data-testid="empty-list"
+      >
+        Empty list
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="space-y-3"
+      data-testid="list-output"
+    >
+      <div className="flex items-center space-x-2 mb-3">
+        <div className="font-semibold text-gray-900">List</div>
+        <span className="text-sm text-gray-600">({list.elements.length} items)</span>
+      </div>
+
+      <div className="space-y-2">
+        {list.elements.map((element, index) => (
+          <div
+            key={index}
+            className="border-l-2 border-gray-200 pl-4 py-2"
+            data-testid={`list-item-${index}`}
+          >
+            <div className="text-xs text-gray-500 mb-1">Item {index + 1}</div>
+            <SymbolOutput
+              symbol={element}
+              colorManager={colorManager}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const SymbolOutput = ({
+  symbol,
+  colorManager,
+}: {
+  symbol: BaseSymbolType;
+  colorManager: ColorManager;
+}) => {
+  switch (symbol.type.toLowerCase()) {
+    case "color":
+      return (
+        <ColorOutput
+          color={symbol as ColorSymbol}
+          colorManager={colorManager}
+        />
+      );
+    case "list":
+      return (
+        <ListOutput
+          list={symbol as ListSymbol}
+          colorManager={colorManager}
+        />
+      );
+    default:
+      return <StringOutput str={symbol.toString()} />;
+  }
+};
+
 const Output = ({ result }: { result: OutputResult }) => {
   const { output, error, colorManager, type } = result;
   if (error) {
@@ -169,17 +240,12 @@ const Output = ({ result }: { result: OutputResult }) => {
   }
 
   if (type === "tokenscript" && output instanceof BaseSymbolType) {
-    switch (output.type) {
-      case "Color":
-        return (
-          <ColorOutput
-            color={output as ColorSymbol}
-            colorManager={colorManager}
-          />
-        );
-      default:
-        return <StringOutput str={output.toString()} />;
-    }
+    return (
+      <SymbolOutput
+        symbol={output}
+        colorManager={colorManager}
+      />
+    );
   }
 
   if (type === "json") {
@@ -189,49 +255,47 @@ const Output = ({ result }: { result: OutputResult }) => {
   return null;
 };
 
+const OutputPanelTitle = ({ error, output }: { error?: string; output?: BaseSymbolType }) => (
+  <div
+    className="flex items-center space-x-2"
+    data-testid="output-panel-title"
+  >
+    <div className={`w-3 h-3 bg-blue-500 rounded-full ${error ? "bg-red-500" : "bg-blue-500"}`} />
+    <span className="font-bold">Output</span>
+    {output?.type && <span>{output.getTypeName()}</span>}
+  </div>
+);
+
 function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
-  const { executionTime, error } = result;
+  const { executionTime, error, output } = result;
 
   return (
-    <div
-      className={`flex flex-col bg-white rounded-lg border shadow-sm ${className}`}
+    <ShellPanel
+      title={
+        <OutputPanelTitle
+          error={error}
+          output={output instanceof BaseSymbolType ? output : undefined}
+        />
+      }
+      headerRight={when(
+        executionTime,
+        <div
+          className="text-sm text-gray-500"
+          data-testid="execution-time"
+        >
+          {executionTime}ms
+        </div>,
+      )}
+      className={`lg:h-full ${className}`}
       data-testid="output-panel"
     >
-      <div className="border-b bg-gray-50 px-3 sm:px-4 py-2 rounded-t-lg flex-shrink-0 h-10 text-box">
-        <div className="flex items-center justify-between h-full w-full">
-          <div
-            className="text-xs sm:text-sm text-gray-600 font-mono truncate pr-2"
-            data-testid="output-panel-title"
-          >
-            <div className="flex items-center space-x-2">
-              <div
-                className={`w-3 h-3 bg-blue-500 rounded-full ${error ? "bg-red-500" : "bg-blue-500"}`}
-              ></div>
-              <span>Output</span>
-            </div>
-          </div>
-          {executionTime && (
-            <div className="ml-2 min-w-0 flex-shrink-0">
-              <div
-                className="text-sm text-gray-500"
-                data-testid="execution-time"
-              >
-                {executionTime}ms
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
       <div
-        className="flex-1 min-h-0 rounded-b-lg overflow-auto"
+        className="p-3 sm:p-4"
         data-testid="output-panel-content"
       >
-        <div className="p-3 sm:p-4 overflow-auto">
-          <Output result={result} />
-        </div>
+        <Output result={result} />
       </div>
-    </div>
+    </ShellPanel>
   );
 }
 

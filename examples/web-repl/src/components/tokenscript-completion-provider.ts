@@ -1,4 +1,13 @@
-import { ColorManager } from "@tokens-studio/tokenscript-interpreter";
+import {
+  BooleanSymbol,
+  ColorManager,
+  ColorSymbol,
+  DictionarySymbol,
+  ListSymbol,
+  NumberSymbol,
+  NumberWithUnitSymbol,
+  StringSymbol,
+} from "@tokens-studio/tokenscript-interpreter";
 import type { editor, Position } from "monaco-editor";
 import { languages } from "monaco-editor";
 import hslSpec from "../../../../data/specifications/colors/hsl.json";
@@ -75,6 +84,63 @@ export class TokenScriptCompletionProvider {
     }
 
     return variables;
+  }
+
+  /**
+   * Get symbol class from variable type string
+   */
+  private getSymbolClass(variableType: string): any {
+    const typeMap: Record<string, any> = {
+      String: StringSymbol,
+      Number: NumberSymbol,
+      Boolean: BooleanSymbol,
+      List: ListSymbol,
+      Dictionary: DictionarySymbol,
+      NumberWithUnit: NumberWithUnitSymbol,
+    };
+
+    // Handle color types like "Color.Hsl", "Color.Rgb", etc.
+    if (variableType.startsWith("Color.")) {
+      return ColorSymbol;
+    }
+
+    return typeMap[variableType];
+  }
+
+  /**
+   * Get supported methods from symbol class _SUPPORTED_METHODS
+   */
+  private getSupportedMethods(
+    symbolClass: any,
+  ): Array<{ name: string; detail: string; description: string }> {
+    if (!symbolClass?._SUPPORTED_METHODS) return [];
+
+    try {
+      return Object.entries(symbolClass._SUPPORTED_METHODS).map(
+        ([methodKey, methodDef]: [string, any]) => {
+          const methodName = methodDef.name || methodKey;
+          const args = methodDef.args || [];
+          const returnType = methodDef.returnType || "unknown";
+
+          // Build argument signature
+          const argSignature = args
+            .map(
+              (arg: any) =>
+                `${arg.name}${arg.optional ? "?" : ""}: ${arg.type?.type || arg.type?.name || "any"}`,
+            )
+            .join(", ");
+
+          return {
+            name: methodName,
+            detail: `${methodName}(${argSignature}): ${returnType}`,
+            description: `Method available on ${symbolClass.type || "this type"}`,
+          };
+        },
+      );
+    } catch (error) {
+      console.warn("Error getting supported methods:", error);
+      return [];
+    }
   }
 
   /**
@@ -250,50 +316,86 @@ export class TokenScriptCompletionProvider {
   }
 
   /**
-   * Create completion items for color attributes and methods
+   * Get regular type attributes based on the symbol type
    */
-  private createAttributeCompletions(
-    attributes: ColorAttribute[],
+  private getRegularTypeAttributes(variableType: string): Array<{
+    name: string;
+    type: string;
+    description: string;
+  }> {
+    const attributes: Array<{ name: string; type: string; description: string }> = [];
+
+    // Add common attributes based on type
+    switch (variableType) {
+      case "Number":
+      case "NumberWithUnit":
+        attributes.push({
+          name: "value",
+          type: "Number",
+          description: "The numeric value of the number",
+        });
+        break;
+    }
+
+    return attributes;
+  }
+
+  /**
+   * Create completion items for attributes and methods
+   */
+  private createAttributeAndMethodCompletions(
+    variableType: string,
     range: editor.IRange,
-    _colorType: string,
   ): languages.CompletionItem[] {
     const completions: languages.CompletionItem[] = [];
 
-    // Add attributes
-    attributes.forEach((attr) => {
-      completions.push({
-        label: attr.name,
-        kind: languages.CompletionItemKind.Property,
-        detail: `${attr.type} property`,
-        documentation: attr.description || `Access the ${attr.name} property`,
-        insertText: attr.name,
-        range,
-        sortText: `0_${attr.name}`, // Prioritize attribute completions
-      });
-    });
+    // Get symbol class and supported methods
+    const symbolClass = this.getSymbolClass(variableType);
+    const supportedMethods = this.getSupportedMethods(symbolClass);
 
-    // Add common color methods
-    const colorMethods = [
-      {
-        name: "toString",
-        detail: "string toString()",
-        description: "Convert color to string representation",
-        insertText: "toString()",
-      },
-    ];
-
-    colorMethods.forEach((method) => {
+    // Add methods from _SUPPORTED_METHODS
+    supportedMethods.forEach((method) => {
       completions.push({
         label: method.name,
         kind: languages.CompletionItemKind.Method,
         detail: method.detail,
         documentation: method.description,
-        insertText: method.insertText,
+        insertText: `${method.name}()`,
         insertTextRules: languages.CompletionItemInsertTextRule.InsertAsSnippet,
         range,
         sortText: `1_${method.name}`,
       });
     });
+
+    // Add attributes for regular types
+    const regularAttributes = this.getRegularTypeAttributes(variableType);
+    regularAttributes.forEach((attr) => {
+      completions.push({
+        label: attr.name,
+        kind: languages.CompletionItemKind.Property,
+        detail: `${attr.type} property`,
+        documentation: attr.description,
+        insertText: attr.name,
+        range,
+        sortText: `0_${attr.name}`,
+      });
+    });
+
+    // For color types, also add attributes from schema
+    if (variableType.startsWith("Color.")) {
+      const attributes = this.getColorAttributes(variableType);
+      attributes.forEach((attr) => {
+        completions.push({
+          label: attr.name,
+          kind: languages.CompletionItemKind.Property,
+          detail: `${attr.type} property`,
+          documentation: attr.description || `Access the ${attr.name} property`,
+          insertText: attr.name,
+          range,
+          sortText: `0_${attr.name}`, // Prioritize attribute completions over methods
+        });
+      });
+    }
 
     return completions;
   }
@@ -339,6 +441,27 @@ export class TokenScriptCompletionProvider {
         insertText: keyword,
         range,
         sortText: `1_${keyword}`,
+      });
+    });
+
+    // Regular symbol types
+    const regularTypes = [
+      { name: "String", desc: "Text/string type" },
+      { name: "Number", desc: "Numeric type" },
+      { name: "Boolean", desc: "Boolean true/false type" },
+      { name: "List", desc: "Array/list type" },
+      { name: "Dictionary", desc: "Key-value object type" },
+      { name: "NumberWithUnit", desc: "Number with unit type (e.g., 10px)" },
+    ];
+    regularTypes.forEach((type) => {
+      completions.push({
+        label: type.name,
+        kind: languages.CompletionItemKind.Class,
+        insertText: type.name,
+        detail: type.desc,
+        documentation: `${type.name} symbol type`,
+        range,
+        sortText: `2_${type.name}`,
       });
     });
 
@@ -399,25 +522,17 @@ export class TokenScriptCompletionProvider {
     const wordInfo = this.getWordAtPosition(model, position);
     const variables = this.extractVariables(code);
 
-    // If we're accessing an attribute (e.g., "variable.")
+    // If we're accessing an attribute/method (e.g., "variable.")
     if (wordInfo.isAttributeAccess && wordInfo.variableName) {
       const variable = variables.find((v) => v.name === wordInfo.variableName);
 
       if (variable) {
-        // Check if it's a color type
-        if (variable.type.startsWith("Color.")) {
-          const attributes = this.getColorAttributes(variable.type);
-          const completions = this.createAttributeCompletions(
-            attributes,
-            wordInfo.range,
-            variable.type,
-          );
+        const completions = this.createAttributeAndMethodCompletions(variable.type, wordInfo.range);
 
-          return {
-            suggestions: completions,
-            incomplete: false,
-          };
-        }
+        return {
+          suggestions: completions,
+          incomplete: false,
+        };
       }
     }
 

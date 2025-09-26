@@ -40,7 +40,7 @@
         "noUnusedVariables": "error",
         "noUnusedPrivateClassMembers": "off",
         "noUnusedImports": "error",
-        "useExhaustiveDependencies": "warn"
+        "useExhaustiveDependencies": "off"
       },
       "style": {
         "noNegationElse": "off",

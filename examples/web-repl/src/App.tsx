@@ -6,17 +6,29 @@ import {
   Lexer,
   Parser,
 } from "@tokens-studio/tokenscript-interpreter";
+import { useAtom } from "jotai";
 import { useCallback, useEffect, useState } from "react";
-import cssColorSpec from "../../../data/specifications/colors/css-color.json";
-import hslSpec from "../../../data/specifications/colors/hsl.json";
-import lrgbSpec from "../../../data/specifications/colors/lrgb.json";
-
-import rgbSpec from "../../../data/specifications/colors/rgb.json";
-import rgbaSpec from "../../../data/specifications/colors/rgba.json";
-import srgbSpec from "../../../data/specifications/colors/srgb.json";
+import { ArrowDown } from "./components/icons";
 import JsonTokenEditor from "./components/JsonTokenEditor";
 import OutputPanel from "./components/OutputPanel";
+import SchemaManager from "./components/SchemaManager";
+import ShellPanel from "./components/ShellPanel";
 import TokenScriptEditor from "./components/TokenScriptEditor";
+import { autoRunAtom, colorSchemasAtom, schemaPanelCollapsedAtom } from "./store/atoms";
+import type { DEFAULT_COLOR_SCHEMAS } from "./utils/default-schemas";
+
+type UnifiedExecutionResult = {
+  type: "tokenscript" | "json";
+  error?: string;
+  errorInfo?: {
+    message: string;
+    line?: number;
+    token?: any;
+  };
+  executionTime?: number;
+  output?: any;
+  colorManager: ColorManager;
+};
 
 const DEFAULT_CODE = `// Example TokenScript code - try editing!
 variable primary: Color.Hsl = hsl(220, 100, 50);
@@ -56,33 +68,16 @@ const DEFAULT_JSON = `{
 
 type InputMode = "tokenscript" | "json";
 
-function setupColorManager(): ColorManager {
+function setupColorManager(schemas: typeof DEFAULT_COLOR_SCHEMAS): ColorManager {
   const colorManager = new ColorManager();
 
-  colorManager.register(
-    "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/",
-    rgbSpec as any,
-  );
-  colorManager.register(
-    "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0/",
-    hslSpec as any,
-  );
-  colorManager.register(
-    "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0/",
-    srgbSpec as any,
-  );
-  colorManager.register(
-    "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgba-color/0/",
-    rgbaSpec as any,
-  );
-  colorManager.register(
-    "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/lrgb-color/0/",
-    lrgbSpec as any,
-  );
-  colorManager.register(
-    "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/css-color/0/",
-    cssColorSpec as any,
-  );
+  for (const [uri, spec] of schemas.entries()) {
+    try {
+      colorManager.register(uri, spec);
+    } catch (error) {
+      console.warn(`Failed to register schema ${uri}:`, error);
+    }
+  }
 
   return colorManager;
 }
@@ -92,15 +87,18 @@ function App() {
   const [jsonInput, setJsonInput] = useState(DEFAULT_JSON);
   const [inputMode, setInputMode] = useState<InputMode>("tokenscript");
   const [result, setResult] = useState<UnifiedExecutionResult>({ type: "tokenscript" });
-  const [autoRun, setAutoRun] = useState(true);
+  const [autoRun, setAutoRun] = useAtom(autoRunAtom);
   const [jsonError, setJsonError] = useState<string>();
+  const [schemaPanelCollapsed, setSchemaPanelCollapsed] = useAtom(schemaPanelCollapsedAtom);
+  const [colorSchemas, _setColorSchemas] = useAtom(colorSchemasAtom);
 
   const executeCode = useCallback(async () => {
     const currentInput = inputMode === "tokenscript" ? code : jsonInput;
+    const colorManager = setupColorManager(colorSchemas);
 
     // If input is empty or just whitespace, clear the output
     if (!currentInput.trim()) {
-      setResult({ type: inputMode });
+      setResult({ type: inputMode, colorManager });
       setJsonError(undefined);
       return;
     }
@@ -109,7 +107,6 @@ function App() {
 
     try {
       if (inputMode === "tokenscript") {
-        const colorManager = setupColorManager();
         const config = new Config({ colorManager });
 
         const lexer = new Lexer(code);
@@ -138,7 +135,6 @@ function App() {
           throw jsonErr;
         }
 
-        const colorManager = setupColorManager();
         const config = new Config({ colorManager });
 
         const output = interpretTokens(jsonTokens, config);
@@ -183,9 +179,10 @@ function App() {
         error: errorInfo.message,
         errorInfo,
         executionTime: Math.round(executionTime * 100) / 100,
+        colorManager,
       });
     }
-  }, [code, jsonInput, inputMode]);
+  }, [code, jsonInput, inputMode, colorSchemas]);
 
   useEffect(() => {
     if (!autoRun) return;
@@ -216,14 +213,11 @@ function App() {
           <div className="flex items-center justify-between">
             <div>
               <h1
-                className="text-2xl font-bold text-gray-900"
+                className="text-xl font-bold text-gray-900"
                 data-testid="app-title"
               >
-                TokenScript Web REPL
+                Tokenscript REPL
               </h1>
-              <p className="text-sm text-gray-600 mt-1">
-                Interactive environment for TokenScript code
-              </p>
             </div>
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
@@ -267,85 +261,70 @@ function App() {
       </header>
 
       <main
-        className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 overflow-auto lg:overflow-hidden w-full"
+        className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 w-full overflow-auto lg:overflow-hidden"
         data-testid="app-main"
       >
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8 min-h-[600px] lg:h-full lg:min-h-[400px]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8 lg:h-full">
+          {/* Editor Panel */}
           <div
-            className="grid grid-rows-[auto_1fr] gap-2 sm:gap-4 min-h-0 lg:min-h-0"
+            className="min-h-[400px] lg:min-h-[300px] lg:max-h-[60vh] rounded-lg shadow-sm lg:overflow-hidden"
             data-testid="editor-panel"
           >
-            <div className="flex items-center justify-between min-h-[2.5rem] flex-wrap gap-2">
-              <h2
-                className="text-base sm:text-lg font-semibold text-gray-900 truncate"
-                data-testid="editor-panel-title"
-              >
-                {inputMode === "tokenscript" ? "TokenScript Editor" : "JSON Token Input"}
-              </h2>
-              <div
-                className="flex bg-gray-100 rounded-md p-1 flex-shrink-0"
-                data-testid="input-mode-toggle"
-              >
-                <button
-                  type="button"
-                  onClick={() => setInputMode("tokenscript")}
-                  className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-medium transition-colors ${
-                    inputMode === "tokenscript"
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                  data-testid="tokenscript-mode-button"
-                >
-                  TokenScript
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setInputMode("json")}
-                  className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-medium transition-colors ${
-                    inputMode === "json"
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                  data-testid="json-mode-button"
-                >
-                  JSON Tokens
-                </button>
-              </div>
-            </div>
-
-            <div className="min-h-[300px] lg:min-h-0 overflow-hidden">
-              {inputMode === "tokenscript" ? (
-                <TokenScriptEditor
-                  value={code}
-                  onChange={setCode}
-                  onKeyDown={handleKeyDown}
-                  error={result.errorInfo}
-                />
-              ) : (
-                <JsonTokenEditor
-                  value={jsonInput}
-                  onChange={setJsonInput}
-                  onKeyDown={handleKeyDown}
-                  error={jsonError}
-                />
-              )}
-            </div>
+            {inputMode === "tokenscript" ? (
+              <TokenScriptEditor
+                value={code}
+                onChange={setCode}
+                onKeyDown={handleKeyDown}
+                error={result.errorInfo}
+                inputMode={inputMode}
+                onInputModeChange={setInputMode}
+              />
+            ) : (
+              <JsonTokenEditor
+                value={jsonInput}
+                onChange={setJsonInput}
+                onKeyDown={handleKeyDown}
+                error={jsonError}
+                inputMode={inputMode}
+                onInputModeChange={setInputMode}
+              />
+            )}
           </div>
 
-          <div
-            className="grid grid-rows-[auto_1fr] gap-2 sm:gap-4 min-h-0 lg:min-h-0"
-            data-testid="app-output-panel"
-          >
-            <div className="min-h-[2.5rem] flex items-center">
-              <h2
-                className="text-base sm:text-lg font-semibold text-gray-900"
-                data-testid="output-panel-title"
-              >
-                Output
-              </h2>
-            </div>
-            <div className="min-h-[250px] lg:min-h-0 overflow-hidden">
+          {/* Right Column: Schema Panel + Output Panel */}
+          <div className="flex flex-col gap-4 min-h-[400px] lg:overflow-hidden">
+            <div
+              className="lg:max-h-full lg:overflow-hidden rounded-lg shadow-sm"
+              data-testid="app-output-panel"
+            >
               <OutputPanel result={result} />
+            </div>
+
+            {/* Schema Panel */}
+            <div
+              data-testid="schema-panel"
+              className="flex-shrink-0"
+            >
+              <ShellPanel
+                title="Schemas"
+                headerRight={
+                  <button
+                    type="button"
+                    onClick={() => setSchemaPanelCollapsed(!schemaPanelCollapsed)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    data-testid="schema-panel-toggle"
+                    aria-label={
+                      schemaPanelCollapsed ? "Expand schema panel" : "Collapse schema panel"
+                    }
+                  >
+                    <ArrowDown className={`${schemaPanelCollapsed ? "rotate-180" : ""}`} />
+                  </button>
+                }
+                className={`transition-all duration-200 ${schemaPanelCollapsed ? "h-10" : ""} overflow-hidden`}
+                data-testid="schema-shell-panel"
+              >
+                {!schemaPanelCollapsed && <SchemaManager />}
+              </ShellPanel>
             </div>
           </div>
         </div>

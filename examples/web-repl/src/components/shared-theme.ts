@@ -6,7 +6,7 @@ export const tokenscriptThemeColors = {
   function: "#795da3", // Functions (rgb, hsl, lighten, etc.)
   variable: "#001080", // Variables and identifiers
   reference: "#E31837", // References (curly braces like {variable.name})
-  string: "#a31515", // Strings
+  string: "#098658", // Strings
   number: "#098658", // Numbers
   hexColor: "#E07B39", // Hex colors
   comment: "#999999", // Comments
@@ -14,7 +14,7 @@ export const tokenscriptThemeColors = {
   delimiter: "#24292e", // Delimiters (parentheses, brackets, semicolons, etc.)
 
   // JSON-specific mappings
-  jsonString: "#a31515", // JSON string values (maps to string)
+  jsonString: "#098658", // JSON string values (maps to string)
   jsonNumber: "#098658", // JSON number values (maps to number)
   jsonBoolean: "#795da3", // JSON boolean values (maps to function color)
   jsonNull: "#D73A49", // JSON null values (maps to operator color)

@@ -54,3 +54,27 @@ export const ColorSpecificationSchema = z.object({
 export type ColorSpecification = z.infer<typeof ColorSpecificationSchema>;
 
 export const specName = (spec: ColorSpecification): string => spec.name.toLowerCase();
+
+// Minimal viable ColorSpecification for testing and defaults
+export const MINIMAL_COLOR_SPECIFICATION: ColorSpecification = {
+  name: "MinimalColor",
+  type: "color",
+  schema: {
+    type: "object",
+    properties: {
+      value: {
+        type: "string",
+      },
+    },
+  },
+  initializers: [
+    {
+      keyword: "minimal",
+      script: {
+        type: "https://schema.example.com/tokenscript/0/",
+        script: "return {input};",
+      },
+    },
+  ],
+  conversions: [],
+};

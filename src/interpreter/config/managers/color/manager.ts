@@ -23,7 +23,7 @@ type Specs = Map<uriType, ColorSpecification>;
 
 // Defaults --------------------------------------------------------------------
 
-const defaultTypeSpecs: Specs = new Map([
+export const defaultTypeSpecs: Specs = new Map([
   [
     "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/hex-color/0/",
     {
