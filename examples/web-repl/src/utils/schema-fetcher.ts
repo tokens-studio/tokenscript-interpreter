@@ -25,7 +25,12 @@ export async function fetchTokenScriptSchema(
     let proxiedUrl = schemaUri;
 
     // Handle common schema URLs that need proxying
-    if (schemaUri.startsWith("https://schema.tokenscript.dev.gcp.tokens.studio/")) {
+    if (schemaUri.startsWith("https://schema.tokenscript.dev.gcp.tokens.studio/api/")) {
+      proxiedUrl = schemaUri.replace(
+        "https://schema.tokenscript.dev.gcp.tokens.studio/api/",
+        "/api/schema/",
+      );
+    } else if (schemaUri.startsWith("https://schema.tokenscript.dev.gcp.tokens.studio/")) {
       proxiedUrl = schemaUri.replace(
         "https://schema.tokenscript.dev.gcp.tokens.studio/",
         "/api/schema/",
