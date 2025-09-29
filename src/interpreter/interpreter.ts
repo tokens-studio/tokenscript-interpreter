@@ -17,6 +17,7 @@ import {
   type IfNode,
   ImplicitListNode,
   type ListNode,
+  type NullNode,
   type NumNode,
   type ReassignNode,
   type ReferenceNode,
@@ -281,6 +282,10 @@ export class Interpreter {
 
   private visitBooleanNode(node: BooleanNode): BooleanSymbol {
     return new BooleanSymbol(node.value);
+  }
+
+  private visitNullNode(_node: NullNode): NullSymbol {
+    return new NullSymbol();
   }
 
   private visitElementWithUnitNode(node: ElementWithUnitNode): NumberWithUnitSymbol {

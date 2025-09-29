@@ -123,6 +123,11 @@ export class BooleanNode implements ASTNode {
   ) {}
 }
 
+export class NullNode implements ASTNode {
+  nodeType = "NullNode";
+  constructor(public token?: Token) {}
+}
+
 export class ElementWithUnitNode implements ASTNode {
   nodeType = "ElementWithUnitNode";
   public unit: SupportedFormats;

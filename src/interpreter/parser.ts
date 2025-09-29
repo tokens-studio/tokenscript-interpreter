@@ -13,6 +13,7 @@ import {
   IfNode,
   ImplicitListNode,
   ListNode,
+  NullNode,
   NumNode,
   ReassignNode,
   ReferenceNode,
@@ -455,6 +456,11 @@ export class Parser {
     ) {
       this.eat(TokenType.RESERVED_KEYWORD);
       return new BooleanNode(token.value === ReservedKeyword.TRUE, token);
+    }
+
+    if (token.type === TokenType.RESERVED_KEYWORD && token.value === ReservedKeyword.NULL) {
+      this.eat(TokenType.RESERVED_KEYWORD);
+      return new NullNode(token);
     }
 
     if (token.type === TokenType.NUMBER) {
