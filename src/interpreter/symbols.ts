@@ -3,7 +3,7 @@ import type { Config } from "./config/config";
 import { InterpreterError } from "./errors";
 import { isValidHex } from "./utils/color";
 import { capitalize } from "./utils/string";
-import { isNull, isObject, isString, isUndefined, nullToUndefined } from "./utils/type";
+import { isNone, isNull, isObject, isString, isUndefined, nullToUndefined } from "./utils/type";
 
 // Utilities -------------------------------------------------------------------
 
@@ -150,6 +150,36 @@ export abstract class BaseSymbolType implements ISymbolType {
 }
 
 // Concrete Symbol Types -------------------------------------------------------
+
+/**
+ * Null type to differentiate from null values from the host language
+ * Methods returning `null` should return this type, also as empty variables should keep this.
+ * Host language `null` or `undefined` will crash when used as values during intepretation.
+ */
+export class NullSymbol extends BaseSymbolType {
+  type = "Null";
+  static readonly type = "Null";
+
+  constructor() {
+    super(null);
+  }
+
+  validValue(val: any): boolean {
+    return isNone(val);
+  }
+
+  toString(): string {
+    return "null";
+  }
+
+  equals(other: ISymbolType): boolean {
+    return other instanceof NullSymbol;
+  }
+
+  static empty(): NullSymbol {
+    return new NullSymbol();
+  }
+}
 
 type numberValue = number | null;
 
@@ -977,6 +1007,7 @@ export class ColorSymbol extends BaseSymbolType {
 
 export const jsValueToSymbolType = (value: any): ISymbolType => {
   if (value instanceof BaseSymbolType) return value;
+  if (value === null || value === undefined) return new NullSymbol();
   if (typeof value === "number") return new NumberSymbol(value);
   if (typeof value === "string") {
     if (isValidHex(value)) return new ColorSymbol(value);
@@ -1006,6 +1037,7 @@ export const basicSymbolTypes = {
   [NumberSymbol.type.toLowerCase()]: NumberSymbol,
   [StringSymbol.type.toLowerCase()]: StringSymbol,
   [BooleanSymbol.type.toLowerCase()]: BooleanSymbol,
+  [NullSymbol.type.toLowerCase()]: NullSymbol,
   [ListSymbol.type.toLowerCase()]: ListSymbol,
   [NumberWithUnitSymbol.type.toLowerCase()]: NumberWithUnitSymbol,
   [ColorSymbol.type.toLowerCase()]: ColorSymbol,
