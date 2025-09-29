@@ -17,7 +17,7 @@ export default defineConfig({
       "/api/schema": {
         target: "https://schema.tokenscript.dev.gcp.tokens.studio",
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/schema/, "/api"),
+        rewrite: (path) => path.replace(/^\/api\/schema/, ""),
         configure: (proxy, _options) => {
           proxy.on("error", (err, _req, _res) => {
             console.log("proxy error", err);
