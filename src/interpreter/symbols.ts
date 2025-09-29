@@ -7,8 +7,8 @@ import { isNone, isNull, isObject, isString, isUndefined, nullToUndefined } from
 
 // Utilities -------------------------------------------------------------------
 
-export const typeEquals = (typeA: string, typeB: string) =>
-  typeA.toLowerCase() === typeB.toLowerCase();
+export const typeEquals = (typeA: string | null, typeB: string | null) =>
+  typeA?.toLowerCase() === typeB?.toLowerCase();
 
 /**
  * Constructs captialized type name from `base` and `sub?`
@@ -61,8 +61,12 @@ export abstract class BaseSymbolType implements ISymbolType {
     return this.type;
   }
 
+  typeEquals(other: ISymbolType): boolean {
+    return typeEquals(this.type, other.type);
+  }
+
   equals(other: ISymbolType): boolean {
-    return this.type === other.type && this.value === other.value;
+    return this.typeEquals(other) && this.value === other.value;
   }
 
   hasMethod?(methodName: string, args: ISymbolType[]): boolean {
@@ -137,7 +141,7 @@ export abstract class BaseSymbolType implements ISymbolType {
   }
 
   hasAttribute?(_attributeName: string): boolean {
-    return false; // Base implementation
+    return false;
   }
 
   getAttribute?(attributeName: string): ISymbolType | null {
@@ -864,7 +868,7 @@ export class DictionarySymbol extends BaseSymbolType {
   getImpl(key: StringSymbol): ISymbolType {
     this.expectSafeValue(this.value);
     const keyStr = this.ensureKeyIsString(key);
-    return this.value[keyStr] || StringSymbol.empty();
+    return this.value[keyStr] || new NullSymbol();
   }
 
   setImpl(key: StringSymbol, value: ISymbolType): DictionarySymbol {
@@ -969,8 +973,16 @@ export class ColorSymbol extends BaseSymbolType {
     return new StringSymbol("");
   }
 
+  typeEquals(other: ISymbolType): boolean {
+    if (!typeEquals(this.type, other.type)) return false;
+    const otherColor = other as ColorSymbol;
+    // Edge-Case Color without type is equal to Hex
+    if ((!this.subType && otherColor.isHex()) || (this.isHex() && otherColor.subType)) return true;
+    return typeEquals(this.subType, (other as ColorSymbol).subType);
+  }
+
   isHex(): boolean {
-    return this.subType?.toLowerCase() === "hex";
+    return typeEquals(this.subType, "hex");
   }
 
   validValue(val: any): boolean {
@@ -1033,15 +1045,25 @@ export const jsValueToSymbolType = (value: any): ISymbolType => {
   throw new InterpreterError(`Invalid value type: ${typeof value}`);
 };
 
-export const basicSymbolTypes = {
+export const nullableSymbolTypes = {
   [NumberSymbol.type.toLowerCase()]: NumberSymbol,
   [StringSymbol.type.toLowerCase()]: StringSymbol,
   [BooleanSymbol.type.toLowerCase()]: BooleanSymbol,
-  [NullSymbol.type.toLowerCase()]: NullSymbol,
-  [ListSymbol.type.toLowerCase()]: ListSymbol,
   [NumberWithUnitSymbol.type.toLowerCase()]: NumberWithUnitSymbol,
   [ColorSymbol.type.toLowerCase()]: ColorSymbol,
+  [NullSymbol.type.toLowerCase()]: NullSymbol,
+} as const;
+
+export const basicSymbolTypes = {
+  ...nullableSymbolTypes,
+  [ListSymbol.type.toLowerCase()]: ListSymbol,
   [DictionarySymbol.type.toLowerCase()]: DictionarySymbol,
 } as const;
 
 export type BasicSymbolTypeConstructor = (typeof basicSymbolTypes)[keyof typeof basicSymbolTypes];
+
+export const isNullableSymbol = (symbol: ISymbolType): boolean =>
+  symbol.type.toLowerCase() in nullableSymbolTypes;
+
+export const hasNullValue = (symbol: ISymbolType): boolean =>
+  isNullableSymbol(symbol) && isNull(symbol.value);

@@ -37,6 +37,7 @@ import {
   ColorSymbol,
   jsValueToSymbolType,
   ListSymbol,
+  NullSymbol,
   NumberSymbol,
   NumberWithUnitSymbol,
   StringSymbol,
@@ -100,6 +101,16 @@ export class Interpreter {
   public setAst(ast: ASTNode | null): void {
     this.ast = ast;
     this.parser = null; // Clear parser since we're using pre-parsed AST
+  }
+
+  public coerceValue(
+    constructorSymbol: ISymbolType,
+    valueSymbol: ISymbolType,
+  ): ISymbolType | undefined {
+    // Allow constructing symbols of null values
+    if (valueSymbol instanceof NullSymbol) return constructorSymbol;
+    // Edge-case: Allow constructing color of string
+    if (constructorSymbol.typeEquals(valueSymbol)) return valueSymbol;
   }
 
   // Visit Functions -------------------------------------------------------------
@@ -332,21 +343,23 @@ export class Interpreter {
       );
     }
 
-    const value: ISymbolType = node.assignmentExpr
-      ? (this.visit(node.assignmentExpr) as ISymbolType)
-      : this.config.getType(baseType, subType);
+    const constructorSymbol = this.config.getType(baseType, subType);
 
-    if (typeEquals(value.type, "list")) {
-      // TODO Implement list type-checking
-    } else if (!subType && !typeEquals(baseType, value.type)) {
+    const valueSymbol: ISymbolType = node.assignmentExpr
+      ? (this.visit(node.assignmentExpr) as ISymbolType)
+      : constructorSymbol;
+
+    const coercedValueSymbol = this.coerceValue(constructorSymbol, valueSymbol);
+    if (!coercedValueSymbol) {
       throw new InterpreterError(
-        `Invalid value '${value}' ('${baseType}') for variable '${name}'. Use a valid value.`,
+        `Invalid value '${valueSymbol.value}' ('${baseType}') for variable '${name}'. Use a valid value.`,
         node.varName.token.line,
         node.varName.token,
+        { constructorSymbol, valueSymbol, node },
       );
     }
 
-    this.symbolTable.set(name, value);
+    this.symbolTable.set(name, coercedValueSymbol);
   }
 
   private visitReassignNode(node: ReassignNode): void {

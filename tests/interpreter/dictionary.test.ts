@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
 import { Interpreter } from "@interpreter/interpreter";
-import { DictionarySymbol, StringSymbol, ListSymbol, BooleanSymbol, NumberSymbol } from "@interpreter/symbols";
+import { DictionarySymbol, StringSymbol, ListSymbol, BooleanSymbol, NumberSymbol, NullSymbol } from "@interpreter/symbols";
 
 describe("Dictionary Operations", () => {
   describe("Basic Dictionary Operations", () => {
@@ -183,16 +183,15 @@ describe("Dictionary Operations", () => {
     it("should return empty string for non-existent keys", () => {
       const text = `
         variable my_dict: Dictionary;
-        variable value: String = my_dict.get("nonexistent");
-        return value;
+        my_dict.get("nonexistent");
       `;
       const lexer = new Lexer(text);
       const parser = new Parser(lexer);
       const interpreter = new Interpreter(parser);
       const result = interpreter.interpret();
       
-      expect(result).toBeInstanceOf(StringSymbol);
-      expect((result as StringSymbol).value).toBe(null);
+      expect(result).toBeInstanceOf(NullSymbol);
+      expect((result as NullSymbol).value).toBe(null);
     });
 
     it("should handle keyExists for non-existent keys", () => {
@@ -238,7 +237,7 @@ describe("Dictionary Operations", () => {
       const value1 = symbolTable.get("value1");
       const value2 = symbolTable.get("value2");
       const keys = symbolTable.get("keys");
-      
+
       expect(value1?.toString()).toBe("value1");
       expect(value2?.toString()).toBe("value2");
       expect(keys?.toString()).toBe("key1, key2, key3");

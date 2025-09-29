@@ -20,6 +20,13 @@
 
 (defonce !result (atom nil))
 
+(defn show-object [obj]
+  (if (:error obj)
+    obj
+    (try
+      (js->clj (js/Object.assign #js {} obj))
+      (catch :default _ obj))))
+
 (defn run
   ([code]
    (run code {}))
@@ -86,13 +93,6 @@
     (catch :default e {:error e
                        :meta (.-meta e)})))
 
-(defn show-object [obj]
-  (if (:error obj)
-    obj
-    (try
-      (js->clj (js/Object.assign #js {} obj))
-      (catch :default _ obj))))
-
 (def schemas
   {"https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/" "./data/specifications/colors/rgb.json"
    "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0/" "./data/specifications/colors/srgb.json"
@@ -100,14 +100,62 @@
 
 (comment
   (run "1rem + 10% + 1px")
+  (run-python! "variable x: Color.rgb;")
+  (-> (run "variable color: Color = #FF5733;
+return color;
+")
+      show-object
+      (update-in ["meta" "constructorSymbol"] show-object)
+      (update-in ["meta" "valueSymbol"] show-object))
+  ;; => Could not resolve symbol: run
+  (run-python! "variable hello: String = 'HELLO';
+variable world: String = 'world';
+variable result: String = hello.lower();
+variable result2: String = world.upper();
+variable result3: String = hello world;
+")
 
-  (run-python! "variable c: Color.Hsl = hsl(220, 100, 50);")
+  (-> (run "variable x: Number = \"string\";
+x")
+      show-object)
 
-  (-> (run-with-colormanager
-       "variable c: Color.Hsl = hsl(220, 100, 50);
-return c.to.rgb()"
-       {:references {:COLOR "#FF0000"}
-        :schema-uris schemas})
-      (show-object))
 
-  ,)
+  (run "variable my_dict: Dictionary;
+variable value: String = my_dict.get('nonexistent');
+value = 'foo';
+return value;")
+
+  (run "variable my_dict: Dictionary;
+        variable value: String = my_dict.get('nonexistent');
+        return value;")
+  ;; => "Value must be int or float, got <class 'NoneType'>."
+
+  (run-python! "variable c: Dictionary;
+variable foo: Dictionary = c.get(\"foo\");
+return foo")
+  ;; => "OrderedDict()"
+
+  (run-python! "variable c: Dictionary;
+variable foo: List = c.get(\"foo\");
+return foo")
+  ;; => ""
+
+  (run-python! "variable c: Dictionary;
+variable foo: String = c.get(\"foo\");
+foo = 'bar';
+return foo")
+  ;; => "bar"
+
+  (run-python! "variable c: Dictionary;
+variable foo: String = c.get(\"foo\");
+foo.concat(\"bar\");
+return foo")
+
+  (run-python! "variable c: Dictionary;
+variable foo: String = c.get(\"foo\");
+foo = \"bar\";
+return foo")
+
+  (run-python! "variable c: Dictionary;
+c.get(\"foo\") + 1
+"))

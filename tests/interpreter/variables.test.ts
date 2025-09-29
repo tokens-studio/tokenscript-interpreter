@@ -166,8 +166,8 @@ describe("Variables - Assignment", () => {
     hello = "abcdd 'sds'";
     variable world: String = 'efgh';
     variable blub: String = hello;
-    variable lst: String = hello world;
-    variable lst2: String = hello world blub;
+    variable lst: List = hello world;
+    variable lst2: List = hello world blub;
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
@@ -257,7 +257,7 @@ describe("Variables - String Features", () => {
     variable world: String = "world";
     variable result: String = hello.lower();
     variable result2: String = world.upper();
-    variable result3: String = hello world;
+    variable result3: String = hello.concat(" ").concat(world);
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
