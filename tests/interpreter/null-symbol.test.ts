@@ -15,6 +15,14 @@ import { Interpreter } from "@interpreter/interpreter";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
 
+// Helper function to run interpreter code and return the result
+const run = (code: string, references?: Record<string, any>) => {
+  const lexer = new Lexer(code);
+  const parser = new Parser(lexer);
+  const interpreter = new Interpreter(parser, { references });
+  return interpreter.interpret();
+};
+
 describe("NullSymbol", () => {
   it("should create a NullSymbol instance", () => {
     const nullSym = new NullSymbol();
@@ -287,5 +295,233 @@ describe("Null Coercion", () => {
     expect(result).toBeInstanceOf(StringSymbol);
     expect(result?.type).toBe("String");
     expect(result?.value).toBe(null);
+  });
+});
+
+describe("Null Comparison Tests", () => {
+  describe("Nullable Types - Should return true when comparing null values to null", () => {
+    it("should compare String null value to null", () => {
+      const result = run(`
+        variable a: String;
+        return a == null;
+      `);
+      
+      expect(result).toBeInstanceOf(BooleanSymbol);
+      expect(result?.value).toBe(true);
+    });
+
+    it("should compare Number null value to null", () => {
+      const result = run(`
+        variable a: Number;
+        return a == null;
+      `);
+      
+      expect(result).toBeInstanceOf(BooleanSymbol);
+      expect(result?.value).toBe(true);
+    });
+
+    it("should compare Boolean null value to null", () => {
+      const result = run(`
+        variable a: Boolean;
+        return a == null;
+      `);
+      
+      expect(result).toBeInstanceOf(BooleanSymbol);
+      expect(result?.value).toBe(true);
+    });
+
+    it("should compare NumberWithUnit null value to null", () => {
+      const result = run(`
+        variable a: NumberWithUnit;
+        return a == null;
+      `);
+      
+      expect(result).toBeInstanceOf(BooleanSymbol);
+      expect(result?.value).toBe(true);
+    });
+
+    it("should compare Color null value to null", () => {
+      const result = run(`
+        variable a: Color;
+        return a == null;
+      `);
+      
+      expect(result).toBeInstanceOf(BooleanSymbol);
+      expect(result?.value).toBe(true);
+    });
+
+    it("should compare Color.Hex null value to null", () => {
+      const result = run(`
+        variable a: Color.Hex;
+        return a == null;
+      `);
+      
+      expect(result).toBeInstanceOf(BooleanSymbol);
+      expect(result?.value).toBe(true);
+    });
+  });
+
+  describe("Nullable Types - Should return false when comparing non-null values to null", () => {
+    it("should compare String with value to null", () => {
+      const result = run(`
+        variable a: String = "hello";
+        return a == null;
+      `);
+      
+      expect(result).toBeInstanceOf(BooleanSymbol);
+      expect(result?.value).toBe(false);
+    });
+
+    it("should compare Number with value to null", () => {
+      const result = run(`
+        variable a: Number = 42;
+        return a == null;
+      `);
+      
+      expect(result).toBeInstanceOf(BooleanSymbol);
+      expect(result?.value).toBe(false);
+    });
+
+    it("should compare Boolean with value to null", () => {
+      const result = run(`
+        variable a: Boolean = true;
+        return a == null;
+      `);
+      
+      expect(result).toBeInstanceOf(BooleanSymbol);
+      expect(result?.value).toBe(false);
+    });
+
+    it("should compare NumberWithUnit with value to null", () => {
+      const result = run(`
+        variable a: NumberWithUnit = 10px;
+        return a == null;
+      `);
+      
+      expect(result).toBeInstanceOf(BooleanSymbol);
+      expect(result?.value).toBe(false);
+    });
+
+    it("should compare Color with value to null", () => {
+      const result = run(`
+        variable a: Color = #ff0000;
+        return a == null;
+      `);
+      
+      expect(result).toBeInstanceOf(BooleanSymbol);
+      expect(result?.value).toBe(false);
+    });
+  });
+
+  describe("Non-nullable Types - List and Dictionary cannot have null values", () => {
+    it("should compare empty List to null (should return false)", () => {
+      const result = run(`
+        variable a: List;
+        return a == null;
+      `);
+      
+      expect(result).toBeInstanceOf(BooleanSymbol);
+      expect(result?.value).toBe(false);
+    });
+
+    it("should compare List with elements to null (should return false)", () => {
+      const result = run(`
+        variable a: List = 1, 2, 3;
+        return a == null;
+      `);
+      
+      expect(result).toBeInstanceOf(BooleanSymbol);
+      expect(result?.value).toBe(false);
+    });
+
+    it("should compare empty Dictionary to null (should return false)", () => {
+      const result = run(`
+        variable a: Dictionary;
+        return a == null;
+      `);
+      
+      expect(result).toBeInstanceOf(BooleanSymbol);
+      expect(result?.value).toBe(false);
+    });
+
+    it("should compare Dictionary with values to null (should return false)", () => {
+      const result = run(`
+        variable a: Dictionary;
+        a.set("key", "value");
+        return a == null;
+      `);
+      
+      expect(result).toBeInstanceOf(BooleanSymbol);
+      expect(result?.value).toBe(false);
+    });
+  });
+
+  describe("Inequality comparison with null", () => {
+    it("should handle != null comparison for nullable types", () => {
+      const resultNull = run(`
+        variable a: String;
+        return a != null;
+      `);
+      
+      expect(resultNull).toBeInstanceOf(BooleanSymbol);
+      expect(resultNull?.value).toBe(false);
+
+      const resultValue = run(`
+        variable a: String = "hello";
+        return a != null;
+      `);
+      
+      expect(resultValue).toBeInstanceOf(BooleanSymbol);
+      expect(resultValue?.value).toBe(true);
+    });
+
+    it("should handle != null comparison for non-nullable types", () => {
+      const result = run(`
+        variable a: List;
+        return a != null;
+      `);
+      
+      expect(result).toBeInstanceOf(BooleanSymbol);
+      expect(result?.value).toBe(true);
+    });
+  });
+
+  describe("Complex null comparison scenarios", () => {
+    it("should handle multiple null comparisons in one expression", () => {
+      const result = run(`
+        variable a: String;
+        variable b: Number;
+        variable c: List;
+        return (a == null) && (b == null) && (c != null);
+      `);
+      
+      expect(result).toBeInstanceOf(BooleanSymbol);
+      expect(result?.value).toBe(true);
+    });
+
+    it("should handle null comparison in if statements", () => {
+      const result = run(`
+        variable a: String;
+        if (a == null) [
+          return "is null";
+        ] else [
+          return "not null";
+        ];
+      `);
+      
+      expect(result).toBeInstanceOf(StringSymbol);
+      expect(result?.value).toBe("is null");
+    });
+
+    it("should handle null comparison with method results", () => {
+      const result = run(`
+        variable dict: Dictionary;
+        variable retrieved: String = dict.get("nonexistent");
+        return retrieved == null;
+      `);
+      
+      expect(result).toBeInstanceOf(BooleanSymbol);
+      expect(result?.value).toBe(true);
+    });
   });
 });
