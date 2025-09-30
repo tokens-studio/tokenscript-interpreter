@@ -17,6 +17,7 @@ import {
   type IfNode,
   ImplicitListNode,
   type ListNode,
+  type NullNode,
   type NumNode,
   type ReassignNode,
   type ReferenceNode,
@@ -37,6 +38,7 @@ import {
   ColorSymbol,
   jsValueToSymbolType,
   ListSymbol,
+  NullSymbol,
   NumberSymbol,
   NumberWithUnitSymbol,
   StringSymbol,
@@ -48,12 +50,14 @@ class ReturnSignal {
   constructor(public value: ISymbolType | null) {}
 }
 
+export type interpreterResult = ISymbolType | string | null;
+
 export class Interpreter {
   private parser: Parser | null = null; // Null if created with pre-parsed AST
   private symbolTable: SymbolTable;
   private references: Map<string, ISymbolType> = new Map();
   private ast: ASTNode | null = null;
-  private config: Config;
+  public config: Config;
 
   constructor(
     input: Parser | ASTNode | null,
@@ -100,6 +104,14 @@ export class Interpreter {
   public setAst(ast: ASTNode | null): void {
     this.ast = ast;
     this.parser = null; // Clear parser since we're using pre-parsed AST
+  }
+
+  public coerceValue(
+    constructorSymbol: ISymbolType,
+    valueSymbol: ISymbolType,
+  ): ISymbolType | undefined {
+    if (valueSymbol instanceof NullSymbol) return constructorSymbol;
+    if (constructorSymbol.typeEquals(valueSymbol)) return valueSymbol;
   }
 
   // Visit Functions -------------------------------------------------------------
@@ -272,6 +284,10 @@ export class Interpreter {
     return new BooleanSymbol(node.value);
   }
 
+  private visitNullNode(_node: NullNode): NullSymbol {
+    return new NullSymbol();
+  }
+
   private visitElementWithUnitNode(node: ElementWithUnitNode): NumberWithUnitSymbol {
     const valNodeVisit = this.visit(node.astNode);
     return new NumberWithUnitSymbol(valNodeVisit?.value, node.unit);
@@ -332,21 +348,23 @@ export class Interpreter {
       );
     }
 
-    const value: ISymbolType = node.assignmentExpr
-      ? (this.visit(node.assignmentExpr) as ISymbolType)
-      : this.config.getType(baseType, subType);
+    const constructorSymbol = this.config.getType(baseType, subType);
 
-    if (typeEquals(value.type, "list")) {
-      // TODO Implement list type-checking
-    } else if (!subType && !typeEquals(baseType, value.type)) {
+    const valueSymbol: ISymbolType = node.assignmentExpr
+      ? (this.visit(node.assignmentExpr) as ISymbolType)
+      : constructorSymbol;
+
+    const coercedValueSymbol = this.coerceValue(constructorSymbol, valueSymbol);
+    if (!coercedValueSymbol) {
       throw new InterpreterError(
-        `Invalid value '${value}' ('${baseType}') for variable '${name}'. Use a valid value.`,
+        `Invalid value '${valueSymbol.value}' ('${baseType}') for variable '${name}'. Use a valid value.`,
         node.varName.token.line,
         node.varName.token,
+        { constructorSymbol, valueSymbol, node },
       );
     }
 
-    this.symbolTable.set(name, value);
+    this.symbolTable.set(name, coercedValueSymbol);
   }
 
   private visitReassignNode(node: ReassignNode): void {
@@ -540,7 +558,7 @@ export class Interpreter {
     return null;
   }
 
-  public interpret(): ISymbolType | string | null {
+  public interpret(): interpreterResult {
     const tree = this.ast || (this.parser ? this.parser.parse() : null);
     if (!tree) return "";
 

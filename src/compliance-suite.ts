@@ -2,10 +2,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { Config } from "@interpreter/config/config";
 import { ColorManager } from "@interpreter/config/managers/color/manager";
-import { Interpreter } from "@interpreter/interpreter";
+import { Interpreter, type interpreterResult } from "@interpreter/interpreter";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
-import { ColorSymbol } from "@interpreter/symbols";
+import { BaseSymbolType, ColorSymbol } from "@interpreter/symbols";
+import { groupBy } from "./interpreter/utils/coll";
+import { InterpreterError, type ISymbolType, LexerError, ParserError } from "./lib";
 
 interface TestCase {
   name: string;
@@ -15,17 +17,14 @@ interface TestCase {
   inline: boolean;
   context?: Record<string, any>;
   schemas?: string[];
+  path: string;
 }
 
-interface TestResult {
+interface TestResult extends TestCase {
   status: "passed" | "failed";
-  path: string;
-  name: string;
   actualOutput: any;
   actualOutputType: string;
-  expectedOutput: any;
-  expectedOutputType: string;
-  error?: string;
+  error?: Error;
 }
 
 interface ComplianceReport {
@@ -67,16 +66,6 @@ function loadSchemas(schemas: string[]): ColorManager {
   return colorManager;
 }
 
-function getType(value: any): string {
-  if (value === null) return "Null";
-  if (Array.isArray(value)) return "Array";
-  return typeof value === "object"
-    ? "Object"
-    : value.constructor?.name
-      ? value.constructor.name
-      : typeof value;
-}
-
 function readJsonFilesRecursively(dir: string): string[] {
   let results: string[] = [];
   const list = fs.readdirSync(dir);
@@ -98,235 +87,159 @@ interface ComplianceConfig {
   output?: string;
 }
 
+const parseTestCasesJson = (json: string, filePath: string): TestCase[] => {
+  try {
+    const testCases = JSON.parse(json);
+    return !Array.isArray(testCases) ? [testCases] : testCases;
+  } catch (_e) {
+    throw new Error(`Could not parse json at path: ${filePath}`);
+  }
+};
+
+const runTest = (test: TestCase): { interpreter: Interpreter; result: interpreterResult } => {
+  const lexer = new Lexer(test.input);
+  const parser = new Parser(lexer);
+  const ast = parser.parse(test.inline);
+
+  let config: Config;
+  if (test.schemas && test.schemas.length > 0) {
+    const colorManager = loadSchemas(test.schemas);
+    config = new Config({ colorManager });
+  } else {
+    config = new Config();
+  }
+
+  const interpreter = new Interpreter(ast, { references: test.context || {}, config });
+  return {
+    interpreter,
+    result: interpreter.interpret(),
+  };
+};
+
+interface ComplianceResult {
+  actualOutput: string;
+  actualOutputType: string;
+}
+
+const interpreterSymbolToComplianceResult = (
+  symbol: ISymbolType,
+  interpreter: Interpreter,
+): ComplianceResult => {
+  // Colors need to be formatted using ColorManager, as we need the order rules
+  if (symbol instanceof ColorSymbol) {
+    return {
+      actualOutput: interpreter.config.colorManager.formatColorMethod(symbol),
+      actualOutputType: symbol.getTypeName(),
+    };
+  }
+
+  return {
+    actualOutput: symbol.toString(),
+    actualOutputType: symbol.getTypeName(),
+  };
+};
+
+const compareResults = (
+  complianceResult: ComplianceResult,
+  testCase: TestCase,
+): "passed" | "failed" => {
+  const isPassing =
+    complianceResult.actualOutput === testCase.expectedOutput &&
+    complianceResult.actualOutputType === testCase.expectedOutputType;
+  return isPassing ? "passed" : "failed";
+};
+
 export async function evaluateStandardCompliance(config: ComplianceConfig) {
   const files = config.file
     ? [config.file]
     : config.dir
       ? readJsonFilesRecursively(config.dir)
       : [];
-  const results: TestResult[] = [];
-  let passed = 0;
-  let failed = 0;
 
-  for (const file of files) {
-    const content = fs.readFileSync(file, "utf-8");
-    let testCases: TestCase[] = [];
-    try {
-      testCases = JSON.parse(content);
-      if (!Array.isArray(testCases)) testCases = [testCases];
-    } catch (_e) {
-      continue;
-    }
-    for (const test of testCases) {
-      let actualOutput: any = null;
-      let actualOutputType: string = "Unknown";
-      let status: "passed" | "failed" = "failed";
-      let error: string | undefined;
+  const testResults: TestResult[] = files.flatMap((path) => {
+    const content = fs.readFileSync(path, "utf-8");
+    const testCases: TestCase[] = parseTestCasesJson(content, path);
+
+    return testCases.map((testCase) => {
+      let testResult: TestResult;
       try {
-        const lexer = new Lexer(test.input);
-        const parser = new Parser(lexer);
-        const ast = parser.parse(test.inline);
-
-        // Load schemas if specified
-        let config: Config;
-        if (test.schemas && test.schemas.length > 0) {
-          const colorManager = loadSchemas(test.schemas);
-          config = new Config({ colorManager });
-        } else {
-          config = new Config();
+        const { result, interpreter } = runTest(testCase);
+        if (!(result instanceof BaseSymbolType)) {
+          throw new Error(`result (${result}) in s not interpreter Symbol`);
         }
-
-        const interpreter = new Interpreter(ast, { references: test.context || {}, config });
-        const result = interpreter.interpret();
-        // Always deeply normalize output for report and comparison
-        function normalize(val: any): { value: any; type: string } {
-          if (val && typeof val === "object") {
-            // Handle ColorSymbol specifically to use ColorManager formatting
-            if (val instanceof ColorSymbol) {
-              return {
-                value: config.colorManager.formatColorMethod(val),
-                type: val.getTypeName(),
-              };
-            }
-            // Handle ListSymbol or arrays
-            if (Array.isArray(val)) {
-              const isUniformTypeList = val.every((v) => v.type === val[0].type);
-
-              const normList = val.map((v) => {
-                const normItem = normalize(v);
-
-                if (isUniformTypeList) return normItem.value;
-
-                // Wrap strings in list of mixed types in quotes
-                return normItem.type === "String" ? `"${normItem.value}"` : normItem.value;
-              });
-
-              return { value: normList, type: "List" };
-            }
-            // Handle NumberWithUnitSymbol or similar
-            if (
-              (val.type === "NumberWithUnit" ||
-                val.$type === "NumberWithUnit" ||
-                val.type === "dimension" ||
-                val.$type === "dimension") &&
-              (typeof val.value === "number" || typeof val.$value === "number") &&
-              (typeof val.unit === "string" || typeof val.$unit === "string")
-            ) {
-              const number = val.value ?? val.$value;
-              const unit = val.unit ?? val.$unit;
-              return { value: `${number}${unit}`, type: "NumberWithUnit" };
-            }
-            // Handle objects with $value/$type (TokenScript output)
-            if ("$value" in val) {
-              // Recursively normalize $value
-              const norm = normalize(val.$value);
-              return {
-                value: norm.value,
-                type: val.$type ? capitalizeFirst(val.$type) : getType(val.$value),
-              };
-            }
-            // Handle objects with value/type (TokenScript output)
-            if ("value" in val && "type" in val && typeof val.type === "string") {
-              // Recursively normalize value
-              const norm = normalize(val.value);
-              return {
-                value: norm.value,
-                type: val.getTypeName ? val.getTypeName() : capitalizeFirst(val.type),
-              };
-            }
-          }
-          return { value: val, type: val?.getTypeName ? val.getTypeName() : getType(val) };
+        const complianceResult = interpreterSymbolToComplianceResult(result, interpreter);
+        testResult = {
+          ...testCase,
+          ...complianceResult,
+          path: path,
+          status: compareResults(complianceResult, testCase),
+        };
+      } catch (e: any) {
+        if (e instanceof InterpreterError || e instanceof LexerError || e instanceof ParserError) {
+          const complianceResult: ComplianceResult = {
+            actualOutput: e.originalMessage || "",
+            actualOutputType: "Error",
+          };
+          return {
+            ...testCase,
+            ...complianceResult,
+            path: path,
+            status: compareResults(complianceResult, testCase),
+            error: e,
+          };
         }
-        const { value: normalizedValue, type: normalizedType } = normalize(result);
-        actualOutput = normalizedValue;
-        actualOutputType = normalizedType;
-
-        // Special case for expected errors
-        if (test.expectedOutputType === "Error") {
-          // We expected an error but got a result instead
-          failed++;
-        }
-        // Simply stringify arrays and compare as strings, regardless of format
-        else if (Array.isArray(normalizedValue) && test.expectedOutputType === "List") {
-          // Handle case where expectedOutput is already a string but the normalizedValue is an array
-          const actualArrayString = normalizedValue.join(", ").toLowerCase();
-          const expectedOutputLower =
-            typeof test.expectedOutput === "string"
-              ? test.expectedOutput.toLowerCase()
-              : Array.isArray(test.expectedOutput)
-                ? test.expectedOutput.join(", ").toLowerCase()
-                : String(test.expectedOutput).toLowerCase();
-
-          if (actualArrayString === expectedOutputLower) {
-            status = "passed";
-            passed++;
-          } else {
-            console.log(
-              `List comparison failed: "${actualArrayString}" !== "${expectedOutputLower}"`,
-            );
-            failed++;
-          }
-        }
-        // Special handling for ImplicitList (space-separated instead of comma-separated)
-        else if (Array.isArray(normalizedValue) && test.expectedOutputType === "ImplicitList") {
-          // Convert normalized value to space-separated string
-          const actualArrayString = normalizedValue.join(" ").toLowerCase();
-
-          // Handle both string and array expectedOutput
-          const expectedArrayString =
-            typeof test.expectedOutput === "string"
-              ? test.expectedOutput.toLowerCase()
-              : Array.isArray(test.expectedOutput)
-                ? test.expectedOutput.join(" ").toLowerCase()
-                : String(test.expectedOutput).toLowerCase();
-
-          if (actualArrayString === expectedArrayString) {
-            status = "passed";
-            passed++;
-          } else {
-            failed++;
-          }
-        }
-        // Use toUnitString for non-array values
-        else if (
-          toUnitString(normalizedValue).toLowerCase() ===
-            toUnitString(test.expectedOutput).toLowerCase() &&
-          normalizedType === test.expectedOutputType
-        ) {
-          status = "passed";
-          passed++;
-        } else {
-          failed++;
-        }
-      } catch (e) {
-        error = e instanceof Error ? e.message : String(e);
-
-        // Check if this was an expected error
-        if (test.expectedOutputType === "Error") {
-          // We expected an error, and got one - check if the error message contains the expected text
-          const errorMsg = e instanceof Error ? e.message : String(e);
-
-          const normalizedError = errorMsg.replace(/^Line \d+: /, "");
-          const normalizedOutputError = test.expectedOutput.replace(/ at position \d+\.$/, "");
-
-          if (normalizedError.includes(normalizedOutputError)) {
-            status = "passed";
-            passed++;
-          } else {
-            // Error message doesn't match what was expected
-            failed++;
-          }
-        } else {
-          // We didn't expect an error
-          failed++;
-        }
+        throw e;
       }
-      results.push({
-        status,
-        path: file,
-        name: test.name,
-        actualOutput: Array.isArray(actualOutput)
-          ? actualOutput.join(
-              // Use test.expectedOutputType as fallback since normalizedType is not in scope here
-              test.expectedOutputType === "ImplicitList" ? " " : ", ",
-            )
-          : actualOutput,
-        actualOutputType,
-        expectedOutput: Array.isArray(test.expectedOutput)
-          ? test.expectedOutput.join(test.expectedOutputType === "ImplicitList" ? " " : ", ")
-          : test.expectedOutput,
-        expectedOutputType: test.expectedOutputType,
-        error,
-      });
-    }
-  }
 
-  const report: ComplianceReport = { passed, failed, results };
+      return {
+        ...testCase,
+        ...testResult,
+        status: "passed",
+        path: path,
+      };
+    });
+  });
+
+  const { passed = [], failed = [] } = groupBy((x) => x.status, testResults);
+
+  // Order keys for json output
+  const orderedResults = testResults.map(
+    ({
+      name,
+      input,
+      inline,
+      context,
+      path,
+      status,
+      actualOutput,
+      actualOutputType,
+      expectedOutput,
+      expectedOutputType,
+      ...rest
+    }) => ({
+      name,
+      path,
+      status,
+      inline,
+      context,
+      input,
+      actualOutput,
+      actualOutputType,
+      expectedOutput,
+      expectedOutputType,
+      ...rest,
+    }),
+  );
+
+  const report: ComplianceReport = {
+    passed: passed.length,
+    failed: failed.length,
+    results: orderedResults,
+  };
 
   if (config.output) {
     fs.writeFileSync(config.output, JSON.stringify(report, null, 2), "utf-8");
   }
 
   return report;
-}
-
-function capitalizeFirst(str: string) {
-  if (!str) return str;
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-function toUnitString(val: any): string {
-  // Handles NumberWithUnit objects from interpreter output or test expectations
-  if (
-    val &&
-    typeof val === "object" &&
-    (val.type === "NumberWithUnit" || val.$type === "NumberWithUnit") &&
-    (typeof val.value === "number" || typeof val.$value === "number") &&
-    (typeof val.unit === "string" || typeof val.$unit === "string")
-  ) {
-    const number = val.value ?? val.$value;
-    const unit = val.unit ?? val.$unit;
-    return `${number}${unit}`;
-  }
-  return String(val);
 }

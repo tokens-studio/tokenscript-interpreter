@@ -4,10 +4,12 @@ import { InterpreterError } from "./errors";
 import {
   type BaseSymbolType,
   BooleanSymbol,
+  NullSymbol,
   NumberSymbol,
   NumberWithUnitSymbol,
   StringSymbol,
 } from "./symbols";
+import { isNull } from "./utils/type";
 
 type MathOperand = NumberSymbol | NumberWithUnitSymbol;
 type OperationFunction = (a: MathOperand, b: MathOperand, config?: Config) => MathOperand;
@@ -72,8 +74,50 @@ function mathWrapper(func: (a: number, b: number) => number): OperationFunction 
   };
 }
 
-function comparisonWrapper(fn: (a: any, b: any) => boolean): BooleanOperationFunction {
+function equalityComparisonWrapper(fn: (a: any, b: any) => boolean): BooleanOperationFunction {
   return (a: ISymbolType, b: ISymbolType): BooleanSymbol => {
+    const isNullComparison = a instanceof NullSymbol || b instanceof NullSymbol;
+
+    if (!isNullComparison) {
+      const isNumericA = a instanceof NumberSymbol || a instanceof NumberWithUnitSymbol;
+      const isNumericB = b instanceof NumberSymbol || b instanceof NumberWithUnitSymbol;
+      if (isNumericA && !isNumericB) {
+        throw new InterpreterError(`Cannot compare ${a.type} with ${b.type}. Incompatible types.`);
+      }
+
+      const isStringA = a instanceof StringSymbol;
+      const isStringB = b instanceof StringSymbol;
+      if (isStringA && !isStringB) {
+        throw new InterpreterError(`Cannot compare ${a.type} with ${b.type}. Incompatible types.`);
+      }
+
+      const isBooleanA = a instanceof BooleanSymbol;
+      const isBooleanB = b instanceof BooleanSymbol;
+      if (isBooleanA && !isBooleanB) {
+        throw new InterpreterError(`Cannot compare ${a.type} with ${b.type}. Incompatible types.`);
+      }
+
+      if (
+        a instanceof NumberWithUnitSymbol &&
+        b instanceof NumberWithUnitSymbol &&
+        a.unit !== b.unit
+      ) {
+        throw new InterpreterError(
+          `Cannot compare NumberWithUnit of different units: ${a.unit} and ${b.unit}`,
+        );
+      }
+    }
+
+    return new BooleanSymbol(fn(a.value, b.value));
+  };
+}
+
+function orderingComparisonWrapper(fn: (a: any, b: any) => boolean): BooleanOperationFunction {
+  return (a: ISymbolType, b: ISymbolType): BooleanSymbol => {
+    if (a instanceof NullSymbol || b instanceof NullSymbol || isNull(a.value) || isNull(b.value)) {
+      throw new InterpreterError(`Cannot perform ordering comparison with null values.`);
+    }
+
     const isNumericA = a instanceof NumberSymbol || a instanceof NumberWithUnitSymbol;
     const isNumericB = b instanceof NumberSymbol || b instanceof NumberWithUnitSymbol;
     if (isNumericA && !isNumericB) {
@@ -182,10 +226,10 @@ export const MATH_IMPLEMENTATIONS: Record<string, OperationFunction> = {
 
 // Comparison operations map to TokenType values directly
 export const COMPARISON_IMPLEMENTATIONS: Record<string, BooleanOperationFunction> = {
-  IS_EQ: comparisonWrapper((a, b) => a === b),
-  IS_NOT_EQ: comparisonWrapper((a, b) => a !== b),
-  GT: comparisonWrapper((a, b) => a > b),
-  LT: comparisonWrapper((a, b) => a < b),
-  IS_GT_EQ: comparisonWrapper((a, b) => a >= b),
-  IS_LT_EQ: comparisonWrapper((a, b) => a <= b),
+  IS_EQ: equalityComparisonWrapper((a, b) => a === b),
+  IS_NOT_EQ: equalityComparisonWrapper((a, b) => a !== b),
+  GT: orderingComparisonWrapper((a, b) => a > b),
+  LT: orderingComparisonWrapper((a, b) => a < b),
+  IS_GT_EQ: orderingComparisonWrapper((a, b) => a >= b),
+  IS_LT_EQ: orderingComparisonWrapper((a, b) => a <= b),
 };

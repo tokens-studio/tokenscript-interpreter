@@ -24,16 +24,11 @@ export class Lexer {
     this.currentChar = this.text[this.pos];
   }
 
-  private error(description = ""): never {
-    if (this.currentChar === null) {
-      throw new LexerError(
-        `Unexpected end of input at position ${this.pos}. ${description}`,
-        this.line,
-      );
-    }
+  private error(description?: string): never {
+    const char = this.currentChar === null ? "end of input" : this.currentChar;
 
     throw new LexerError(
-      `Invalid character '${this.currentChar}' at position ${this.pos}. ${description}`,
+      `Invalid character '${char}' at position ${this.pos}.${description ? ` ${description}` : ""}`,
       this.line,
       { type: TokenType.EOF, value: this.currentChar, line: this.line },
     );
