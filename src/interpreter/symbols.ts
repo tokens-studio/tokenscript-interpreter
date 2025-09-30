@@ -713,9 +713,6 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
   }
 
   toString(): string {
-    if (this.value === null) {
-      throw new InterpreterError("Cannot convert null to string.");
-    }
     return `${this.value}${this.unit}`;
   }
 
