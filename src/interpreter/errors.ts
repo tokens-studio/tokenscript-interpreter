@@ -5,6 +5,7 @@ export class LanguageError extends Error {
   public line?: number;
   public token?: Token;
   public meta?: any;
+  public originalMessage?: string;
 
   constructor(message: string, line?: number, token?: Token, meta?: any) {
     super(message);
@@ -14,6 +15,7 @@ export class LanguageError extends Error {
       this.line = token.line;
     }
     this.token = token;
+    this.originalMessage = message;
     this.message = this.formatMessage();
     this.meta = meta;
   }

@@ -50,12 +50,14 @@ class ReturnSignal {
   constructor(public value: ISymbolType | null) {}
 }
 
+export type interpreterResult = ISymbolType | string | null;
+
 export class Interpreter {
   private parser: Parser | null = null; // Null if created with pre-parsed AST
   private symbolTable: SymbolTable;
   private references: Map<string, ISymbolType> = new Map();
   private ast: ASTNode | null = null;
-  private config: Config;
+  public config: Config;
 
   constructor(
     input: Parser | ASTNode | null,
@@ -558,7 +560,7 @@ export class Interpreter {
     return null;
   }
 
-  public interpret(): ISymbolType | string | null {
+  public interpret(): interpreterResult {
     const tree = this.ast || (this.parser ? this.parser.parse() : null);
     if (!tree) return "";
 
