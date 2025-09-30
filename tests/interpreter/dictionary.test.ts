@@ -180,10 +180,10 @@ describe("Dictionary Operations", () => {
   });
 
   describe("Error Handling", () => {
-    it("should return empty string for non-existent keys", () => {
+    it("should return null for non-existent keys", () => {
       const text = `
         variable my_dict: Dictionary;
-        my_dict.get("nonexistent");
+        return my_dict.get("nonexistent");
       `;
       const lexer = new Lexer(text);
       const parser = new Parser(lexer);
@@ -263,6 +263,67 @@ describe("Dictionary Operations", () => {
       const symbolTable = (interpreter as any).symbolTable;
       const myList = symbolTable.get("my_list");
       expect(myList?.toString()).toBe("1, 2");
+    });
+  });
+
+  describe("Insertion Order Preservation (OrderedDict Behavior)", () => {
+    it("should preserve insertion order when adding keys", () => {
+      const text = `
+        variable my_dict: Dictionary;
+        my_dict.set("third", "3");
+        my_dict.set("first", "1");
+        my_dict.set("second", "2");
+        variable keys: List = my_dict.keys();
+        return keys;
+      `;
+      const lexer = new Lexer(text);
+      const parser = new Parser(lexer);
+      const interpreter = new Interpreter(parser);
+      const result = interpreter.interpret();
+      
+      expect(result).toBeInstanceOf(ListSymbol);
+      // Keys should be in insertion order: third, first, second
+      expect(result?.toString()).toBe("third, first, second");
+    });
+
+    it("should preserve insertion order in toString output", () => {
+      const text = `
+        variable my_dict: Dictionary;
+        my_dict.set("z", "last");
+        my_dict.set("a", "first");
+        my_dict.set("m", "middle");
+        return my_dict;
+      `;
+      const lexer = new Lexer(text);
+      const parser = new Parser(lexer);
+      const interpreter = new Interpreter(parser);
+      const result = interpreter.interpret();
+      
+      expect(result).toBeInstanceOf(DictionarySymbol);
+      // Dictionary string representation should maintain insertion order
+      expect(result?.toString()).toBe("{'z': 'last', 'a': 'first', 'm': 'middle'}");
+    });
+
+    it("should maintain order when deleting and re-adding keys", () => {
+      const text = `
+        variable my_dict: Dictionary;
+        my_dict.set("first", "1");
+        my_dict.set("second", "2");
+        my_dict.set("third", "3");
+        my_dict.delete("second");
+        my_dict.set("fourth", "4");
+        my_dict.set("second", "2b");
+        variable keys: List = my_dict.keys();
+        return keys;
+      `;
+      const lexer = new Lexer(text);
+      const parser = new Parser(lexer);
+      const interpreter = new Interpreter(parser);
+      const result = interpreter.interpret();
+      
+      expect(result).toBeInstanceOf(ListSymbol);
+      // Order should be: first, third, fourth, second (second re-added at the end)
+      expect(result?.toString()).toBe("first, third, fourth, second");
     });
   });
 });

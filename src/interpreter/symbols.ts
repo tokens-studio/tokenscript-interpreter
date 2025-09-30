@@ -6,6 +6,7 @@ import { capitalize } from "./utils/string";
 import {
   isArray,
   isBoolean,
+  isMap,
   isNone,
   isNull,
   isNumber,
@@ -827,16 +828,20 @@ export class DictionarySymbol extends BaseSymbolType {
     },
   };
 
-  public value: Record<string, ISymbolType> | null;
+  public value: Map<string, ISymbolType>;
 
-  constructor(value: Record<string, ISymbolType> | DictionarySymbol | null) {
-    let safeValue: Record<string, ISymbolType> | null;
+  constructor(
+    value: Map<string, ISymbolType> | Record<string, ISymbolType> | DictionarySymbol | null,
+  ) {
+    let safeValue: Map<string, ISymbolType> | null;
     if (value instanceof DictionarySymbol) {
       safeValue = value.value;
-    } else if (value === null) {
-      safeValue = {};
-    } else if (typeof value === "object" && !Array.isArray(value)) {
+    } else if (isMap(value)) {
       safeValue = value;
+    } else if (isNull(value)) {
+      safeValue = new Map();
+    } else if (isObject(value)) {
+      safeValue = new Map(Object.entries(value));
     } else {
       throw new InterpreterError(`Value must be dict, got ${typeof value}.`);
     }
@@ -845,18 +850,18 @@ export class DictionarySymbol extends BaseSymbolType {
   }
 
   validValue(val: any): boolean {
-    return typeof val === "object" && !Array.isArray(val) && val !== null;
+    return isMap(val) || isNull(val);
   }
 
-  expectSafeValue(val: any): asserts val is Record<string, ISymbolType> {
-    if (val === null || val === undefined) {
+  expectSafeValue(val: any): asserts val is Map<string, ISymbolType> {
+    if (isNone(val)) {
       throw new InterpreterError("Dictionary value cannot be null.");
     }
   }
 
   toString(): string {
     this.expectSafeValue(this.value);
-    const entries = Object.entries(this.value)
+    const entries = Array.from(this.value.entries())
       .map(([key, value]) => `'${key}': '${value.toString()}'`)
       .join(", ");
     return `{${entries}}`;
@@ -875,47 +880,43 @@ export class DictionarySymbol extends BaseSymbolType {
   getImpl(key: StringSymbol): ISymbolType {
     this.expectSafeValue(this.value);
     const keyStr = this.ensureKeyIsString(key);
-    return this.value[keyStr] || new NullSymbol();
+    return this.value.get(keyStr) || new NullSymbol();
   }
 
   setImpl(key: StringSymbol, value: ISymbolType): DictionarySymbol {
     this.expectSafeValue(this.value);
     const keyStr = this.ensureKeyIsString(key);
-    this.value[keyStr] = value;
+    this.value.set(keyStr, value);
     return this;
   }
 
   deleteImpl(key: StringSymbol): DictionarySymbol {
     this.expectSafeValue(this.value);
     const keyStr = this.ensureKeyIsString(key);
-    if (keyStr in this.value) {
-      delete this.value[keyStr];
-    }
+    this.value.delete(keyStr);
     return this;
   }
 
   keysImpl(): ListSymbol {
     this.expectSafeValue(this.value);
-    const keys = Object.keys(this.value).map((key) => new StringSymbol(key));
+    const keys = Array.from(this.value.keys()).map((key) => new StringSymbol(key));
     return new ListSymbol(keys);
   }
 
   keyExistsImpl(key: StringSymbol): BooleanSymbol {
     this.expectSafeValue(this.value);
     const keyStr = this.ensureKeyIsString(key);
-    return new BooleanSymbol(keyStr in this.value);
+    return new BooleanSymbol(this.value.has(keyStr));
   }
 
   lengthImpl(): NumberSymbol {
     this.expectSafeValue(this.value);
-    return new NumberSymbol(Object.keys(this.value).length);
+    return new NumberSymbol(this.value.size);
   }
 
   clearImpl(): DictionarySymbol {
     this.expectSafeValue(this.value);
-    for (const key in this.value) {
-      delete this.value[key];
-    }
+    this.value.clear();
     return this;
   }
 
@@ -1042,11 +1043,11 @@ export const jsValueToSymbolType = (value: any): ISymbolType => {
 
   // Convert plain object to dictionary
   if (isObject(value)) {
-    const dictValue: Record<string, ISymbolType> = {};
+    const dict = new Map<string, ISymbolType>();
     for (const key in value) {
-      dictValue[key] = jsValueToSymbolType(value[key]);
+      dict.set(key, jsValueToSymbolType(value[key]));
     }
-    return new DictionarySymbol(dictValue);
+    return new DictionarySymbol(dict);
   }
 
   throw new InterpreterError(`Invalid value type: ${typeof value}`);
