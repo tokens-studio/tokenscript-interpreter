@@ -3,5 +3,11 @@
   "compilerOptions": {
     "noUnusedLocals": false,
     "noUnusedParameters": false
-  }
+  },
+  "exclude": [
+    "tests/**/*",
+    "examples/**/*",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ]
 }

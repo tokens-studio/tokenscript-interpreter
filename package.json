@@ -24,6 +24,7 @@
     "LICENSE"
   ],
   "scripts": {
+    "ts:typecheck": "tsc -p tsconfig.build.json",
     "build": "tsup",
     "build:lib": "tsup",
     "build:watch": "tsup --watch",

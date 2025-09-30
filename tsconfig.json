@@ -1,37 +1,45 @@
 {
-    "compilerOptions": {
-        "target": "ESNext",
-        "esModuleInterop": true,
-        "experimentalDecorators": true,
-        "useDefineForClassFields": false,
-        "module": "ESNext",
-        "lib": ["esnext"],
-        "skipLibCheck": true,
-
-        /* Node.js ES Module mode */
-        "types": ["node"],
-        "moduleResolution": "node",
-        "allowImportingTsExtensions": false,
-        "isolatedModules": true,
-        "moduleDetection": "force",
-        "noEmit": false,
-        "allowJs": true,
-        "jsx": "react-jsx",
-        "outDir": "./dist",
-        "rootDir": "./",
-
-        /* Linting */
-        "strict": true,
-        "noUnusedLocals": true,
-        "noUnusedParameters": true,
-        "noFallthroughCasesInSwitch": true,
-        "noUncheckedSideEffectImports": true,
-
-        "paths": {
-            "@/*": ["./*"],
-            "@src/*": ["./src/*"],
-            "@interpreter/*": ["./src/interpreter/*"]
-        },
-        "typeRoots": ["./types", "./node_modules/@types"]
-    }
+  "compilerOptions": {
+    "target": "ESNext",
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+    "module": "ESNext",
+    "lib": [
+      "esnext"
+    ],
+    "skipLibCheck": true,
+    "types": [
+      "node"
+    ],
+    "moduleResolution": "node",
+    "allowImportingTsExtensions": false,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "allowJs": true,
+    "jsx": "react-jsx",
+    "outDir": "./dist",
+    "rootDir": "./",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+    "paths": {
+      "@/*": [
+        "./*"
+      ],
+      "@src/*": [
+        "./src/*"
+      ],
+      "@interpreter/*": [
+        "./src/interpreter/*"
+      ]
+    },
+    "typeRoots": [
+      "./types",
+      "./node_modules/@types"
+    ]
+  }
 }
