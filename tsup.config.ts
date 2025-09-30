@@ -5,7 +5,6 @@ const sharedConfig = {
   sourcemap: true,
   treeshake: true,
   tsconfig: "tsconfig.build.json",
-  silent: true,
 };
 
 export default defineConfig([
