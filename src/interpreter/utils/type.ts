@@ -22,6 +22,10 @@ export const isObject = (v: unknown): v is Record<string, unknown> => {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 };
 
+export const isNonEmptyObject = (v: unknown): v is Record<string, unknown> => {
+  return isObject(v) && Object.keys(v).length > 0;
+};
+
 export const isString = (v: unknown): v is string => {
   return typeof v === "string";
 };

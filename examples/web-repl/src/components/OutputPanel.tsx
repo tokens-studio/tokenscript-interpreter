@@ -3,7 +3,7 @@ import { useEffect } from "react";
 
 import "prismjs/themes/prism.css";
 import "prismjs/components/prism-json";
-import { when } from "@interpreter/utils/type";
+import { isNonEmptyObject, when } from "@interpreter/utils/type";
 import {
   BaseSymbolType,
   type ColorManager,
@@ -27,6 +27,7 @@ export interface OutputResult {
 }
 
 const toCssColor = (color: ColorSymbol, colorManager: ColorManager): string | undefined => {
+  if (color.isHex()) return color.value;
   try {
     // @ts-expect-error - Unwraps result -> CssColor -> String
     return colorManager.convertToByType(color, "CssColor").value.value.value as string;
@@ -75,19 +76,25 @@ const ColorOutput = ({
         </div>
       </div>
 
-      {color.value && typeof color.value === "object" && Object.keys(color.value).length > 0 && (
+      {(isNonEmptyObject(color.value) || color.isHex()) && (
         <div>
-          <div className="font-semibold text-gray-900 mb-2">Properties:</div>
+          <div className="font-semibold text-sm text-gray-800 mb-2">Properties</div>
           <div className="bg-gray-50 rounded p-3 text-sm font-mono space-y-1">
-            {Object.entries(color.value).map(([key, value]) => (
-              <div
-                key={key}
-                className="flex justify-between"
-              >
-                <span className="text-blue-600">{key}:</span>
-                <span className="text-gray-800">{String(value)}</span>
+            {color.isHex() ? (
+              <div className="flex justify-between">
+                <span className="text-gray-800">{color.toString()}</span>
               </div>
-            ))}
+            ) : (
+              Object.entries(color.value).map(([key, value]) => (
+                <div
+                  key={key}
+                  className="flex justify-between"
+                >
+                  <span className="text-blue-600">{key}:</span>
+                  <span className="text-gray-800">{String(value)}</span>
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
