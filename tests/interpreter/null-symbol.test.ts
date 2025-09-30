@@ -524,4 +524,209 @@ describe("Null Comparison Tests", () => {
       expect(result?.value).toBe(true);
     });
   });
+
+  describe("Null Ordering Comparison Tests", () => {
+    describe("Should throw error when performing ordering comparisons with literal null", () => {
+      it("should throw error for > comparison with null literal", () => {
+        expect(() => {
+          run(`
+            variable a: String = "test";
+            return a > null;
+          `);
+        }).toThrow(/Cannot perform ordering comparison with null values/);
+      });
+
+      it("should throw error for < comparison with null literal", () => {
+        expect(() => {
+          run(`
+            variable a: Number = 42;
+            return a < null;
+          `);
+        }).toThrow(/Cannot perform ordering comparison with null values/);
+      });
+
+      it("should throw error for >= comparison with null literal", () => {
+        expect(() => {
+          run(`
+            variable a: Boolean = true;
+            return a >= null;
+          `);
+        }).toThrow(/Cannot perform ordering comparison with null values/);
+      });
+
+      it("should throw error for <= comparison with null literal", () => {
+        expect(() => {
+          run(`
+            variable a: NumberWithUnit = 10px;
+            return a <= null;
+          `);
+        }).toThrow(/Cannot perform ordering comparison with null values/);
+      });
+
+      it("should throw error when null is the left operand in > comparison", () => {
+        expect(() => {
+          run(`
+            variable a: String = "test";
+            return null > a;
+          `);
+        }).toThrow(/Cannot perform ordering comparison with null values/);
+      });
+
+      it("should throw error when null is the left operand in < comparison", () => {
+        expect(() => {
+          run(`
+            variable a: Number = 42;
+            return null < a;
+          `);
+        }).toThrow(/Cannot perform ordering comparison with null values/);
+      });
+
+      it("should throw error when null is the left operand in >= comparison", () => {
+        expect(() => {
+          run(`
+            variable a: Boolean = true;
+            return null >= a;
+          `);
+        }).toThrow(/Cannot perform ordering comparison with null values/);
+      });
+
+      it("should throw error when null is the left operand in <= comparison", () => {
+        expect(() => {
+          run(`
+            variable a: NumberWithUnit = 10px;
+            return null <= a;
+          `);
+        }).toThrow(/Cannot perform ordering comparison with null values/);
+      });
+
+      it("should throw error when both operands are null literals", () => {
+        expect(() => {
+          run(`return null > null;`);
+        }).toThrow(/Cannot perform ordering comparison with null values/);
+
+        expect(() => {
+          run(`return null < null;`);
+        }).toThrow(/Cannot perform ordering comparison with null values/);
+
+        expect(() => {
+          run(`return null >= null;`);
+        }).toThrow(/Cannot perform ordering comparison with null values/);
+
+        expect(() => {
+          run(`return null <= null;`);
+        }).toThrow(/Cannot perform ordering comparison with null values/);
+      });
+    });
+
+    describe("Should return false when comparing null-typed variables (not literal null)", () => {
+      it("should throw for > comparison with null-typed variable", () => {
+        expect(() => run(`
+          variable a: String;
+          return a > "test";
+        `)).toThrow(/Cannot perform ordering comparison with null values/);
+      });
+
+      it("should throw for < comparison with null-typed variable", () => {
+        expect(() => run(`
+          variable a: Number;
+          return a < 42;
+        `)).toThrow(/Cannot perform ordering comparison with null values/);
+      });
+
+      it("should throw for >= comparison with null-typed variable", () => {
+        expect(() => run(`
+          variable a: Boolean;
+          return a >= true;
+        `)).toThrow(/Cannot perform ordering comparison with null values/);
+      });
+
+      it("should throw for <= comparison with null-typed variable", () => {
+        expect(() => run(`
+          variable a: NumberWithUnit;
+          return a <= 10px;
+        `)).toThrow(/Cannot perform ordering comparison with null values/);
+      });
+
+      it("should throw for ordering comparison between same-type null variables", () => {
+        expect(() => run(`
+          variable a: String;
+          variable b: String;
+          return a > b;
+        `)).toThrow(/Cannot perform ordering comparison with null values/);
+      });
+
+      it("should throw for ordering comparison with null from dictionary", () => {
+        expect(() => run(`
+          variable dict: Dictionary;
+          variable nullValue: String = dict.get("nonexistent");
+          return nullValue > "test";
+        `)).toThrow(/Cannot perform ordering comparison with null values/);
+      });
+
+      it("should throw for complex expressions with null-typed variable ordering", () => {
+        expect(() => run(`
+          variable a: String;
+          variable b: String = "test";
+          return (a > b) && (b != null);
+        `)).toThrow(/Cannot perform ordering comparison with null values/);
+      });
+
+      it("should throw for if statement conditions with null-typed variable ordering", () => {
+        expect(() => run(`
+          variable a: Number;
+          if (a > 0) [
+            return "positive";
+          ] else [
+            return "not positive";
+          ];
+        `)).toThrow(/Cannot perform ordering comparison with null values/);
+      });
+    });
+
+    describe("Should work correctly when no null values are involved", () => {
+      it("should perform > comparison with non-null values", () => {
+        const result = run(`
+          variable a: Number = 5;
+          variable b: Number = 3;
+          return a > b;
+        `);
+        
+        expect(result).toBeInstanceOf(BooleanSymbol);
+        expect(result?.value).toBe(true);
+      });
+
+      it("should perform < comparison with non-null values", () => {
+        const result = run(`
+          variable a: String = "apple";
+          variable b: String = "banana";
+          return a < b;
+        `);
+        
+        expect(result).toBeInstanceOf(BooleanSymbol);
+        expect(result?.value).toBe(true);
+      });
+
+      it("should perform >= comparison with non-null values", () => {
+        const result = run(`
+          variable a: Number = 5;
+          variable b: Number = 5;
+          return a >= b;
+        `);
+        
+        expect(result).toBeInstanceOf(BooleanSymbol);
+        expect(result?.value).toBe(true);
+      });
+
+      it("should perform <= comparison with non-null values", () => {
+        const result = run(`
+          variable a: NumberWithUnit = 10px;
+          variable b: NumberWithUnit = 15px;
+          return a <= b;
+        `);
+        
+        expect(result).toBeInstanceOf(BooleanSymbol);
+        expect(result?.value).toBe(true);
+      });
+    });
+  });
 });
