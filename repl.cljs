@@ -13,7 +13,7 @@
 ;; Imports ---------------------------------------------------------------------
 
 (require
- '["./dist/lib/index.js" :refer [Lexer Interpreter Parser Config ColorManager]]
+ '["./dist/lib/index.js" :refer [Lexer Interpreter Parser Config ColorManager StringSymbol NullSymbol]]
  :reload)
 
 ;; Runner ----------------------------------------------------------------------
@@ -99,6 +99,12 @@
    "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0/" "./data/specifications/colors/hsl.json"})
 
 (comment
+  (group-by)
+  (run "variable x: List = 1 2 3; x")
+  (.toString (js/Error. "Foo"))
+  nil)
+
+(comment
   (run "1rem + 10% + 1px")
   (run-python! "variable x: Color.rgb;")
   (-> (run "variable color: Color = #FF5733;
@@ -130,10 +136,19 @@ return value;")
         return value;")
   ;; => "Value must be int or float, got <class 'NoneType'>."
 
-  (run-python! "variable c: Dictionary;
+  (run "variable c: Dictionary;
 variable foo: Dictionary = c.get(\"foo\");
 return foo")
-  ;; => "OrderedDict()"
+  ;; => #object[_DictionarySymbol {}]
+
+  (run "variable c: Dictionary;
+c.get(\"foo\");
+")
+
+  (run "variable c: Dictionary;
+variable foo: String = c.get(\"foo\");
+return foo")
+  ;; => #object[_StringSymbol null]
 
   (run-python! "variable c: Dictionary;
 variable foo: List = c.get(\"foo\");
