@@ -143,7 +143,7 @@ describe("Null Coercion", () => {
     const result = interpreter.interpret();
     
     expect(result).toBeInstanceOf(DictionarySymbol);
-    expect((result as DictionarySymbol).value).toEqual({});
+    expect((result as DictionarySymbol).value).toEqual(new Map());
   });
 
   it("should handle null coercion in variable declaration without assignment", () => {
