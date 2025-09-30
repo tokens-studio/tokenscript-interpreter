@@ -279,53 +279,32 @@ export class NumberSymbol extends BaseSymbolType {
       return new StringSymbol(String(this.value));
     }
 
-    // Convert to integer if it's a float but represents an integer
-    let numValue: number;
-    if (typeof this.value === "number" && Number.isInteger(this.value)) {
-      numValue = Math.trunc(this.value);
-    } else {
-      numValue = this.value;
-    }
-
-    // Get the radix value
     const base = radix.value;
-
-    // Validate the base
     if (!Number.isInteger(base) || base < 2 || base > 36) {
       throw new InterpreterError(`Invalid radix: ${base}. Must be between 2 and 36.`);
     }
 
-    // Perform the base conversion
-    try {
-      if (Number.isInteger(numValue)) {
-        let result = "";
-
-        // Handle negative numbers
-        const isNegative = numValue < 0;
-        if (isNegative) {
-          numValue = Math.abs(numValue);
-        }
-
-        // Special case for zero
-        if (numValue === 0) {
-          return new StringSymbol("0");
-        }
-
-        // Convert to the specified base
-        const digits = "0123456789abcdefghijklmnopqrstuvwxyz";
-        while (numValue > 0) {
-          result = digits[numValue % base] + result;
-          numValue = Math.floor(numValue / base);
-        }
-
-        // Add negative sign if needed
-        if (isNegative) {
-          result = `-${result}`;
-        }
-
-        return new StringSymbol(result);
+    let numValue: number;
+    if (base === 16) {
+      numValue = Math.round(this.value);
+      // For hexadecimal, round non-integer values (with .5 rounding down)
+      // Otherwise color conversion to hex wont work as expected
+      const fractionalPart = Math.abs(this.value % 1);
+      if (fractionalPart === 0.5) {
+        // .5 cases round down (towards negative infinity)
+        numValue = Math.floor(this.value);
       } else {
-        // For non-integer values, simply return the string representation
+        // Normal rounding for other fractional parts
+        numValue = Math.round(this.value);
+      }
+    } else {
+      numValue = this.value;
+    }
+
+    try {
+      if (Number.isInteger(numValue) && radix) {
+        return new StringSymbol(numValue.toString(base));
+      } else {
         return new StringSymbol(String(this.value));
       }
     } catch (e) {
