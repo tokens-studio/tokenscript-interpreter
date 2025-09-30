@@ -3,7 +3,17 @@ import type { Config } from "./config/config";
 import { InterpreterError } from "./errors";
 import { isValidHex } from "./utils/color";
 import { capitalize } from "./utils/string";
-import { isNone, isNull, isObject, isString, isUndefined, nullToUndefined } from "./utils/type";
+import {
+  isArray,
+  isBoolean,
+  isNone,
+  isNull,
+  isNumber,
+  isObject,
+  isString,
+  isUndefined,
+  nullToUndefined,
+} from "./utils/type";
 
 // Utilities -------------------------------------------------------------------
 
@@ -1016,14 +1026,14 @@ export class ColorSymbol extends BaseSymbolType {
 
 export const jsValueToSymbolType = (value: any): ISymbolType => {
   if (value instanceof BaseSymbolType) return value;
-  if (value === null || value === undefined) return new NullSymbol();
-  if (typeof value === "number") return new NumberSymbol(value);
-  if (typeof value === "string") {
+  if (isNone(value)) return new NullSymbol();
+  if (isNumber(value)) return new NumberSymbol(value);
+  if (isString(value)) {
     if (isValidHex(value)) return new ColorSymbol(value);
     return new StringSymbol(value);
   }
-  if (typeof value === "boolean") return new BooleanSymbol(value);
-  if (Array.isArray(value)) return new ListSymbol(value.map(jsValueToSymbolType));
+  if (isBoolean(value)) return new BooleanSymbol(value);
+  if (isArray(value)) return new ListSymbol(value.map(jsValueToSymbolType));
 
   // Convert NumberWithUnit object
   if (value instanceof NumberWithUnitSymbol) return value;
@@ -1031,7 +1041,7 @@ export const jsValueToSymbolType = (value: any): ISymbolType => {
   if (numberWithUnit) return numberWithUnit;
 
   // Convert plain object to dictionary
-  if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+  if (isObject(value)) {
     const dictValue: Record<string, ISymbolType> = {};
     for (const key in value) {
       dictValue[key] = jsValueToSymbolType(value[key]);
