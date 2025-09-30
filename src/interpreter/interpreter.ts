@@ -110,9 +110,7 @@ export class Interpreter {
     constructorSymbol: ISymbolType,
     valueSymbol: ISymbolType,
   ): ISymbolType | undefined {
-    // Allow constructing symbols of null values
     if (valueSymbol instanceof NullSymbol) return constructorSymbol;
-    // Edge-case: Allow constructing color of string
     if (constructorSymbol.typeEquals(valueSymbol)) return valueSymbol;
   }
 
