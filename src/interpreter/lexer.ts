@@ -1,6 +1,7 @@
 import { Operations, ReservedKeyword, SupportedFormats, type Token, TokenType } from "@src/types";
 import { LexerError } from "./errors";
 import { CodePoint, isAlpha, isAlphaNumeric, isNumber, isSpace } from "./utils/string";
+import { when } from "./utils/type";
 
 const SUPPORTED_FORMAT_STRINGS: Record<string, SupportedFormats> = {};
 for (const val of Object.values(SupportedFormats) as string[]) {
@@ -33,7 +34,7 @@ export class Lexer {
     }
 
     throw new LexerError(
-      `Invalid character '${this.currentChar}' at position ${this.pos}. ${description}`,
+      `Invalid character '${this.currentChar}' at position ${this.pos}.${when(description, ` ${description}`)}`,
       this.line,
       { type: TokenType.EOF, value: this.currentChar, line: this.line },
     );
