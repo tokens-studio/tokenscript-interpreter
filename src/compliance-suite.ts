@@ -200,7 +200,7 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
     });
   });
 
-  const { passed, failed } = groupBy((x) => x.status, testResults);
+  const { passed = [], failed = [] } = groupBy((x) => x.status, testResults);
 
   // Order keys for json output
   const orderedResults = testResults.map(
