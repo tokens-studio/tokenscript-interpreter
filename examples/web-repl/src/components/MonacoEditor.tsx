@@ -1,6 +1,7 @@
 import Editor, { useMonaco } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
 import { useEffect, useRef } from "react";
+import ErrorStatusBar from "./ErrorStatusBar";
 import {
   tokenscriptLanguageConfig,
   tokenscriptLanguageDefinition,
@@ -213,13 +214,15 @@ function MonacoEditor({
     }
   };
 
+  const hasError = error?.message || validationErrors.length > 0;
+
   return (
     <div
-      className={`h-full ${className}`}
+      className={`h-full flex flex-col ${className}`}
       data-testid="monaco-editor"
     >
       <div
-        className="h-full"
+        className="flex-1 min-h-0"
         data-testid="monaco-editor-container"
       >
         <Editor
@@ -235,6 +238,14 @@ function MonacoEditor({
           }}
         />
       </div>
+      {hasError && (
+        <div className="flex-shrink-0">
+          <ErrorStatusBar
+            error={error?.message}
+            errorInfo={error}
+          />
+        </div>
+      )}
     </div>
   );
 }

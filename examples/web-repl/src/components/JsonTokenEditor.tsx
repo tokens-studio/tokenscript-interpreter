@@ -26,15 +26,6 @@ function JsonTokenEditor({
   inputMode,
   onInputModeChange,
 }: JsonTokenEditorProps) {
-  const headerRight = error ? (
-    <span
-      className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded"
-      data-testid="json-editor-error"
-    >
-      Invalid JSON
-    </span>
-  ) : undefined;
-
   const title = (
     <EditorModeTitle
       inputMode={inputMode}
@@ -47,7 +38,6 @@ function JsonTokenEditor({
   return (
     <ShellPanel
       title={title}
-      headerRight={headerRight}
       className={`h-full ${className}`}
       data-testid="json-editor"
       ShellTitle={({ children }) => children}

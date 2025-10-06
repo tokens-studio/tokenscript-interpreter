@@ -21,15 +21,6 @@ function TokenScriptEditor({
   inputMode,
   onInputModeChange,
 }: TokenScriptEditorProps) {
-  const headerRight = error?.line ? (
-    <span
-      className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded"
-      data-testid="tokenscript-editor-error"
-    >
-      Error on line {error.line}
-    </span>
-  ) : undefined;
-
   const title = (
     <EditorModeTitle
       inputMode={inputMode}
@@ -44,7 +35,6 @@ function TokenScriptEditor({
   return (
     <ShellPanel
       title={title}
-      headerRight={headerRight}
       className={`h-full ${className}`}
       data-testid="tokenscript-editor"
       ShellTitle={({ children }) => children}
