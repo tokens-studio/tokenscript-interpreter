@@ -16,6 +16,7 @@ import ShellPanel from "./components/ShellPanel";
 import TokenScriptEditor from "./components/TokenScriptEditor";
 import { autoRunAtom, colorSchemasAtom, schemaPanelCollapsedAtom } from "./store/atoms";
 import type { DEFAULT_COLOR_SCHEMAS } from "./utils/default-schemas";
+import type { Preset } from "./utils/presets";
 
 type UnifiedExecutionResult = {
   type: "tokenscript" | "json";
@@ -216,6 +217,16 @@ function App() {
     }
   }, [code, jsonInput, inputMode, colorSchemas]);
 
+  const handlePresetSelect = useCallback((preset: Preset) => {
+    if (preset.type === "code") {
+      setInputMode("tokenscript");
+      setCode(preset.code);
+    } else if (preset.type === "json") {
+      setInputMode("json");
+      setJsonInput(preset.code);
+    }
+  }, []);
+
   useEffect(() => {
     if (!autoRun) return;
     executeCode();
@@ -310,6 +321,7 @@ function App() {
                 error={result.errorInfo}
                 inputMode={inputMode}
                 onInputModeChange={setInputMode}
+                onPresetSelect={handlePresetSelect}
               />
             ) : (
               <JsonTokenEditor
@@ -319,6 +331,7 @@ function App() {
                 error={jsonError}
                 inputMode={inputMode}
                 onInputModeChange={setInputMode}
+                onPresetSelect={handlePresetSelect}
               />
             )}
           </div>

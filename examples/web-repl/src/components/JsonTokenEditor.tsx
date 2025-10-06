@@ -1,5 +1,7 @@
+import type { Preset } from "../utils/presets";
 import EditorModeTitle from "./EditorModeTitle";
 import MonacoEditor from "./MonacoEditor";
+import PresetSelector from "./PresetSelector";
 import ShellPanel from "./ShellPanel";
 
 export interface JsonErrorInfo {
@@ -15,6 +17,7 @@ interface JsonTokenEditorProps {
   error?: string;
   inputMode?: "tokenscript" | "json";
   onInputModeChange?: (mode: "tokenscript" | "json") => void;
+  onPresetSelect?: (preset: Preset) => void;
 }
 
 function JsonTokenEditor({
@@ -25,6 +28,7 @@ function JsonTokenEditor({
   error,
   inputMode,
   onInputModeChange,
+  onPresetSelect,
 }: JsonTokenEditorProps) {
   const title = (
     <EditorModeTitle
@@ -35,9 +39,19 @@ function JsonTokenEditor({
     />
   );
 
+  const headerRight =
+    onPresetSelect && inputMode ? (
+      <PresetSelector
+        inputMode={inputMode}
+        onPresetSelect={onPresetSelect}
+        testId="preset-selector"
+      />
+    ) : undefined;
+
   return (
     <ShellPanel
       title={title}
+      headerRight={headerRight}
       className={`h-full ${className}`}
       data-testid="json-editor"
       ShellTitle={({ children }) => children}
