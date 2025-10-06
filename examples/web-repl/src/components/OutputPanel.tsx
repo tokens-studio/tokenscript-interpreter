@@ -8,6 +8,7 @@ import {
   BaseSymbolType,
   type ColorManager,
   type ColorSymbol,
+  type DictionarySymbol,
   type ListSymbol,
 } from "@tokens-studio/tokenscript-interpreter";
 import ShellPanel from "./ShellPanel";
@@ -39,11 +40,43 @@ const toCssColor = (color: ColorSymbol, colorManager: ColorManager): string | un
 const ColorOutput = ({
   color,
   colorManager,
+  compact = false,
 }: {
   color: ColorSymbol;
   colorManager: ColorManager;
+  compact?: boolean;
 }) => {
   const cssColor = toCssColor(color, colorManager);
+
+  if (compact) {
+    return (
+      <div
+        className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border"
+        data-testid="color-output-compact"
+      >
+        <div
+          className="w-8 h-8 rounded border border-gray-300 flex-shrink-0"
+          style={{ backgroundColor: cssColor }}
+          title={`Color: ${cssColor}`}
+          data-testid="color-swatch-compact"
+        />
+        <div className="flex-1 min-w-0">
+          <div
+            className="text-sm font-medium text-gray-900 truncate"
+            data-testid="color-type-compact"
+          >
+            {colorManager.formatColorMethod(color)}
+          </div>
+          <div
+            className="text-xs text-gray-600 font-mono truncate"
+            data-testid="color-value-compact"
+          >
+            {color.getTypeName()}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -133,11 +166,26 @@ function JsonOutput({ value }: { value: any }) {
   );
 }
 
-const StringOutput = ({ str }: { str: string }) => (
-  <div className="text-gray-800">
-    <pre className="whitespace-pre-wrap text-sm font-mono">{str}</pre>
-  </div>
-);
+const StringOutput = ({ str, compact = false }: { str: string; compact?: boolean }) => {
+  if (compact) {
+    return (
+      <div
+        className="flex items-center p-3 bg-gray-50 rounded-lg border"
+        data-testid="string-output-compact"
+      >
+        <div className="flex-1 min-w-0">
+          <div className="text-xs text-gray-600 font-mono truncate">{str}</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="text-gray-800">
+      <pre className="whitespace-pre-wrap text-sm font-mono">{str}</pre>
+    </div>
+  );
+};
 
 const ErrorOutput = ({ error }: { error: string }) => (
   <div
@@ -168,14 +216,60 @@ interface UnifiedOutputPanelProps {
   className?: string;
 }
 
-const ListOutput = ({ list, colorManager }: { list: ListSymbol; colorManager: ColorManager }) => {
+const ListOutput = ({
+  list,
+  colorManager,
+  compact = false,
+}: {
+  list: ListSymbol;
+  colorManager: ColorManager;
+  compact?: boolean;
+}) => {
   if (list.elements.length === 0) {
+    if (compact) {
+      return (
+        <div
+          className="flex items-center p-3 bg-gray-50 rounded-lg border"
+          data-testid="empty-list-compact"
+        >
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-medium text-gray-900">List</div>
+            <div className="text-xs text-gray-500">Empty list</div>
+          </div>
+        </div>
+      );
+    }
     return (
       <div
         className="text-gray-500 italic"
         data-testid="empty-list"
       >
         Empty list
+      </div>
+    );
+  }
+
+  if (compact) {
+    return (
+      <div
+        className="p-3 bg-gray-50 rounded-lg border"
+        data-testid="list-output-compact"
+      >
+        <div className="flex items-center space-x-2 mb-2">
+          <div className="text-sm font-medium text-gray-900">List</div>
+          <span className="text-xs text-gray-600">({list.elements.length} items)</span>
+        </div>
+        <div className="space-y-1">
+          {list.elements.map((element, index) => (
+            <SymbolOutput
+              key={index}
+              symbol={element}
+              colorManager={colorManager}
+              compact={true}
+              data-testid={`list-item-${index}`}
+            />
+          ))}
+        </div>
       </div>
     );
   }
@@ -192,19 +286,63 @@ const ListOutput = ({ list, colorManager }: { list: ListSymbol; colorManager: Co
 
       <div className="space-y-2">
         {list.elements.map((element, index) => (
-          <div
+          <SymbolOutput
             key={index}
-            className="border-l-2 border-gray-200 pl-4 py-2"
+            symbol={element}
+            colorManager={colorManager}
+            compact={true}
             data-testid={`list-item-${index}`}
-          >
-            <div className="text-xs text-gray-500 mb-1">Item {index + 1}</div>
-            <SymbolOutput
-              symbol={element}
-              colorManager={colorManager}
-            />
-          </div>
+          />
         ))}
       </div>
+    </div>
+  );
+};
+
+const DictionaryOutput = ({
+  dictionary,
+  colorManager,
+  compact = false,
+}: {
+  dictionary: DictionarySymbol;
+  colorManager: ColorManager;
+  compact?: boolean;
+}) => {
+  const dictObject = Object.fromEntries(
+    [...dictionary.value].map(([key, value]) => [
+      key,
+      value.type.toLowerCase() === "color"
+        ? colorManager.formatColorMethod(value)
+        : value.toString(),
+    ]),
+  );
+
+  if (compact) {
+    return (
+      <div
+        className="p-3 bg-gray-50 rounded-lg border"
+        data-testid="dictionary-output-compact"
+      >
+        <div className="flex items-center space-x-2 mb-2">
+          <div className="text-sm font-medium text-gray-900">Dictionary</div>
+          <span className="text-xs text-gray-600">({dictionary.value.size} keys)</span>
+        </div>
+        <JsonOutput value={dictObject} />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="space-y-3"
+      data-testid="dictionary-output"
+    >
+      <div className="flex items-center space-x-2 mb-3">
+        <div className="font-semibold text-gray-900">Dictionary</div>
+        <span className="text-sm text-gray-600">({dictionary.value.size} keys)</span>
+      </div>
+
+      <JsonOutput value={dictObject} />
     </div>
   );
 };
@@ -212,9 +350,11 @@ const ListOutput = ({ list, colorManager }: { list: ListSymbol; colorManager: Co
 const SymbolOutput = ({
   symbol,
   colorManager,
+  compact = false,
 }: {
   symbol: BaseSymbolType;
   colorManager: ColorManager;
+  compact?: boolean;
 }) => {
   switch (symbol.type.toLowerCase()) {
     case "color":
@@ -222,6 +362,7 @@ const SymbolOutput = ({
         <ColorOutput
           color={symbol as ColorSymbol}
           colorManager={colorManager}
+          compact={compact}
         />
       );
     case "list":
@@ -229,10 +370,24 @@ const SymbolOutput = ({
         <ListOutput
           list={symbol as ListSymbol}
           colorManager={colorManager}
+          compact={compact}
+        />
+      );
+    case "dictionary":
+      return (
+        <DictionaryOutput
+          dictionary={symbol as DictionarySymbol}
+          colorManager={colorManager}
+          compact={compact}
         />
       );
     default:
-      return <StringOutput str={symbol.toString()} />;
+      return (
+        <StringOutput
+          str={symbol.toString()}
+          compact={compact}
+        />
+      );
   }
 };
 

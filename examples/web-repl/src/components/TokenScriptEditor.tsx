@@ -1,5 +1,7 @@
+import type { Preset } from "../utils/presets";
 import EditorModeTitle from "./EditorModeTitle";
 import MonacoEditor, { type ErrorInfo } from "./MonacoEditor";
+import PresetSelector from "./PresetSelector";
 import ShellPanel from "./ShellPanel";
 
 interface TokenScriptEditorProps {
@@ -10,6 +12,7 @@ interface TokenScriptEditorProps {
   error?: ErrorInfo;
   inputMode?: "tokenscript" | "json";
   onInputModeChange?: (mode: "tokenscript" | "json") => void;
+  onPresetSelect?: (preset: Preset) => void;
 }
 
 function TokenScriptEditor({
@@ -20,16 +23,8 @@ function TokenScriptEditor({
   error,
   inputMode,
   onInputModeChange,
+  onPresetSelect,
 }: TokenScriptEditorProps) {
-  const headerRight = error?.line ? (
-    <span
-      className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded"
-      data-testid="tokenscript-editor-error"
-    >
-      Error on line {error.line}
-    </span>
-  ) : undefined;
-
   const title = (
     <EditorModeTitle
       inputMode={inputMode}
@@ -40,6 +35,15 @@ function TokenScriptEditor({
       defaultLabel="tokenscript"
     />
   );
+
+  const headerRight =
+    onPresetSelect && inputMode ? (
+      <PresetSelector
+        inputMode={inputMode}
+        onPresetSelect={onPresetSelect}
+        testId="preset-selector"
+      />
+    ) : undefined;
 
   return (
     <ShellPanel

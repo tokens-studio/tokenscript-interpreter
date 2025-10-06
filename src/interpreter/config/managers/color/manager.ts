@@ -21,6 +21,11 @@ type colorName = string;
 
 type Specs = Map<uriType, ColorSpecification>;
 
+interface FormatColorOptions {
+  decimalPlaces?: number;
+  removeTrailingZeros?: boolean;
+}
+
 // Defaults --------------------------------------------------------------------
 
 export const defaultTypeSpecs: Specs = new Map([
@@ -300,6 +305,26 @@ ${spec}`,
   }
 
   /**
+   * Formats a number value, rounding to specified decimal places and optionally removing trailing zeros.
+   *
+   * @param value - The numeric value to format
+   * @param decimalPlaces - Number of decimal places to round to
+   * @param removeTrailingZeros - Whether to remove trailing zeros
+   * @returns Formatted number string
+   */
+  private formatNumber(value: number, decimalPlaces: number, removeTrailingZeros: boolean): string {
+    const rounded = Number(value.toFixed(decimalPlaces));
+    const formatted = rounded.toFixed(decimalPlaces);
+
+    if (removeTrailingZeros) {
+      // Remove trailing zeros and decimal point if not needed
+      return formatted.replace(/\.?0+$/, "");
+    }
+
+    return formatted;
+  }
+
+  /**
    * Formats a ColorSymbol as a string representation using the appropriate schema-defined format.
    *
    * For hex colors (string values), returns the hex string as-is.
@@ -307,6 +332,7 @@ ${spec}`,
    * parameter order and formats as a function call (e.g., "hsl(0, 100, 50.0)").
    *
    * @param color - The ColorSymbol to format
+   * @param opts - Formatting options for numeric values
    * @returns Formatted string representation of the color, or empty string if formatting fails
    *
    * @example
@@ -316,11 +342,17 @@ ${spec}`,
    * manager.formatColorMethod(hexColor); // "#ff0000"
    *
    * // HSL color with schema order ["h", "s", "l"]
-   * const hslColor = new ColorSymbol({ h: 0, s: 100, l: 50 }, "HSL");
-   * manager.formatColorMethod(hslColor); // "hsl(0, 100, 50)"
+   * const hslColor = new ColorSymbol({ h: 0, s: 100, l: 50.123456 }, "HSL");
+   * manager.formatColorMethod(hslColor); // "hsl(0, 100, 50.12)"
+   *
+   * // RGB color with trailing zeros removed
+   * const rgbColor = new ColorSymbol({ r: 0, g: 85.00000000000004, b: 255 }, "RGB");
+   * manager.formatColorMethod(rgbColor); // "rgb(0, 85, 255)"
    * ```
    */
-  formatColorMethod(color: ColorSymbol): string {
+  formatColorMethod(color: ColorSymbol, opts: FormatColorOptions = {}): string {
+    const { decimalPlaces = 2, removeTrailingZeros = true } = opts;
+
     if (typeof color.value === "string") {
       // For hex colors, return the hex string
       return color.value;
@@ -332,14 +364,19 @@ ${spec}`,
         return "";
       }
 
-      const order = spec.schema.order;
-      if (!order || order.length === 0) {
-        return "";
-      }
+      // Use schema order if available, otherwise fall back to object keys order
+      const order =
+        spec.schema.order && spec.schema.order.length > 0
+          ? spec.schema.order
+          : Object.keys(color.value as Record<string, any>);
 
-      // Extract values in the order specified by the schema
+      // Extract values in the specified order
       const values = order.map((key) => {
-        const value = (color.value as Record<string, any>)?.[key];
+        const valObj = (color.value as Record<string, any>)[key];
+        const value = valObj?.value;
+        if (typeof value === "number") {
+          return this.formatNumber(value, decimalPlaces, removeTrailingZeros);
+        }
         return value?.toString() || "0";
       });
 

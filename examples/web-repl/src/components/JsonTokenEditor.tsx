@@ -1,5 +1,7 @@
+import type { Preset } from "../utils/presets";
 import EditorModeTitle from "./EditorModeTitle";
 import MonacoEditor from "./MonacoEditor";
+import PresetSelector from "./PresetSelector";
 import ShellPanel from "./ShellPanel";
 
 export interface JsonErrorInfo {
@@ -15,6 +17,7 @@ interface JsonTokenEditorProps {
   error?: string;
   inputMode?: "tokenscript" | "json";
   onInputModeChange?: (mode: "tokenscript" | "json") => void;
+  onPresetSelect?: (preset: Preset) => void;
 }
 
 function JsonTokenEditor({
@@ -25,16 +28,8 @@ function JsonTokenEditor({
   error,
   inputMode,
   onInputModeChange,
+  onPresetSelect,
 }: JsonTokenEditorProps) {
-  const headerRight = error ? (
-    <span
-      className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded"
-      data-testid="json-editor-error"
-    >
-      Invalid JSON
-    </span>
-  ) : undefined;
-
   const title = (
     <EditorModeTitle
       inputMode={inputMode}
@@ -43,6 +38,15 @@ function JsonTokenEditor({
       defaultLabel="json"
     />
   );
+
+  const headerRight =
+    onPresetSelect && inputMode ? (
+      <PresetSelector
+        inputMode={inputMode}
+        onPresetSelect={onPresetSelect}
+        testId="preset-selector"
+      />
+    ) : undefined;
 
   return (
     <ShellPanel

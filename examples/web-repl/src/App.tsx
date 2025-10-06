@@ -16,6 +16,7 @@ import ShellPanel from "./components/ShellPanel";
 import TokenScriptEditor from "./components/TokenScriptEditor";
 import { autoRunAtom, colorSchemasAtom, schemaPanelCollapsedAtom } from "./store/atoms";
 import type { DEFAULT_COLOR_SCHEMAS } from "./utils/default-schemas";
+import type { Preset } from "./utils/presets";
 
 type UnifiedExecutionResult = {
   type: "tokenscript" | "json";
@@ -64,6 +65,28 @@ const DEFAULT_JSON = `{
 
 type InputMode = "tokenscript" | "json";
 
+// Helper to get code from sessionStorage (HMR-preserved) or default
+function getInitialCode(): string {
+  if (import.meta.env.DEV) {
+    const stored = sessionStorage.getItem("repl:code");
+    if (stored !== null) {
+      return stored;
+    }
+  }
+  return DEFAULT_CODE;
+}
+
+// Helper to get JSON from sessionStorage (HMR-preserved) or default
+function getInitialJson(): string {
+  if (import.meta.env.DEV) {
+    const stored = sessionStorage.getItem("repl:jsonInput");
+    if (stored !== null) {
+      return stored;
+    }
+  }
+  return DEFAULT_JSON;
+}
+
 function setupColorManager(schemas: typeof DEFAULT_COLOR_SCHEMAS): ColorManager {
   const colorManager = new ColorManager();
 
@@ -79,14 +102,28 @@ function setupColorManager(schemas: typeof DEFAULT_COLOR_SCHEMAS): ColorManager 
 }
 
 function App() {
-  const [code, setCode] = useState(DEFAULT_CODE);
-  const [jsonInput, setJsonInput] = useState(DEFAULT_JSON);
+  const [code, setCode] = useState(getInitialCode);
+  const [jsonInput, setJsonInput] = useState(getInitialJson);
   const [inputMode, setInputMode] = useState<InputMode>("tokenscript");
   const [result, setResult] = useState<UnifiedExecutionResult>({ type: "tokenscript" });
   const [autoRun, setAutoRun] = useAtom(autoRunAtom);
   const [jsonError, setJsonError] = useState<string>();
   const [schemaPanelCollapsed, setSchemaPanelCollapsed] = useAtom(schemaPanelCollapsedAtom);
   const [colorSchemas, _setColorSchemas] = useAtom(colorSchemasAtom);
+
+  // In development mode, persist code to sessionStorage for HMR preservation
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      sessionStorage.setItem("repl:code", code);
+    }
+  }, [code]);
+
+  // In development mode, persist JSON input to sessionStorage for HMR preservation
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      sessionStorage.setItem("repl:jsonInput", jsonInput);
+    }
+  }, [jsonInput]);
 
   const executeCode = useCallback(async () => {
     const currentInput = inputMode === "tokenscript" ? code : jsonInput;
@@ -180,6 +217,16 @@ function App() {
     }
   }, [code, jsonInput, inputMode, colorSchemas]);
 
+  const handlePresetSelect = useCallback((preset: Preset) => {
+    if (preset.type === "code") {
+      setInputMode("tokenscript");
+      setCode(preset.code);
+    } else if (preset.type === "json") {
+      setInputMode("json");
+      setJsonInput(preset.code);
+    }
+  }, []);
+
   useEffect(() => {
     if (!autoRun) return;
     executeCode();
@@ -263,7 +310,7 @@ function App() {
         <div className="mx-auto grid grid-cols-1 max-w-7xl lg:grid-cols-2 gap-4 lg:gap-8 lg:h-full">
           {/* Editor Panel */}
           <div
-            className="min-h-[400px] lg:min-h-[300px] lg:max-h-[60vh] rounded-lg shadow-sm lg:overflow-hidden"
+            className="min-h-[400px] lg:min-h-[300px] lg:max-h-[60vh] lg:sticky lg:top-0 rounded-lg shadow-sm lg:overflow-hidden"
             data-testid="editor-panel"
           >
             {inputMode === "tokenscript" ? (
@@ -274,6 +321,7 @@ function App() {
                 error={result.errorInfo}
                 inputMode={inputMode}
                 onInputModeChange={setInputMode}
+                onPresetSelect={handlePresetSelect}
               />
             ) : (
               <JsonTokenEditor
@@ -283,6 +331,7 @@ function App() {
                 error={jsonError}
                 inputMode={inputMode}
                 onInputModeChange={setInputMode}
+                onPresetSelect={handlePresetSelect}
               />
             )}
           </div>

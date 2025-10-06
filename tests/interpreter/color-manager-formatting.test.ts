@@ -207,7 +207,7 @@ describe("ColorManager.formatColorMethod", () => {
       
       const result = colorManager.formatColorMethod(noOrderColor);
       
-      expect(result).toBe("");
+      expect(result).toBe("noorder(1, 2)");
     });
 
     it("should return empty string for null color values", () => {
@@ -246,7 +246,7 @@ describe("ColorManager.formatColorMethod", () => {
       
       const result = colorManager.formatColorMethod(emptyOrderColor);
       
-      expect(result).toBe("");
+      expect(result).toBe("emptyorder(42)");
     });
   });
 
@@ -307,9 +307,9 @@ describe("ColorManager.formatColorMethod", () => {
       colorManager.register(uri, rgbSpec);
       
       const rgbColor = new ColorSymbol({
-        r: 200, // Primitive numbers
-        g: 150,
-        b: 100
+        r: new NumberSymbol(200),
+        g: new NumberSymbol(150),
+        b: new NumberSymbol(100)
       }, "RGB");
       
       const result = colorManager.formatColorMethod(rgbColor);
