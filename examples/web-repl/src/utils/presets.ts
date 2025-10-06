@@ -10,7 +10,7 @@ export const TOKENSCRIPT_PRESETS: Preset[] = [
     type: "code",
     code: `variable palette: List;
 variable i: Number = 0;
-variable max: Number = 100;
+variable max: Number = 10;
 while(i < max) [
   i = i + 1;
   palette.append(hsl(220, 100, (i - 1) / (max - 1) * 100));
@@ -19,57 +19,18 @@ while(i < max) [
 return palette;`,
   },
   {
-    name: "Gradient generator",
-    type: "code",
-    code: `variable start: Color = hsl(220, 100, 50);
-variable end: Color = hsl(320, 100, 50);
-variable steps: Number = 10;
-variable gradient: List;
-variable i: Number = 0;
-
-while(i < steps) [
-  variable ratio: Number = i / (steps - 1);
-  variable interpolated: Color = start.mix(end, ratio);
-  gradient.append(interpolated);
-  i = i + 1;
-]
-
-return gradient;`,
-  },
-  {
-    name: "Color harmony",
-    type: "code",
-    code: `variable base: Color = hsl(220, 80, 60);
-variable harmony: Object;
-
-harmony.base = base;
-harmony.complement = base.rotate(180);
-harmony.triadic = [
-  base,
-  base.rotate(120),
-  base.rotate(240)
-];
-harmony.analogous = [
-  base.rotate(-30),
-  base,
-  base.rotate(30)
-];
-
-return harmony;`,
-  },
-  {
     name: "Typography scale",
     type: "code",
     code: `variable baseSize: Number = 16;
 variable ratio: Number = 1.25;
-variable scale: Object;
+variable scale: Dictionary;
 
-scale.xs = baseSize / (ratio * ratio);
-scale.sm = baseSize / ratio;
-scale.base = baseSize;
-scale.lg = baseSize * ratio;
-scale.xl = baseSize * ratio * ratio;
-scale.xxl = baseSize * ratio * ratio * ratio;
+scale.set("xs", baseSize / (ratio * ratio));
+scale.set("sm", baseSize / ratio);
+scale.set("base", baseSize);
+scale.set("lg", baseSize * ratio);
+scale.set("xl", baseSize * ratio * ratio);
+scale.set("xxl", baseSize * ratio * ratio * ratio);
 
 return scale;`,
   },
@@ -77,15 +38,15 @@ return scale;`,
     name: "Spacing system",
     type: "code",
     code: `variable base: Number = 8;
-variable spacing: Object;
+variable spacing: Dictionary;
 
-spacing.none = 0;
-spacing.xs = base / 2;
-spacing.sm = base;
-spacing.md = base * 1.5;
-spacing.lg = base * 2;
-spacing.xl = base * 3;
-spacing.xxl = base * 4;
+spacing.set("none", 0);
+spacing.set("xs", base / 2);
+spacing.set("sm", base);
+spacing.set("md", base * 1.5);
+spacing.set("lg", base * 2);
+spacing.set("xl", base * 3);
+spacing.set("xxl", base * 4);
 
 return spacing;`,
   },
