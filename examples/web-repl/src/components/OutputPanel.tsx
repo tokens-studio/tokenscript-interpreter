@@ -165,11 +165,26 @@ function JsonOutput({ value }: { value: any }) {
   );
 }
 
-const StringOutput = ({ str }: { str: string }) => (
-  <div className="text-gray-800">
-    <pre className="whitespace-pre-wrap text-sm font-mono">{str}</pre>
-  </div>
-);
+const StringOutput = ({ str, compact = false }: { str: string; compact?: boolean }) => {
+  if (compact) {
+    return (
+      <div
+        className="flex items-center p-3 bg-gray-50 rounded-lg border"
+        data-testid="string-output-compact"
+      >
+        <div className="flex-1 min-w-0">
+          <div className="text-xs text-gray-600 font-mono truncate">{str}</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="text-gray-800">
+      <pre className="whitespace-pre-wrap text-sm font-mono">{str}</pre>
+    </div>
+  );
+};
 
 const ErrorOutput = ({ error }: { error: string }) => (
   <div
@@ -200,14 +215,60 @@ interface UnifiedOutputPanelProps {
   className?: string;
 }
 
-const ListOutput = ({ list, colorManager }: { list: ListSymbol; colorManager: ColorManager }) => {
+const ListOutput = ({
+  list,
+  colorManager,
+  compact = false,
+}: {
+  list: ListSymbol;
+  colorManager: ColorManager;
+  compact?: boolean;
+}) => {
   if (list.elements.length === 0) {
+    if (compact) {
+      return (
+        <div
+          className="flex items-center p-3 bg-gray-50 rounded-lg border"
+          data-testid="empty-list-compact"
+        >
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-medium text-gray-900">List</div>
+            <div className="text-xs text-gray-500">Empty list</div>
+          </div>
+        </div>
+      );
+    }
     return (
       <div
         className="text-gray-500 italic"
         data-testid="empty-list"
       >
         Empty list
+      </div>
+    );
+  }
+
+  if (compact) {
+    return (
+      <div
+        className="p-3 bg-gray-50 rounded-lg border"
+        data-testid="list-output-compact"
+      >
+        <div className="flex items-center space-x-2 mb-2">
+          <div className="text-sm font-medium text-gray-900">List</div>
+          <span className="text-xs text-gray-600">({list.elements.length} items)</span>
+        </div>
+        <div className="space-y-1">
+          {list.elements.map((element, index) => (
+            <SymbolOutput
+              key={index}
+              symbol={element}
+              colorManager={colorManager}
+              compact={true}
+              data-testid={`list-item-${index}`}
+            />
+          ))}
+        </div>
       </div>
     );
   }
@@ -224,16 +285,13 @@ const ListOutput = ({ list, colorManager }: { list: ListSymbol; colorManager: Co
 
       <div className="space-y-2">
         {list.elements.map((element, index) => (
-          <div
+          <SymbolOutput
             key={index}
+            symbol={element}
+            colorManager={colorManager}
+            compact={true}
             data-testid={`list-item-${index}`}
-          >
-            <SymbolOutput
-              symbol={element}
-              colorManager={colorManager}
-              compact={true}
-            />
-          </div>
+          />
         ))}
       </div>
     </div>
@@ -263,10 +321,16 @@ const SymbolOutput = ({
         <ListOutput
           list={symbol as ListSymbol}
           colorManager={colorManager}
+          compact={compact}
         />
       );
     default:
-      return <StringOutput str={symbol.toString()} />;
+      return (
+        <StringOutput
+          str={symbol.toString()}
+          compact={compact}
+        />
+      );
   }
 };
 
