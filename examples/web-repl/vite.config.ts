@@ -4,10 +4,18 @@ import { defineConfig } from "vite";
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react({
+      fastRefresh: true,
+      include: "**/*.{jsx,tsx}",
+    }),
+  ],
   server: {
     port: 3000,
     host: true,
+    hmr: {
+      overlay: true,
+    },
     fs: {
       // Allow serving files from outside the project root
       allow: ["../../"],
