@@ -1,5 +1,4 @@
 import { JSON_PRESETS, type Preset, TOKENSCRIPT_PRESETS } from "../utils/presets";
-import { ArrowDown } from "./icons";
 
 interface PresetSelectorProps {
   inputMode: "tokenscript" | "json";
@@ -20,14 +19,14 @@ function PresetSelector({ inputMode, onPresetSelect, testId }: PresetSelectorPro
   };
 
   return (
-    <div className="relative flex items-center h-full">
+    <div className="relative">
       <select
         value=""
         onChange={(e) => handlePresetChange(e.target.value)}
-        className="h-full appearance-none text-xs sm:text-sm text-gray-600 font-mono bg-transparent border-none outline-none truncate cursor-pointer pr-6"
+        className="appearance-none bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded px-3 py-1 text-xs text-gray-700 font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
         data-testid={testId}
       >
-        <option value="">Load preset...</option>
+        <option value="">Load preset</option>
         {presets.map((preset) => (
           <option
             key={preset.name}
@@ -37,9 +36,6 @@ function PresetSelector({ inputMode, onPresetSelect, testId }: PresetSelectorPro
           </option>
         ))}
       </select>
-      <span className="pointer-events-none absolute right-0">
-        <ArrowDown />
-      </span>
     </div>
   );
 }
