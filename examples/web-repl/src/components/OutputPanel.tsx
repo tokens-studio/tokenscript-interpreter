@@ -39,11 +39,43 @@ const toCssColor = (color: ColorSymbol, colorManager: ColorManager): string | un
 const ColorOutput = ({
   color,
   colorManager,
+  compact = false,
 }: {
   color: ColorSymbol;
   colorManager: ColorManager;
+  compact?: boolean;
 }) => {
   const cssColor = toCssColor(color, colorManager);
+
+  if (compact) {
+    return (
+      <div
+        className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border"
+        data-testid="color-output-compact"
+      >
+        <div
+          className="w-8 h-8 rounded border border-gray-300 flex-shrink-0"
+          style={{ backgroundColor: cssColor }}
+          title={`Color: ${cssColor}`}
+          data-testid="color-swatch-compact"
+        />
+        <div className="flex-1 min-w-0">
+          <div
+            className="text-sm font-medium text-gray-900 truncate"
+            data-testid="color-type-compact"
+          >
+            {color.getTypeName()}
+          </div>
+          <div
+            className="text-xs text-gray-600 font-mono truncate"
+            data-testid="color-value-compact"
+          >
+            {color.isHex() ? color.toString() : `${Object.keys(color.value).length} attributes`}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -194,13 +226,13 @@ const ListOutput = ({ list, colorManager }: { list: ListSymbol; colorManager: Co
         {list.elements.map((element, index) => (
           <div
             key={index}
-            className="border-l-2 border-gray-200 pl-4 py-2"
+            className="pl-4 py-2"
             data-testid={`list-item-${index}`}
           >
-            <div className="text-xs text-gray-500 mb-1">Item {index + 1}</div>
             <SymbolOutput
               symbol={element}
               colorManager={colorManager}
+              compact={true}
             />
           </div>
         ))}
@@ -212,9 +244,11 @@ const ListOutput = ({ list, colorManager }: { list: ListSymbol; colorManager: Co
 const SymbolOutput = ({
   symbol,
   colorManager,
+  compact = false,
 }: {
   symbol: BaseSymbolType;
   colorManager: ColorManager;
+  compact?: boolean;
 }) => {
   switch (symbol.type.toLowerCase()) {
     case "color":
@@ -222,6 +256,7 @@ const SymbolOutput = ({
         <ColorOutput
           color={symbol as ColorSymbol}
           colorManager={colorManager}
+          compact={compact}
         />
       );
     case "list":
