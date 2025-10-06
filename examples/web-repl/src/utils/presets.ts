@@ -35,9 +35,9 @@ scale.set("xxl", baseSize * ratio * ratio * ratio);
 return scale;`,
   },
   {
-    name: "Spacing system",
+    name: "Unit Spacing system",
     type: "code",
-    code: `variable base: Number = 8;
+    code: `variable base: NumberWithUnit = 8px;
 variable spacing: Dictionary;
 
 spacing.set("none", 0);
