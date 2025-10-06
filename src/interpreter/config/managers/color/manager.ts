@@ -350,7 +350,7 @@ ${spec}`,
    * manager.formatColorMethod(rgbColor); // "rgb(0, 85, 255)"
    * ```
    */
-  formatColorMethod(color: ColorSymbol, opts?: FormatColorOptions = {}): string {
+  formatColorMethod(color: ColorSymbol, opts: FormatColorOptions = {}): string {
     const { decimalPlaces = 2, removeTrailingZeros = true } = opts;
 
     if (typeof color.value === "string") {
@@ -372,7 +372,8 @@ ${spec}`,
 
       // Extract values in the specified order
       const values = order.map((key) => {
-        const { value } = (color.value as Record<string, any>)?.[key];
+        const valObj = (color.value as Record<string, any>)[key];
+        const value = valObj?.value;
         if (typeof value === "number") {
           return this.formatNumber(value, decimalPlaces, removeTrailingZeros);
         }
