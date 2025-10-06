@@ -8,6 +8,7 @@ import {
   BaseSymbolType,
   type ColorManager,
   type ColorSymbol,
+  type DictionarySymbol,
   type ListSymbol,
 } from "@tokens-studio/tokenscript-interpreter";
 import ShellPanel from "./ShellPanel";
@@ -298,6 +299,54 @@ const ListOutput = ({
   );
 };
 
+const DictionaryOutput = ({
+  dictionary,
+  colorManager,
+  compact = false,
+}: {
+  dictionary: DictionarySymbol;
+  colorManager: ColorManager;
+  compact?: boolean;
+}) => {
+  const dictObject = Object.fromEntries(
+    [...dictionary.value].map(([key, value]) => [
+      key,
+      value.type.toLowerCase() === "color"
+        ? colorManager.formatColorMethod(value)
+        : value.toString(),
+    ]),
+  );
+
+  if (compact) {
+    return (
+      <div
+        className="p-3 bg-gray-50 rounded-lg border"
+        data-testid="dictionary-output-compact"
+      >
+        <div className="flex items-center space-x-2 mb-2">
+          <div className="text-sm font-medium text-gray-900">Dictionary</div>
+          <span className="text-xs text-gray-600">({dictionary.value.size} keys)</span>
+        </div>
+        <JsonOutput value={dictObject} />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="space-y-3"
+      data-testid="dictionary-output"
+    >
+      <div className="flex items-center space-x-2 mb-3">
+        <div className="font-semibold text-gray-900">Dictionary</div>
+        <span className="text-sm text-gray-600">({dictionary.value.size} keys)</span>
+      </div>
+
+      <JsonOutput value={dictObject} />
+    </div>
+  );
+};
+
 const SymbolOutput = ({
   symbol,
   colorManager,
@@ -320,6 +369,14 @@ const SymbolOutput = ({
       return (
         <ListOutput
           list={symbol as ListSymbol}
+          colorManager={colorManager}
+          compact={compact}
+        />
+      );
+    case "dictionary":
+      return (
+        <DictionaryOutput
+          dictionary={symbol as DictionarySymbol}
           colorManager={colorManager}
           compact={compact}
         />
