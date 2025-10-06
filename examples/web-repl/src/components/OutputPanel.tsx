@@ -226,7 +226,6 @@ const ListOutput = ({ list, colorManager }: { list: ListSymbol; colorManager: Co
         {list.elements.map((element, index) => (
           <div
             key={index}
-            className="pl-4 py-2"
             data-testid={`list-item-${index}`}
           >
             <SymbolOutput
