@@ -299,7 +299,7 @@ function App() {
         <div className="mx-auto grid grid-cols-1 max-w-7xl lg:grid-cols-2 gap-4 lg:gap-8 lg:h-full">
           {/* Editor Panel */}
           <div
-            className="min-h-[400px] lg:min-h-[300px] lg:max-h-[60vh] rounded-lg shadow-sm lg:overflow-hidden"
+            className="min-h-[400px] lg:min-h-[300px] lg:max-h-[60vh] lg:sticky lg:top-0 rounded-lg shadow-sm lg:overflow-hidden"
             data-testid="editor-panel"
           >
             {inputMode === "tokenscript" ? (
