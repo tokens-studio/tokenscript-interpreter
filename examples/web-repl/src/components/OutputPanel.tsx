@@ -64,13 +64,13 @@ const ColorOutput = ({
             className="text-sm font-medium text-gray-900 truncate"
             data-testid="color-type-compact"
           >
-            {color.getTypeName()}
+            {colorManager.formatColorMethod(color)}
           </div>
           <div
             className="text-xs text-gray-600 font-mono truncate"
             data-testid="color-value-compact"
           >
-            {color.isHex() ? color.toString() : `${Object.keys(color.value).length} attributes`}
+            {color.getTypeName()}
           </div>
         </div>
       </div>
