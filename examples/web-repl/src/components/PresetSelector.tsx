@@ -26,7 +26,12 @@ function PresetSelector({ inputMode, onPresetSelect, testId }: PresetSelectorPro
         className="appearance-none bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded px-3 py-1 text-xs text-gray-700 font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
         data-testid={testId}
       >
-        <option value="">Load preset</option>
+        <option
+          value=""
+          hidden
+        >
+          Load preset
+        </option>
         {presets.map((preset) => (
           <option
             key={preset.name}
