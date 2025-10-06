@@ -332,10 +332,11 @@ ${spec}`,
         return "";
       }
 
-      const order = spec.schema.order;
-      if (!order || order.length === 0) {
-        return "";
-      }
+      // Use schema order if available, otherwise fall back to object keys order
+      const order =
+        spec.schema.order && spec.schema.order.length > 0
+          ? spec.schema.order
+          : Object.keys(color.value as Record<string, any>);
 
       // Extract values in the order specified by the schema
       const values = order.map((key) => {
