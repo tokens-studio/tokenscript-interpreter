@@ -25,8 +25,9 @@
   ],
   "scripts": {
     "ts:typecheck": "tsc -p tsconfig.build.json",
-    "build": "tsup",
-    "build:lib": "tsup",
+    "build": "npm run build:lib && npm run build:cli",
+    "build:lib": "tsup --config tsup.lib.config.ts",
+    "build:cli": "tsup --config tsup.cli.config.ts",
     "build:watch": "tsup --watch",
     "test": "vitest run",
     "test:watch": "vitest",

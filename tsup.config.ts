@@ -1,23 +1,24 @@
 import { defineConfig } from "tsup";
 
+// This config is used for watch mode - use separate configs for production builds
 const sharedConfig = {
-  dts: true,
   sourcemap: true,
   treeshake: true,
   tsconfig: "tsconfig.build.json",
 };
 
 export default defineConfig([
-  // Library build
+  // Library build - build first to ensure types are available
   {
     entry: ["src/lib/index.ts"],
     format: ["esm", "cjs"],
     clean: true,
     outDir: "dist/lib",
     external: ["node:fs", "node:path", "node:url"],
+    dts: true,
     ...sharedConfig,
   },
-  // CLI build
+  // CLI build - depends on library types
   {
     entry: ["src/cli.ts"],
     format: ["esm"],
@@ -26,6 +27,7 @@ export default defineConfig([
     banner: {
       js: "#!/usr/bin/env node",
     },
+    dts: true,
     ...sharedConfig,
   },
   // Supporting files needed by CLI
@@ -34,6 +36,7 @@ export default defineConfig([
     format: ["esm"],
     outDir: "dist",
     external: ["node:fs", "node:path", "chalk"],
+    dts: true,
     ...sharedConfig,
   },
 ]);
