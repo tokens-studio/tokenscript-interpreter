@@ -2,6 +2,7 @@ export interface Preset {
   name: string;
   type: "code" | "json";
   code: string;
+  dependencies?: string[];
 }
 
 export const TOKENSCRIPT_PRESETS: Preset[] = [
@@ -57,6 +58,9 @@ return spacing;`,
 config.set("steps", 10);
 config.set("saturation", 255);
 rainbow_color_scale(config).values();`,
+    dependencies: [
+      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/test-color-scale-rainbow/0.0.1/",
+    ],
   },
 ];
 
