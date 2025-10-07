@@ -8,7 +8,7 @@ const TokenScriptSchemaResponseSchema = z.object({
   slug: z.string(),
   version: z.string(),
   content: ColorSpecificationSchema,
-  license_name: z.string(),
+  license_name: z.string().optional(),
 });
 
 export type TokenScriptSchemaResponse = z.infer<typeof TokenScriptSchemaResponseSchema>;
