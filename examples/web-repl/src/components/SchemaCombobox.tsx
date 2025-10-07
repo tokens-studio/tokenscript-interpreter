@@ -1,3 +1,7 @@
+import type {
+  ColorSpecification,
+  FunctionSpecification,
+} from "@tokens-studio/tokenscript-interpreter";
 import { useCallback, useEffect, useState } from "react";
 import {
   Button,
@@ -11,7 +15,6 @@ import {
   Popover,
   Separator,
 } from "react-aria-components";
-import type { ColorSpecification } from "../../../src/interpreter/config/managers/color/schema";
 import { fetchTokenScriptSchema } from "../utils/schema-fetcher";
 
 interface SchemaOption {
@@ -23,12 +26,17 @@ interface SchemaOption {
 }
 
 interface SchemaComboboxProps {
-  onSchemaSelect: (url: string, spec: ColorSpecification) => void;
+  onSchemaSelect: (
+    url: string,
+    spec: ColorSpecification | FunctionSpecification,
+    type?: "color" | "function",
+  ) => void;
   onCreateCustom: () => void;
   onRestoreDefaults?: () => void;
   onClearAllSchemas?: () => void;
   placeholder?: string;
-  existingSchemas?: Map<string, ColorSpecification>;
+  existingColorSchemas?: Map<string, ColorSpecification>;
+  existingFunctionSchemas?: Map<string, FunctionSpecification>;
 }
 
 export default function SchemaCombobox({
@@ -37,7 +45,8 @@ export default function SchemaCombobox({
   onRestoreDefaults,
   onClearAllSchemas,
   placeholder = "Add schema...",
-  existingSchemas = new Map(),
+  existingColorSchemas = new Map(),
+  existingFunctionSchemas = new Map(),
 }: SchemaComboboxProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -142,7 +151,8 @@ export default function SchemaCombobox({
       try {
         setLoading(true);
         const response = await fetchTokenScriptSchema(schema.url);
-        onSchemaSelect(schema.url, response.content);
+        const schemaType = schema.type === "function" ? "function" : "color";
+        onSchemaSelect(schema.url, response.content, schemaType);
         setInputValue("");
       } catch (err) {
         console.error("Failed to fetch schema content:", err);
@@ -358,7 +368,10 @@ export default function SchemaCombobox({
                       {groupName} ({schemas.length})
                     </Header>
                     {schemas.map((schema) => {
-                      const isDownloaded = existingSchemas.has(schema.url);
+                      const isDownloaded =
+                        schema.type === "function"
+                          ? existingFunctionSchemas.has(schema.url)
+                          : existingColorSchemas.has(schema.url);
                       return (
                         <ListBoxItem
                           key={schema.id}

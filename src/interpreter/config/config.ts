@@ -81,4 +81,13 @@ export class Config {
 
     return !!basicSymbolTypes[lowerBaseType];
   }
+
+  clone(): Config {
+    return new Config({
+      languageOptions: { ...this.languageOptions },
+      colorManager: this.colorManager.clone(),
+      unitManager: this.unitManager.clone(),
+      functionsManager: this.functionsManager.clone(),
+    });
+  }
 }

@@ -1,6 +1,8 @@
 import {
   ColorManager,
   Config,
+  type FunctionSpecification,
+  FunctionsManager,
   Interpreter,
   interpretTokens,
   Lexer,
@@ -14,7 +16,12 @@ import OutputPanel from "./components/OutputPanel";
 import SchemaManager from "./components/SchemaManager";
 import ShellPanel from "./components/ShellPanel";
 import TokenScriptEditor from "./components/TokenScriptEditor";
-import { autoRunAtom, colorSchemasAtom, schemaPanelCollapsedAtom } from "./store/atoms";
+import {
+  autoRunAtom,
+  colorSchemasAtom,
+  functionSchemasAtom,
+  schemaPanelCollapsedAtom,
+} from "./store/atoms";
 import type { DEFAULT_COLOR_SCHEMAS } from "./utils/default-schemas";
 import type { Preset } from "./utils/presets";
 
@@ -29,6 +36,7 @@ type UnifiedExecutionResult = {
   executionTime?: number;
   output?: any;
   colorManager: ColorManager;
+  functionsManager: FunctionsManager;
 };
 
 const DEFAULT_CODE = `// Example TokenScript code - try editing!
@@ -94,11 +102,25 @@ function setupColorManager(schemas: typeof DEFAULT_COLOR_SCHEMAS): ColorManager 
     try {
       colorManager.register(uri, spec);
     } catch (error) {
-      console.warn(`Failed to register schema ${uri}:`, error);
+      console.warn(`Failed to register color schema ${uri}:`, error);
     }
   }
 
   return colorManager;
+}
+
+function setupFunctionsManager(schemas: Map<string, FunctionSpecification>): FunctionsManager {
+  const functionsManager = new FunctionsManager();
+
+  for (const [uri, spec] of schemas.entries()) {
+    try {
+      functionsManager.register(spec.keyword, spec);
+    } catch (error) {
+      console.warn(`Failed to register function schema ${uri}:`, error);
+    }
+  }
+
+  return functionsManager;
 }
 
 function App() {
@@ -110,6 +132,7 @@ function App() {
   const [jsonError, setJsonError] = useState<string>();
   const [schemaPanelCollapsed, setSchemaPanelCollapsed] = useAtom(schemaPanelCollapsedAtom);
   const [colorSchemas, _setColorSchemas] = useAtom(colorSchemasAtom);
+  const [functionSchemas, _setFunctionSchemas] = useAtom(functionSchemasAtom);
   const [input, setInputs] = useState<Record<string, any>>({});
 
   // In development mode, persist code to sessionStorage for HMR preservation
@@ -129,10 +152,11 @@ function App() {
   const executeCode = useCallback(async () => {
     const currentInput = inputMode === "tokenscript" ? code : jsonInput;
     const colorManager = setupColorManager(colorSchemas);
+    const functionsManager = setupFunctionsManager(functionSchemas);
 
     // If input is empty or just whitespace, clear the output
     if (!currentInput.trim()) {
-      setResult({ type: inputMode, colorManager });
+      setResult({ type: inputMode, colorManager, functionsManager });
       setJsonError(undefined);
       return;
     }
@@ -141,7 +165,7 @@ function App() {
 
     try {
       if (inputMode === "tokenscript") {
-        const config = new Config({ colorManager });
+        const config = new Config({ colorManager, functionsManager });
 
         const lexer = new Lexer(code);
         const ast = new Parser(lexer).parse();
@@ -157,6 +181,7 @@ function App() {
           executionTime: Math.round(executionTime * 100) / 100,
           output,
           colorManager,
+          functionsManager,
         });
         setJsonError(undefined);
       } else {
@@ -170,7 +195,7 @@ function App() {
           throw jsonErr;
         }
 
-        const config = new Config({ colorManager });
+        const config = new Config({ colorManager, functionsManager });
 
         const output = interpretTokens(jsonTokens, config);
         const executionTime = performance.now() - startTime;
@@ -184,6 +209,7 @@ function App() {
           executionTime: Math.round(executionTime * 100) / 100,
           output,
           colorManager,
+          functionsManager,
         });
       }
     } catch (error) {
@@ -215,9 +241,10 @@ function App() {
         errorInfo,
         executionTime: Math.round(executionTime * 100) / 100,
         colorManager,
+        functionsManager,
       });
     }
-  }, [code, jsonInput, inputMode, colorSchemas, input]);
+  }, [code, jsonInput, inputMode, colorSchemas, functionSchemas, input]);
 
   const handlePresetSelect = useCallback((preset: Preset) => {
     if (preset.type === "code") {

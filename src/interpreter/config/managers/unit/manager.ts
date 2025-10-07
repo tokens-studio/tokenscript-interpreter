@@ -102,7 +102,7 @@ export class UnitManager extends BaseManager<
    * Creates a clone of this class to be passed down to initializers and conversion functions
    * Links properties to the parent config.
    */
-  protected clone(): this {
+  public clone(): this {
     const unitManager = new UnitManager(new Map());
     unitManager.specs = this.specs;
     unitManager.specTypes = this.specTypes;

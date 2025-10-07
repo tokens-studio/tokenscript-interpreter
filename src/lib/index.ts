@@ -2,6 +2,8 @@
 
 export * from "@interpreter/ast";
 export * from "@interpreter/config";
+export type { FunctionSpecification } from "@interpreter/config/managers/functions/schema";
+export { FunctionSpecificationSchema } from "@interpreter/config/managers/functions/schema";
 export * from "@interpreter/errors";
 export { Interpreter } from "@interpreter/interpreter";
 export { Lexer } from "@interpreter/lexer";

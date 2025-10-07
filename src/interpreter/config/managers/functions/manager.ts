@@ -1,4 +1,7 @@
 import { InterpreterError } from "@interpreter/errors";
+import { Interpreter } from "@interpreter/interpreter";
+import { Lexer } from "@interpreter/lexer";
+import { Parser } from "@interpreter/parser";
 import { NumberSymbol, NumberWithUnitSymbol, StringSymbol } from "@interpreter/symbols";
 import type { ISymbolType } from "@src/types";
 import { BaseManager } from "../base-manager";
@@ -21,10 +24,10 @@ export class FunctionsManager extends BaseManager<
   }
 
   protected getSpecName(spec: FunctionSpecification): string {
-    return spec.name;
+    return spec.keyword;
   }
 
-  protected clone(): this {
+  public clone(): this {
     const functionsManager = new FunctionsManager();
     functionsManager.specs = this.specs;
     functionsManager.specTypes = this.specTypes;
@@ -50,8 +53,12 @@ export class FunctionsManager extends BaseManager<
       parsedSpec = parseResult.data;
     }
 
-    this.specs.set(name.toLowerCase(), parsedSpec);
-    this.specTypes.set(parsedSpec.name.toLowerCase(), name.toLowerCase());
+    const functionName = parsedSpec.keyword.toLowerCase();
+    this.specs.set(functionName, parsedSpec);
+    this.specTypes.set(parsedSpec.name.toLowerCase(), functionName);
+
+    // Register the dynamic function implementation
+    this.registerDynamicFunction(parsedSpec);
 
     return parsedSpec;
   }
@@ -369,6 +376,47 @@ export class FunctionsManager extends BaseManager<
 
   private registerFunction(name: string, impl: FunctionImpl): void {
     this.functionMap.set(name.toLowerCase(), impl);
+  }
+
+  private registerDynamicFunction(spec: FunctionSpecification): void {
+    const functionName = spec.keyword.toLowerCase();
+    const script = spec.script.script;
+
+    const impl: FunctionImpl = (...args: ISymbolType[]): ISymbolType => {
+      try {
+        // Create a config instance for the dynamic function execution
+        const config = this.parentConfig?.clone();
+        if (!config) {
+          throw new InterpreterError(`No config available for dynamic function '${functionName}'`);
+        }
+
+        // Parse and execute the script
+        const lexer = new Lexer(script);
+        const ast = new Parser(lexer).parse();
+        const interpreter = new Interpreter(ast, {
+          references: { input: args },
+          config,
+        });
+
+        const result = interpreter.interpret();
+        if (result === null) {
+          throw new InterpreterError(`Dynamic function '${functionName}' returned null`);
+        }
+
+        // Handle string results by converting them to StringSymbol
+        if (typeof result === "string") {
+          return new StringSymbol(result);
+        }
+
+        return result;
+      } catch (error) {
+        throw new InterpreterError(
+          `Error executing dynamic function '${functionName}': ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    };
+
+    this.functionMap.set(functionName, impl);
   }
 
   public getFunction(name: string): FunctionImpl | undefined {

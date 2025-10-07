@@ -138,7 +138,7 @@ export abstract class BaseManager<TSpec, TInput, TOutput> {
   /**
    * Abstract method for creating a clone of the manager
    */
-  protected abstract clone(): this;
+  public abstract clone(): this;
 
   /**
    * Set the parent config reference

@@ -78,7 +78,7 @@ export class ColorManager extends BaseManager<ColorSpecification, ColorSymbol, C
    * Creates a clone of this class to be passed down to initializers and conversion functions
    * Links properties to the parent config.
    */
-  protected clone(): this {
+  public clone(): this {
     const colorManager = new ColorManager(new Map());
     colorManager.specs = this.specs;
     colorManager.specTypes = this.specTypes;
