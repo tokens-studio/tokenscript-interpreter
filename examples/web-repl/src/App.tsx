@@ -101,20 +101,20 @@ function setupColorManager(schemas: typeof DEFAULT_COLOR_SCHEMAS): ColorManager 
   const cssColorUri = "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/css-color/0/";
   const cssColorEntry = DEFAULT_COLOR_SCHEMAS.get(cssColorUri);
 
-  if (cssColorEntry) {
-    try {
-      colorManager.register(cssColorUri, cssColorEntry);
-    } catch (error) {
-      console.warn(`Failed to register css-color schema:`, error);
-    }
-  }
-
   // Register all other schemas
   for (const [uri, spec] of schemas.entries()) {
     try {
       colorManager.register(uri, spec);
     } catch (error) {
       console.warn(`Failed to register color schema ${uri}:`, error);
+    }
+  }
+
+  if (cssColorEntry) {
+    try {
+      colorManager.register(cssColorUri, cssColorEntry);
+    } catch (error) {
+      console.warn(`Failed to register css-color schema:`, error);
     }
   }
 
