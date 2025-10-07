@@ -275,6 +275,12 @@ export class FunctionsManager extends BaseManager<
       return new NumberSymbol(Math.atan(arg.value as number));
     });
 
+    this.registerFunction("atan2", (y: ISymbolType, x: ISymbolType): NumberSymbol => {
+      if (!(y instanceof NumberSymbol) || !(x instanceof NumberSymbol))
+        throw new InterpreterError("atan2() expects two number arguments.");
+      return new NumberSymbol(Math.atan2(y.value as number, x.value as number));
+    });
+
     // Logarithmic functions
     this.registerFunction("log", (arg: ISymbolType, base?: ISymbolType): NumberSymbol => {
       if (!(arg instanceof NumberSymbol))
