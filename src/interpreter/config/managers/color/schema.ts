@@ -44,7 +44,7 @@ const SpecSchemaSchema = z.object({
 
 export const ColorSpecificationSchema = z.object({
   name: z.string(),
-  type: z.string(),
+  type: z.literal("color"),
   description: z.string().optional(),
   schema: SpecSchemaSchema.optional(),
   initializers: z.array(InitializerSchema).default([]),
@@ -58,7 +58,7 @@ export const specName = (spec: ColorSpecification): string => spec.name.toLowerC
 // Minimal viable ColorSpecification for testing and defaults
 export const MINIMAL_COLOR_SPECIFICATION: ColorSpecification = {
   name: "MinimalColor",
-  type: "color",
+  type: "color" as const,
   schema: {
     type: "object",
     properties: {

@@ -1,5 +1,11 @@
 import { ColorSpecificationSchema } from "@interpreter/config/managers/color/schema";
+import { FunctionSpecificationSchema } from "@interpreter/config/managers/functions/schema";
 import { z } from "zod";
+
+const SchemaContentSchema = z.discriminatedUnion("type", [
+  ColorSpecificationSchema,
+  FunctionSpecificationSchema,
+]);
 
 const TokenScriptSchemaResponseSchema = z.object({
   id: z.string(),
@@ -7,12 +13,12 @@ const TokenScriptSchemaResponseSchema = z.object({
   schema: z.string().url(),
   slug: z.string(),
   version: z.string(),
-  content: ColorSpecificationSchema,
+  content: SchemaContentSchema,
   license_name: z.string().nullish(),
 });
 
 export type TokenScriptSchemaResponse = z.infer<typeof TokenScriptSchemaResponseSchema>;
-export type TokenScriptSchemaContent = z.infer<typeof ColorSpecificationSchema>;
+export type TokenScriptSchemaContent = z.infer<typeof SchemaContentSchema>;
 
 export interface SchemaFetcherOptions {
   timeout?: number;

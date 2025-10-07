@@ -1,6 +1,8 @@
 import {
   type ColorSpecification,
   ColorSpecificationSchema,
+  type FunctionSpecification,
+  FunctionSpecificationSchema,
   MINIMAL_COLOR_SPECIFICATION,
 } from "@tokens-studio/tokenscript-interpreter";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
@@ -11,9 +13,17 @@ import MonacoEditor, { jsonEditorOptions, type ValidationError } from "./MonacoE
 
 interface SchemaEditorModalProps {
   onClose: () => void;
-  schema: { url: string; spec: ColorSpecification } | null;
-  onSave: (url: string, spec: ColorSpecification) => void;
-  existingSchemas?: Map<string, ColorSpecification>;
+  schema: {
+    url: string;
+    spec: ColorSpecification | FunctionSpecification;
+    type: "color" | "function";
+  } | null;
+  onSave: (
+    url: string,
+    spec: ColorSpecification | FunctionSpecification,
+    type: "color" | "function",
+  ) => void;
+  existingSchemas?: Map<string, ColorSpecification | FunctionSpecification>;
 }
 
 export default function SchemaEditorModal({
@@ -24,9 +34,8 @@ export default function SchemaEditorModal({
 }: SchemaEditorModalProps) {
   const [url, setUrl] = useState<string | undefined>(schema?.url);
 
-  const [schemaJson, setSchemaJson] = useState(
-    JSON.stringify(schema?.spec || MINIMAL_COLOR_SPECIFICATION, null, 2),
-  );
+  const defaultSpec = schema?.spec || MINIMAL_COLOR_SPECIFICATION;
+  const [schemaJson, setSchemaJson] = useState(JSON.stringify(defaultSpec, null, 2));
   type ErrorType = "empty" | "invalid" | "duplicate";
   type SchemaEditorError = { type: ErrorType; message: string } | undefined;
   const [error, setError] = useState<SchemaEditorError>();
@@ -100,7 +109,7 @@ export default function SchemaEditorModal({
 
   // Validate schema JSON in real-time
   const validateSchema = useCallback(
-    (jsonString: string): ColorSpecification | null => {
+    (jsonString: string): ColorSpecification | FunctionSpecification | null => {
       setValidationErrors([]);
 
       if (!jsonString.trim()) {
@@ -123,11 +132,19 @@ export default function SchemaEditorModal({
         return null;
       }
 
+      const schemaType = (parsedJson as any)?.type;
+
       try {
-        return ColorSpecificationSchema.parse(parsedJson);
+        switch (schemaType) {
+          case "color":
+            return ColorSpecificationSchema.parse(parsedJson);
+          case "function":
+            return FunctionSpecificationSchema.parse(parsedJson);
+        }
       } catch (err) {
-        if (err instanceof Error && "issues" in err) {
-          const zodError = err as ZodError;
+        const primaryError = err as ZodError;
+        if (primaryError instanceof Error && "issues" in primaryError) {
+          const zodError = primaryError as ZodError;
           // Map Zod errors to ValidationError structure with line/column positions
           const errors: ValidationError[] = zodError.issues.map((issue) => {
             const position = findJsonPathPosition(jsonString, issue.path);
@@ -143,7 +160,7 @@ export default function SchemaEditorModal({
 
           setValidationErrors(errors);
         } else {
-          const errorMsg = `Schema validation failed: ${err instanceof Error ? err.message : "Unknown error"}`;
+          const errorMsg = `Schema validation failed: ${primaryError instanceof Error ? primaryError.message : "Unknown error"}`;
           setValidationErrors([{ message: errorMsg, line: 1, column: 1 }]);
         }
         return null;
@@ -203,7 +220,9 @@ export default function SchemaEditorModal({
       return;
     }
 
-    onSave(trimmedUrl, validatedSpec);
+    // Determine schema type from the validated spec
+    const schemaType = validatedSpec.type === "function" ? "function" : "color";
+    onSave(trimmedUrl, validatedSpec, schemaType);
     onClose();
   }, [error, validationErrors.length, url, schemaJson, onSave, onClose, validateSchema]);
 
