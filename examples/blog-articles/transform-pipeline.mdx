@@ -18,8 +18,8 @@ Say in penpot I need a object with these properties spread out, I can easily jus
 // Using something like ts-match to easily match the expected shape of input data
 const cssBorderToObject = (input: TokenScriptSymbol) => match([
   [borderWidth: NumberWithUnit, borderStyle: String, borderColor: Color] => ({
-    borderWidth, borderWidth.value,
-    borderStyle,
+    borderWidth, borderWidth.toString(),
+    borderStyle: borderStyle.toString(),
     borderColor: bordderColor.to.rgb().to.jsObject(),
   })
 ])
