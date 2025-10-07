@@ -111,7 +111,6 @@ function App() {
   const [schemaPanelCollapsed, setSchemaPanelCollapsed] = useAtom(schemaPanelCollapsedAtom);
   const [colorSchemas, _setColorSchemas] = useAtom(colorSchemasAtom);
   const [input, setInputs] = useState<Record<string, any>>({});
-  const [_inputsPanelCollapsed, _setInputsPanelCollapsed] = useState(true);
 
   // In development mode, persist code to sessionStorage for HMR preservation
   useEffect(() => {

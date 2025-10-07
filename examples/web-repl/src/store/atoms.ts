@@ -51,3 +51,18 @@ export const colorSchemasAtom = atomWithStorage<Specs>("repl:colorSchemas", DEFA
 
 // Deleted schemas history for undo functionality
 export const deletedSchemasAtom = atom<DeletedSchema[]>([]);
+
+// Input definitions for TokenScript REPL
+export interface InputDefinition {
+  name: string;
+  type: "string" | "number" | "boolean" | "color";
+  value: string | number | boolean;
+}
+
+// Inputs panel state (non-persisted)
+export const inputsPanelCollapsedAtom = atom(true);
+
+// Inputs data (non-persisted)
+export const inputsDataAtom = atom<InputDefinition[]>([
+  { name: "input1", type: "string", value: "" },
+]);

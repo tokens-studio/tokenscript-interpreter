@@ -1,12 +1,8 @@
+import { useAtom } from "jotai";
 import type React from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
+import { type InputDefinition, inputsDataAtom } from "../store/atoms";
 import Select from "./Select";
-
-export interface InputDefinition {
-  name: string;
-  type: "string" | "number" | "boolean" | "color";
-  value: string | number | boolean;
-}
 
 const TYPE_OPTIONS = [
   { value: "string", label: "String" },
@@ -21,9 +17,15 @@ interface InputsPanelProps {
 }
 
 const InputsPanel: React.FC<InputsPanelProps> = ({ onInputsChange, initialInputs = [] }) => {
-  const [inputs, setInputs] = useState<InputDefinition[]>(
-    initialInputs.length > 0 ? initialInputs : [{ name: "input1", type: "string", value: "" }],
-  );
+  const [inputs, setInputs] = useAtom(inputsDataAtom);
+
+  // Initialize from initialInputs if provided (only on first mount)
+  useEffect(() => {
+    if (initialInputs.length > 0) {
+      setInputs(initialInputs);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Sync inputs changes with parent component
   useEffect(() => {

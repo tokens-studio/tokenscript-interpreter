@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useAtom } from "jotai";
+import { inputsPanelCollapsedAtom } from "../store/atoms";
 import type { Preset } from "../utils/presets";
 import EditorModeTitle from "./EditorModeTitle";
 import InputsPanel from "./InputsPanel";
@@ -29,7 +30,7 @@ function TokenScriptEditor({
   onPresetSelect,
   onReferencesChange,
 }: TokenScriptEditorProps) {
-  const [inputsPanelCollapsed, setInputsPanelCollapsed] = useState(true);
+  const [inputsPanelCollapsed, setInputsPanelCollapsed] = useAtom(inputsPanelCollapsedAtom);
 
   const title = (
     <div className="flex items-center space-x-2">
