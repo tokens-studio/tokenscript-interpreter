@@ -63,7 +63,12 @@ export default function SchemaManager() {
   const handleLoadDefaults = useCallback(() => {
     setSchemas(new Map(DEFAULT_COLOR_SCHEMAS));
     setDeletedSchemas([]);
-  }, [setSchemas]);
+  }, [setSchemas, setDeletedSchemas]);
+
+  const handleClearAllSchemas = useCallback(() => {
+    setSchemas(new Map());
+    setDeletedSchemas([]);
+  }, [setSchemas, setDeletedSchemas]);
 
   const handleSchemaSelect = useCallback(
     (url: string, spec: ColorSpecification) => {
@@ -90,17 +95,11 @@ export default function SchemaManager() {
             <SchemaCombobox
               onSchemaSelect={handleSchemaSelect}
               onCreateCustom={handleAddNew}
+              onRestoreDefaults={handleLoadDefaults}
+              onClearAllSchemas={handleClearAllSchemas}
               placeholder="Add or search schemas..."
               existingSchemas={schemas}
             />
-            <button
-              type="button"
-              onClick={handleLoadDefaults}
-              className="px-3 py-1 text-sm bg-white border border-gray-300 text-gray-600 rounded hover:border-gray-600 hover:bg-gray-50 whitespace-nowrap"
-              data-testid="load-defaults-button"
-            >
-              Restore Defaults
-            </button>
           </div>
         </div>
       </div>
