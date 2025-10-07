@@ -46,9 +46,9 @@ export const ColorSpecificationSchema = z.object({
   name: z.string(),
   type: z.string(),
   description: z.string().optional(),
-  schema: SpecSchemaSchema,
-  initializers: z.array(InitializerSchema),
-  conversions: z.array(ConversionSchema),
+  schema: SpecSchemaSchema.optional(),
+  initializers: z.array(InitializerSchema).default([]),
+  conversions: z.array(ConversionSchema).default([]),
 });
 
 export type ColorSpecification = z.infer<typeof ColorSpecificationSchema>;
