@@ -5,7 +5,85 @@ export interface Preset {
   dependencies?: string[];
 }
 
-export const TOKENSCRIPT_PRESETS: Preset[] = [
+const DEMO_PRESETS: Preset[] = [
+  {
+    name: "Demo 1: Color Variable",
+    type: "code",
+    code: `variable yellow: Color = #FF9900;
+
+return yellow;`,
+  },
+  {
+    name: "Demo 2: Color Method",
+    type: "code",
+    code: `variable yellow: Color = #FF9900;
+
+return yellow.to.hsl();`,
+    dependencies: [
+      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0.0.1/",
+      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0.0.1/",
+    ],
+  },
+  {
+    name: "Demo 3: HSL Color Variable",
+    type: "code",
+    code: `variable yellow: Color = #FF9900;
+variable brandYellow: Color.Hsl = yellow.to.hsl();
+return brandYellow;`,
+  },
+  {
+    name: "Demo 4: Color Ramp Loop",
+    type: "code",
+    code: `variable yellow: Color = #FF9900;
+variable brandYellow: Color.Hsl = yellow.to.hsl();
+variable i: Number = 0;
+variable max: Number = 10;
+variable colorRamp: Dictionary;
+while (i < max) [
+  i = i + 1;
+  colorRamp.set(i.toString(), hsl(brandYellow.h, brandYellow.s, i * (100 / max)));
+]
+return colorRamp.values();`,
+  },
+  {
+    name: "Demo 5: Relative Darken Function",
+    type: "code",
+    code: `variable yellow: Color = #FF9900;
+return relativeDarken(yellow, 10%);`,
+  },
+  {
+    name: "Demo 6: HSL Ramp Function",
+    type: "code",
+    code: `variable yellow: Color = #FF9900;
+variable config: Dictionary;
+config.set("steps", 10);
+return hslRamp(yellow, config);`,
+  },
+  {
+    name: "Demo 7: OKLCH Color Ramp",
+    type: "code",
+    code: `variable yellow: Color = #FF9900;
+variable prettyRamp: Dictionary = oklchRamp(yellow.toOklch());
+return prettyRamp;`,
+  },
+  {
+    name: "Demo 8: Ramp to Hex Values",
+    type: "code",
+    code: `variable yellow: Color = #FF9900;
+variable prettyRamp: Dictionary = oklchRamp(yellow.toOklch());
+variable hexValues: List;
+variable l: Number = 0;
+while (l < prettyRamp.length) [
+  hexValues.append(prettyRamp.values()[l].toHex());
+  l = l + 1;
+]
+return hexValues;`,
+  },
+  {
+    name: "Demo 9: Mixed Unit Addition",
+    type: "code",
+    code: `return 1rem + 1px + 10%;`,
+  },
   {
     name: "Color palette",
     type: "code",
@@ -19,6 +97,10 @@ while(i < max) [
 
 return palette;`,
   },
+];
+
+export const TOKENSCRIPT_PRESETS: Preset[] = [
+  ...DEMO_PRESETS,
   {
     name: "Typography scale",
     type: "code",
