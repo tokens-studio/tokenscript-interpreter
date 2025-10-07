@@ -328,7 +328,7 @@ export default function SchemaManager() {
           onClose={() => setIsModalOpen(false)}
           schema={editingSchema}
           onSave={handleSave}
-          existingSchemas={schemas}
+          existingSchemas={new Map([...colorSchemas, ...functionSchemas])}
         />
       )}
     </div>
