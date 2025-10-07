@@ -777,6 +777,13 @@ export class DictionarySymbol extends BaseSymbolType {
       args: [],
       returnType: "List",
     },
+    values: {
+      function: function (this: DictionarySymbol) {
+        return this.valuesImpl();
+      },
+      args: [],
+      returnType: "List",
+    },
     keyexists: {
       function: function (this: DictionarySymbol, key: StringSymbol) {
         return this.keyExistsImpl(key);
@@ -880,6 +887,12 @@ export class DictionarySymbol extends BaseSymbolType {
     this.expectSafeValue(this.value);
     const keys = Array.from(this.value.keys()).map((key) => new StringSymbol(key));
     return new ListSymbol(keys);
+  }
+
+  valuesImpl(): ListSymbol {
+    this.expectSafeValue(this.value);
+    const values = Array.from(this.value.values());
+    return new ListSymbol(values);
   }
 
   keyExistsImpl(key: StringSymbol): BooleanSymbol {
