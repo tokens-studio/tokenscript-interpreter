@@ -141,6 +141,7 @@ const InputsPanel: React.FC<InputsPanelProps> = ({ onInputsChange, initialInputs
       <div className="flex justify-between items-center mb-3">
         <h3 className="text-sm font-medium text-gray-700">Inputs</h3>
         <button
+          type="button"
           onClick={addInput}
           className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition-colors"
         >
@@ -168,6 +169,7 @@ const InputsPanel: React.FC<InputsPanelProps> = ({ onInputsChange, initialInputs
             />
             <div>{renderInputField(input, index)}</div>
             <button
+              type="button"
               onClick={() => removeInput(index)}
               className="text-xs bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 transition-colors"
             >
