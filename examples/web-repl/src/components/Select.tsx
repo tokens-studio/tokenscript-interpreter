@@ -10,7 +10,6 @@ interface SelectProps {
   onChange: (value: string) => void;
   options: SelectOption[];
   placeholder?: string;
-  hidePlaceholder?: boolean;
   showCheckmarks?: boolean;
   className?: string;
   testId?: string;
@@ -22,7 +21,6 @@ function Select({
   onChange,
   options,
   placeholder,
-  hidePlaceholder = false,
   showCheckmarks = true,
   className = "",
   testId,

@@ -14,7 +14,6 @@ interface JsonTokenEditorProps {
   onChange: (value: string) => void;
   onKeyDown?: (event: KeyboardEvent) => void;
   className?: string;
-  error?: string;
   inputMode?: "tokenscript" | "json";
   onInputModeChange?: (mode: "tokenscript" | "json") => void;
   onPresetSelect?: (preset: Preset) => void;
@@ -25,7 +24,6 @@ function JsonTokenEditor({
   onChange,
   onKeyDown,
   className = "",
-  error,
   inputMode,
   onInputModeChange,
   onPresetSelect,
