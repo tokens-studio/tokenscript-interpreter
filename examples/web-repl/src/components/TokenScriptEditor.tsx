@@ -68,16 +68,14 @@ function TokenScriptEditor({
       data-testid="tokenscript-editor"
       ShellTitle={({ children }) => children}
     >
-      <div className={`overflow-hidden ${!inputsPanelCollapsed ? "h-24" : "h-0"}`}>
-        {!inputsPanelCollapsed && (
-          <div className="p-2 bg-gray-50 border-b">
-            <InputsPanel
-              onInputsChange={onReferencesChange}
-              initialInputs={[]}
-            />
-          </div>
-        )}
-      </div>
+      {!inputsPanelCollapsed && (
+        <div className="p-2 bg-gray-50 border-b">
+          <InputsPanel
+            onInputsChange={onReferencesChange}
+            initialInputs={[]}
+          />
+        </div>
+      )}
       <MonacoEditor
         value={value}
         onChange={onChange}
