@@ -29,6 +29,7 @@ return yellow.to.hsl();`,
     type: "code",
     code: `variable yellow: Color = #FF9900;
 variable brandYellow: Color.Hsl = yellow.to.hsl();
+
 return brandYellow;`,
     dependencies: [
       "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0.0.1/",
@@ -43,10 +44,12 @@ variable brandYellow: Color.Hsl = yellow.to.hsl();
 variable i: Number = 0;
 variable max: Number = 10;
 variable colorRamp: Dictionary;
+
 while (i < max) [
   i = i + 1;
   colorRamp.set(i.toString(), hsl(brandYellow.h, brandYellow.s, i * (100 / max)));
 ]
+
 return colorRamp.values();`,
     dependencies: [
       "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0.0.1/",
@@ -57,6 +60,7 @@ return colorRamp.values();`,
     name: "Demo 5: Relative Darken Function",
     type: "code",
     code: `variable yellow: Color = #FF9900;
+
 return relativeDarken(yellow, 10);`,
     dependencies: [
       "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0.0.1/",
@@ -70,7 +74,8 @@ return relativeDarken(yellow, 10);`,
     code: `variable yellow: Color = #FF9900;
 variable config: Dictionary;
 config.set("steps", 10);
-return hslRamp(yellow, config);`,
+
+return hslRamp(yellow, config).values();`,
     dependencies: [
       "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-ramp/0.0.1/",
     ],
@@ -79,21 +84,32 @@ return hslRamp(yellow, config);`,
     name: "Demo 7: OKLCH Color Ramp",
     type: "code",
     code: `variable yellow: Color = #FF9900;
-variable prettyRamp: Dictionary = oklchRamp(yellow.toOklch());
-return prettyRamp;`,
+variable prettyRamp: Dictionary = oklchRamp(yellow.to.oklch());
+
+return prettyRamp.values();`,
+    dependencies: [
+      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/oklch-ramp/0.0.1/",
+    ],
   },
   {
     name: "Demo 8: Ramp to Hex Values",
     type: "code",
     code: `variable yellow: Color = #FF9900;
-variable prettyRamp: Dictionary = oklchRamp(yellow.toOklch());
+variable prettyRamp: List = oklchRamp(yellow.to.oklch()).values();
+
 variable hexValues: List;
 variable l: Number = 0;
-while (l < prettyRamp.length) [
-  hexValues.append(prettyRamp.values()[l].toHex());
+variable z: Color.Oklch;
+while (l < prettyRamp.length()) [
+  z = prettyRamp.get(l);
+  hexValues.append(z.to.hex());
   l = l + 1;
 ]
+
 return hexValues;`,
+    dependencies: [
+      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/oklch-ramp/0.0.1/",
+    ],
   },
   {
     name: "Demo 9: Mixed Unit Addition",
