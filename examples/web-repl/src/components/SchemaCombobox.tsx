@@ -143,7 +143,6 @@ export default function SchemaCombobox({
         setLoading(true);
         const response = await fetchTokenScriptSchema(schema.url);
         onSchemaSelect(schema.url, response.content);
-        setIsOpen(false);
         setInputValue("");
       } catch (err) {
         console.error("Failed to fetch schema content:", err);
