@@ -1,5 +1,7 @@
+import { useState } from "react";
 import type { Preset } from "../utils/presets";
 import EditorModeTitle from "./EditorModeTitle";
+import InputsPanel from "./InputsPanel";
 import MonacoEditor, { type ErrorInfo } from "./MonacoEditor";
 import PresetSelector from "./PresetSelector";
 import ShellPanel from "./ShellPanel";
@@ -13,6 +15,7 @@ interface TokenScriptEditorProps {
   inputMode?: "tokenscript" | "json";
   onInputModeChange?: (mode: "tokenscript" | "json") => void;
   onPresetSelect?: (preset: Preset) => void;
+  onReferencesChange?: (references: Record<string, any>) => void;
 }
 
 function TokenScriptEditor({
@@ -24,16 +27,28 @@ function TokenScriptEditor({
   inputMode,
   onInputModeChange,
   onPresetSelect,
+  onReferencesChange,
 }: TokenScriptEditorProps) {
+  const [inputsPanelCollapsed, setInputsPanelCollapsed] = useState(true);
+
   const title = (
-    <EditorModeTitle
-      inputMode={inputMode}
-      onInputModeChange={onInputModeChange}
-      testId={
-        inputMode && onInputModeChange ? "input-mode-dropdown" : "tokenscript-editor-language"
-      }
-      defaultLabel="tokenscript"
-    />
+    <div className="flex items-center space-x-2">
+      <EditorModeTitle
+        inputMode={inputMode}
+        onInputModeChange={onInputModeChange}
+        testId={
+          inputMode && onInputModeChange ? "input-mode-dropdown" : "tokenscript-editor-language"
+        }
+        defaultLabel="tokenscript"
+      />
+      <button
+        type="button"
+        onClick={() => setInputsPanelCollapsed(!inputsPanelCollapsed)}
+        className="text-xs bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded transition-colors"
+      >
+        {inputsPanelCollapsed ? "Show Inputs" : "Hide Inputs"}
+      </button>
+    </div>
   );
 
   const headerRight =
@@ -53,6 +68,16 @@ function TokenScriptEditor({
       data-testid="tokenscript-editor"
       ShellTitle={({ children }) => children}
     >
+      <div className={`overflow-hidden ${!inputsPanelCollapsed ? "h-24" : "h-0"}`}>
+        {!inputsPanelCollapsed && (
+          <div className="p-2 bg-gray-50 border-b">
+            <InputsPanel
+              onInputsChange={onReferencesChange}
+              initialInputs={[]}
+            />
+          </div>
+        )}
+      </div>
       <MonacoEditor
         value={value}
         onChange={onChange}
@@ -60,6 +85,7 @@ function TokenScriptEditor({
         error={error}
         language="tokenscript"
         theme="tokenscript-theme"
+        className={!inputsPanelCollapsed ? "h-[calc(100%-6rem)]" : "h-full"}
       />
     </ShellPanel>
   );

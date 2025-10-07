@@ -110,6 +110,8 @@ function App() {
   const [jsonError, setJsonError] = useState<string>();
   const [schemaPanelCollapsed, setSchemaPanelCollapsed] = useAtom(schemaPanelCollapsedAtom);
   const [colorSchemas, _setColorSchemas] = useAtom(colorSchemasAtom);
+  const [references, setReferences] = useState<Record<string, any>>({});
+  const [inputsPanelCollapsed, setInputsPanelCollapsed] = useState(true);
 
   // In development mode, persist code to sessionStorage for HMR preservation
   useEffect(() => {
@@ -144,7 +146,10 @@ function App() {
 
         const lexer = new Lexer(code);
         const ast = new Parser(lexer).parse();
-        const interpreter = new Interpreter(ast, { config });
+        const interpreter = new Interpreter(ast, { 
+          config, 
+          references 
+        });
         const output = interpreter.interpret();
         const executionTime = performance.now() - startTime;
 
@@ -215,7 +220,7 @@ function App() {
         colorManager,
       });
     }
-  }, [code, jsonInput, inputMode, colorSchemas]);
+  }, [code, jsonInput, inputMode, colorSchemas, references]);
 
   const handlePresetSelect = useCallback((preset: Preset) => {
     if (preset.type === "code") {
@@ -322,6 +327,7 @@ function App() {
                 inputMode={inputMode}
                 onInputModeChange={setInputMode}
                 onPresetSelect={handlePresetSelect}
+                onReferencesChange={setReferences}
               />
             ) : (
               <JsonTokenEditor
