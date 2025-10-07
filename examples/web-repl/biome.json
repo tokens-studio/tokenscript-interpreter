@@ -15,5 +15,13 @@
       "!.vite",
       "!**/*.spec.ts"
     ]
+  },
+
+  "linter": {
+    "rules": {
+      "correctness": {
+        "useUniqueElementIds": "off"
+      }
+    }
   }
 }
