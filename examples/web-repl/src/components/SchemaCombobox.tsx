@@ -19,6 +19,7 @@ interface SchemaOption {
   name: string;
   url: string;
   description?: string;
+  type?: string;
 }
 
 interface SchemaComboboxProps {
@@ -41,7 +42,8 @@ export default function SchemaCombobox({
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [availableSchemas, setAvailableSchemas] = useState<SchemaOption[]>([]);
-  const [filteredSchemas, setFilteredSchemas] = useState<SchemaOption[]>([]);
+  const [_filteredSchemas, setFilteredSchemas] = useState<SchemaOption[]>([]);
+  const [groupedSchemas, setGroupedSchemas] = useState<Record<string, SchemaOption[]>>({});
   const [loading, setLoading] = useState(false);
 
   // Get the first available item to focus
@@ -75,6 +77,7 @@ export default function SchemaCombobox({
                 ? `https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/${item.slug}/${item.latest.version}/`
                 : "",
             description: item.description || "",
+            type: item.type || "unknown",
           }))
         : [];
 
@@ -87,18 +90,42 @@ export default function SchemaCombobox({
     }
   }, []);
 
-  // Filter schemas based on input
+  // Group and filter schemas based on input
   useEffect(() => {
-    if (!inputValue.trim()) {
-      setFilteredSchemas(availableSchemas);
-    } else {
-      const filtered = availableSchemas.filter(
+    let schemasToProcess = availableSchemas;
+
+    // Filter by input if provided
+    if (inputValue.trim()) {
+      schemasToProcess = availableSchemas.filter(
         (schema) =>
           schema.name.toLowerCase().includes(inputValue.toLowerCase()) ||
           schema.description?.toLowerCase().includes(inputValue.toLowerCase()),
       );
-      setFilteredSchemas(filtered);
     }
+
+    // Group by type
+    const grouped = schemasToProcess.reduce(
+      (acc, schema) => {
+        const type = schema.type || "unknown";
+        console.log(type, schema);
+        const groupName =
+          type === "type"
+            ? "Color Schemas"
+            : type === "function"
+              ? "Function Schemas"
+              : `${type.charAt(0).toUpperCase() + type.slice(1)} Schemas`;
+
+        if (!acc[groupName]) {
+          acc[groupName] = [];
+        }
+        acc[groupName].push(schema);
+        return acc;
+      },
+      {} as Record<string, SchemaOption[]>,
+    );
+
+    setFilteredSchemas(schemasToProcess);
+    setGroupedSchemas(grouped);
   }, [inputValue, availableSchemas]);
 
   // Fetch schemas when combobox opens
@@ -278,12 +305,11 @@ export default function SchemaCombobox({
 
           <Separator className="border-t border-gray-200 my-1" />
 
-          <ListBoxSection>
-            <Header className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
-              {loading ? "Loading schemas..." : `Schemas (${filteredSchemas.length})`}
-            </Header>
-
-            {loading && (
+          {loading && (
+            <ListBoxSection>
+              <Header className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                Loading schemas...
+              </Header>
               <ListBoxItem
                 id="loading"
                 textValue="Loading schemas"
@@ -294,54 +320,14 @@ export default function SchemaCombobox({
                   <span>Loading schemas...</span>
                 </div>
               </ListBoxItem>
-            )}
+            </ListBoxSection>
+          )}
 
-            {!loading &&
-              filteredSchemas.map((schema) => {
-                const isDownloaded = existingSchemas.has(schema.url);
-                return (
-                  <ListBoxItem
-                    key={schema.id}
-                    id={schema.id}
-                    textValue={schema.name}
-                    className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer focus:bg-blue-50 focus:outline-none data-[focused]:bg-blue-50 data-[hovered]:bg-gray-50"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex flex-col flex-1 min-w-0">
-                        <span className="font-medium text-gray-900">{schema.name}</span>
-                        {schema.description && (
-                          <span className="text-xs text-gray-500 mt-1">{schema.description}</span>
-                        )}
-                        <span
-                          className="text-xs text-gray-400 mt-1 truncate"
-                          title={schema.url}
-                        >
-                          {schema.url}
-                        </span>
-                      </div>
-                      {isDownloaded && (
-                        <div className="flex-shrink-0 mt-0.5">
-                          <svg
-                            className="w-4 h-4 text-green-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M5 13l4 4L19 7"
-                            />
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-                  </ListBoxItem>
-                );
-              })}
-
-            {!loading && filteredSchemas.length === 0 && inputValue && (
+          {!loading && Object.keys(groupedSchemas).length === 0 && inputValue && (
+            <ListBoxSection>
+              <Header className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                No Results
+              </Header>
               <ListBoxItem
                 id="no-results"
                 textValue="No results found"
@@ -349,8 +335,82 @@ export default function SchemaCombobox({
               >
                 <span>No schemas found matching "{inputValue}"</span>
               </ListBoxItem>
-            )}
-          </ListBoxSection>
+            </ListBoxSection>
+          )}
+
+          {!loading &&
+            (() => {
+              // Define the desired order: Color Schemas first, then Function Schemas, then others alphabetically
+              const orderedGroups = ["Color Schemas", "Function Schemas"];
+              const otherGroups = Object.keys(groupedSchemas)
+                .filter((group) => !orderedGroups.includes(group))
+                .sort();
+              const allGroups = [
+                ...orderedGroups.filter((group) => groupedSchemas[group]),
+                ...otherGroups,
+              ];
+
+              return allGroups.map((groupName) => {
+                const schemas = groupedSchemas[groupName];
+                if (!schemas || schemas.length === 0) return null;
+
+                return (
+                  <ListBoxSection key={groupName}>
+                    <Header className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                      {groupName} ({schemas.length})
+                    </Header>
+                    {schemas.map((schema) => {
+                      const isDownloaded = existingSchemas.has(schema.url);
+                      return (
+                        <ListBoxItem
+                          key={schema.id}
+                          id={schema.id}
+                          textValue={schema.name}
+                          className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer focus:bg-blue-50 focus:outline-none data-[focused]:bg-blue-50 data-[hovered]:bg-gray-50"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex flex-col flex-1 min-w-0">
+                              <span className="font-medium text-gray-900">{schema.name}</span>
+                              {schema.description && (
+                                <span className="text-xs text-gray-500 mt-1">
+                                  {schema.description}
+                                </span>
+                              )}
+                              <span
+                                className="text-xs text-gray-400 mt-1 truncate"
+                                title={schema.url}
+                              >
+                                {schema.url}
+                              </span>
+                            </div>
+                            {isDownloaded && (
+                              <div className="flex-shrink-0 mt-0.5">
+                                <svg
+                                  className="w-4 h-4 text-green-600"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M5 13l4 4L19 7"
+                                  />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                        </ListBoxItem>
+                      );
+                    })}
+                    {groupName !== allGroups[allGroups.length - 1] && (
+                      <Separator className="border-t border-gray-200 my-1" />
+                    )}
+                  </ListBoxSection>
+                );
+              });
+            })()}
         </ListBox>
       </Popover>
     </ComboBox>

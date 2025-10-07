@@ -118,44 +118,95 @@ export default function SchemaManager() {
             </button>
           </div>
         ) : (
-          <div className="rounded-md border border-gray-200 bg-white divide-y divide-gray-200 overflow-hidden">
-            {Array.from(schemas.entries()).map(([url, spec]) => (
-              <div
-                key={url}
-                className="flex items-center justify-between p-3 hover:bg-gray-50"
-                data-testid={`schema-${url}`}
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-gray-900 truncate">
-                    {spec.name || url}
-                  </div>
+          <div className="space-y-4">
+            {(() => {
+              // Group schemas by type
+              const grouped = Array.from(schemas.entries()).reduce(
+                (acc, [url, spec]) => {
+                  const type = spec.type || "unknown";
+                  const groupName =
+                    type === "color"
+                      ? "Color Schemas"
+                      : type === "function"
+                        ? "Function Schemas"
+                        : `${type.charAt(0).toUpperCase() + type.slice(1)} Schemas`;
+
+                  if (!acc[groupName]) {
+                    acc[groupName] = [];
+                  }
+                  acc[groupName].push([url, spec]);
+                  return acc;
+                },
+                {} as Record<string, Array<[string, ColorSpecification]>>,
+              );
+
+              // Define the desired order: Color Schemas first, then Function Schemas, then others alphabetically
+              const orderedGroups = ["Color Schemas", "Function Schemas"];
+              const otherGroups = Object.keys(grouped)
+                .filter((group) => !orderedGroups.includes(group))
+                .sort();
+              const allGroups = [
+                ...orderedGroups.filter((group) => grouped[group]),
+                ...otherGroups,
+              ];
+
+              return allGroups.map((groupName) => {
+                const groupSchemas = grouped[groupName];
+                if (!groupSchemas || groupSchemas.length === 0) return null;
+
+                return (
                   <div
-                    className="text-xs text-gray-500 truncate"
-                    title={url}
+                    key={groupName}
+                    className="bg-white rounded-md border border-gray-200 overflow-hidden"
                   >
-                    {formatUrl(url)}
+                    <div className="px-3 py-2 bg-gray-50 border-b border-gray-200">
+                      <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        {groupName} ({groupSchemas.length})
+                      </h4>
+                    </div>
+                    <div className="divide-y divide-gray-200">
+                      {groupSchemas.map(([url, spec]) => (
+                        <div
+                          key={url}
+                          className="flex items-center justify-between p-3 hover:bg-gray-50"
+                          data-testid={`schema-${url}`}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-gray-900 truncate">
+                              {spec.name || url}
+                            </div>
+                            <div
+                              className="text-xs text-gray-500 truncate"
+                              title={url}
+                            >
+                              {formatUrl(url)}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 ml-2">
+                            <button
+                              type="button"
+                              onClick={() => handleEdit(url, spec)}
+                              className="px-2 py-1 text-xs text-gray-600 border border-gray-300 rounded hover:bg-gray-100"
+                              data-testid={`edit-${url}`}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(url, spec)}
+                              className="px-2 py-1 text-xs text-red-600 border border-red-300 rounded hover:bg-red-50"
+                              data-testid={`delete-${url}`}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-2 ml-2">
-                  <button
-                    type="button"
-                    onClick={() => handleEdit(url, spec)}
-                    className="px-2 py-1 text-xs text-gray-600 border border-gray-300 rounded hover:bg-gray-100"
-                    data-testid={`edit-${url}`}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(url, spec)}
-                    className="px-2 py-1 text-xs text-red-600 border border-red-300 rounded hover:bg-red-50"
-                    data-testid={`delete-${url}`}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
+                );
+              });
+            })()}
           </div>
         )}
       </div>
