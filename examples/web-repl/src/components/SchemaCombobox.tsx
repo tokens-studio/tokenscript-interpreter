@@ -43,7 +43,6 @@ export default function SchemaCombobox({
   const [availableSchemas, setAvailableSchemas] = useState<SchemaOption[]>([]);
   const [filteredSchemas, setFilteredSchemas] = useState<SchemaOption[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Get the first available item to focus
   const getFirstFocusableKey = useCallback(() => {
@@ -54,7 +53,6 @@ export default function SchemaCombobox({
   // Fetch available schemas from API
   const fetchAvailableSchemas = useCallback(async () => {
     setLoading(true);
-    setError(null);
 
     try {
       const response = await fetch(
@@ -84,7 +82,6 @@ export default function SchemaCombobox({
       setFilteredSchemas(schemas);
     } catch (err) {
       console.error("Failed to fetch schemas:", err);
-      setError(err instanceof Error ? err.message : "Failed to fetch schemas");
     } finally {
       setLoading(false);
     }
@@ -124,7 +121,6 @@ export default function SchemaCombobox({
         setInputValue("");
       } catch (err) {
         console.error("Failed to fetch schema content:", err);
-        setError(err instanceof Error ? err.message : "Failed to fetch schema content");
       } finally {
         setLoading(false);
       }
@@ -300,41 +296,7 @@ export default function SchemaCombobox({
               </ListBoxItem>
             )}
 
-            {error && (
-              <ListBoxItem
-                id="error"
-                textValue="Error loading schemas"
-                className="px-3 py-2 text-sm text-red-600 cursor-default data-[focused]:bg-transparent"
-              >
-                <div>
-                  <div className="flex items-center gap-2">
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    <span>{error}</span>
-                  </div>
-                  <button
-                    onClick={fetchAvailableSchemas}
-                    className="mt-1 text-xs text-blue-600 hover:text-blue-800 underline"
-                  >
-                    Try again
-                  </button>
-                </div>
-              </ListBoxItem>
-            )}
-
             {!loading &&
-              !error &&
               filteredSchemas.map((schema) => {
                 const isDownloaded = existingSchemas.has(schema.url);
                 return (
@@ -379,7 +341,7 @@ export default function SchemaCombobox({
                 );
               })}
 
-            {!loading && !error && filteredSchemas.length === 0 && inputValue && (
+            {!loading && filteredSchemas.length === 0 && inputValue && (
               <ListBoxItem
                 id="no-results"
                 textValue="No results found"
