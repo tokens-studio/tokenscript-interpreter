@@ -65,7 +65,7 @@ export default function SchemaCombobox({
       }
 
       const data = await response.json();
-      console.log("Fetched schemas:", data);
+      // console.log("Fetched schemas:", data);
 
       // Transform the API response to our schema format
       const schemas: SchemaOption[] = Array.isArray(data)
@@ -107,7 +107,6 @@ export default function SchemaCombobox({
     const grouped = schemasToProcess.reduce(
       (acc, schema) => {
         const type = schema.type || "unknown";
-        console.log(type, schema);
         const groupName =
           type === "type"
             ? "Color Schemas"
