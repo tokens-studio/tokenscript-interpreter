@@ -153,7 +153,8 @@ export default function SchemaCombobox({
         const response = await fetchTokenScriptSchema(schema.url);
         const schemaType = schema.type === "function" ? "function" : "color";
         onSchemaSelect(schema.url, response.content, schemaType);
-        setInputValue("");
+        setIsOpen(false);
+        // Don't clear input value - keep it as is
       } catch (err) {
         console.error("Failed to fetch schema content:", err);
       } finally {
@@ -166,14 +167,14 @@ export default function SchemaCombobox({
   const handleCreateCustom = useCallback(() => {
     onCreateCustom();
     setIsOpen(false);
-    setInputValue("");
+    // Don't clear input value - keep it as is
   }, [onCreateCustom]);
 
   const handleRestoreDefaults = useCallback(() => {
     if (onRestoreDefaults) {
       onRestoreDefaults();
       setIsOpen(false);
-      setInputValue("");
+      // Don't clear input value - keep it as is
     }
   }, [onRestoreDefaults]);
 
@@ -181,7 +182,7 @@ export default function SchemaCombobox({
     if (onClearAllSchemas) {
       onClearAllSchemas();
       setIsOpen(false);
-      setInputValue("");
+      // Don't clear input value - keep it as is
     }
   }, [onClearAllSchemas]);
 
@@ -241,6 +242,7 @@ export default function SchemaCombobox({
               id="create-custom"
               textValue="Create custom schema"
               className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer focus:bg-blue-50 focus:outline-none data-[focused]:bg-blue-50 data-[hovered]:bg-gray-50"
+              onAction={() => onCreateCustom()}
             >
               <div className="flex items-center gap-2">
                 <svg
@@ -265,6 +267,7 @@ export default function SchemaCombobox({
                 id="restore-defaults"
                 textValue="Restore defaults"
                 className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer focus:bg-blue-50 focus:outline-none data-[focused]:bg-blue-50 data-[hovered]:bg-gray-50"
+                onAction={() => onRestoreDefaults()}
               >
                 <div className="flex items-center gap-2">
                   <svg
@@ -290,6 +293,7 @@ export default function SchemaCombobox({
                 id="clear-all-schemas"
                 textValue="Clear all schemas"
                 className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer focus:bg-blue-50 focus:outline-none data-[focused]:bg-blue-50 data-[hovered]:bg-gray-50"
+                onAction={() => onClearAllSchemas()}
               >
                 <div className="flex items-center gap-2">
                   <svg
