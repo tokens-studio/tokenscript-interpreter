@@ -275,6 +275,16 @@ ${spec}`,
       );
     }
 
+    if (!spec.schema) {
+      throw new InterpreterError(
+        `No schema defined for Color type ${color.subType}.`,
+        node.token?.line,
+        node.token,
+        this,
+        ColorManagerError.MISSING_SCHEMA,
+      );
+    }
+
     const attrSchema = spec.schema.properties[attr];
     if (!attrSchema) {
       throw new InterpreterError(
@@ -366,7 +376,7 @@ ${spec}`,
 
       // Use schema order if available, otherwise fall back to object keys order
       const order =
-        spec.schema.order && spec.schema.order.length > 0
+        spec.schema?.order && spec.schema.order.length > 0
           ? spec.schema.order
           : Object.keys(color.value as Record<string, any>);
 
