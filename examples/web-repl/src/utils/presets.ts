@@ -50,6 +50,14 @@ spacing.set("xxl", base * 4);
 
 return spacing;`,
   },
+  {
+    name: "Rainbow Color Scale",
+    type: "code",
+    code: `variable config: Dictionary;
+config.set("steps", 10);
+config.set("saturation", 255);
+rainbow_color_scale(config).values();`,
+  },
 ];
 
 export const JSON_PRESETS: Preset[] = [
