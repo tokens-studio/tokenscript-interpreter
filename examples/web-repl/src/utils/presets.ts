@@ -30,6 +30,10 @@ return yellow.to.hsl();`,
     code: `variable yellow: Color = #FF9900;
 variable brandYellow: Color.Hsl = yellow.to.hsl();
 return brandYellow;`,
+    dependencies: [
+      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0.0.1/",
+      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0.0.1/",
+    ],
   },
   {
     name: "Demo 4: Color Ramp Loop",
@@ -44,12 +48,21 @@ while (i < max) [
   colorRamp.set(i.toString(), hsl(brandYellow.h, brandYellow.s, i * (100 / max)));
 ]
 return colorRamp.values();`,
+    dependencies: [
+      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0.0.1/",
+      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0.0.1/",
+    ],
   },
   {
     name: "Demo 5: Relative Darken Function",
     type: "code",
     code: `variable yellow: Color = #FF9900;
-return relativeDarken(yellow, 10%);`,
+return relativeDarken(yellow, 10);`,
+    dependencies: [
+      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0.0.1/",
+      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0.0.1/",
+      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/relative-darken/0.0.1/",
+    ],
   },
   {
     name: "Demo 6: HSL Ramp Function",
