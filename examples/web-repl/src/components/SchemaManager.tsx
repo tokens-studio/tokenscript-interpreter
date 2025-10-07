@@ -189,15 +189,13 @@ export default function SchemaManager() {
         ) : (
           <div className="space-y-4">
             {(() => {
-              // Combine both schema types
+              // Combine both schema types, but hide css-color from UI (always loaded in config)
               const allSchemas: Array<
                 [string, ColorSpecification | FunctionSpecification, "color" | "function"]
               > = [
-                ...Array.from(colorSchemas.entries()).map(([url, spec]) => [
-                  url,
-                  spec,
-                  "color" as const,
-                ]),
+                ...Array.from(colorSchemas.entries())
+                  .filter(([url]) => !url.includes("css-color")) // Hide css-color from UI
+                  .map(([url, spec]) => [url, spec, "color" as const]),
                 ...Array.from(functionSchemas.entries()).map(([url, spec]) => [
                   url,
                   spec,
