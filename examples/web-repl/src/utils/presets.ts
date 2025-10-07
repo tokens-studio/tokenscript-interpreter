@@ -71,6 +71,9 @@ return relativeDarken(yellow, 10);`,
 variable config: Dictionary;
 config.set("steps", 10);
 return hslRamp(yellow, config);`,
+    dependencies: [
+      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-ramp/0.0.1/",
+    ],
   },
   {
     name: "Demo 7: OKLCH Color Ramp",
