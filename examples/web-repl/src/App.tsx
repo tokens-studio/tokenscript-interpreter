@@ -110,8 +110,8 @@ function App() {
   const [jsonError, setJsonError] = useState<string>();
   const [schemaPanelCollapsed, setSchemaPanelCollapsed] = useAtom(schemaPanelCollapsedAtom);
   const [colorSchemas, _setColorSchemas] = useAtom(colorSchemasAtom);
-  const [references, setReferences] = useState<Record<string, any>>({});
-  const [inputsPanelCollapsed, setInputsPanelCollapsed] = useState(true);
+  const [input, setInputs] = useState<Record<string, any>>({});
+  const [_inputsPanelCollapsed, _setInputsPanelCollapsed] = useState(true);
 
   // In development mode, persist code to sessionStorage for HMR preservation
   useEffect(() => {
@@ -146,14 +146,12 @@ function App() {
 
         const lexer = new Lexer(code);
         const ast = new Parser(lexer).parse();
-        const interpreter = new Interpreter(ast, { 
-          config, 
-          references 
+        const interpreter = new Interpreter(ast, {
+          references: { input },
+          config,
         });
         const output = interpreter.interpret();
         const executionTime = performance.now() - startTime;
-
-        // console.log("TokenScript Output", { ast, interpreter, output, executionTime });
 
         setResult({
           type: "tokenscript",
@@ -220,7 +218,7 @@ function App() {
         colorManager,
       });
     }
-  }, [code, jsonInput, inputMode, colorSchemas, references]);
+  }, [code, jsonInput, inputMode, colorSchemas, input]);
 
   const handlePresetSelect = useCallback((preset: Preset) => {
     if (preset.type === "code") {
@@ -327,7 +325,7 @@ function App() {
                 inputMode={inputMode}
                 onInputModeChange={setInputMode}
                 onPresetSelect={handlePresetSelect}
-                onReferencesChange={setReferences}
+                onReferencesChange={setInputs}
               />
             ) : (
               <JsonTokenEditor

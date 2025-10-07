@@ -902,6 +902,20 @@ export class DictionarySymbol extends BaseSymbolType {
   static empty(): DictionarySymbol {
     return new DictionarySymbol(null);
   }
+
+  hasAttribute(attributeName: string): boolean {
+    this.expectSafeValue(this.value);
+    return this.value.has(attributeName);
+  }
+
+  getAttribute(attributeName: string): ISymbolType | null {
+    this.expectSafeValue(this.value);
+    const value = this.value.get(attributeName);
+    if (value === undefined) {
+      return null;
+    }
+    return value;
+  }
 }
 
 export type dynamicColorValue = Record<string, ISymbolType>;
