@@ -6,16 +6,14 @@ import { defineConfig } from "vite";
 export default defineConfig({
   plugins: [
     react({
-      fastRefresh: true,
-      include: "**/*.{jsx,tsx}",
+      babel: {
+        plugins: [["babel-plugin-react-compiler"]],
+      },
     }),
   ],
   server: {
     port: 3000,
     host: true,
-    hmr: {
-      overlay: true,
-    },
     fs: {
       // Allow serving files from outside the project root
       allow: ["../../"],
