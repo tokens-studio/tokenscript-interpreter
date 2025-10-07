@@ -3,6 +3,7 @@ import { useCallback, useState } from "react";
 import type { ColorSpecification } from "../../../src/interpreter/config/managers/color/schema";
 import { colorSchemasAtom, deletedSchemasAtom } from "../store/atoms";
 import { DEFAULT_COLOR_SCHEMAS } from "../utils/default-schemas";
+import SchemaCombobox from "./SchemaCombobox";
 import SchemaEditorModal from "./SchemaEditorModal";
 
 export default function SchemaManager() {
@@ -64,6 +65,17 @@ export default function SchemaManager() {
     setDeletedSchemas([]);
   }, [setSchemas]);
 
+  const handleSchemaSelect = useCallback(
+    (url: string, spec: ColorSpecification) => {
+      setSchemas((current) => {
+        const updated = new Map(current);
+        updated.set(url, spec);
+        return updated;
+      });
+    },
+    [setSchemas],
+  );
+
   const formatUrl = (url: string) => {
     if (url.length <= 50) return url;
     return `${url.substring(0, 25)}...${url.substring(url.length - 22)}`;
@@ -75,21 +87,19 @@ export default function SchemaManager() {
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-medium text-gray-900">Color Schemas</h3>
           <div className="flex items-center gap-2">
+            <SchemaCombobox
+              onSchemaSelect={handleSchemaSelect}
+              onCreateCustom={handleAddNew}
+              placeholder="Add or search schemas..."
+              existingSchemas={schemas}
+            />
             <button
               type="button"
               onClick={handleLoadDefaults}
-              className="px-3 py-1 text-sm bg-white border border-gray-300 text-gray-600 rounded hover:border-gray-600 hover:bg-gray-50"
+              className="px-3 py-1 text-sm bg-white border border-gray-300 text-gray-600 rounded hover:border-gray-600 hover:bg-gray-50 whitespace-nowrap"
               data-testid="load-defaults-button"
             >
               Restore Defaults
-            </button>
-            <button
-              type="button"
-              onClick={handleAddNew}
-              className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
-              data-testid="add-schema-button"
-            >
-              Add Schema
             </button>
           </div>
         </div>
