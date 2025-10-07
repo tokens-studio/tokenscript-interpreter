@@ -286,7 +286,7 @@ function App() {
 
   return (
     <div
-      className="h-screen bg-gray-50 flex flex-col"
+      className="h-screen flex flex-col"
       data-testid="app-container"
     >
       <header
@@ -345,13 +345,13 @@ function App() {
       </header>
 
       <main
-        className="flex-1 px-4 sm:px-6 lg:px-8 py-4 sm:py-8 w-full overflow-auto"
+        className="flex-1 px-4 sm:px-6 lg:px-8 py-4 sm:py-8 w-full"
         data-testid="app-main"
       >
-        <div className="mx-auto grid grid-cols-1 max-w-7xl lg:grid-cols-2 gap-4 lg:gap-8 lg:h-full">
+        <div className="mx-auto grid grid-cols-1 max-w-7xl lg:grid-cols-2 gap-4 lg:gap-8 lg:items-start">
           {/* Editor Panel */}
           <div
-            className="min-h-[400px] lg:min-h-[300px] lg:max-h-[60vh] lg:sticky lg:top-0 rounded-lg shadow-sm lg:overflow-hidden"
+            className="min-h-[400px] lg:h-[70vh] lg:sticky lg:top-4 rounded-lg shadow-sm overflow-hidden"
             data-testid="editor-panel"
           >
             {inputMode === "tokenscript" ? (
@@ -379,7 +379,7 @@ function App() {
           </div>
 
           {/* Right Column: Schema Panel + Output Panel */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 pb-8">
             <div
               className="rounded-lg shadow-sm"
               data-testid="app-output-panel"
