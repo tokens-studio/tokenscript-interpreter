@@ -30,7 +30,7 @@
       }
     },
     {
-      "source": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/",
+      "source": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0.0.1/",
       "target": "$self",
       "description": "Converts RGB to CssColor",
       "lossless": true,
@@ -40,7 +40,7 @@
       }
     },
     {
-      "source": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0/",
+      "source": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0.0.1/",
       "target": "$self",
       "description": "Converts SRGB to CssColor",
       "lossless": true,
@@ -50,7 +50,7 @@
       }
     },
     {
-      "source": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgba-color/0/",
+      "source": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgba-color/0.0.1/",
       "target": "$self",
       "description": "Converts RGBA to CssColor",
       "lossless": true,
@@ -60,17 +60,17 @@
       }
     },
     {
-      "source": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0/",
+      "source": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0.0.1/",
       "target": "$self",
       "description": "Converts HSL to CssColor",
       "lossless": true,
       "script": {
         "type": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/",
-        "script": "variable outputs: List = \"hsl(\" {input}.h \", \" {input}.s \"%, \" {input}.l \"%)\";\nvariable output: Color.CssColor;\noutput.value = outputs.join();\noutput.input = {input}\n;\nreturn output;"
+        "script": "variable outputs: List = \"hsl(\" {input}.h \", \" {input}.s \"%, \" {input}.l \"%)\";\nvariable output: Color.CssColor;\noutput.value = outputs.join();\noutput.input = {input};\nreturn output;"
       }
     },
     {
-      "source": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/lrgb-color/0/",
+      "source": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/lrgb-color/0.0.1/",
       "target": "$self",
       "description": "Converts LRGB to CssColor",
       "lossless": true,
