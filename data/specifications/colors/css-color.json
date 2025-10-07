@@ -128,7 +128,26 @@
         "type": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/",
         "script": "variable r: Number = {input}.r * 255;\nvariable g: Number = {input}.g * 255;\nvariable b: Number = {input}.b * 255;\nvariable outputs: List = \"rgb(\" r \", \" g \", \" b \")\";\nvariable output: Color.CssColor;\noutput.value = outputs.join();\noutput.input = {input}\n;\nreturn output;"
       }
+    },
+    {
+      "source": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/oklch-color/0.0.1/",
+      "target": "$self",
+      "description": "Converts OKLCH to CssColor",
+      "lossless": true,
+      "script": {
+        "type": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/",
+        "script": "variable outputs: List = \"oklch(\" {input}.l \" \" {input}.c \" \" {input}.h \")\";\nvariable output: Color.CssColor;\noutput.value = outputs.join();\noutput.input = {input};\nreturn output;"
+      }
+    },
+    {
+      "source": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/oklch-color/0/",
+      "target": "$self",
+      "description": "Converts OKLCH to CssColor",
+      "lossless": true,
+      "script": {
+        "type": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/",
+        "script": "variable outputs: List = \"oklch(\" {input}.l \" \" {input}.c \" \" {input}.h \")\";\nvariable output: Color.CssColor;\noutput.value = outputs.join();\noutput.input = {input};\nreturn output;"
+      }
     }
-
   ]
 }
