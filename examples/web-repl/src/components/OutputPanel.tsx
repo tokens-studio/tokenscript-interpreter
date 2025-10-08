@@ -3,7 +3,7 @@ import { useEffect } from "react";
 
 import "prismjs/themes/prism.css";
 import "prismjs/components/prism-json";
-import { isNonEmptyObject, when } from "@interpreter/utils/type";
+import { isNonEmptyObject } from "@interpreter/utils/type";
 import {
   BaseSymbolType,
   type ColorManager,
@@ -422,7 +422,7 @@ const OutputPanelTitle = ({ error, output }: { error?: string; output?: BaseSymb
 );
 
 function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
-  const { executionTime, error, output } = result;
+  const { error, output } = result;
 
   return (
     <ShellPanel
@@ -432,15 +432,6 @@ function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
           output={output instanceof BaseSymbolType ? output : undefined}
         />
       }
-      headerRight={when(
-        executionTime,
-        <div
-          className="text-xs text-zinc-500 font-mono px-2 py-1 bg-zinc-800/40 rounded-md border border-zinc-700/30"
-          data-testid="execution-time"
-        >
-          {executionTime}ms
-        </div>,
-      )}
       className={`lg:h-full ${className}`}
       data-testid="output-panel"
     >
