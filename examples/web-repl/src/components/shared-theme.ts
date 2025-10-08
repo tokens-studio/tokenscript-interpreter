@@ -1,35 +1,35 @@
 // Shared theme configuration for both Monaco editor and Prism.js syntax highlighting
 export const tokenscriptThemeColors = {
-  // Core syntax colors (modern dark theme)
-  keyword: "#C586C0", // Keywords (variable, if, else, etc.) - purple
-  type: "#4EC9B0", // Types (String, Number, Color, etc.) - teal
-  function: "#DCDCAA", // Functions (rgb, hsl, lighten, etc.) - yellow
-  variable: "#9CDCFE", // Variables and identifiers - light blue
-  reference: "#FF6B6B", // References (curly braces like {variable.name}) - red
-  string: "#CE9178", // Strings - orange
-  number: "#B5CEA8", // Numbers - green
-  hexColor: "#FFB86C", // Hex colors - bright orange
-  comment: "#6A9955", // Comments - muted green
-  operator: "#D4D4D4", // Operators (+, -, *, /, =, etc.) - light gray
-  delimiter: "#D4D4D4", // Delimiters (parentheses, brackets, semicolons, etc.) - light gray
+  // Core syntax colors (muted cool dark theme)
+  keyword: "#D19ECF", // Keywords (variable, if, else, etc.) - muted purple-pink
+  type: "#7EC8E3", // Types (String, Number, Color, etc.) - muted cyan
+  function: "#E6C068", // Functions (rgb, hsl, lighten, etc.) - muted yellow
+  variable: "#A2C4A0", // Variables and identifiers - muted sage green
+  reference: "#E88A85", // References (curly braces like {variable.name}) - muted red
+  string: "#D49B6A", // Strings - muted orange
+  number: "#9BC49E", // Numbers - muted green
+  hexColor: "#D49BC4", // Hex colors - muted rose
+  comment: "#747D8C", // Comments - muted blue-gray (keep same)
+  operator: "#C5A3C5", // Operators (+, -, *, /, =, etc.) - muted purple
+  delimiter: "#8FA6D4", // Delimiters (parentheses, brackets, semicolons, etc.) - muted blue
 
   // JSON-specific mappings
-  jsonString: "#CE9178", // JSON string values
-  jsonNumber: "#B5CEA8", // JSON number values
-  jsonBoolean: "#569CD6", // JSON boolean values - blue
-  jsonNull: "#569CD6", // JSON null values - blue
-  jsonProperty: "#9CDCFE", // JSON property names - light blue
-  jsonPunctuation: "#D4D4D4", // JSON punctuation
+  jsonString: "#D49B6A", // JSON string values - muted orange
+  jsonNumber: "#9BC49E", // JSON number values - muted green
+  jsonBoolean: "#7EC8E3", // JSON boolean values - muted cyan
+  jsonNull: "#747D8C", // JSON null values - muted gray
+  jsonProperty: "#A2C4A0", // JSON property names - muted sage green
+  jsonPunctuation: "#8FA6D4", // JSON punctuation - muted blue
 
-  // Editor colors (neutral dark theme)
-  background: "#18181b",
-  foreground: "#e4e4e7",
-  lineHighlight: "#27272a",
-  selection: "#3f3f46",
-  lineNumber: "#71717a",
-  lineNumberActive: "#a1a1aa",
-  gutterBackground: "#18181b",
-  gutterBorder: "#27272a",
+  // Editor colors (keeping original neutral dark theme)
+  background: "#18181b", // Original background
+  foreground: "#e4e4e7", // Original foreground
+  lineHighlight: "#27272a", // Original line highlight
+  selection: "#3f3f46", // Original selection
+  lineNumber: "#71717a", // Original line numbers
+  lineNumberActive: "#a1a1aa", // Original active line number
+  gutterBackground: "#18181b", // Original gutter
+  gutterBorder: "#27272a", // Original border
 };
 
 // Monaco theme definition
@@ -84,16 +84,20 @@ export const monacoThemeDefinition = {
     "editorLineNumber.foreground": tokenscriptThemeColors.lineNumber,
     "editorLineNumber.activeForeground": tokenscriptThemeColors.lineNumberActive,
     "editorGutter.background": tokenscriptThemeColors.gutterBackground,
-    "editorCursor.foreground": "#AEAFAD",
-    "editor.selectionHighlightBackground": "#264f7840",
-    "editor.inactiveSelectionBackground": "#3a3d41",
-    "editorWhitespace.foreground": "#3b3a32",
-    "editorIndentGuide.background": "#404040",
-    "editorIndentGuide.activeBackground": "#707070",
-    "scrollbar.shadow": "#00000033",
-    "scrollbarSlider.background": "#79797966",
-    "scrollbarSlider.hoverBackground": "#646464b3",
-    "scrollbarSlider.activeBackground": "#bfbfbf66",
+    "editorCursor.foreground": "#D19ECF", // Muted purple-pink cursor
+    "editor.selectionHighlightBackground": "#D19ECF15", // Subtle muted selection highlight
+    "editor.inactiveSelectionBackground": "#3a3d41", // Original inactive selection
+    "editorWhitespace.foreground": "#3b3a32", // Original whitespace
+    "editorIndentGuide.background": "#404040", // Original indent guides
+    "editorIndentGuide.activeBackground": "#D19ECF", // Muted pink active indent guide
+    "scrollbar.shadow": "#00000033", // Original shadow
+    "scrollbarSlider.background": "#79797966", // Original scrollbar
+    "scrollbarSlider.hoverBackground": "#646464b3", // Original hover
+    "scrollbarSlider.activeBackground": "#bfbfbf66", // Original active
+    "editor.wordHighlightBackground": "#D19ECF20", // Subtle muted word highlight
+    "editor.wordHighlightStrongBackground": "#D19ECF25", // Muted strong word highlight
+    "editorBracketMatch.background": "#D19ECF25", // Muted bracket matching
+    "editorBracketMatch.border": "#D19ECF", // Muted bracket border
   },
 };
 
