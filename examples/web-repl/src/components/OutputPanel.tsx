@@ -51,11 +51,11 @@ const ColorOutput = ({
   if (compact) {
     return (
       <div
-        className="flex items-center space-x-3 p-3 bg-zinc-800/30 rounded-lg border border-zinc-700/50"
+        className="flex items-center space-x-3 rounded-lg"
         data-testid="color-output-compact"
       >
         <div
-          className="w-8 h-8 rounded-md border border-zinc-700 flex-shrink-0 shadow-lg"
+          className="w-20 h-10 flex-shrink-0 shadow-lg"
           style={{ backgroundColor: cssColor }}
           title={`Color: ${cssColor}`}
           data-testid="color-swatch-compact"
@@ -63,12 +63,14 @@ const ColorOutput = ({
         <div className="flex-1 min-w-0">
           <div
             className="text-sm font-medium text-zinc-200 truncate"
+            style={{ fontSize: "0.8em" }}
             data-testid="color-type-compact"
           >
             {colorManager.formatColorMethod(color)}
           </div>
           <div
-            className="text-xs text-zinc-500 font-mono truncate"
+            className="text-zinc-500 font-mono truncate"
+            style={{ fontSize: "0.65em" }}
             data-testid="color-value-compact"
           >
             {color.getTypeName()}
@@ -284,7 +286,7 @@ const ListOutput = ({
         <span className="text-sm text-zinc-500">({list.elements.length} items)</span>
       </div>
 
-      <div className="space-y-2">
+      <div className="">
         {list.elements.map((element, index) => (
           <SymbolOutput
             key={index}
