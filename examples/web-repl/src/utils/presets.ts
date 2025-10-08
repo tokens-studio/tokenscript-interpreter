@@ -43,13 +43,13 @@ return brandYellow;`,
     type: "code",
     code: `variable yellow: Color = #FF9900;
 variable brandYellow: Color.Hsl = yellow.to.hsl();
-variable i: Number = 0;
-variable max: Number = 10;
+variable currentStep: Number = 0;
+variable totalSteps: Number = 10;
 variable colorRamp: Dictionary;
 
-while (i < max) [
-  i = i + 1;
-  colorRamp.set(i.toString(), hsl(brandYellow.h, brandYellow.s, i * (100 / max)));
+while (currentStep < totalSteps) [
+  currentStep = currentStep + 1;
+  colorRamp.set(currentStep.toString(), hsl(brandYellow.h, brandYellow.s, currentStep * (100 / totalSteps)));
 ]
 
 return colorRamp.values();`,
@@ -100,12 +100,12 @@ return prettyRamp.values();`,
 variable prettyRamp: List = oklchRamp(yellow.to.oklch()).values();
 
 variable hexValues: List;
-variable l: Number = 0;
-variable z: Color.Oklch;
-while (l < prettyRamp.length()) [
-  z = prettyRamp.get(l);
-  hexValues.append(z.to.hex());
-  l = l + 1;
+variable colorIndex: Number = 0;
+variable currentColor: Color.Oklch;
+while (colorIndex < prettyRamp.length()) [
+  currentColor = prettyRamp.get(colorIndex);
+  hexValues.append(currentColor.to.hex());
+  colorIndex = colorIndex + 1;
 ]
 
 return hexValues;`,
@@ -122,11 +122,11 @@ return hexValues;`,
     name: "Color palette",
     type: "code",
     code: `variable palette: List;
-variable i: Number = 0;
-variable max: Number = 10;
-while(i < max) [
-  i = i + 1;
-  palette.append(hsl(220, 100, (i - 1) / (max - 1) * 100));
+variable currentStep: Number = 0;
+variable totalSteps: Number = 10;
+while(currentStep < totalSteps) [
+  currentStep = currentStep + 1;
+  palette.append(hsl(220, 100, (currentStep - 1) / (totalSteps - 1) * 100));
 ]
 
 return palette;`,
@@ -142,18 +142,86 @@ export const TOKENSCRIPT_PRESETS: Preset[] = [
   {
     name: "Typography scale",
     type: "code",
-    code: `variable baseSize: Number = 16;
+    code: `variable body: Number = 16;
 variable ratio: Number = 1.25;
-variable scale: Dictionary;
+variable fontSizes: Dictionary;
 
-scale.set("xs", baseSize / (ratio * ratio));
-scale.set("sm", baseSize / ratio);
-scale.set("base", baseSize);
-scale.set("lg", baseSize * ratio);
-scale.set("xl", baseSize * ratio * ratio);
-scale.set("xxl", baseSize * ratio * ratio * ratio);
+// Headings (h1 largest to h6 same as body)
+fontSizes.set("h1", roundTo(body * ratio^5));
+fontSizes.set("h2", roundTo(body * ratio^4));
+fontSizes.set("h3", roundTo(body * ratio^3));
+fontSizes.set("h4", roundTo(body * ratio^2));
+fontSizes.set("h5", roundTo(body * ratio^1));
+fontSizes.set("h6", body);
 
-return scale;`,
+// Body and smaller sizes
+fontSizes.set("body", body);
+fontSizes.set("sm", roundTo(body * 0.85));
+fontSizes.set("xs", roundTo(body * 0.65));
+
+return fontSizes;`,
+  },
+  {
+    name: "Typography scale (snapped)",
+    type: "code",
+    code: `variable body: Number = 16;
+variable ratio: Number = 1.25;
+variable snapInterval: Number = 4;
+variable fontSizes: Dictionary;
+
+// Headings (h1 largest to h6 same as body) - snapped to 4px grid
+fontSizes.set("h1", snap(body * ratio^5, snapInterval));
+fontSizes.set("h2", snap(body * ratio^4, snapInterval));
+fontSizes.set("h3", snap(body * ratio^3, snapInterval));
+fontSizes.set("h4", snap(body * ratio^2, snapInterval));
+fontSizes.set("h5", snap(body * ratio^1, snapInterval));
+fontSizes.set("h6", body);
+
+// Body and smaller sizes
+fontSizes.set("body", body);
+fontSizes.set("sm", snap(body * 0.85, snapInterval));
+fontSizes.set("xs", snap(body * 0.65, snapInterval));
+
+return fontSizes;`,
+    dependencies: [
+      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/snap/0.0.1/",
+    ],
+  },
+  {
+    name: "Responsive Font Size (remap)",
+    type: "code",
+    code: `// Map viewport to responsive font size
+variable viewport: Number = 768;
+variable mobileViewport: Number = 320;
+variable desktopViewport: Number = 1920;
+variable minFontSize: Number = 16;
+variable maxFontSize: Number = 48;
+variable shouldClamp: Number = 1;
+
+variable fontSize: Number = remap(viewport, mobileViewport, desktopViewport, minFontSize, maxFontSize, shouldClamp);
+
+return fontSize;`,
+    dependencies: [
+      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/remap/0.0.1/",
+    ],
+  },
+  {
+    name: "Opacity from Percentage (remap)",
+    type: "code",
+    code: `// Map percentage to opacity
+variable percentage: Number = 75;
+variable minPercentage: Number = 0;
+variable maxPercentage: Number = 100;
+variable minOpacity: Number = 0;
+variable maxOpacity: Number = 1;
+variable shouldClamp: Number = 1;
+
+variable opacity: Number = remap(percentage, minPercentage, maxPercentage, minOpacity, maxOpacity, shouldClamp);
+
+return opacity;`,
+    dependencies: [
+      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/remap/0.0.1/",
+    ],
   },
   {
     name: "Unit Spacing system",
@@ -182,6 +250,26 @@ rainbow_color_scale(config).values();`,
       "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/test-color-scale-rainbow/0.0.1/",
     ],
   },
+  {
+    name: "Contrasting Text Color Finder",
+    type: "code",
+    code: `variable backgroundColor: Color = #1E40AF;
+
+// Get the contrasting color - just pass the colors directly!
+variable foregroundColor: Color;
+foregroundColor = contrastColor(backgroundColor, #FFFFFF, #D1D5DB, #374151, #000000);
+
+// Return background and foreground as list for visual display
+variable output: List;
+output.append(backgroundColor);
+output.append(foregroundColor);
+
+return output;`,
+    dependencies: [
+      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0.0.1/",
+      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/contrast-color/0.0.1/",
+    ],
+  }
 ];
 
 export const JSON_PRESETS: Preset[] = [
@@ -220,14 +308,24 @@ export const JSON_PRESETS: Preset[] = [
     type: "json",
     code: `{
   "colors": {
-    "brand": {
-      "primary": {
+    "primary": {
+      "base": {
         "$type": "color",
-        "$value": "#2563eb"
+        "$value": "#325611"
       },
-      "secondary": {
+      "on-base": {
+        "$type": "color",
+        "$value": "contrastColor({colors.primary.base}, #fff, #000)"
+      }
+    },
+    "secondary": {
+      "base": {
         "$type": "color",
         "$value": "#7c3aed"
+      },
+      "on-base": {
+        "$type": "color",
+        "$value": "contrastColor({colors.secondary.base}, #fff, #000)"
       }
     },
     "neutral": {
