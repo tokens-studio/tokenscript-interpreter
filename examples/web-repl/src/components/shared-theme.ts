@@ -1,52 +1,50 @@
 // Shared theme configuration for both Monaco editor and Prism.js syntax highlighting
 export const tokenscriptThemeColors = {
-  // Core syntax colors
-  keyword: "#0000FF", // Keywords (variable, if, else, etc.)
-  type: "#267f99", // Types (String, Number, Color, etc.)
-  function: "#795da3", // Functions (rgb, hsl, lighten, etc.)
-  variable: "#001080", // Variables and identifiers
-  reference: "#E31837", // References (curly braces like {variable.name})
-  string: "#098658", // Strings
-  number: "#098658", // Numbers
-  hexColor: "#E07B39", // Hex colors
-  comment: "#999999", // Comments
-  operator: "#D73A49", // Operators (+, -, *, /, =, etc.)
-  delimiter: "#24292e", // Delimiters (parentheses, brackets, semicolons, etc.)
+  // Core syntax colors (modern dark theme)
+  keyword: "#C586C0", // Keywords (variable, if, else, etc.) - purple
+  type: "#4EC9B0", // Types (String, Number, Color, etc.) - teal
+  function: "#DCDCAA", // Functions (rgb, hsl, lighten, etc.) - yellow
+  variable: "#9CDCFE", // Variables and identifiers - light blue
+  reference: "#FF6B6B", // References (curly braces like {variable.name}) - red
+  string: "#CE9178", // Strings - orange
+  number: "#B5CEA8", // Numbers - green
+  hexColor: "#FFB86C", // Hex colors - bright orange
+  comment: "#6A9955", // Comments - muted green
+  operator: "#D4D4D4", // Operators (+, -, *, /, =, etc.) - light gray
+  delimiter: "#D4D4D4", // Delimiters (parentheses, brackets, semicolons, etc.) - light gray
 
   // JSON-specific mappings
-  jsonString: "#098658", // JSON string values (maps to string)
-  jsonNumber: "#098658", // JSON number values (maps to number)
-  jsonBoolean: "#795da3", // JSON boolean values (maps to function color)
-  jsonNull: "#D73A49", // JSON null values (maps to operator color)
-  jsonProperty: "#267f99", // JSON property names (maps to type color)
-  jsonPunctuation: "#24292e", // JSON punctuation (maps to delimiter)
+  jsonString: "#CE9178", // JSON string values
+  jsonNumber: "#B5CEA8", // JSON number values
+  jsonBoolean: "#569CD6", // JSON boolean values - blue
+  jsonNull: "#569CD6", // JSON null values - blue
+  jsonProperty: "#9CDCFE", // JSON property names - light blue
+  jsonPunctuation: "#D4D4D4", // JSON punctuation
 
-  // Editor colors
-  background: "#ffffff",
-  foreground: "#000000",
-  lineHighlight: "#f8f8ff",
-  selection: "#add6ff",
-  lineNumber: "#666666",
-  lineNumberActive: "#333333",
-  gutterBackground: "#fafafa",
-  gutterBorder: "#e8e8e8",
+  // Editor colors (neutral dark theme)
+  background: "#18181b",
+  foreground: "#e4e4e7",
+  lineHighlight: "#27272a",
+  selection: "#3f3f46",
+  lineNumber: "#71717a",
+  lineNumberActive: "#a1a1aa",
+  gutterBackground: "#18181b",
+  gutterBorder: "#27272a",
 };
 
 // Monaco theme definition
 export const monacoThemeDefinition = {
-  base: "vs" as const,
+  base: "vs-dark" as const,
   inherit: true,
   rules: [
     {
       token: "keyword",
       foreground: tokenscriptThemeColors.keyword.substring(1),
-      fontStyle: "bold",
     },
-    { token: "type", foreground: tokenscriptThemeColors.type.substring(1), fontStyle: "bold" },
+    { token: "type", foreground: tokenscriptThemeColors.type.substring(1) },
     {
       token: "function",
       foreground: tokenscriptThemeColors.function.substring(1),
-      fontStyle: "bold",
     },
     { token: "variable.name", foreground: tokenscriptThemeColors.variable.substring(1) },
     { token: "identifier", foreground: tokenscriptThemeColors.variable.substring(1) },
@@ -54,21 +52,18 @@ export const monacoThemeDefinition = {
       token: "reference",
       foreground: tokenscriptThemeColors.reference.substring(1),
       fontStyle: "italic",
-      fontWeight: "bold",
     },
     { token: "string", foreground: tokenscriptThemeColors.string.substring(1) },
-    { token: "string.invalid", foreground: "cd3131" },
+    { token: "string.invalid", foreground: "f44747" },
     { token: "number", foreground: tokenscriptThemeColors.number.substring(1) },
     { token: "number.float", foreground: tokenscriptThemeColors.number.substring(1) },
     {
       token: "number.hex",
       foreground: tokenscriptThemeColors.hexColor.substring(1),
-      fontStyle: "bold",
     },
     {
       token: "number.unit",
       foreground: tokenscriptThemeColors.number.substring(1),
-      fontStyle: "bold",
     },
     {
       token: "comment",
@@ -78,7 +73,6 @@ export const monacoThemeDefinition = {
     {
       token: "operator",
       foreground: tokenscriptThemeColors.operator.substring(1),
-      fontStyle: "bold",
     },
     { token: "delimiter", foreground: tokenscriptThemeColors.delimiter.substring(1) },
   ],
@@ -90,11 +84,16 @@ export const monacoThemeDefinition = {
     "editorLineNumber.foreground": tokenscriptThemeColors.lineNumber,
     "editorLineNumber.activeForeground": tokenscriptThemeColors.lineNumberActive,
     "editorGutter.background": tokenscriptThemeColors.gutterBackground,
-    "editorGutter.border": tokenscriptThemeColors.gutterBorder,
-    "scrollbar.shadow": "#00000010",
-    "scrollbarSlider.background": "#c0c0c040",
-    "scrollbarSlider.hoverBackground": "#c0c0c060",
-    "scrollbarSlider.activeBackground": "#c0c0c080",
+    "editorCursor.foreground": "#AEAFAD",
+    "editor.selectionHighlightBackground": "#264f7840",
+    "editor.inactiveSelectionBackground": "#3a3d41",
+    "editorWhitespace.foreground": "#3b3a32",
+    "editorIndentGuide.background": "#404040",
+    "editorIndentGuide.activeBackground": "#707070",
+    "scrollbar.shadow": "#00000033",
+    "scrollbarSlider.background": "#79797966",
+    "scrollbarSlider.hoverBackground": "#646464b3",
+    "scrollbarSlider.activeBackground": "#bfbfbf66",
   },
 };
 

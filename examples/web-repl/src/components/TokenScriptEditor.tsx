@@ -63,7 +63,7 @@ function TokenScriptEditor({
       ShellTitle={({ children }) => children}
     >
       {!inputsPanelCollapsed && (
-        <div className="p-2 bg-gray-50 border-b">
+        <div className="p-3 bg-zinc-900/20 border-b border-zinc-800">
           <InputsPanel
             onInputsChange={onReferencesChange}
             initialInputs={[]}
