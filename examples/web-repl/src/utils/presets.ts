@@ -130,6 +130,10 @@ while(i < max) [
 ]
 
 return palette;`,
+    dependencies: [
+      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0.0.1/",
+      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0.0.1/",
+    ],
   },
 ];
 
