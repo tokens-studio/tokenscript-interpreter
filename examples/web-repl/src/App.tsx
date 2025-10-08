@@ -325,13 +325,13 @@ function App() {
       data-testid="app-container"
     >
       <main
-        className="flex-1 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 w-full overflow-auto"
+        className="flex-1 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 w-full overflow-hidden"
         data-testid="app-main"
       >
-        <div className="mx-auto grid grid-cols-1 max-w-full xl:max-w-[1800px] lg:grid-cols-2 gap-3 lg:gap-4 h-full">
+        <div className="mx-auto flex flex-col lg:flex-row max-w-full xl:max-w-[1800px] gap-3 lg:gap-4 h-full">
           {/* Editor Panel */}
           <div
-            className="min-h-[400px] lg:h-[calc(100vh-8rem)] rounded-xl shadow-2xl overflow-hidden"
+            className="min-h-[400px] lg:h-full lg:flex-shrink-0 lg:w-1/2 rounded-xl shadow-2xl overflow-hidden"
             data-testid="editor-panel"
           >
             {inputMode === "tokenscript" ? (
@@ -359,7 +359,7 @@ function App() {
           </div>
 
           {/* Right Column: Output Panel + Schema Panel */}
-          <div className="flex flex-col gap-3 lg:gap-4 pb-4">
+          <div className="flex flex-col gap-3 lg:gap-4 lg:flex-1 lg:min-h-0 lg:overflow-auto">
             <div
               className="rounded-xl shadow-2xl"
               data-testid="app-output-panel"
@@ -370,7 +370,7 @@ function App() {
             {/* Schema Panel */}
             <div
               data-testid="schema-panel"
-              className="flex-shrink-0 lg:max-h-full"
+              className="flex-shrink-0"
             >
               <ShellPanel
                 title="Schemas"
