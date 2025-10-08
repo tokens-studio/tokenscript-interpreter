@@ -37,6 +37,7 @@ interface MonacoEditorProps {
 
 export const options = {
   fontSize: 14,
+  lineHeight: 30,
   lineNumbers: "on",
   lineNumbersMinChars: 2,
   minimap: { enabled: false },
