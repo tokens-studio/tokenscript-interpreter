@@ -140,7 +140,7 @@ function App() {
   const [jsonInput, setJsonInput] = useState(getInitialJson);
   const [inputMode, setInputMode] = useState<InputMode>("tokenscript");
   const [result, setResult] = useState<UnifiedExecutionResult>({ type: "tokenscript" });
-  const [autoRun, setAutoRun] = useAtom(autoRunAtom);
+  const [autoRun, _setAutoRun] = useAtom(autoRunAtom);
   const [jsonError, setJsonError] = useState<string>();
   const [schemaPanelCollapsed, setSchemaPanelCollapsed] = useAtom(schemaPanelCollapsedAtom);
   const [colorSchemas, _setColorSchemas] = useAtom(colorSchemasAtom);
@@ -289,62 +289,6 @@ function App() {
       className="h-screen flex flex-col bg-zinc-950"
       data-testid="app-container"
     >
-      <header
-        className="bg-zinc-900/95 border-b border-zinc-800 flex-shrink-0 backdrop-blur-sm"
-        data-testid="app-header"
-      >
-        <div className="max-w-full mx-auto px-6 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <h1
-                className="text-lg font-semibold text-zinc-50"
-                data-testid="app-title"
-              >
-                TokenScript REPL
-              </h1>
-              <div className="hidden sm:flex items-center space-x-2 px-3 py-1.5 bg-zinc-800/50 rounded-lg border border-zinc-700/50">
-                <input
-                  type="checkbox"
-                  checked={autoRun}
-                  onChange={(e) => setAutoRun(e.target.checked)}
-                  className="h-3.5 w-3.5 text-zinc-50 rounded border-zinc-600 bg-zinc-800 focus:ring-2 focus:ring-zinc-500 focus:ring-offset-0"
-                  data-testid="auto-run-checkbox"
-                />
-                <label
-                  htmlFor="auto-run"
-                  className="text-xs text-zinc-400 select-none"
-                >
-                  Auto-run
-                </label>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <button
-                type="button"
-                onClick={executeCode}
-                className="px-4 py-2 bg-zinc-50 hover:bg-zinc-200 text-zinc-900 text-sm font-medium rounded-lg transition-all duration-200 flex items-center space-x-2"
-                data-testid="run-code-button"
-                title="Run Code (Ctrl+Enter)"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M8 5.14v13.72L19 12L8 5.14z"
-                    fill="currentColor"
-                  />
-                </svg>
-                <span className="hidden sm:inline">Run</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
       <main
         className="flex-1 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 w-full overflow-auto"
         data-testid="app-main"
@@ -405,7 +349,9 @@ function App() {
                       schemaPanelCollapsed ? "Expand schema panel" : "Collapse schema panel"
                     }
                   >
-                    <ArrowDown className={`${schemaPanelCollapsed ? "rotate-180" : ""} transition-transform`} />
+                    <ArrowDown
+                      className={`${schemaPanelCollapsed ? "rotate-180" : ""} transition-transform`}
+                    />
                   </button>
                 }
                 className={`transition-all duration-200 ${schemaPanelCollapsed && "h-10"}`}
