@@ -4,7 +4,7 @@ import type {
 } from "@tokens-studio/tokenscript-interpreter";
 import { useAtom } from "jotai";
 import { useCallback } from "react";
-import { colorSchemasAtom, functionSchemasAtom } from "../store/atoms";
+import { colorSchemasAtom, currentPresetAtom, functionSchemasAtom } from "../store/atoms";
 import { JSON_PRESETS, type Preset, TOKENSCRIPT_PRESETS } from "../utils/presets";
 import { fetchTokenScriptSchema } from "../utils/schema-fetcher";
 import Select from "./Select";
@@ -19,6 +19,7 @@ function PresetSelector({ inputMode, onPresetSelect, testId }: PresetSelectorPro
   const presets = inputMode === "tokenscript" ? TOKENSCRIPT_PRESETS : JSON_PRESETS;
   const [colorSchemas, setColorSchemas] = useAtom(colorSchemasAtom);
   const [functionSchemas, setFunctionSchemas] = useAtom(functionSchemasAtom);
+  const [currentPreset, setCurrentPreset] = useAtom(currentPresetAtom);
 
   const loadDependencies = useCallback(
     async (dependencies: string[]) => {
@@ -104,10 +105,18 @@ function PresetSelector({ inputMode, onPresetSelect, testId }: PresetSelectorPro
           await loadDependencies(preset.dependencies);
         }
 
+        setCurrentPreset(preset.name);
         onPresetSelect(preset);
       }
     },
-    [presets, loadDependencies, onPresetSelect, setColorSchemas, setFunctionSchemas],
+    [
+      presets,
+      loadDependencies,
+      onPresetSelect,
+      setColorSchemas,
+      setFunctionSchemas,
+      setCurrentPreset,
+    ],
   );
 
   const options = presets.map((preset) => ({
@@ -116,14 +125,27 @@ function PresetSelector({ inputMode, onPresetSelect, testId }: PresetSelectorPro
   }));
 
   return (
-    <Select
-      value=""
-      onChange={handlePresetChange}
-      options={options}
-      placeholder="Load preset"
-      showCheckmarks={false}
-      testId={testId}
-    />
+    <div className="relative">
+      <style>
+        {`
+          .preset-select .customizable-select option::checkmark {
+            display: none !important;
+            width: 0 !important;
+            margin: 0 !important;
+          }
+        `}
+      </style>
+      <div className="preset-select">
+        <Select
+          value={currentPreset}
+          onChange={handlePresetChange}
+          options={options}
+          placeholder="Load preset"
+          showCheckmarks={false}
+          testId={testId}
+        />
+      </div>
+    </div>
   );
 }
 

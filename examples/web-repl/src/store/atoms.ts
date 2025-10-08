@@ -112,3 +112,6 @@ export const inputsPanelCollapsedAtom = atom(true);
 export const inputsDataAtom = atom<InputDefinition[]>([
   { name: "input1", type: "string", value: "" },
 ]);
+
+// Current preset name (non-persisted)
+export const currentPresetAtom = atom<string>("");

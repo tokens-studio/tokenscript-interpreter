@@ -19,6 +19,7 @@ import TokenScriptEditor from "./components/TokenScriptEditor";
 import {
   autoRunAtom,
   colorSchemasAtom,
+  currentPresetAtom,
   functionSchemasAtom,
   schemaPanelCollapsedAtom,
 } from "./store/atoms";
@@ -145,6 +146,7 @@ function App() {
   const [schemaPanelCollapsed, setSchemaPanelCollapsed] = useAtom(schemaPanelCollapsedAtom);
   const [colorSchemas, _setColorSchemas] = useAtom(colorSchemasAtom);
   const [functionSchemas, _setFunctionSchemas] = useAtom(functionSchemasAtom);
+  const [currentPreset, setCurrentPreset] = useAtom(currentPresetAtom);
   const [input, setInputs] = useState<Record<string, any>>({});
 
   // In development mode, persist code to sessionStorage for HMR preservation
@@ -268,6 +270,39 @@ function App() {
     }
   }, []);
 
+  const handleCodeChange = useCallback(
+    (newCode: string) => {
+      setCode(newCode);
+      // Clear current preset if user manually changes code
+      if (currentPreset) {
+        setCurrentPreset("");
+      }
+    },
+    [currentPreset, setCurrentPreset],
+  );
+
+  const handleJsonChange = useCallback(
+    (newJson: string) => {
+      setJsonInput(newJson);
+      // Clear current preset if user manually changes JSON
+      if (currentPreset) {
+        setCurrentPreset("");
+      }
+    },
+    [currentPreset, setCurrentPreset],
+  );
+
+  const handleInputModeChange = useCallback(
+    (newMode: InputMode) => {
+      setInputMode(newMode);
+      // Clear current preset when switching input modes
+      if (currentPreset) {
+        setCurrentPreset("");
+      }
+    },
+    [currentPreset, setCurrentPreset],
+  );
+
   useEffect(() => {
     if (!autoRun) return;
     executeCode();
@@ -302,22 +337,22 @@ function App() {
             {inputMode === "tokenscript" ? (
               <TokenScriptEditor
                 value={code}
-                onChange={setCode}
+                onChange={handleCodeChange}
                 onKeyDown={handleKeyDown}
                 error={result.errorInfo}
                 inputMode={inputMode}
-                onInputModeChange={setInputMode}
+                onInputModeChange={handleInputModeChange}
                 onPresetSelect={handlePresetSelect}
                 onReferencesChange={setInputs}
               />
             ) : (
               <JsonTokenEditor
                 value={jsonInput}
-                onChange={setJsonInput}
+                onChange={handleJsonChange}
                 onKeyDown={handleKeyDown}
                 error={jsonError}
                 inputMode={inputMode}
-                onInputModeChange={setInputMode}
+                onInputModeChange={handleInputModeChange}
                 onPresetSelect={handlePresetSelect}
               />
             )}
