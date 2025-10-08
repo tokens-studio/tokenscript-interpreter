@@ -190,10 +190,15 @@ return fontSizes;`,
   {
     name: "Responsive Font Size (remap)",
     type: "code",
-    code: `// Map viewport 768px to responsive font size
-// Mobile (320px) = 16px, Desktop (1920px) = 48px
+    code: `// Map viewport to responsive font size
 variable viewport: Number = 768;
-variable fontSize: Number = remap(viewport, 320, 1920, 16, 48, 1);
+variable mobileViewport: Number = 320;
+variable desktopViewport: Number = 1920;
+variable minFontSize: Number = 16;
+variable maxFontSize: Number = 48;
+variable shouldClamp: Number = 1;
+
+variable fontSize: Number = remap(viewport, mobileViewport, desktopViewport, minFontSize, maxFontSize, shouldClamp);
 
 return fontSize;`,
     dependencies: [
@@ -203,9 +208,15 @@ return fontSize;`,
   {
     name: "Opacity from Percentage (remap)",
     type: "code",
-    code: `// Map percentage (0-100) to opacity (0-1)
+    code: `// Map percentage to opacity
 variable percentage: Number = 75;
-variable opacity: Number = remap(percentage, 0, 100, 0, 1, 1);
+variable minPercentage: Number = 0;
+variable maxPercentage: Number = 100;
+variable minOpacity: Number = 0;
+variable maxOpacity: Number = 1;
+variable shouldClamp: Number = 1;
+
+variable opacity: Number = remap(percentage, minPercentage, maxPercentage, minOpacity, maxOpacity, shouldClamp);
 
 return opacity;`,
     dependencies: [
