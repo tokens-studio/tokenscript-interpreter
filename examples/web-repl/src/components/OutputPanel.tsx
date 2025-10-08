@@ -257,10 +257,6 @@ const ListOutput = ({
         className="p-3 bg-zinc-800/30 rounded-lg border border-zinc-700/50"
         data-testid="list-output-compact"
       >
-        <div className="flex items-center space-x-2 mb-2">
-          <div className="text-sm font-medium text-zinc-300">List</div>
-          <span className="text-xs text-zinc-500">({list.elements.length} items)</span>
-        </div>
         <div className="space-y-1">
           {list.elements.map((element, index) => (
             <SymbolOutput
@@ -278,25 +274,18 @@ const ListOutput = ({
 
   return (
     <div
-      className="space-y-3"
+      className=""
       data-testid="list-output"
     >
-      <div className="flex items-center space-x-2 mb-3">
-        <div className="font-semibold text-zinc-300">List</div>
-        <span className="text-sm text-zinc-500">({list.elements.length} items)</span>
-      </div>
-
-      <div className="">
-        {list.elements.map((element, index) => (
-          <SymbolOutput
-            key={index}
-            symbol={element}
-            colorManager={colorManager}
-            compact={true}
-            data-testid={`list-item-${index}`}
-          />
-        ))}
-      </div>
+      {list.elements.map((element, index) => (
+        <SymbolOutput
+          key={index}
+          symbol={element}
+          colorManager={colorManager}
+          compact={true}
+          data-testid={`list-item-${index}`}
+        />
+      ))}
     </div>
   );
 };
@@ -424,7 +413,9 @@ const OutputPanelTitle = ({ error, output }: { error?: string; output?: BaseSymb
     className="flex items-center space-x-2"
     data-testid="output-panel-title"
   >
-    <div className={`w-2 h-2 rounded-full ${error ? "bg-red-400" : "bg-emerald-400"} shadow-lg ${error ? "shadow-red-500/50" : "shadow-emerald-500/50"}`} />
+    <div
+      className={`w-2 h-2 rounded-full ${error ? "bg-red-400" : "bg-emerald-400"} shadow-lg ${error ? "shadow-red-500/50" : "shadow-emerald-500/50"}`}
+    />
     <span className="font-semibold text-zinc-200">Output</span>
     {output?.type && <span className="text-zinc-500 text-xs">{output.getTypeName()}</span>}
   </div>
