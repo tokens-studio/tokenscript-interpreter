@@ -94,6 +94,11 @@ function PresetSelector({ inputMode, onPresetSelect, testId }: PresetSelectorPro
 
       const preset = presets.find((p) => p.name === presetName);
       if (preset) {
+        if (preset.clearDependencies) {
+          setColorSchemas(new Map());
+          setFunctionSchemas(new Map());
+        }
+
         // Load dependencies before selecting the preset
         if (preset.dependencies && preset.dependencies.length > 0) {
           await loadDependencies(preset.dependencies);
@@ -102,7 +107,7 @@ function PresetSelector({ inputMode, onPresetSelect, testId }: PresetSelectorPro
         onPresetSelect(preset);
       }
     },
-    [presets, loadDependencies, onPresetSelect],
+    [presets, loadDependencies, onPresetSelect, setColorSchemas, setFunctionSchemas],
   );
 
   const options = presets.map((preset) => ({

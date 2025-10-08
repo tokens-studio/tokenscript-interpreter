@@ -3,6 +3,7 @@ export interface Preset {
   type: "code" | "json";
   code: string;
   dependencies?: string[];
+  clearDependencies?: boolean;
 }
 
 const DEMO_PRESETS: Preset[] = [
@@ -12,6 +13,7 @@ const DEMO_PRESETS: Preset[] = [
     code: `variable yellow: Color = #FF9900;
 
 return yellow;`,
+    clearDependencies: true,
   },
   {
     name: "Demo 2: Color Method",
