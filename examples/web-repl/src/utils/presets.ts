@@ -300,7 +300,7 @@ export const JSON_PRESETS: Preset[] = [
     "primary": {
       "base": {
         "$type": "color",
-        "$value": "#000"
+        "$value": "#325611"
       },
       "on-base": {
         "$type": "color",
