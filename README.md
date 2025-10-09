@@ -1,17 +1,25 @@
+![banner.png](examples/repo-assets/banner.png)
+
 # TokenScript Interpreter
 
 A TypeScript interpreter for **TokenScript**, a domain-specific language designed for design token manipulation, computation, and color space conversions. TokenScript provides a powerful, type-safe environment for working with design tokens in modern design systems.
+
+This is an early public release. The language and interpreter are under active development. You can find the interactive playground [here](https://repl.tokenscript.dev.gcp.tokens.studio/) and our talk about TokenScript at [Penpot Fest 2025](https://www.youtube.com/watch?v=H82szrnX4ws).
+
+Additionally we released the [TokenScript Standard Compliance Test Suite](https://github.com/tokens-studio/tokenscript-compliance-suite) which enables you to validate your TokenScript implementations against the official specification.
+
+If you want join the discussion or have questions, feel free to reach out on our [Tokens Studio Slack](https://tokens-studio.slack.com/archives/C09KPC4MFUL).
 
 ## Language Overview
 
 TokenScript is a statically-typed language that excels at design token operations, mathematical computations, and color manipulations. It features:
 
 - **Strong Type System** with design-aware types (Color, NumberWithUnit, etc.)
-- **Color Space Management** with automatic conversions between RGB, HSL, HEX, and more
+- **Color Space Management** with dynamic type loading and conversions trees
 - **Unit-Aware Arithmetic** for consistent spacing, sizing, and measurement calculations
 - **Control Flow** with conditional statements and loops
 - **Built-in Functions** optimized for design token operations
-- **Reference Resolution** for token alias and dependency management
+- **Optimized Reference Resolution** for token alias and dependency management
 
 ## Language Features
 
@@ -36,19 +44,19 @@ variable tokenList: List = "red", "green", "blue";
 TokenScript excels at color operations with full color space support:
 
 ```tokenscript
-// Color Declaration and Manipulation
-variable primary: Color.RGB;
-primary.r = 255;
-primary.g = 107;
-primary.b = 53;
+variable yellow: Color = #FF9900;
+variable prettyRamp: List = oklchRamp(yellow.to.oklch()).values();
 
-// Automatic Color Space Conversions
-variable hexColor: Color = #ff6b35;
-variable rgbColor: Color.RGB = hexColor; // Automatic conversion
+variable hexValues: List;
+variable colorIndex: Number = 0;
+variable currentColor: Color.Oklch;
+while (colorIndex < prettyRamp.length()) [
+  currentColor = prettyRamp.get(colorIndex);
+  hexValues.append(currentColor.to.hex());
+  colorIndex = colorIndex + 1;
+]
 
-// Color Functions
-variable lighter: Color = lighten(primary, 20%);
-variable mixed: Color = mix(primary, #ffffff, 0.5);
+return hexValues;
 ```
 
 ### Mathematical Operations
@@ -59,6 +67,7 @@ Built-in support for design-aware mathematics:
 // Unit-Aware Arithmetic
 variable baseSpacing: NumberWithUnit = 8px;
 variable largeSpacing: NumberWithUnit = baseSpacing * 3; // 24px
+variable wildMixing: NumberWithUnit = return 1rem + 1px + 10%; // 18.7px
 
 // Mathematical Functions
 variable rounded: Number = round(3.14159, 2); // 3.14
@@ -110,11 +119,11 @@ TokenScript supports token references for building scalable design systems:
 
 ```tokenscript
 // References use curly brace syntax
-variable primaryColor: Color = {colors.primary};
-variable buttonPadding: NumberWithUnit = {spacing.medium} * 2;
+variable primaryColor: Color = {colors_primary};
+variable buttonPadding: NumberWithUnit = {spacing_medium} * 2;
 
 // Nested references
-variable complexValue: NumberWithUnit = {base.unit} + {modifiers.large};
+variable complexValue: NumberWithUnit = {base_unit} + {modifiers_large};
 ```
 
 ## Configuration Setup
@@ -333,34 +342,3 @@ npx tokenscript parse_tokenset --tokenset ./tokens.zip --output ./processed.json
 # Run compliance tests
 npx tokenscript evaluate_standard_compliance --test-dir ./tests/ --output ./report.json
 ```
-
-## Built-in Functions
-
-TokenScript includes comprehensive built-in functions:
-
-### Math Functions
-- `min(a, b, ...)` - Find minimum value
-- `max(a, b, ...)` - Find maximum value
-- `round(value, decimals?)` - Round to specified decimals
-- `floor(value)` - Round down
-- `ceil(value)` - Round up
-- `abs(value)` - Absolute value
-- `pow(base, exponent)` - Power function
-- `sqrt(value)` - Square root
-
-### String Functions
-- `concat(str1, str2, ...)` - Concatenate strings
-- `split(string, delimiter)` - Split string into list
-- `length(string)` - Get string length
-- `substring(string, start, end?)` - Extract substring
-
-### List Functions
-- `length()` - Get list length
-- `get(index)` - Get item at index
-- `push(item)` - Add item to end
-- `update(index, value)` - Update item at index
-
-### Color Functions
-- `lighten(color, amount)` - Lighten color
-- `darken(color, amount)` - Darken color
-- `mix(color1, color2, ratio)` - Mix two colors
