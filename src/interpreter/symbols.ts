@@ -722,6 +722,13 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
     return new NumberSymbol(this.value);
   }
 
+  equals(other: ISymbolType): boolean {
+    return (
+      other instanceof NumberWithUnitSymbol &&
+      this.value === other.value &&
+      this.unit.toLowerCase() === other?.unit.toLowerCase()
+    );
+  }
   static empty(): NumberWithUnitSymbol {
     return new NumberWithUnitSymbol(null, "px");
   }
