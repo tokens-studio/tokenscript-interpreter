@@ -64,6 +64,25 @@ export abstract class BaseSymbolType implements ISymbolType {
 
   abstract validValue(value: any): boolean;
 
+  /**
+   * Forces creating a deepCopy of provided symbol no matter if it's immutable or not.
+   */
+  abstract deepCopy(): ISymbolType;
+
+  /**
+   * Returns a copy of the symbol if it's mutable, otherwise returns the same instance.
+   *
+   * This method is used to prevent reference sharing issues when storing symbols in
+   * containers like lists and dictionaries. Immutable symbols (Number, String, Boolean,
+   * NumberWithUnit, Null, hex ColorSymbol) can safely share references since they
+   * cannot be modified after creation. Mutable symbols (List, Dictionary, dynamic
+   * ColorSymbol) need to be deep copied to prevent unintended mutations.
+   *
+   * @returns For immutable symbols: returns `this` (same reference)
+   *          For mutable symbols: returns `this.deepCopy()` (new instance)
+   */
+  abstract cloneIfMutable(): ISymbolType;
+
   toString(): string {
     return String(this.value);
   }
@@ -187,6 +206,14 @@ export class NullSymbol extends BaseSymbolType {
     return "null";
   }
 
+  deepCopy(): NullSymbol {
+    return new NullSymbol();
+  }
+
+  cloneIfMutable(): NullSymbol {
+    return this;
+  }
+
   equals(other: ISymbolType): boolean {
     return other instanceof NullSymbol;
   }
@@ -252,6 +279,14 @@ export class NumberSymbol extends BaseSymbolType {
       return String(this.value);
     }
     return String(Number(this.value));
+  }
+
+  deepCopy(): NumberSymbol {
+    return new NumberSymbol(this.value, this.isFloat);
+  }
+
+  cloneIfMutable(): NumberSymbol {
+    return this;
   }
 
   static empty(): NumberSymbol {
@@ -386,6 +421,14 @@ export class StringSymbol extends BaseSymbolType {
     return new StringSymbol(this.value.toUpperCase());
   }
 
+  deepCopy(): StringSymbol {
+    return new StringSymbol(this.value);
+  }
+
+  cloneIfMutable(): StringSymbol {
+    return this;
+  }
+
   static empty(): StringSymbol {
     return new StringSymbol(null);
   }
@@ -455,6 +498,14 @@ export class BooleanSymbol extends BaseSymbolType {
     if (val === null || val === undefined) {
       throw new InterpreterError("Value must be a boolean, got null.");
     }
+  }
+
+  deepCopy(): BooleanSymbol {
+    return new BooleanSymbol(this.value);
+  }
+
+  cloneIfMutable(): BooleanSymbol {
+    return this;
   }
 
   static empty(): BooleanSymbol {
@@ -559,7 +610,8 @@ export class ListSymbol extends BaseSymbolType {
   }
 
   appendImpl(item: ISymbolType): ListSymbol {
-    this.elements.push(item);
+    const itemToAdd = item.cloneIfMutable();
+    this.elements.push(itemToAdd);
     return this;
   }
 
@@ -567,9 +619,9 @@ export class ListSymbol extends BaseSymbolType {
     // Handle both individual arguments and ListSymbol arguments
     for (const item of items) {
       if (item instanceof ListSymbol) {
-        this.elements.push(...item.elements);
+        this.elements.push(...item.elements.map((element) => element.cloneIfMutable()));
       } else {
-        this.elements.push(item);
+        this.elements.push(item.cloneIfMutable());
       }
     }
     return this;
@@ -579,7 +631,7 @@ export class ListSymbol extends BaseSymbolType {
     const index = indexSymbol.value as number;
     if (index < 0 || index > this.elements.length)
       throw new InterpreterError("Index out of range for insert.");
-    this.elements.splice(index, 0, item);
+    this.elements.splice(index, 0, item.cloneIfMutable());
     return this;
   }
 
@@ -611,7 +663,7 @@ export class ListSymbol extends BaseSymbolType {
     const index = indexSymbol.value as number;
     if (index < 0 || index >= this.elements.length)
       throw new InterpreterError("Index out of range for update.");
-    this.elements[index] = item;
+    this.elements[index] = item.cloneIfMutable();
     return this;
   }
 
@@ -624,6 +676,15 @@ export class ListSymbol extends BaseSymbolType {
       return element.toString();
     });
     return new StringSymbol(stringElements.join(sep));
+  }
+
+  deepCopy(): ListSymbol {
+    const copiedElements = this.elements.map((element) => element.deepCopy());
+    return new ListSymbol(copiedElements, this.isImplicit);
+  }
+
+  cloneIfMutable(): ListSymbol {
+    return this.deepCopy();
   }
 
   static empty(): ListSymbol {
@@ -722,6 +783,22 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
     return new NumberSymbol(this.value);
   }
 
+  equals(other: ISymbolType): boolean {
+    return (
+      other instanceof NumberWithUnitSymbol &&
+      this.value === other.value &&
+      this.unit.toLowerCase() === other?.unit.toLowerCase()
+    );
+  }
+
+  deepCopy(): NumberWithUnitSymbol {
+    return new NumberWithUnitSymbol(this.value, this.unit);
+  }
+
+  cloneIfMutable(): NumberWithUnitSymbol {
+    return this;
+  }
+
   static empty(): NumberWithUnitSymbol {
     return new NumberWithUnitSymbol(null, "px");
   }
@@ -738,7 +815,7 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
   }
 
   getTypeName(): string {
-    return typeName(this.type, this.unit);
+    return `${this.type}.${capitalize(this.unit)}`;
   }
 }
 
@@ -872,7 +949,7 @@ export class DictionarySymbol extends BaseSymbolType {
   setImpl(key: StringSymbol, value: ISymbolType): DictionarySymbol {
     this.expectSafeValue(this.value);
     const keyStr = this.ensureKeyIsString(key);
-    this.value.set(keyStr, value);
+    this.value.set(keyStr, value.cloneIfMutable());
     return this;
   }
 
@@ -910,6 +987,19 @@ export class DictionarySymbol extends BaseSymbolType {
     this.expectSafeValue(this.value);
     this.value.clear();
     return this;
+  }
+
+  deepCopy(): DictionarySymbol {
+    this.expectSafeValue(this.value);
+    const copiedMap = new Map<string, ISymbolType>();
+    for (const [key, value] of this.value.entries()) {
+      copiedMap.set(key, value.deepCopy());
+    }
+    return new DictionarySymbol(copiedMap);
+  }
+
+  cloneIfMutable(): DictionarySymbol {
+    return this.deepCopy();
   }
 
   static empty(): DictionarySymbol {
@@ -990,8 +1080,8 @@ export class ColorSymbol extends BaseSymbolType {
   typeEquals(other: ISymbolType): boolean {
     if (!typeEquals(this.type, other.type)) return false;
     const otherColor = other as ColorSymbol;
-    // Edge-Case Color without type is equal to Hex
-    if ((!this.subType && otherColor.isHex()) || (this.isHex() && otherColor.subType)) return true;
+    // Edge-Case Color without type is equal to Hex only
+    if ((!this.subType && otherColor.isHex()) || (this.isHex() && !otherColor.subType)) return true;
     return typeEquals(this.subType, (other as ColorSymbol).subType);
   }
 
@@ -1001,6 +1091,28 @@ export class ColorSymbol extends BaseSymbolType {
 
   validValue(val: any): boolean {
     return val instanceof ColorSymbol || isNull(val) || isObject(val) || isValidHex(val);
+  }
+
+  deepCopy(): ColorSymbol {
+    if (isObject(this.value)) {
+      // For dynamic colors with object values, deep copy the object
+      const copiedValue: dynamicColorValue = {};
+      for (const [key, val] of Object.entries(this.value)) {
+        copiedValue[key] = val.deepCopy();
+      }
+      return new ColorSymbol(copiedValue, this.subType || undefined);
+    }
+    // For hex colors (string values), no deep copy needed
+    return new ColorSymbol(this.value, this.subType || undefined);
+  }
+
+  cloneIfMutable(): ColorSymbol {
+    if (isObject(this.value)) {
+      // Dynamic colors with object values are mutable, need deep copy
+      return this.deepCopy();
+    }
+    // Hex colors (string values) are immutable, return this
+    return this;
   }
 
   hasAttribute(attributeName: string): boolean {
