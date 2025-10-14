@@ -25,6 +25,15 @@ import {
 import { DEFAULT_COLOR_SCHEMAS } from "./utils/default-schemas";
 import type { Preset } from "./utils/presets";
 
+const awakenSchemaServer = async () => {
+  await fetch("https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/", {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+    },
+  });
+};
+
 type UnifiedExecutionResult = {
   type: "tokenscript" | "json";
   error?: string;
@@ -146,6 +155,10 @@ function App() {
   const [colorSchemas, _setColorSchemas] = useAtom(colorSchemasAtom);
   const [functionSchemas, _setFunctionSchemas] = useAtom(functionSchemasAtom);
   const [input, setInputs] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    awakenSchemaServer();
+  }, []);
 
   // In development mode, persist code to sessionStorage for HMR preservation
   useEffect(() => {
