@@ -90,6 +90,8 @@ export interface ISymbolType {
   value: any;
 
   validValue(value: any): boolean;
+  deepCopy(): ISymbolType;
+  cloneIfMutable(): ISymbolType;
   toString(): string; // JS equivalent of __repr__ or __str__
   typeEquals(other: ISymbolType): boolean;
   equals(other: ISymbolType): boolean; // JS equivalent of __eq__
