@@ -51,7 +51,7 @@ type UnifiedExecutionResult = {
 const DEFAULT_CODE = `// Example TokenScript code - try editing!
 variable primary: Color.Hsl = hsl(220, 100, 50);
 
-return primary.to.rgb();`;
+return primary();`;
 
 const DEFAULT_JSON = `{
   "colors": {
@@ -107,10 +107,6 @@ function getInitialJson(): string {
 function setupColorManager(schemas: typeof DEFAULT_COLOR_SCHEMAS): ColorManager {
   const colorManager = new ColorManager();
 
-  const cssColorUri = "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/css-color/0/";
-  const cssColorEntry = DEFAULT_COLOR_SCHEMAS.get(cssColorUri);
-
-  // Register all other schemas
   for (const [uri, spec] of schemas.entries()) {
     try {
       colorManager.register(uri, spec);
@@ -119,9 +115,12 @@ function setupColorManager(schemas: typeof DEFAULT_COLOR_SCHEMAS): ColorManager 
     }
   }
 
-  if (cssColorEntry) {
+  // Always register css color name schema to display css value in color tile
+  const cssColorUri = "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/css-color/0/";
+  const CssColorSchema = DEFAULT_COLOR_SCHEMAS.get(cssColorUri);
+  if (CssColorSchema) {
     try {
-      colorManager.register(cssColorUri, cssColorEntry);
+      colorManager.register(cssColorUri, CssColorSchema);
     } catch (error) {
       console.warn(`Failed to register css-color schema:`, error);
     }
