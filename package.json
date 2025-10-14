@@ -1,6 +1,6 @@
 {
   "name": "@tokens-studio/tokenscript-interpreter",
-  "version": "1.0.0",
+  "version": "0.2.0",
   "description": "A TypeScript interpreter for TokenScript, a domain-specific language for design token manipulation and computation",
   "type": "module",
   "main": "./dist/lib/index.js",
@@ -16,7 +16,7 @@
     }
   },
   "bin": {
-    "tokenscript": "./dist/cli.js"
+    "tokenscript": "dist/cli.js"
   },
   "files": [
     "dist",
@@ -73,7 +73,6 @@
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
   },
-
   "keywords": [
     "tokenscript",
     "design-tokens",
@@ -85,7 +84,7 @@
   "license": "MPL-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tokens-studio/tokenscript-interpreter.git"
+    "url": "git+https://github.com/tokens-studio/tokenscript-interpreter.git"
   },
   "bugs": {
     "url": "https://github.com/tokens-studio/tokenscript-interpreter/issues"
