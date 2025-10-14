@@ -997,8 +997,8 @@ export class ColorSymbol extends BaseSymbolType {
   typeEquals(other: ISymbolType): boolean {
     if (!typeEquals(this.type, other.type)) return false;
     const otherColor = other as ColorSymbol;
-    // Edge-Case Color without type is equal to Hex
-    if ((!this.subType && otherColor.isHex()) || (this.isHex() && otherColor.subType)) return true;
+    // Edge-Case Color without type is equal to Hex only
+    if ((!this.subType && otherColor.isHex()) || (this.isHex() && !otherColor.subType)) return true;
     return typeEquals(this.subType, (other as ColorSymbol).subType);
   }
 
