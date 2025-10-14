@@ -51,7 +51,7 @@ type UnifiedExecutionResult = {
 const DEFAULT_CODE = `// Example TokenScript code - try editing!
 variable primary: Color.Hsl = hsl(220, 100, 50);
 
-return primary();`;
+return primary.to.srgb();`;
 
 const DEFAULT_JSON = `{
   "colors": {
