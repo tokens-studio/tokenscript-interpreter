@@ -1090,6 +1090,10 @@ export class ColorSymbol extends BaseSymbolType {
   }
 
   toStringImpl(): StringSymbol {
+    if (this.config?.colorManager) {
+      const formatted = this.config.colorManager.formatColorMethod(this);
+      return new StringSymbol(formatted, this.config);
+    }
     if (isObject(this.value)) {
       return new StringSymbol(JSON.stringify(this.value), this.config);
     }
