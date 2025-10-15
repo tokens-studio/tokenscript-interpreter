@@ -183,9 +183,7 @@ fontSizes.set("sm", snap(body * 0.85, snapInterval));
 fontSizes.set("xs", snap(body * 0.65, snapInterval));
 
 return fontSizes;`,
-    dependencies: [
-      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/snap/0.0.1/",
-    ],
+    dependencies: ["https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/snap/0.0.1/"],
   },
   {
     name: "Responsive Font Size (remap)",
@@ -201,9 +199,7 @@ variable shouldClamp: Number = 1;
 variable fontSize: Number = remap(viewport, mobileViewport, desktopViewport, minFontSize, maxFontSize, shouldClamp);
 
 return fontSize;`,
-    dependencies: [
-      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/remap/0.0.1/",
-    ],
+    dependencies: ["https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/remap/0.0.1/"],
   },
   {
     name: "Opacity from Percentage (remap)",
@@ -219,9 +215,7 @@ variable shouldClamp: Number = 1;
 variable opacity: Number = remap(percentage, minPercentage, maxPercentage, minOpacity, maxOpacity, shouldClamp);
 
 return opacity;`,
-    dependencies: [
-      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/remap/0.0.1/",
-    ],
+    dependencies: ["https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/remap/0.0.1/"],
   },
   {
     name: "Unit Spacing system",
@@ -269,7 +263,7 @@ return output;`,
       "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0.0.1/",
       "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/contrast-color/0.0.1/",
     ],
-  }
+  },
 ];
 
 export const JSON_PRESETS: Preset[] = [
@@ -302,6 +296,9 @@ export const JSON_PRESETS: Preset[] = [
     }
   }
 }`,
+    dependencies: [
+      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0.0.1/",
+    ],
   },
   {
     name: "Design system",
@@ -366,5 +363,9 @@ export const JSON_PRESETS: Preset[] = [
     }
   }
 }`,
+    dependencies: [
+      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0.0.1/",
+      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/contrast-color/0.0.1/",
+    ],
   },
 ];

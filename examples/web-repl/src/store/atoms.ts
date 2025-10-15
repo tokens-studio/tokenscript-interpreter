@@ -42,7 +42,7 @@ export interface DeletedFunctionSchema {
 
 // Color schemas - persisted to localStorage as Map serialized to array of [key, value] pairs
 export const colorSchemasAtom = atomWithStorage<ColorSpecs>(
-  "repl:colorSchemas",
+  "repl:colorSchemas:v2",
   DEFAULT_COLOR_SCHEMAS,
   {
     getItem: (key, initialValue) => {
@@ -69,7 +69,7 @@ export const colorSchemasAtom = atomWithStorage<ColorSpecs>(
 
 // Function schemas - persisted to localStorage as Map serialized to array of [key, value] pairs
 export const functionSchemasAtom = atomWithStorage<FunctionSpecs>(
-  "repl:functionSchemas",
+  "repl:functionSchemas:v2",
   new Map(),
   {
     getItem: (key, initialValue) => {
@@ -94,21 +94,17 @@ export const functionSchemasAtom = atomWithStorage<FunctionSpecs>(
   },
 );
 
-// Deleted schemas history for undo functionality
 export const deletedColorSchemasAtom = atom<DeletedColorSchema[]>([]);
 export const deletedFunctionSchemasAtom = atom<DeletedFunctionSchema[]>([]);
 
-// Input definitions for TokenScript REPL
 export interface InputDefinition {
   name: string;
   type: "string" | "number" | "boolean" | "color";
   value: string | number | boolean;
 }
 
-// Inputs panel state (non-persisted)
 export const inputsPanelCollapsedAtom = atom(true);
 
-// Inputs data (non-persisted)
 export const inputsDataAtom = atom<InputDefinition[]>([
   { name: "input1", type: "string", value: "" },
 ]);
