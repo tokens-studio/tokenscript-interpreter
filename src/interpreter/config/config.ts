@@ -56,9 +56,9 @@ export class Config {
         if (!this.colorManager.getSpecByType(subType)) {
           throw new InterpreterError(`No spec found for ${subType}`);
         }
-        return new ColorSymbol(null, subType);
+        return new ColorSymbol(null, subType, this);
       }
-      return ColorSymbol.empty();
+      return new ColorSymbol(null, undefined, this);
     }
 
     const basicSymbolConstructor = basicSymbolTypes[baseType.toLowerCase()];

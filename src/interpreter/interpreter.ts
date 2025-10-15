@@ -88,7 +88,7 @@ export class Interpreter {
       this.references = references;
     } else if (references) {
       for (const key in references) {
-        this.references.set(key, jsValueToSymbolType(references[key]));
+        this.references.set(key, jsValueToSymbolType(references[key], this.config));
       }
     } else {
       this.references = new Map<string, ISymbolType>();
@@ -174,11 +174,11 @@ export class Interpreter {
   }
 
   private visitNumNode(node: NumNode): NumberSymbol {
-    return new NumberSymbol(node.value);
+    return new NumberSymbol(node.value, false, this.config);
   }
 
   private visitStringNode(node: StringNode): StringSymbol {
-    return new StringSymbol(node.value);
+    return new StringSymbol(node.value, this.config);
   }
 
   /**
@@ -187,7 +187,9 @@ export class Interpreter {
    */
   private visitIdentifierNode(node: IdentifierNode): ISymbolType {
     return (
-      this.symbolTable.get(node.name) || this.getReference(node.name) || new StringSymbol(node.name)
+      this.symbolTable.get(node.name) ||
+      this.getReference(node.name) ||
+      new StringSymbol(node.name, this.config)
     );
   }
 
@@ -203,7 +205,7 @@ export class Interpreter {
             node.opToken,
           );
         }
-        return new NumberSymbol(-result.value);
+        return new NumberSymbol(-result.value, result.isFloat, this.config);
       }
 
       if (result instanceof NumberWithUnitSymbol) {
@@ -214,7 +216,7 @@ export class Interpreter {
             node.opToken,
           );
         }
-        return new NumberWithUnitSymbol(-result.value, result.unit);
+        return new NumberWithUnitSymbol(-result.value, result.unit, this.config);
       }
 
       throw new InterpreterError(
@@ -238,7 +240,7 @@ export class Interpreter {
 
     if (node.op === Operations.LOGIC_NOT) {
       if (result instanceof BooleanSymbol) {
-        return new BooleanSymbol(!result.value);
+        return new BooleanSymbol(!result.value, this.config);
       }
 
       throw new InterpreterError(
@@ -259,6 +261,7 @@ export class Interpreter {
     return new ListSymbol(
       node.elements.map((el) => this.visit(el) as ISymbolType),
       node instanceof ImplicitListNode,
+      this.config,
     );
   }
 
@@ -277,20 +280,20 @@ export class Interpreter {
   }
 
   private visitHexColorNode(node: HexColorNode): ColorSymbol {
-    return new ColorSymbol(node.value, "Hex");
+    return new ColorSymbol(node.value, "Hex", this.config);
   }
 
   private visitBooleanNode(node: BooleanNode): BooleanSymbol {
-    return new BooleanSymbol(node.value);
+    return new BooleanSymbol(node.value, this.config);
   }
 
   private visitNullNode(_node: NullNode): NullSymbol {
-    return new NullSymbol();
+    return new NullSymbol(this.config);
   }
 
   private visitElementWithUnitNode(node: ElementWithUnitNode): NumberWithUnitSymbol {
     const valNodeVisit = this.visit(node.astNode);
-    return new NumberWithUnitSymbol(valNodeVisit?.value, node.unit);
+    return new NumberWithUnitSymbol(valNodeVisit?.value, node.unit, this.config);
   }
 
   private visitFunctionCallNode(node: FunctionCallNode): ISymbolType {
@@ -310,7 +313,7 @@ export class Interpreter {
 
     if (UNINTERPRETED_KEYWORDS.includes(fnName)) {
       const argStrings = args.map((arg) => arg.toString());
-      return new StringSymbol(`${fnName}(${argStrings.join(", ")})`);
+      return new StringSymbol(`${fnName}(${argStrings.join(", ")})`, this.config);
     }
 
     throw new InterpreterError(`Unknown function: '${node.name}'`, node.token?.line, node.token);
@@ -422,8 +425,8 @@ export class Interpreter {
       if (right instanceof FunctionCallNode) {
         // Handle method calls (e.g., str.lower(), color.hex())
         const args = right.args.map((arg) => this.visit(arg) as ISymbolType);
-        if (left.hasMethod(right.name, args, this.config)) {
-          const result = left.callMethod?.(right.name, args, this.config);
+        if (left.hasMethod(right.name, args)) {
+          const result = left.callMethod?.(right.name, args);
           if (result === null || result === undefined) {
             throw new InterpreterError(
               `Method '${right.name}' returned null or undefined`,
@@ -441,8 +444,8 @@ export class Interpreter {
       }
       if (right instanceof IdentifierNode) {
         // Handle property access (e.g., str.length, color.to)
-        if (left.hasAttribute(right.name, this.config)) {
-          const result = left.getAttribute?.(right.name, this.config);
+        if (left.hasAttribute(right.name)) {
+          const result = left.getAttribute?.(right.name);
           if (result === null || result === undefined) {
             throw new InterpreterError(
               `Attribute '${right.name}' returned null or undefined`,

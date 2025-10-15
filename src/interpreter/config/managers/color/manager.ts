@@ -133,7 +133,7 @@ export class ColorManager extends BaseManager<ColorSpecification, ColorSymbol, C
             );
           }
           const value = typeof result === "string" ? result : (result?.value ?? null);
-          return new ColorSymbol(value, targetSpec.name);
+          return new ColorSymbol(value, targetSpec.name, this.parentConfig);
         }
         return result as ColorSymbol;
       };
