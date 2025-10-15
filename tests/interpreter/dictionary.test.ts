@@ -70,7 +70,7 @@ describe("Dictionary Operations", () => {
       const result = interpreter.interpret();
       
       expect(result).toBeInstanceOf(DictionarySymbol);
-      expect(result?.toString()).toBe("{'key1': 'value1', 'key3': 'value3'}");
+      expect(result?.toString()).toBe("{key1: value1, key3: value3}");
     });
 
     it("should check if key exists", () => {
@@ -230,7 +230,7 @@ describe("Dictionary Operations", () => {
       
       // Check that my_dict has the expected structure
       expect(result).toBeInstanceOf(DictionarySymbol);
-      expect(result?.toString()).toBe("{'key1': 'value1', 'key2': 'value2'}");
+      expect(result?.toString()).toBe("{key1: value1, key2: value2}");
       
       // Check that variables were set correctly
       const symbolTable = (interpreter as any).symbolTable;
@@ -301,7 +301,7 @@ describe("Dictionary Operations", () => {
       
       expect(result).toBeInstanceOf(DictionarySymbol);
       // Dictionary string representation should maintain insertion order
-      expect(result?.toString()).toBe("{'z': 'last', 'a': 'first', 'm': 'middle'}");
+      expect(result?.toString()).toBe("{z: last, a: first, m: middle}");
     });
 
     it("should maintain order when deleting and re-adding keys", () => {

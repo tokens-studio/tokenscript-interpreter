@@ -35,6 +35,23 @@ const typeName = (base: string, sub?: string): string => {
   return baseStr;
 };
 
+const formatObjectEntries = (
+  data: Record<string, any> | Map<string, any> | Array<[string, any]>,
+): string => {
+  let entries: Array<[string, any]>;
+
+  if (Array.isArray(data)) {
+    entries = data;
+  } else if (data instanceof Map) {
+    entries = Array.from(data.entries());
+  } else {
+    entries = Object.entries(data);
+  }
+
+  const formattedEntries = entries.map(([key, value]) => `${key}: ${value.toString()}`).join(", ");
+  return `{${formattedEntries}}`;
+};
+
 // Base Type -------------------------------------------------------------------
 
 type SupportedMethods = Record<string, MethodDefinitionDef>;
@@ -946,10 +963,7 @@ export class DictionarySymbol extends BaseSymbolType {
 
   toString(): string {
     this.expectSafeValue(this.value);
-    const entries = Array.from(this.value.entries())
-      .map(([key, value]) => `'${key}': '${value.toString()}'`)
-      .join(", ");
-    return `{${entries}}`;
+    return formatObjectEntries(this.value);
   }
 
   private ensureKeyIsString(key: ISymbolType): string {
@@ -1095,7 +1109,7 @@ export class ColorSymbol extends BaseSymbolType {
       return new StringSymbol(formatted, this.config);
     }
     if (isObject(this.value)) {
-      return new StringSymbol(JSON.stringify(this.value), this.config);
+      return new StringSymbol(formatObjectEntries(this.value), this.config);
     }
     if (isString(this.value)) {
       return new StringSymbol(this.value, this.config);

@@ -89,14 +89,14 @@ describe("ColorSymbol", () => {
       expect(result.value).toBe("#ff0000");
     });
 
-    it("should convert dynamic color to JSON string", () => {
+    it("should convert dynamic color to object string", () => {
       const colorValue = {
         red: new StringSymbol("255"),
         green: new StringSymbol("128"),
       };
       const color = new ColorSymbol(colorValue, "rgb");
       const result = color.toStringImpl();
-      expect(result.value).toBe(JSON.stringify(colorValue));
+      expect(result.value).toBe("{red: 255, green: 128}");
     });
 
     it("should convert null color to empty string", () => {
