@@ -97,15 +97,15 @@ export interface ISymbolType {
   equals(other: ISymbolType): boolean; // JS equivalent of __eq__
   toJSON?(): any; // Optional JSON serialization
 
-  hasMethod?(methodName: string, args: ISymbolType[]): boolean;
+  hasMethod?(methodName: string, args: ISymbolType[], config?: Config): boolean;
   callMethod?(
     methodName: string,
     args: ISymbolType[],
     config: Config,
   ): ISymbolType | null | undefined;
-  hasAttribute?(attributeName: string): boolean;
-  getAttribute?(attributeName: string): ISymbolType | null;
-  setAttribute?(attributeName: string, value: ISymbolType): void;
+  hasAttribute?(attributeName: string, config?: Config): boolean;
+  getAttribute?(attributeName: string, config?: Config): ISymbolType | null;
+  setAttribute?(attributeName: string, value: ISymbolType, config?: Config): void;
 
   getTypeName(): string;
 

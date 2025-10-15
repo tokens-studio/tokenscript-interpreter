@@ -99,7 +99,7 @@ export abstract class BaseSymbolType implements ISymbolType {
     return this.typeEquals(other) && this.value === other.value;
   }
 
-  hasMethod?(methodName: string, args: ISymbolType[]): boolean {
+  hasMethod?(methodName: string, args: ISymbolType[], _config?: Config): boolean {
     const methodDefinition = (this.constructor as any)._SUPPORTED_METHODS?.[
       methodName.toLowerCase()
     ];
@@ -128,7 +128,7 @@ export abstract class BaseSymbolType implements ISymbolType {
     const methodDefinition = (this.constructor as any)._SUPPORTED_METHODS?.[
       methodName.toLowerCase()
     ];
-    if (!methodDefinition || !this.hasMethod?.(methodName, args)) {
+    if (!methodDefinition || !this.hasMethod?.(methodName, args, _config)) {
       throw new InterpreterError(
         `Method '${methodName}' not found or invalid arguments on type '${this.type}'.`,
       );
@@ -170,15 +170,15 @@ export abstract class BaseSymbolType implements ISymbolType {
     return methodDefinition.function.call(this, ...processedArgs);
   }
 
-  hasAttribute?(_attributeName: string): boolean {
+  hasAttribute?(_attributeName: string, _config?: Config): boolean {
     return false;
   }
 
-  getAttribute?(attributeName: string): ISymbolType | null {
+  getAttribute?(attributeName: string, _config?: Config): ISymbolType | null {
     throw new InterpreterError(`Attribute '${attributeName}' not found on type '${this.type}'.`);
   }
 
-  setAttribute?(attributeName: string, _value: ISymbolType): void {
+  setAttribute?(attributeName: string, _value: ISymbolType, _config?: Config): void {
     throw new InterpreterError(`Cannot set attribute '${attributeName}' on type '${this.type}'.`);
   }
 }
@@ -293,11 +293,11 @@ export class NumberSymbol extends BaseSymbolType {
     return new NumberSymbol(null);
   }
 
-  hasAttribute(attributeName: string): boolean {
+  hasAttribute(attributeName: string, _config?: Config): boolean {
     return attributeName === "value";
   }
 
-  getAttribute(attributeName: string): ISymbolType | null {
+  getAttribute(attributeName: string, _config?: Config): ISymbolType | null {
     if (attributeName === "value") {
       return new NumberSymbol(this.value);
     }
@@ -803,11 +803,11 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
     return new NumberWithUnitSymbol(null, "px");
   }
 
-  hasAttribute(attributeName: string): boolean {
+  hasAttribute(attributeName: string, _config?: Config): boolean {
     return attributeName === "value";
   }
 
-  getAttribute(attributeName: string): ISymbolType | null {
+  getAttribute(attributeName: string, _config?: Config): ISymbolType | null {
     if (attributeName === "value") {
       return new NumberSymbol(this.value);
     }
@@ -1006,12 +1006,12 @@ export class DictionarySymbol extends BaseSymbolType {
     return new DictionarySymbol(null);
   }
 
-  hasAttribute(attributeName: string): boolean {
+  hasAttribute(attributeName: string, _config?: Config): boolean {
     this.expectSafeValue(this.value);
     return this.value.has(attributeName);
   }
 
-  getAttribute(attributeName: string): ISymbolType | null {
+  getAttribute(attributeName: string, _config?: Config): ISymbolType | null {
     this.expectSafeValue(this.value);
     const value = this.value.get(attributeName);
     if (value === undefined) {
@@ -1115,7 +1115,11 @@ export class ColorSymbol extends BaseSymbolType {
     return this;
   }
 
-  hasAttribute(attributeName: string): boolean {
+  hasAttribute(attributeName: string, _config?: Config): boolean {
+    if (attributeName === "to") {
+      return true;
+    }
+
     // For dynamic colors (object values), check if the attribute exists
     if (isObject(this.value)) {
       return attributeName in this.value;
@@ -1125,7 +1129,11 @@ export class ColorSymbol extends BaseSymbolType {
     return false;
   }
 
-  getAttribute(attributeName: string): ISymbolType | null {
+  getAttribute(attributeName: string, _config?: Config): ISymbolType | null {
+    if (attributeName === "to") {
+      return this;
+    }
+
     if (isObject(this.value)) {
       const attributeValue = this.value[attributeName];
       if (attributeValue !== undefined) {
@@ -1134,6 +1142,41 @@ export class ColorSymbol extends BaseSymbolType {
     }
 
     throw new InterpreterError(`Attribute '${attributeName}' not found on Color.`);
+  }
+
+  hasMethod(methodName: string, args: ISymbolType[], config?: Config): boolean {
+    // First check if it's a built-in method
+    if (super.hasMethod?.(methodName, args, config)) {
+      return true;
+    }
+
+    // Check if it's a color conversion method
+    if (config?.colorManager.hasInitializer(methodName)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  callMethod(
+    methodName: string,
+    args: ISymbolType[],
+    config: Config,
+  ): ISymbolType | null | undefined {
+    // First check if it's a built-in method
+    const methodDefinition = (this.constructor as any)._SUPPORTED_METHODS?.[
+      methodName.toLowerCase()
+    ];
+    if (methodDefinition && super.hasMethod?.(methodName, args, config)) {
+      return super.callMethod?.(methodName, args, config);
+    }
+
+    // Handle color conversion methods
+    if (config.colorManager.hasInitializer(methodName)) {
+      return config.colorManager.convertToByType(this, methodName);
+    }
+
+    throw new InterpreterError(`Method '${methodName}' not found on type '${this.type}'.`);
   }
 
   getTypeName(): string {

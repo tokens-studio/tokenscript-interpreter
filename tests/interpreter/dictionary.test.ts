@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
 import { Interpreter } from "@interpreter/interpreter";
-import { DictionarySymbol, StringSymbol, ListSymbol, BooleanSymbol, NumberSymbol, NullSymbol } from "@interpreter/symbols";
+import { DictionarySymbol, StringSymbol, ListSymbol, BooleanSymbol, NumberSymbol, NullSymbol, ColorSymbol } from "@interpreter/symbols";
 
 describe("Dictionary Operations", () => {
   describe("Basic Dictionary Operations", () => {
