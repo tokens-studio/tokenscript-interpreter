@@ -7,7 +7,7 @@ import {
 } from "@src/types";
 import {
   type AssignNode,
-  AttributeAccessNode,
+  type AttributeAccessNode,
   type BinOpNode,
   type BooleanNode,
   type ElementWithUnitNode,
@@ -415,37 +415,14 @@ export class Interpreter {
   }
 
   private visitAttributeAccessNode(node: AttributeAccessNode): ISymbolType {
-    // TODO Clean up this messy implementation for the color conversion
-    // Special case: Handle color conversion syntax like c.to.hex() or rgb(255,255,255).to.hex()
-    if (
-      node.left instanceof AttributeAccessNode &&
-      (node.left.left instanceof IdentifierNode || node.left.left instanceof FunctionCallNode)
-    ) {
-      const nestedLeft = this.visit(node.left.left) as ISymbolType;
-      const nestedRight = node.left.right;
-
-      if (
-        nestedLeft instanceof ColorSymbol &&
-        nestedRight instanceof IdentifierNode &&
-        node.right instanceof FunctionCallNode &&
-        nestedRight.name === "to"
-      ) {
-        const targetColorMethod = node.right.name;
-        const colorSymbol = nestedLeft;
-
-        return this.config.colorManager.convertToByType(colorSymbol, targetColorMethod);
-      }
-    }
-
     const left = this.visit(node.left) as ISymbolType;
     const right = node.right;
 
-    // Check if left supports attribute/method access
     if (typeof left.hasMethod === "function" && typeof left.hasAttribute === "function") {
       if (right instanceof FunctionCallNode) {
-        // Handle method calls (e.g., str.lower())
+        // Handle method calls (e.g., str.lower(), color.hex())
         const args = right.args.map((arg) => this.visit(arg) as ISymbolType);
-        if (left.hasMethod(right.name, args)) {
+        if (left.hasMethod(right.name, args, this.config)) {
           const result = left.callMethod?.(right.name, args, this.config);
           if (result === null || result === undefined) {
             throw new InterpreterError(
@@ -463,9 +440,9 @@ export class Interpreter {
         );
       }
       if (right instanceof IdentifierNode) {
-        // Handle property access (e.g., str.length)
-        if (left.hasAttribute(right.name)) {
-          const result = left.getAttribute?.(right.name);
+        // Handle property access (e.g., str.length, color.to)
+        if (left.hasAttribute(right.name, this.config)) {
+          const result = left.getAttribute?.(right.name, this.config);
           if (result === null || result === undefined) {
             throw new InterpreterError(
               `Attribute '${right.name}' returned null or undefined`,

@@ -6,7 +6,7 @@ import { InterpreterError } from "@interpreter/errors";
 import { Interpreter } from "@interpreter/interpreter";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
-import { ColorSymbol, ListSymbol as List, NumberSymbol } from "@interpreter/symbols";
+import { ColorSymbol, ListSymbol as List, NumberSymbol, StringSymbol } from "@interpreter/symbols";
 
 function setupColorManagerWithRgb(): ColorManager {
   const colorManager = new ColorManager();
@@ -28,28 +28,28 @@ describe("Color Conversion - Happy Path", () => {
   it("should convert RGB to HEX", () => {
     const colorManager = setupColorManagerWithRgb();
     
-    const code = `
-      variable c: Color.Rgb = rgb(255, 255, 255);
-      c.to.hex()
+    const code = `variable c: Dictionary;
+    c.set("a", #333);
+    c.get("a").to.hex().to.hex();
     `;
     
     const result = interpretWithColorManager(code, colorManager);
     
     expect(result).toBeInstanceOf(ColorSymbol);
     expect((result as ColorSymbol).subType).toBe("Hex");
-    expect(result?.toString()).toBe("#ffffff");
+    expect(result?.toString()).toBe("#333");
   });
 
   it("should convert RGB with low values to HEX", () => {
     const colorManager = setupColorManagerWithRgb();
-    
+
     const code = `
       variable c: Color.Rgb = rgb(10, 5, 0);
       c.to.hex()
     `;
-    
+
     const result = interpretWithColorManager(code, colorManager);
-    
+
     expect(result).toBeInstanceOf(ColorSymbol);
     expect((result as ColorSymbol).subType).toBe("Hex");
     expect(result?.toString()).toBe("#0a0500");
@@ -57,14 +57,14 @@ describe("Color Conversion - Happy Path", () => {
 
   it("should perform identity conversion (hex to hex)", () => {
     const colorManager = setupColorManagerWithRgb();
-    
+
     const code = `
       variable c: Color.Hex = #FFF;
       c.to.hex()
     `;
-    
+
     const result = interpretWithColorManager(code, colorManager);
-    
+
     expect(result).toBeInstanceOf(ColorSymbol);
     expect((result as ColorSymbol).subType).toBe("Hex");
     expect(result?.toString()).toBe("#FFF");
@@ -72,17 +72,17 @@ describe("Color Conversion - Happy Path", () => {
 
   it("should convert HEX to RGB (6 digit)", () => {
     const colorManager = setupColorManagerWithRgb();
-    
+
     const code = `
       variable c: Color.Hex = #ff5733;
       c.to.rgb()
     `;
-    
+
     const result = interpretWithColorManager(code, colorManager);
-    
+
     expect(result).toBeInstanceOf(ColorSymbol);
     expect((result as ColorSymbol).subType).toBe("RGB");
-    
+
     // Check RGB values by accessing properties
     const colorResult = result as ColorSymbol;
     expect(colorResult.value).toHaveProperty("r");
@@ -92,21 +92,21 @@ describe("Color Conversion - Happy Path", () => {
 
   it("should convert HEX to RGB (3 digit)", () => {
     const colorManager = setupColorManagerWithRgb();
-    
+
     const code = `
       variable c: Color.Hex = #f53;
       c.to.rgb()
     `;
-    
+
     const result = interpretWithColorManager(code, colorManager);
-    
+
     expect(result).toBeInstanceOf(ColorSymbol);
     expect((result as ColorSymbol).subType).toBe("RGB");
   });
 
   it("should handle RGB color with attribute access", () => {
     const colorManager = setupColorManagerWithRgb();
-    
+
     const code = `
       variable c: Color.Rgb;
       c.r = 255;
@@ -114,9 +114,9 @@ describe("Color Conversion - Happy Path", () => {
       c.b = 255;
       c.r
     `;
-    
+
     const result = interpretWithColorManager(code, colorManager);
-    
+
     expect(result).toBeInstanceOf(NumberSymbol);
     expect(result?.toString()).toBe("255");
   });
@@ -125,12 +125,12 @@ describe("Color Conversion - Happy Path", () => {
 describe("Color Conversion - Error Cases", () => {
   it("should throw error when source color type is not found", () => {
     const colorManager = new ColorManager(); // Empty color manager
-    
+
     const code = `
       variable c: Color.Unknown = #fff;
       c.to.hex()
     `;
-    
+
     expect(() => {
       interpretWithColorManager(code, colorManager);
     }).toThrow(InterpreterError);
@@ -138,12 +138,12 @@ describe("Color Conversion - Error Cases", () => {
 
   it("should throw error when target color type is not found", () => {
     const colorManager = setupColorManagerWithRgb();
-    
+
     const code = `
       variable c: Color.Hex = #fff;
       c.to.unknown()
     `;
-    
+
     expect(() => {
       interpretWithColorManager(code, colorManager);
     }).toThrow(InterpreterError);
@@ -152,12 +152,12 @@ describe("Color Conversion - Error Cases", () => {
   it("should throw error when conversion is not available", () => {
     // Create a color manager with only hex colors (no RGB)
     const colorManager = new ColorManager();
-    
+
     const code = `
       variable c: Color.Hex = #fff;
       c.to.rgb()
     `;
-    
+
     expect(() => {
       interpretWithColorManager(code, colorManager);
     }).toThrow(InterpreterError);
@@ -165,13 +165,13 @@ describe("Color Conversion - Error Cases", () => {
 
   it("should throw error for incomplete RGB color conversion", () => {
     const colorManager = setupColorManagerWithRgb();
-    
+
     const code = `
       variable c: Color.Rgb;
       c.r = 255;
       c.to.hex()
     `;
-    
+
     expect(() => {
       interpretWithColorManager(code, colorManager);
     }).toThrow(InterpreterError);
@@ -179,12 +179,12 @@ describe("Color Conversion - Error Cases", () => {
 
   it("should throw error for invalid RGB initializer arguments", () => {
     const colorManager = setupColorManagerWithRgb();
-    
+
     const code = `
       variable c: Color.Rgb = rgb(255, 255);
       c
     `;
-    
+
     expect(() => {
       interpretWithColorManager(code, colorManager);
     }).toThrow(InterpreterError);
@@ -192,12 +192,12 @@ describe("Color Conversion - Error Cases", () => {
 
   it("should handle conversion with malformed hex color", () => {
     const colorManager = setupColorManagerWithRgb();
-    
+
     const code = `
       variable c: Color.Hex = #gggg;
       c.to.rgb()
     `;
-    
+
     // This should either throw an error during conversion or handle it gracefully
     expect(() => {
       interpretWithColorManager(code, colorManager);
@@ -208,10 +208,10 @@ describe("Color Conversion - Error Cases", () => {
 describe("Color Conversion - Manager Methods", () => {
   it("should check if conversion exists between URIs", () => {
     const colorManager = setupColorManagerWithRgb();
-    
+
     const hexUri = "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/hex-color/0/";
     const rgbUri = "./data/specifications/colors/rgb.json";
-    
+
     expect(colorManager.hasConversion(hexUri, rgbUri)).toBe(true);
     expect(colorManager.hasConversion(rgbUri, hexUri)).toBe(true);
     expect(colorManager.hasConversion(hexUri, "non-existent")).toBe(false);
@@ -219,7 +219,7 @@ describe("Color Conversion - Manager Methods", () => {
 
   it("should check if conversion exists between types", () => {
     const colorManager = setupColorManagerWithRgb();
-    
+
     expect(colorManager.hasConversionByType("hex", "rgb")).toBe(true);
     expect(colorManager.hasConversionByType("rgb", "hex")).toBe(true);
     expect(colorManager.hasConversionByType("hex", "unknown")).toBe(false);
@@ -230,31 +230,98 @@ describe("Color Conversion - Manager Methods", () => {
     const colorManager = setupColorManagerWithRgb();
     // Create a config to ensure the manager has proper context
     const config = new Config({ colorManager });
-    
+
     const hexColor = new ColorSymbol("#ff0000", "Hex");
     const rgbColor = colorManager.convertToByType(hexColor, "rgb");
-    
+
     expect(rgbColor).toBeInstanceOf(ColorSymbol);
     expect(rgbColor.subType).toBe("RGB");
   });
 
   it("should return same color for identity conversion by type", () => {
     const colorManager = setupColorManagerWithRgb();
-    
+
     const hexColor = new ColorSymbol("#ff0000", "Hex");
     const sameColor = colorManager.convertToByType(hexColor, "hex");
-    
+
     expect(sameColor).toBe(hexColor); // Should be the exact same instance
   });
 
   it("should throw error for direct conversion with invalid types", () => {
     const colorManager = setupColorManagerWithRgb();
-    
+
     const hexColor = new ColorSymbol("#ff0000", "Hex");
-    
+
     expect(() => {
       colorManager.convertToByType(hexColor, "unknown");
     }).toThrow(InterpreterError);
+  });
+});
+
+describe("Color Conversion from Dictionary", () => {
+  it("should convert hex color retrieved from dictionary", () => {
+    const colorManager = setupColorManagerWithRgb();
+
+    const code = `
+      variable config: Dictionary;
+      config.set("color", #333);
+      config.get("color").to.hex()
+    `;
+
+    const result = interpretWithColorManager(code, colorManager);
+
+    expect(result).toBeInstanceOf(ColorSymbol);
+    expect((result as ColorSymbol).subType).toBe("Hex");
+    expect(result?.toString()).toBe("#333");
+  });
+
+  it("should convert RGB color retrieved from dictionary", () => {
+    const colorManager = setupColorManagerWithRgb();
+
+    const code = `
+      variable config: Dictionary;
+      variable color: Color.Rgb = rgb(255, 255, 255);
+      config.set("color", color);
+      config.get("color").to.hex()
+    `;
+
+    const result = interpretWithColorManager(code, colorManager);
+
+    expect(result).toBeInstanceOf(ColorSymbol);
+    expect((result as ColorSymbol).subType).toBe("Hex");
+    expect(result?.toString()).toBe("#ffffff");
+  });
+
+  it("should handle method calls on colors from dictionary", () => {
+    const colorManager = setupColorManagerWithRgb();
+
+    const code = `
+      variable config: Dictionary;
+      config.set("color", #fff);
+      config.get("color").toString()
+    `;
+
+    const result = interpretWithColorManager(code, colorManager);
+
+    expect(result).toBeInstanceOf(StringSymbol);
+    expect(result?.toString()).toBe("#fff");
+  });
+
+  it("should handle nested dictionary attribute access with color conversion", () => {
+    const colorManager = setupColorManagerWithRgb();
+
+    const code = `
+      variable config: Dictionary;
+      variable innerConfig: Dictionary;
+      innerConfig.set("primaryColor", #ff0000);
+      config.set("theme", innerConfig);
+      config.get("theme").get("primaryColor").to.rgb()
+    `;
+
+    const result = interpretWithColorManager(code, colorManager);
+
+    expect(result).toBeInstanceOf(ColorSymbol);
+    expect((result as ColorSymbol).subType).toBe("RGB");
   });
 });
 
