@@ -1,6 +1,6 @@
 {
   "name": "@tokens-studio/tokenscript-interpreter",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "A TypeScript interpreter for TokenScript, a domain-specific language for design token manipulation and computation",
   "type": "module",
   "main": "./dist/lib/index.js",
