@@ -1,0 +1,91 @@
+name: Reusable Cloud Run Build
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      working-directory:
+        required: false
+        type: string
+        default: "."
+      service-name-prefix:
+        required: false
+        type: string
+        default: ""
+      dockerfile:
+        required: false
+        type: string
+        default: "Dockerfile"
+      version:
+        required: false
+        type: string
+        default: "not-set"
+      deployment-env:
+        required: false
+        type: string
+        default: "not-set"
+    outputs:
+      image-tag:
+        description: "Built image tag"
+        value: ${{ jobs.build.outputs.image_tag }}
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      image_tag: ${{ steps.build.outputs.image_tag }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Google Auth
+      uses: google-github-actions/auth@v1
+      with:
+        workload_identity_provider: ${{ vars.GOOGLE_WORKLOAD_IDENTITY_PROVIDER }}
+        service_account: ${{ vars.GOOGLE_SERVICE_ACCOUNT }}
+        token_format: 'access_token'
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+
+    - name: Configure Docker
+      run: |
+        gcloud auth configure-docker ${{ vars.REGION }}-docker.pkg.dev --quiet
+
+    - name: Build and Push Image
+      id: build
+      run: |
+        REPO=${{ vars.ARTIFACT_REPOSITORY }}
+        SERVICE_PREFIX="${{ inputs.service-name-prefix }}"
+        BASE_NAME="${{vars.SERVICE_NAME}}"
+        SENTRY_AUTH_TOKEN=${{secrets.SENTRY_AUTH_TOKEN}}
+        # Convert all GitHub vars to build args
+        BUILD_ARGS=""
+        for var in $(echo '${{ toJSON(vars) }}' | jq -r 'to_entries | .[] | @base64'); do
+          DECODED=$(echo $var | base64 -d)
+          KEY=$(echo $DECODED | jq -r '.key')
+          VALUE=$(echo $DECODED | jq -r '.value')
+          BUILD_ARGS="$BUILD_ARGS --build-arg ${KEY}='${VALUE}'"
+        done
+        
+        SHA=$(git rev-parse --short HEAD)
+
+        BUILD_ARGS="$BUILD_ARGS --build-arg SENTRY_AUTH_TOKEN='${SENTRY_AUTH_TOKEN}'"
+        BUILD_ARGS="$BUILD_ARGS --build-arg ENVIRONMENT='${{ inputs.deployment-env }}'"
+        BUILD_ARGS="$BUILD_ARGS --build-arg VERSION='${{ inputs.version }}'"
+        BUILD_ARGS="$BUILD_ARGS --build-arg SHA='${SHA}'"
+    
+        echo "Building image with args: $BUILD_ARGS"
+    
+        IMAGE="${REPO}/${SERVICE_PREFIX:+$SERVICE_PREFIX-}${BASE_NAME}"
+        eval docker build -t ${IMAGE}:${SHA} . --file ${{ inputs.dockerfile }} ${BUILD_ARGS}
+        docker push ${IMAGE}:${SHA} 
+        echo "image_tag=${IMAGE}:${SHA}" >> $GITHUB_OUTPUT

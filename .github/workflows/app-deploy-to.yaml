@@ -1,0 +1,109 @@
+name: Reusable Cloud Run Deploy
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      image-tag:
+        required: true
+        type: string
+      deployment-tag:
+        required: true
+        type: string
+      tag-only:
+        required: false
+        type: boolean
+        default: false
+      working-directory:
+        required: false
+        type: string
+        default: "."
+      service-name-prefix:
+        required: false
+        type: string
+        default: ""
+      version:
+        required: false
+        type: string
+        default: "not-set"
+      deployment-env:
+        required: false
+        type: string
+        default: "not-set"
+      regions:
+        required: false
+        type: string
+        description: "Comma-separated regions to deploy to (overrides the default regions)"
+        default: ""
+    outputs:
+      urls:
+        description: "Deployed service URLs"
+        value: ${{ jobs.deploy.outputs.urls }}
+      primary_url:
+        description: "Primary service URL"
+        value: ${{ jobs.deploy.outputs.urls }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      urls: ${{ steps.deploy.outputs.urls }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+
+    steps:
+    - name: Google Auth
+      uses: google-github-actions/auth@v1
+      with:
+        workload_identity_provider: ${{ vars.GOOGLE_WORKLOAD_IDENTITY_PROVIDER }}
+        service_account: ${{ vars.GOOGLE_SERVICE_ACCOUNT }}
+        token_format: 'access_token'
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+
+    - name: Deploy
+      id: deploy
+      run: |
+        SERVICE_PREFIX="${{ inputs.service-name-prefix }}"
+        BASE_NAME="${{vars.SERVICE_NAME}}"
+        COMBINED_SERVICE_NAME="${SERVICE_PREFIX:+$SERVICE_PREFIX-}${BASE_NAME}"
+        
+        # Use provided regions if available, otherwise fall back to vars.REGIONS
+        DEPLOY_REGIONS="${{ inputs.regions }}"
+        if [[ -z "$DEPLOY_REGIONS" ]]; then
+          DEPLOY_REGIONS="${{ vars.REGIONS }}"
+        fi
+        
+        URLS=""
+        for region in $DEPLOY_REGIONS; do
+          SERVICE_URL=$(gcloud run deploy ${COMBINED_SERVICE_NAME} \
+            --image ${{ inputs.image-tag }} \
+            --update-env-vars "ENVIRONMENT=${{ inputs.deployment-env }},NEXT_PUBLIC_APP_ENV=${{ inputs.deployment-env }},NEXT_PUBLIC_RELEASE=${{ inputs.version }}" \
+            --region $region \
+            --project ${{ vars.PROJECT_ID }} \
+            --platform managed \
+            --tag ${{ inputs.deployment-tag }} \
+            --format="value(status.url)")
+          
+          # Add URL to the list
+          URLS="${URLS}${URLS:+,}${SERVICE_URL}"
+        
+          if [[ "${{ inputs.tag-only }}" != "true" ]]; then
+            gcloud run services update-traffic ${COMBINED_SERVICE_NAME} \
+              --region $region \
+              --project ${{ vars.PROJECT_ID }} \
+              --platform managed \
+              --to-tags ${{ inputs.deployment-tag }}=100
+          fi
+        done
+        
+        # Output the URLs
+        echo "urls=${URLS}" >> $GITHUB_OUTPUT

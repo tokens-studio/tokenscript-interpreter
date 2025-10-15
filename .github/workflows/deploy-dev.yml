@@ -27,7 +27,7 @@ jobs:
 
   build:
     name: Build Image
-    uses: tokens-studio/terraform/.github/workflows/app-cloudrun-build.yaml@main
+    uses: ./.github/workflows/app-cloudrun-build.yaml
     with:
       environment: dev
 
@@ -36,7 +36,7 @@ jobs:
   deploy:
     name: Deploy Dev - 100%
     needs: [get-sha, build]
-    uses: tokens-studio/terraform/.github/workflows/app-deploy-to.yaml@main
+    uses: ./.github/workflows/app-deploy-to.yaml
     with:
       environment: dev
       image-tag: ${{ needs.build.outputs.image-tag }}
