@@ -1,5 +1,6 @@
 import type { Token } from "@src/types";
-import type { InterpreterErrorType } from "./error-types";
+import type { ColorManagerErrorType } from "./config/managers/color/errors";
+import type { UnitManagerErrorType } from "./config/managers/unit/errors";
 
 export class LanguageError extends Error {
   public line?: number;
@@ -45,6 +46,8 @@ export class ParserError extends LanguageError {
     this.name = "ParserError";
   }
 }
+
+export type InterpreterErrorType = ColorManagerErrorType | UnitManagerErrorType | string;
 
 export class InterpreterError extends LanguageError {
   public type?: InterpreterErrorType;

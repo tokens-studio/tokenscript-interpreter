@@ -3,7 +3,7 @@ import { ColorManager } from "@interpreter/config/managers/color/manager";
 import { ColorSymbol, NumberSymbol, StringSymbol, ListSymbol } from "@interpreter/symbols";
 import { ReassignNode, IdentifierNode } from "@interpreter/ast";
 import { InterpreterError } from "@interpreter/errors";
-import { ColorManagerError } from "@interpreter/error-types";
+import { ColorManagerError } from "@interpreter/config/managers/color/errors";
 import * as fs from "node:fs";
 import * as path from "node:path";
 

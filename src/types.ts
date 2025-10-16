@@ -1,5 +1,3 @@
-// Enums from config.py and lexer.py
-
 import type { Config } from "@interpreter/config/config";
 
 export enum Operations {
@@ -70,52 +68,38 @@ export enum TokenType {
   RBLOCK = "RBLOCK",
 }
 
-// Token structure
 export interface Token {
   type: TokenType;
-  value: any; // Can be string, Operations enum, SupportedFormats enum, ReservedKeyword enum
+  value: any;
   line: number;
 }
 
-// AST Node base
 export interface ASTNode {
-  token?: Token; // Optional, as not all nodes directly correspond to a single token (e.g., StatementList)
-  // Add a common property if needed, like a 'type' string for node identification during visitation
+  token?: Token;
   nodeType: string;
 }
 
-// Forward declaration for mutually recursive types if needed, e.g. for SymbolType methods
 export interface ISymbolType {
   type: string;
   value: any;
 
-  validValue(value: any): boolean;
-  deepCopy(): ISymbolType;
   cloneIfMutable(): ISymbolType;
-  toString(): string; // JS equivalent of __repr__ or __str__
+  deepCopy(): ISymbolType;
+
   typeEquals(other: ISymbolType): boolean;
-  equals(other: ISymbolType): boolean; // JS equivalent of __eq__
-  toJSON?(): any; // Optional JSON serialization
+  equals(other: ISymbolType): boolean;
+  validValue(value: any): boolean;
+
+  toJSON?(): any;
+  toString(): string;
+  getTypeName(): string;
 
   hasMethod?(methodName: string, args: ISymbolType[]): boolean;
   callMethod?(methodName: string, args: ISymbolType[]): ISymbolType | null | undefined;
   hasAttribute?(attributeName: string): boolean;
   getAttribute?(attributeName: string): ISymbolType | null;
   setAttribute?(attributeName: string, value: ISymbolType, config?: Config): void;
-
-  getTypeName(): string;
-
-  // Static method to create an empty/null instance of the symbol type
-  // static empty?(...args: any[]): ISymbolType;
 }
-
-export type InterpreterValue =
-  | ISymbolType
-  | string
-  | number
-  | boolean
-  | null
-  | Array<InterpreterValue>;
 
 export const UNINTERPRETED_KEYWORDS: string[] = [
   "inside",
@@ -138,7 +122,6 @@ export const UNINTERPRETED_KEYWORDS: string[] = [
   "shadow",
 ];
 
-export type ReferenceRecord = Record<
-  string,
-  string | number | ISymbolType | Array<string | number | ISymbolType>
->;
+export type ReferenceRecordValue = string | number | ISymbolType;
+
+export type ReferenceRecord = Record<string, ReferenceRecordValue | Array<ReferenceRecordValue>>;

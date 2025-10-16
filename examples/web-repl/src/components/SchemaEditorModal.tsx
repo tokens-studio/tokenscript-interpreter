@@ -1,9 +1,9 @@
+import { MINIMAL_COLOR_SPECIFICATION } from "@interpreter/config/managers/color/schema";
 import {
   type ColorSpecification,
   ColorSpecificationSchema,
   type FunctionSpecification,
   FunctionSpecificationSchema,
-  MINIMAL_COLOR_SPECIFICATION,
 } from "@tokens-studio/tokenscript-interpreter";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";

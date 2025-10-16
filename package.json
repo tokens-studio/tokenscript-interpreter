@@ -2,6 +2,23 @@
   "name": "@tokens-studio/tokenscript-interpreter",
   "version": "0.2.3",
   "description": "A TypeScript interpreter for TokenScript, a domain-specific language for design token manipulation and computation",
+  "author": "Tokens Studio (https://tokens.studio)",
+  "license": "MPL-2.0",
+  "homepage": "https://github.com/tokens-studio/tokenscript-interpreter#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tokens-studio/tokenscript-interpreter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tokens-studio/tokenscript-interpreter/issues"
+  },
+  "keywords": [
+    "tokenscript",
+    "design-tokens",
+    "design-system",
+    "interpreter",
+    "cli"
+  ],
   "type": "module",
   "main": "./dist/lib/index.js",
   "types": "./dist/lib/index.d.ts",
@@ -23,39 +40,43 @@
     "README.md",
     "LICENSE"
   ],
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "scripts": {
-    "ts:typecheck": "tsc -p tsconfig.build.json",
     "build": "npm run build:lib && npm run build:cli",
-    "build:lib": "tsup --config tsup.lib.config.ts",
     "build:cli": "tsup --config tsup.cli.config.ts",
+    "build:lib": "tsup --config tsup.lib.config.ts",
     "build:watch": "tsup --watch",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "compliance_test": "tsx src/cli.ts evaluate_standard_compliance --test-dir ./data/compliance-suite/tests/ --output compliance-report.json",
-    "compliance_test:built": "node dist/cli.js evaluate_standard_compliance --test-dir ./data/compliance-suite/tests/ --output compliance-report.json",
-    "compliance_test:failed": "npm run compliance_test && jq '.results | map(select(.status == \"failed\"))' compliance-report.json",
+    "check": "biome ci . --diagnostic-level=error",
+    "check:all": "npm run check && npm run test",
+    "check:errors": "biome ci . --diagnostic-level=error",
+    "clean": "rm -rf dist",
     "cli": "tsx src/cli.ts",
     "cli:built": "node dist/cli.js",
     "cli:interactive": "tsx src/cli.ts interactive",
     "cli:parse": "tsx src/cli.ts parse_tokenset",
     "cli:permutate": "tsx src/cli.ts permutate_tokenset",
-    "lint": "biome lint --max-diagnostics=none .",
-    "lint:fix": "biome lint --write .",
+    "compliance_test": "tsx src/cli.ts evaluate_standard_compliance --test-dir ./data/compliance-suite/tests/ --output compliance-report.json",
+    "compliance_test:built": "node dist/cli.js evaluate_standard_compliance --test-dir ./data/compliance-suite/tests/ --output compliance-report.json",
+    "compliance_test:failed": "npm run compliance_test && jq '.results | map(select(.status == \"failed\"))' compliance-report.json",
+    "dev:repl": "cd examples/web-repl && npm run dev:watch",
+    "fix": "biome check --write .",
     "format": "biome format --write .",
     "format:check": "biome format .",
-    "check": "biome ci . --diagnostic-level=error",
-    "check:errors": "biome ci . --diagnostic-level=error",
-    "check:all": "npm run check && npm run test",
-    "fix": "biome check --write .",
-    "prepublishOnly": "npm run test && npm run build:lib",
-    "version": "npm run build:lib",
+    "lint": "biome lint --max-diagnostics=none .",
+    "lint:fix": "biome lint --write .",
     "postversion": "git push && git push --tags",
-    "release:patch": "npm version patch && npm publish",
-    "release:minor": "npm version minor && npm publish",
+    "prepublishOnly": "npm run test && npm run build:lib",
     "release:major": "npm version major && npm publish",
-    "dev:repl": "cd examples/web-repl && npm run dev:watch",
-    "clean": "rm -rf dist"
+    "release:minor": "npm version minor && npm publish",
+    "release:patch": "npm version patch && npm publish",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "ts:typecheck": "tsc -p tsconfig.build.json",
+    "ts:typecheck:watch": "tsc -p tsconfig.build.json --watch",
+    "version": "npm run build:lib"
   },
   "dependencies": {
     "commander": "^14.0.1",
@@ -73,25 +94,5 @@
     "tsx": "^4.20.5",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
-  },
-  "keywords": [
-    "tokenscript",
-    "design-tokens",
-    "design-system",
-    "interpreter",
-    "cli"
-  ],
-  "author": "Marco Christian Krenn <marco.krenn@gmail.com>",
-  "license": "MPL-2.0",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/tokens-studio/tokenscript-interpreter.git"
-  },
-  "bugs": {
-    "url": "https://github.com/tokens-studio/tokenscript-interpreter/issues"
-  },
-  "homepage": "https://github.com/tokens-studio/tokenscript-interpreter#readme",
-  "engines": {
-    "node": ">=16.0.0"
   }
 }

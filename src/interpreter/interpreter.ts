@@ -43,6 +43,7 @@ import {
   NumberWithUnitSymbol,
   StringSymbol,
   typeEquals,
+  typeName,
 } from "./symbols";
 import { SymbolTable } from "./symbolTable";
 
@@ -344,7 +345,7 @@ export class Interpreter {
 
     if (!this.config.isTypeDefined(baseType, subType)) {
       throw new InterpreterError(
-        `Invalid variable type '${baseType}'. Use a valid type. (${Object.keys(basicSymbolTypes).join(", ")})`,
+        `Invalid variable type '${typeName(baseType, subType)}'. Use a valid type. (${Object.keys(basicSymbolTypes).join(", ")})`,
         node.varName.token.line,
         node.varName.token,
         { baseType, subType, config: this.config },

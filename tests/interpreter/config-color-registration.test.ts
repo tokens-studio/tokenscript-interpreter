@@ -271,7 +271,7 @@ describe("Config and ColorManager - Color Registration", () => {
       }
       
       expect(error).toBeInstanceOf(InterpreterError);
-      expect(error?.message).toContain("Invalid variable type 'Color'");
+      expect(error?.message).toContain("Invalid variable type 'Color.Missing'");
       expect(error?.meta).toBeDefined();
       expect(error?.meta?.baseType).toBe("Color");
       expect(error?.meta?.subType).toBe("Missing");
@@ -337,7 +337,7 @@ describe("Config and ColorManager - Color Registration", () => {
       }
       
       expect(error).toBeInstanceOf(InterpreterError);
-      expect(error?.message).toContain("Invalid variable type 'Color'");
+      expect(error?.message).toContain("Invalid variable type 'Color.Nonexistent'");
       
       // Check metadata contains useful debugging info
       expect(error?.meta).toBeDefined();

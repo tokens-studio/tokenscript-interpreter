@@ -1,11 +1,11 @@
 import { attributesToString, type ReassignNode } from "@interpreter/ast";
-import { ColorManagerError } from "@interpreter/error-types";
 import { InterpreterError } from "@interpreter/errors";
 import { parseExpression } from "@interpreter/parser";
 import { ColorSymbol, type dynamicColorValue, typeEquals } from "@interpreter/symbols";
 import { Interpreter } from "@src/lib";
 import type { ISymbolType } from "@src/types";
 import { BaseManager } from "../base-manager";
+import { ColorManagerError } from "./errors";
 import {
   type ColorSpecification,
   ColorSpecificationSchema,

@@ -26,7 +26,7 @@ export const typeEquals = (typeA: string | null, typeB: string | null) =>
  * E.g.: base = color, sub = hex => Color.Hex
  *       base = COLOR => Color
  */
-const typeName = (base: string, sub?: string): string => {
+export const typeName = (base: string, sub?: string): string => {
   const baseStr = capitalize(base);
   if (sub) {
     const subStr = capitalize(sub);
@@ -60,7 +60,6 @@ interface MethodArgumentDef {
   name: string;
   type: any; // Could be ISymbolType constructor or a special marker like SymbolSelfType
   optional?: boolean;
-  unpack?: boolean;
 }
 
 interface MethodDefinitionDef {
@@ -123,16 +122,15 @@ export abstract class BaseSymbolType implements ISymbolType {
       methodName.toLowerCase()
     ];
     if (!methodDefinition) return false;
+    if (methodDefinition.args.length === 0) return true;
 
     const requiredArgs = methodDefinition.args.filter((arg: MethodArgumentDef) => !arg.optional);
-    const hasUnpackArg = methodDefinition.args.some((arg: any) => arg.unpack);
 
     if (args.length < requiredArgs.length) {
       return false;
     }
 
-    // If there's an unpack argument, allow any number of arguments >= required
-    if (!hasUnpackArg && args.length > methodDefinition.args.length) {
+    if (args.length > methodDefinition.args.length) {
       return false;
     }
 
@@ -149,38 +147,21 @@ export abstract class BaseSymbolType implements ISymbolType {
       );
     }
 
+    if (methodDefinition.args.length === 0) {
+      return methodDefinition.function.call(this, ...args);
+    }
+
     const processedArgs: ISymbolType[] = [];
 
-    // Handle unpack arguments - if any argument has unpack: true, pass all remaining args to that parameter
-    const unpackArgIndex = methodDefinition.args.findIndex(
-      (argDef: MethodArgumentDef) => argDef.unpack,
-    );
-
-    if (unpackArgIndex !== -1) {
-      // Add regular arguments before the unpack argument
-      for (let i = 0; i < unpackArgIndex; i++) {
-        if (args[i] !== undefined) {
-          processedArgs.push(args[i]);
-        } else if (!methodDefinition.args[i].optional) {
-          throw new InterpreterError(
-            `Missing required argument '${methodDefinition.args[i].name}' for method '${methodName}'.`,
-          );
-        }
+    methodDefinition.args.forEach((argDef: MethodArgumentDef, index: number) => {
+      if (args[index] !== undefined) {
+        processedArgs.push(args[index]);
+      } else if (!argDef.optional) {
+        throw new InterpreterError(
+          `Missing required argument '${argDef.name}' for method '${methodName}'.`,
+        );
       }
-      // Add all remaining arguments as unpacked arguments
-      processedArgs.push(...args.slice(unpackArgIndex));
-    } else {
-      // No unpack arguments, process normally
-      methodDefinition.args.forEach((argDef: any, index: number) => {
-        if (args[index] !== undefined) {
-          processedArgs.push(args[index]);
-        } else if (!argDef.optional) {
-          throw new InterpreterError(
-            `Missing required argument '${argDef.name}' for method '${methodName}'.`,
-          );
-        }
-      });
-    }
+    });
 
     return methodDefinition.function.call(this, ...processedArgs);
   }
@@ -552,14 +533,14 @@ export class ListSymbol extends BaseSymbolType {
       function: function (this: ListSymbol, item: ISymbolType) {
         return this.appendImpl(item);
       },
-      args: [{ name: "item", type: "any", unpack: false }],
+      args: [{ name: "item", type: "any" }],
       returnType: "List",
     },
     extend: {
       function: function (this: ListSymbol, ...items: ISymbolType[]) {
         return this.extendImpl(...items);
       },
-      args: [{ name: "items", type: "any", unpack: true }],
+      args: [],
       returnType: "List",
     },
     insert: {
@@ -568,7 +549,7 @@ export class ListSymbol extends BaseSymbolType {
       },
       args: [
         { name: "index", type: "Number" },
-        { name: "item", type: "any", unpack: false },
+        { name: "item", type: "any" },
       ],
       returnType: "List",
     },
@@ -590,7 +571,7 @@ export class ListSymbol extends BaseSymbolType {
       function: function (this: ListSymbol, item: ISymbolType) {
         return this.indexImpl(item);
       },
-      args: [{ name: "item", type: "any", unpack: false }],
+      args: [{ name: "item", type: "any" }],
       returnType: "Number",
     },
     get: {
@@ -606,7 +587,7 @@ export class ListSymbol extends BaseSymbolType {
       },
       args: [
         { name: "index", type: "Number" },
-        { name: "item", type: "any", unpack: false },
+        { name: "item", type: "any" },
       ],
       returnType: "List",
     },
@@ -1224,7 +1205,7 @@ export class ColorSymbol extends BaseSymbolType {
   }
 }
 
-// Utilities -------------------------------------------------------------------
+// Symbol Normalization Utilities ----------------------------------------------
 
 export const jsValueToSymbolType = (value: any, config?: Config): ISymbolType => {
   if (value instanceof BaseSymbolType) {
