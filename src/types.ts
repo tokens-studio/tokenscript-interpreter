@@ -1,5 +1,3 @@
-// Enums from config.py and lexer.py
-
 import type { Config } from "@interpreter/config/config";
 
 export enum Operations {
