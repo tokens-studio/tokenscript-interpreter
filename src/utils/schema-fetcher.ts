@@ -32,11 +32,9 @@ export async function fetchTokenScriptSchema(
 ): Promise<TokenScriptSchemaResponse> {
   const { timeout = 10000, headers = {}, signal } = options;
 
-  // Create AbortController for timeout, or use provided signal
   const controller = signal ? new AbortController() : new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-  // If external signal is provided, listen for its abort event
   if (signal) {
     signal.addEventListener("abort", () => controller.abort());
   }
@@ -59,7 +57,6 @@ export async function fetchTokenScriptSchema(
 
     const data = await response.json();
 
-    // Validate the response structure using Zod
     const validatedData = TokenScriptSchemaResponseSchema.parse(data);
 
     return validatedData;
