@@ -26,7 +26,7 @@ export const typeEquals = (typeA: string | null, typeB: string | null) =>
  * E.g.: base = color, sub = hex => Color.Hex
  *       base = COLOR => Color
  */
-const typeName = (base: string, sub?: string): string => {
+export const typeName = (base: string, sub?: string): string => {
   const baseStr = capitalize(base);
   if (sub) {
     const subStr = capitalize(sub);
