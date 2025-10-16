@@ -1224,7 +1224,7 @@ export class ColorSymbol extends BaseSymbolType {
   }
 }
 
-// Utilities -------------------------------------------------------------------
+// Symbol Normalization Utilities ----------------------------------------------
 
 export const jsValueToSymbolType = (value: any, config?: Config): ISymbolType => {
   if (value instanceof BaseSymbolType) {
