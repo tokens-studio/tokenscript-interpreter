@@ -29,17 +29,6 @@ export {
 
 export * from "@src/types";
 
-// Performance tracking utilities ----------------------------------------------
-
-export type {
-  PerformanceData,
-  PerformanceSummary,
-} from "@src/utils/performance-tracker";
-export {
-  PerformanceTracker,
-  trackPerformance,
-} from "@src/utils/performance-tracker";
-
 // Schema fetching utilities ---------------------------------------------------
 
 export type {
