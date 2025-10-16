@@ -1238,11 +1238,6 @@ export const jsValueToSymbolType = (value: any, config?: Config): ISymbolType =>
       config,
     );
 
-  // Convert NumberWithUnit object
-  if (value instanceof NumberWithUnitSymbol) return value;
-  const numberWithUnit = NumberWithUnitSymbol.fromRecord(value, config);
-  if (numberWithUnit) return numberWithUnit;
-
   // Convert plain object to dictionary
   if (isObject(value)) {
     const dict = new Map<string, ISymbolType>();
