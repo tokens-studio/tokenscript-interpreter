@@ -1223,7 +1223,10 @@ export class ColorSymbol extends BaseSymbolType {
 // Utilities -------------------------------------------------------------------
 
 export const jsValueToSymbolType = (value: any, config?: Config): ISymbolType => {
-  if (value instanceof BaseSymbolType) return value;
+  if (value instanceof BaseSymbolType) {
+    value.config = config;
+    return value;
+  }
   if (isNone(value)) return new NullSymbol(config);
   if (isNumber(value)) return new NumberSymbol(value, false, config);
   if (isString(value)) {
