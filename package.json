@@ -55,6 +55,7 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "ts:typecheck": "tsc -p tsconfig.build.json",
+    "ts:typecheck:watch": "tsc -p tsconfig.build.json --watch",
     "version": "npm run build:lib"
   },
   "dependencies": {
