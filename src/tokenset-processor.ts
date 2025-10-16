@@ -45,7 +45,6 @@ export class TokenSetResolver {
 
   private buildRequirementsGraph(): void {
     for (const [tokenName, tokenData] of this.tokens.entries()) {
-      // Skip uninterpreted keywords
       if (UNINTERPRETED_KEYWORDS.includes(tokenData)) {
         this.resolvedTokens.set(tokenName, tokenData);
         continue;
