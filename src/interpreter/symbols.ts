@@ -1117,6 +1117,10 @@ export class ColorSymbol extends BaseSymbolType {
     return new StringSymbol("", this.config);
   }
 
+  toString(): string {
+    return this.toStringImpl().toString();
+  }
+
   typeEquals(other: ISymbolType): boolean {
     if (!typeEquals(this.type, other.type)) return false;
     const otherColor = other as ColorSymbol;
