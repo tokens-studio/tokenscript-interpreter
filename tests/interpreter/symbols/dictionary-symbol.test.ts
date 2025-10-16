@@ -190,8 +190,8 @@ describe("DictionarySymbol", () => {
         ])
       );
       const str = dict.toString();
-      expect(str).toContain("'key1': 'value1'");
-      expect(str).toContain("'key2': '42'");
+      expect(str).toContain("key1: value1");
+      expect(str).toContain("key2: 42");
     });
   });
 

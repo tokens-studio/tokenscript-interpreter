@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { ColorSymbol, StringSymbol } from "@src/interpreter/symbols";
+import { ColorSymbol, StringSymbol, NumberSymbol } from "@src/interpreter/symbols";
 import { InterpreterError } from "@src/interpreter/errors";
+import { Config } from "@src/interpreter/config/config";
+import { ColorManager } from "@src/interpreter/config/managers/color/manager";
+import type { ColorSpecification } from "@src/interpreter/config/managers/color/schema";
 
 describe("ColorSymbol", () => {
   describe("constructor", () => {
@@ -86,20 +89,78 @@ describe("ColorSymbol", () => {
       expect(result.value).toBe("#ff0000");
     });
 
-    it("should convert dynamic color to JSON string", () => {
+    it("should convert dynamic color to object string", () => {
       const colorValue = {
         red: new StringSymbol("255"),
         green: new StringSymbol("128"),
       };
       const color = new ColorSymbol(colorValue, "rgb");
       const result = color.toStringImpl();
-      expect(result.value).toBe(JSON.stringify(colorValue));
+      expect(result.value).toBe("{red: 255, green: 128}");
     });
 
     it("should convert null color to empty string", () => {
       const color = new ColorSymbol(null);
       const result = color.toStringImpl();
       expect(result.value).toBe("");
+    });
+
+    describe("with config and color manager", () => {
+      it("should use formatColorMethod for hex colors when config is provided", () => {
+        const colorManager = new ColorManager();
+        const config = new Config({ colorManager });
+        const color = new ColorSymbol("#ff0000", "Hex", config);
+        
+        const result = color.toStringImpl();
+        expect(result.value).toBe("#ff0000");
+      });
+
+      it("should use formatColorMethod for dynamic colors with schema", () => {
+        const colorManager = new ColorManager();
+        const config = new Config({ colorManager });
+        
+        // Register RGB schema
+        const rgbSpec: ColorSpecification = {
+          name: "RGB",
+          type: "color",
+          schema: {
+            type: "object",
+            order: ["r", "g", "b"],
+            properties: {
+              r: { type: "number" },
+              g: { type: "number" },
+              b: { type: "number" }
+            }
+          },
+          initializers: [],
+          conversions: []
+        };
+        
+        colorManager.register("https://test.example/rgb/", rgbSpec);
+        
+        const rgbColor = new ColorSymbol({
+          r: new NumberSymbol(255),
+          g: new NumberSymbol(128),
+          b: new NumberSymbol(64)
+        }, "RGB", config);
+        
+        const result = rgbColor.toStringImpl();
+        expect(result.value).toBe("rgb(255, 128, 64)");
+      });
+
+      it("should fallback to JSON.stringify when no schema is found", () => {
+        const colorManager = new ColorManager();
+        const config = new Config({ colorManager });
+        
+        const colorValue = {
+          red: new NumberSymbol(255),
+          green: new NumberSymbol(128),
+        };
+        const color = new ColorSymbol(colorValue, "UnknownType", config);
+        
+        const result = color.toStringImpl();
+        expect(result.value).toBe(""); // formatColorMethod returns empty string for unknown types
+      });
     });
   });
 
