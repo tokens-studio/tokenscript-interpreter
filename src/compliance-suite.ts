@@ -5,8 +5,9 @@ import { ColorManager } from "@interpreter/config/managers/color/manager";
 import { Interpreter, type interpreterResult } from "@interpreter/interpreter";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
-import { BaseSymbolType, ColorSymbol } from "@interpreter/symbols";
+import { BaseSymbolType, ColorSymbol, NumberWithUnitSymbol } from "@interpreter/symbols";
 import { groupBy } from "./interpreter/utils/coll";
+import { isArray, isObject } from "./interpreter/utils/type";
 import { InterpreterError, type ISymbolType, LexerError, ParserError } from "./lib";
 
 interface TestCase {
@@ -96,6 +97,41 @@ const parseTestCasesJson = (json: string, filePath: string): TestCase[] => {
   }
 };
 
+function normalizeContextObject(
+  obj: any,
+  config: Config,
+  fns: Array<(obj: any, config: Config) => any>,
+): any {
+  for (const rule of fns) {
+    const transformed = rule(obj, config);
+    if (typeof transformed !== "undefined") {
+      return transformed;
+    }
+  }
+  if (isArray(obj)) {
+    return obj.map((el) => normalizeContextObject(el, config, fns));
+  }
+  if (isObject(obj)) {
+    const out: Record<string, any> = {};
+    for (const [k, v] of Object.entries(obj)) {
+      out[k] = normalizeContextObject(v, config, fns);
+    }
+    return out;
+  }
+  return obj;
+}
+
+function transformContextToSymbols(obj: any, config: Config): any {
+  return normalizeContextObject(obj, config, [
+    (val: any, config: Config) => {
+      if (isObject(val) && val.type === "NumberWithUnit") {
+        const numberVal = val as unknown as NumberWithUnitSymbol;
+        return new NumberWithUnitSymbol(numberVal.value ?? null, numberVal.unit, config);
+      }
+    },
+  ]);
+}
+
 const runTest = (test: TestCase): { interpreter: Interpreter; result: interpreterResult } => {
   const lexer = new Lexer(test.input);
   const parser = new Parser(lexer);
@@ -109,7 +145,8 @@ const runTest = (test: TestCase): { interpreter: Interpreter; result: interprete
     config = new Config();
   }
 
-  const interpreter = new Interpreter(ast, { references: test.context || {}, config });
+  const references = test.context ? transformContextToSymbols(test.context, config) : {};
+  const interpreter = new Interpreter(ast, { references, config });
   return {
     interpreter,
     result: interpreter.interpret(),
