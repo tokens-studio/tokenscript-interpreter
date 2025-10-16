@@ -2,6 +2,23 @@
   "name": "@tokens-studio/tokenscript-interpreter",
   "version": "0.2.3",
   "description": "A TypeScript interpreter for TokenScript, a domain-specific language for design token manipulation and computation",
+  "author": "Tokens Studio (https://tokens.studio)",
+  "license": "MPL-2.0",
+  "homepage": "https://github.com/tokens-studio/tokenscript-interpreter#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tokens-studio/tokenscript-interpreter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tokens-studio/tokenscript-interpreter/issues"
+  },
+  "keywords": [
+    "tokenscript",
+    "design-tokens",
+    "design-system",
+    "interpreter",
+    "cli"
+  ],
   "type": "module",
   "main": "./dist/lib/index.js",
   "types": "./dist/lib/index.d.ts",
@@ -23,6 +40,9 @@
     "README.md",
     "LICENSE"
   ],
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "scripts": {
     "build": "npm run build:lib && npm run build:cli",
     "build:cli": "tsup --config tsup.cli.config.ts",
@@ -74,25 +94,5 @@
     "tsx": "^4.20.5",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
-  },
-  "keywords": [
-    "tokenscript",
-    "design-tokens",
-    "design-system",
-    "interpreter",
-    "cli"
-  ],
-  "author": "Marco Christian Krenn <marco.krenn@gmail.com>",
-  "license": "MPL-2.0",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/tokens-studio/tokenscript-interpreter.git"
-  },
-  "bugs": {
-    "url": "https://github.com/tokens-studio/tokenscript-interpreter/issues"
-  },
-  "homepage": "https://github.com/tokens-studio/tokenscript-interpreter#readme",
-  "engines": {
-    "node": ">=16.0.0"
   }
 }
