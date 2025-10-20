@@ -77,8 +77,8 @@ describe("Dictionary Operations", () => {
       const text = `
         variable my_dict: Dictionary;
         my_dict.set("key1", "value1");
-        variable exists: Boolean = my_dict.keyExists("key1");
-        variable not_exists: Boolean = my_dict.keyExists("key2");
+        variable exists: Boolean = my_dict.key_exists("key1");
+        variable not_exists: Boolean = my_dict.key_exists("key2");
         return exists;
       `;
       const lexer = new Lexer(text);
@@ -197,7 +197,7 @@ describe("Dictionary Operations", () => {
     it("should handle keyExists for non-existent keys", () => {
       const text = `
         variable my_dict: Dictionary;
-        variable exists: Boolean = my_dict.keyExists("nonexistent");
+        variable exists: Boolean = my_dict.key_exists("nonexistent");
         return exists;
       `;
       const lexer = new Lexer(text);

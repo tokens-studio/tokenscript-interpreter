@@ -4,11 +4,11 @@ import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
 
 describe("Math Functions - Parse Int", () => {
-  it("should handle parseint with base 16", () => {
+  it("should handle parse_int with base 16", () => {
     const text = `
-    variable i: Number = parseint("ff", 16);
-    variable j: Number = parseint("00", 16);
-    variable k: Number = parseint("A0", 16);
+    variable i: Number = parse_int("ff", 16);
+    variable j: Number = parse_int("00", 16);
+    variable k: Number = parse_int("A0", 16);
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
@@ -24,11 +24,11 @@ describe("Math Functions - Parse Int", () => {
     expect(k?.value).toBe(160);
   });
 
-  it("should handle parseint with base 10", () => {
+  it("should handle parse_int with base 10", () => {
     const text = `
-    variable a: Number = parseint("123", 10);
-    variable b: Number = parseint("0", 10);
-    variable c: Number = parseint("999", 10);
+    variable a: Number = parse_int("123", 10);
+    variable b: Number = parse_int("0", 10);
+    variable c: Number = parse_int("999", 10);
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
@@ -44,11 +44,11 @@ describe("Math Functions - Parse Int", () => {
     expect(c?.value).toBe(999);
   });
 
-  it("should handle parseint with base 2", () => {
+  it("should handle parse_int with base 2", () => {
     const text = `
-    variable binary1: Number = parseint("1010", 2);
-    variable binary2: Number = parseint("1111", 2);
-    variable binary3: Number = parseint("0", 2);
+    variable binary1: Number = parse_int("1010", 2);
+    variable binary2: Number = parse_int("1111", 2);
+    variable binary3: Number = parse_int("0", 2);
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
@@ -171,12 +171,12 @@ describe("Math Functions - Rounding", () => {
   });
 });
 
-describe("Math Functions - RoundTo", () => {
-  it("should handle roundTo function with default precision", () => {
+describe("Math Functions - round_to", () => {
+  it("should handle round_to function with default precision", () => {
     const text = `
-    variable result1: Number = roundTo(3.14159);
-    variable result2: Number = roundTo(2.71828);
-    variable result3: Number = roundTo(1.41421);
+    variable result1: Number = round_to(3.14159);
+    variable result2: Number = round_to(2.71828);
+    variable result3: Number = round_to(1.41421);
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
@@ -192,11 +192,11 @@ describe("Math Functions - RoundTo", () => {
     expect(result3?.value).toBe(1);
   });
 
-  it("should handle roundTo function with specified precision", () => {
+  it("should handle round_to function with specified precision", () => {
     const text = `
-    variable result1: Number = roundTo(3.14159, 2);
-    variable result2: Number = roundTo(2.71828, 3);
-    variable result3: Number = roundTo(1.41421, 1);
+    variable result1: Number = round_to(3.14159, 2);
+    variable result2: Number = round_to(2.71828, 3);
+    variable result3: Number = round_to(1.41421, 1);
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
@@ -212,11 +212,11 @@ describe("Math Functions - RoundTo", () => {
     expect(result3?.value).toBe(1.4);
   });
 
-  it("should handle roundTo function with zero precision", () => {
+  it("should handle round_to function with zero precision", () => {
     const text = `
-    variable result1: Number = roundTo(3.7, 0);
-    variable result2: Number = roundTo(2.3, 0);
-    variable result3: Number = roundTo(1.5, 0);
+    variable result1: Number = round_to(3.7, 0);
+    variable result2: Number = round_to(2.3, 0);
+    variable result3: Number = round_to(1.5, 0);
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
@@ -232,13 +232,13 @@ describe("Math Functions - RoundTo", () => {
     expect(result3?.value).toBe(2); // 1.5 rounds to 2 (JavaScript's round half up)
   });
 
-  it("should handle roundTo function with font size calculations", () => {
+  it("should handle round_to function with font size calculations", () => {
     const text = `
     variable base: Number = 16;
     variable ratio: Number = 1.25;
-    variable h1: Number = roundTo(base * (ratio^5));
-    variable h2: Number = roundTo(base * (ratio^4));
-    variable h3: Number = roundTo(base * (ratio^3));
+    variable h1: Number = round_to(base * (ratio^5));
+    variable h2: Number = round_to(base * (ratio^4));
+    variable h3: Number = round_to(base * (ratio^3));
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
@@ -257,11 +257,11 @@ describe("Math Functions - RoundTo", () => {
     expect(h3?.value).toBe(31);
   });
 
-  it("should handle roundTo function with negative numbers", () => {
+  it("should handle round_to function with negative numbers", () => {
     const text = `
-    variable result1: Number = roundTo(-3.7);
-    variable result2: Number = roundTo(-2.3);
-    variable result3: Number = roundTo(-1.5);
+    variable result1: Number = round_to(-3.7);
+    variable result2: Number = round_to(-2.3);
+    variable result3: Number = round_to(-1.5);
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
@@ -277,10 +277,10 @@ describe("Math Functions - RoundTo", () => {
     expect(result3?.value).toBe(-2); // -1.5 rounds to -2 (banker's rounding to nearest even)
   });
 
-  it("should handle roundTo function with precision and negative numbers", () => {
+  it("should handle round_to function with precision and negative numbers", () => {
     const text = `
-    variable result1: Number = roundTo(-3.14159, 2);
-    variable result2: Number = roundTo(-2.71828, 3);
+    variable result1: Number = round_to(-3.14159, 2);
+    variable result2: Number = round_to(-2.71828, 3);
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
@@ -332,14 +332,14 @@ describe("Math Functions - Complex Expressions", () => {
     expect(rounded?.value).toBeCloseTo(0.214, 3);
   });
 
-  it("should handle complex expressions with roundTo", () => {
+  it("should handle complex expressions with round_to", () => {
     const text = `
     variable base: Number = 14;
     variable growthRatio: Number = 1.2;
     variable shrinkRatio: Number = 0.9;
-    variable bodyL: Number = roundTo(base * (growthRatio^1));
-    variable bodyS: Number = roundTo(base * (shrinkRatio^-1));
-    variable headlineXL: Number = roundTo(base * (growthRatio^2));
+    variable bodyL: Number = round_to(base * (growthRatio^1));
+    variable bodyS: Number = round_to(base * (shrinkRatio^-1));
+    variable headlineXL: Number = round_to(base * (growthRatio^2));
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
@@ -498,13 +498,13 @@ describe("Math Functions - String Functions", () => {
   });
 });
 
-describe("Math Functions - Enhanced RoundTo with Banker's Rounding", () => {
+describe("Math Functions - Enhanced round_to with Banker's Rounding", () => {
   it("should use banker's rounding for precision cases", () => {
     const text = `
-    variable round_2_25: Number = roundTo(2.25, 1);
-    variable round_2_35: Number = roundTo(2.35, 1);
-    variable round_2_45: Number = roundTo(2.45, 1);
-    variable round_2_55: Number = roundTo(2.55, 1);
+    variable round_2_25: Number = round_to(2.25, 1);
+    variable round_2_35: Number = round_to(2.35, 1);
+    variable round_2_45: Number = round_to(2.45, 1);
+    variable round_2_55: Number = round_to(2.55, 1);
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
@@ -520,10 +520,10 @@ describe("Math Functions - Enhanced RoundTo with Banker's Rounding", () => {
 
   it("should use banker's rounding for integer precision", () => {
     const text = `
-    variable round_12_5: Number = roundTo(12.5, 0);
-    variable round_13_5: Number = roundTo(13.5, 0);
-    variable round_14_5: Number = roundTo(14.5, 0);
-    variable round_15_5: Number = roundTo(15.5, 0);
+    variable round_12_5: Number = round_to(12.5, 0);
+    variable round_13_5: Number = round_to(13.5, 0);
+    variable round_14_5: Number = round_to(14.5, 0);
+    variable round_15_5: Number = round_to(15.5, 0);
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);

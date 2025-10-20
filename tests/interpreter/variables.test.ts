@@ -350,7 +350,7 @@ describe("Variables - Number Features", () => {
   it("should handle number to string", () => {
     const text = `
     variable hello: Number = 123;
-    variable result: String = hello.toString();
+    variable result: String = hello.to_string();
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
@@ -364,7 +364,7 @@ describe("Variables - Number Features", () => {
   it("should handle number to string with unit", () => {
     const text = `
     variable hello: NumberWithUnit = 123rem;
-    variable result: String = hello.toString();
+    variable result: String = hello.to_string();
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);

@@ -40,7 +40,7 @@
       }
     },
     {
-      "source": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0.0.1/",
+      "source": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0.1.0/",
       "target": "$self",
       "description": "Converts SRGB to CssColor",
       "lossless": true,
@@ -90,7 +90,7 @@
       }
     },
     {
-      "source": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0.0.1/",
+      "source": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0.1.0/",
       "target": "$self",
       "description": "Converts SRGB to CssColor",
       "lossless": true,

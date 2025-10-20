@@ -17,7 +17,7 @@ jobs:
         with:
           repository: tokens-studio/tokenscript-compliance-suite
           path: tokenscript-compliance-suite
-          ref: ec5f51650ff6c332a2410b31fda7b0a3d26d63e1
+          ref: 38ee5f15598a0f0de413ae446c2fc2e3645eac87
           token: ${{ secrets.GH_PAT_STANDARD_COMPLIANCE }}
 
       - name: Set up Node.js

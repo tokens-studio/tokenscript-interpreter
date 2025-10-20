@@ -15,7 +15,7 @@ export const DEFAULT_COLOR_SCHEMAS: Specs = new Map([
     hsl as ColorSpecification,
   ],
   [
-    "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0.0.1/",
+    "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0.1.0/",
     srgb as ColorSpecification,
   ],
 ]);

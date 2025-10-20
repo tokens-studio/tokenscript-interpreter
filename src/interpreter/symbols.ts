@@ -225,8 +225,8 @@ export class NumberSymbol extends BaseSymbolType {
   type = "Number";
   static readonly type = "Number";
   static _SUPPORTED_METHODS = {
-    tostring: {
-      name: "toString",
+    to_string: {
+      name: "to_string",
       function: function (this: NumberSymbol, radix?: NumberSymbol) {
         return this.toStringImpl(radix);
       },
@@ -712,8 +712,8 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
   type = "NumberWithUnit";
   static readonly type = "NumberWithUnit";
   static _SUPPORTED_METHODS = {
-    tostring: {
-      name: "toString",
+    to_string: {
+      name: "to_string",
       function: function (this: NumberWithUnitSymbol) {
         return this.toStringImpl();
       },
@@ -880,13 +880,6 @@ export class DictionarySymbol extends BaseSymbolType {
       args: [],
       returnType: "List",
     },
-    keyexists: {
-      function: function (this: DictionarySymbol, key: StringSymbol) {
-        return this.keyExistsImpl(key);
-      },
-      args: [{ name: "key", type: "String", optional: false }],
-      returnType: "Boolean",
-    },
     key_exists: {
       function: function (this: DictionarySymbol, key: StringSymbol) {
         return this.keyExistsImpl(key);
@@ -1044,8 +1037,8 @@ export class ColorSymbol extends BaseSymbolType {
   type = "Color";
   static readonly type = "Color";
   static _SUPPORTED_METHODS = {
-    tostring: {
-      name: "toString",
+    to_string: {
+      name: "to_string",
       function: function (this: ColorSymbol) {
         return this.toStringImpl();
       },

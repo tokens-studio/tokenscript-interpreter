@@ -144,10 +144,10 @@ describe("Color Objects - Color Operations", () => {
     expect(result?.toString()).toBe("#3366CC");
   });
 
-  it("should support toString method on color objects", () => {
+  it("should support to_string method on color objects", () => {
     const text = `
     variable color: Color = #FF5733;
-    variable colorString: String = color.toString();
+    variable colorString: String = color.to_string();
     return colorString;
     `;
     const lexer = new Lexer(text);
@@ -160,10 +160,10 @@ describe("Color Objects - Color Operations", () => {
     expect(result?.value).toBe("#FF5733");
   });
 
-  it("should support toString method on 3-digit hex colors", () => {
+  it("should support to_string method on 3-digit hex colors", () => {
     const text = `
     variable color: Color = #F53;
-    variable result: String = color.toString();
+    variable result: String = color.to_string();
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
