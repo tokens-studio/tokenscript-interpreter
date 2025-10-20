@@ -42,7 +42,7 @@ export interface DeletedFunctionSchema {
 
 // Color schemas - persisted to localStorage as Map serialized to array of [key, value] pairs
 export const colorSchemasAtom = atomWithStorage<ColorSpecs>(
-  "repl:colorSchemas:v2",
+  "repl:colorSchemas:v3",
   DEFAULT_COLOR_SCHEMAS,
   {
     getItem: (key, initialValue) => {
@@ -69,7 +69,7 @@ export const colorSchemasAtom = atomWithStorage<ColorSpecs>(
 
 // Function schemas - persisted to localStorage as Map serialized to array of [key, value] pairs
 export const functionSchemasAtom = atomWithStorage<FunctionSpecs>(
-  "repl:functionSchemas:v2",
+  "repl:functionSchemas:v3",
   new Map(),
   {
     getItem: (key, initialValue) => {
