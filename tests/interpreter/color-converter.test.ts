@@ -298,7 +298,7 @@ describe("Color Conversion from Dictionary", () => {
     const code = `
       variable config: Dictionary;
       config.set("color", #fff);
-      config.get("color").toString()
+      config.get("color").to_string()
     `;
 
     const result = interpretWithColorManager(code, colorManager);
@@ -328,18 +328,18 @@ describe("Color Conversion from Dictionary", () => {
 describe("Legacy Color Converter Tests", () => {
   it("should convert hex color to RGB (6 digit)", () => {
     const text = `
-    variable color_parts: List = {COLOR}.toString().split("#");
+    variable color_parts: List = {COLOR}.to_string().split("#");
     variable color: List = color_parts.get(1).split();
     variable length: Number = color.length();
     variable rgb: List = 0, 0, 0;
     if(length == 3) [
-        rgb.update(0, parseint(color.get(0).concat(color.get(0)), 16));
-        rgb.update(1, parseint(color.get(1).concat(color.get(1)), 16));
-        rgb.update(2, parseint(color.get(2).concat(color.get(2)), 16));
+        rgb.update(0, parse_int(color.get(0).concat(color.get(0)), 16));
+        rgb.update(1, parse_int(color.get(1).concat(color.get(1)), 16));
+        rgb.update(2, parse_int(color.get(2).concat(color.get(2)), 16));
     ] else [
-        rgb.update(0, parseint(color.get(0).concat(color.get(1)), 16));
-        rgb.update(1, parseint(color.get(2).concat(color.get(3)), 16));
-        rgb.update(2, parseint(color.get(4).concat(color.get(5)), 16));
+        rgb.update(0, parse_int(color.get(0).concat(color.get(1)), 16));
+        rgb.update(1, parse_int(color.get(2).concat(color.get(3)), 16));
+        rgb.update(2, parse_int(color.get(4).concat(color.get(5)), 16));
     ];
 
     return rgb;
@@ -355,18 +355,18 @@ describe("Legacy Color Converter Tests", () => {
 
   it("should convert hex color to RGB (3 digit)", () => {
     const text = `
-    variable color_parts: List = {COLOR}.toString().split("#");
+    variable color_parts: List = {COLOR}.to_string().split("#");
     variable color: List = color_parts.get(1).split();
     variable length: Number = color.length();
     variable rgb: List = 0, 0, 0;
     if(length == 3) [
-        rgb.update(0, parseint(color.get(0).concat(color.get(0)), 16));
-        rgb.update(1, parseint(color.get(1).concat(color.get(1)), 16));
-        rgb.update(2, parseint(color.get(2).concat(color.get(2)), 16));
+        rgb.update(0, parse_int(color.get(0).concat(color.get(0)), 16));
+        rgb.update(1, parse_int(color.get(1).concat(color.get(1)), 16));
+        rgb.update(2, parse_int(color.get(2).concat(color.get(2)), 16));
     ] else [
-        rgb.update(0, parseint(color.get(0).concat(color.get(1)), 16));
-        rgb.update(1, parseint(color.get(2).concat(color.get(3)), 16));
-        rgb.update(2, parseint(color.get(4).concat(color.get(5)), 16));
+        rgb.update(0, parse_int(color.get(0).concat(color.get(1)), 16));
+        rgb.update(1, parse_int(color.get(2).concat(color.get(3)), 16));
+        rgb.update(2, parse_int(color.get(4).concat(color.get(5)), 16));
     ];
 
     return rgb;

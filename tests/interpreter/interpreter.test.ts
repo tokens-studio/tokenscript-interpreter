@@ -231,10 +231,10 @@ describe("Interpreter - Functions", () => {
     expect(result?.toString()).toBe("linear-gradient(1, 2 5px, 3rem)");
   });
 
-  it("should handle parseint function", () => {
+  it("should handle parse_int function", () => {
     const text = `
-    variable i: Number = parseint("ff", 16);
-    variable j: Number = parseint("00", 16);
+    variable i: Number = parse_int("ff", 16);
+    variable j: Number = parse_int("00", 16);
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
@@ -523,10 +523,10 @@ describe("Interpreter - Edge Cases", () => {
     expect(result?.value).toBe(7);
   });
 
-  it("should handle parseint function", () => {
+  it("should handle parse_int function", () => {
     const text = `
-    variable i: Number = parseint("ff", 16);
-    variable j: Number = parseint("00", 16);
+    variable i: Number = parse_int("ff", 16);
+    variable j: Number = parse_int("00", 16);
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);

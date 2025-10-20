@@ -49,7 +49,7 @@ variable colorRamp: Dictionary;
 
 while (currentStep < totalSteps) [
   currentStep = currentStep + 1;
-  colorRamp.set(currentStep.toString(), hsl(brandYellow.h, brandYellow.s, currentStep * (100 / totalSteps)));
+  colorRamp.set(currentStep.to_string(), hsl(brandYellow.h, brandYellow.s, currentStep * (100 / totalSteps)));
 ]
 
 return colorRamp.values();`,
@@ -147,17 +147,17 @@ variable ratio: Number = 1.25;
 variable fontSizes: Dictionary;
 
 // Headings (h1 largest to h6 same as body)
-fontSizes.set("h1", roundTo(body * ratio^5));
-fontSizes.set("h2", roundTo(body * ratio^4));
-fontSizes.set("h3", roundTo(body * ratio^3));
-fontSizes.set("h4", roundTo(body * ratio^2));
-fontSizes.set("h5", roundTo(body * ratio^1));
+fontSizes.set("h1", round_to(body * ratio^5));
+fontSizes.set("h2", round_to(body * ratio^4));
+fontSizes.set("h3", round_to(body * ratio^3));
+fontSizes.set("h4", round_to(body * ratio^2));
+fontSizes.set("h5", round_to(body * ratio^1));
 fontSizes.set("h6", body);
 
 // Body and smaller sizes
 fontSizes.set("body", body);
-fontSizes.set("sm", roundTo(body * 0.85));
-fontSizes.set("xs", roundTo(body * 0.65));
+fontSizes.set("sm", round_to(body * 0.85));
+fontSizes.set("xs", round_to(body * 0.65));
 
 return fontSizes;`,
   },

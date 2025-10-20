@@ -217,15 +217,15 @@ export class FunctionsManager extends BaseManager<
     });
 
     this.registerFunction(
-      "parseint",
+      "parse_int",
       (strSymbol: ISymbolType, baseSymbol?: ISymbolType): NumberSymbol => {
         if (!(strSymbol instanceof StringSymbol))
-          throw new InterpreterError("parseint() first argument must be a string.");
+          throw new InterpreterError("parse_int() first argument must be a string.");
         const base = baseSymbol instanceof NumberSymbol ? (baseSymbol.value as number) : 10;
         const parsed = Number.parseInt(strSymbol.value as string, base);
         if (Number.isNaN(parsed))
           throw new InterpreterError(
-            `Invalid string for parseint: "${strSymbol.value}" with base ${base}.`,
+            `Invalid string for parse_int: "${strSymbol.value}" with base ${base}.`,
           );
         return new NumberSymbol(parsed);
       },
@@ -314,15 +314,15 @@ export class FunctionsManager extends BaseManager<
     });
 
     this.registerFunction(
-      "roundto",
+      "round_to",
       (value: ISymbolType, precision?: ISymbolType): NumberSymbol => {
         if (!(value instanceof NumberSymbol))
-          throw new InterpreterError("roundTo() expects a number as first argument.");
+          throw new InterpreterError("round_to() expects a number as first argument.");
 
         let precisionValue = 0;
         if (precision !== undefined) {
           if (!(precision instanceof NumberSymbol))
-            throw new InterpreterError("roundTo() expects a number as second argument.");
+            throw new InterpreterError("round_to() expects a number as second argument.");
           precisionValue = precision.value as number;
         }
 
