@@ -10,12 +10,13 @@ import {
 } from "@tokens-studio/tokenscript-interpreter";
 import { useAtom } from "jotai";
 import { useCallback, useEffect, useState } from "react";
-import { ArrowDown, Docs, Github } from "./components/icons";
+import { ArrowDown, Docs, Github, Share } from "./components/icons";
 import EditorModeTitle from "./components/EditorModeTitle";
 import JsonTokenEditor from "./components/JsonTokenEditor";
 import OutputPanel from "./components/OutputPanel";
 import PresetSelector from "./components/PresetSelector";
 import SchemaDialog from "./components/SchemaDialog";
+import ShareDialog from "./components/ShareDialog";
 import SchemaManager from "./components/SchemaManager";
 import { HEADER_HEIGHT } from "./components/shared-theme";
 import SlantedSeparator from "./components/SlantedSeparator";
@@ -31,6 +32,11 @@ import { useTheme } from "./contexts/ThemeContext";
 import { getTheme } from "./theme/colors";
 import { DEFAULT_COLOR_SCHEMAS } from "./utils/default-schemas";
 import type { Preset } from "./utils/presets";
+import {
+  createShareState,
+  getShareStateFromUrl,
+  type ShareState,
+} from "./utils/share";
 
 const awakenSchemaServer = async () => {
   await fetch("https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/", {
@@ -164,6 +170,14 @@ function App() {
   const [functionSchemas, _setFunctionSchemas] = useAtom(functionSchemasAtom);
   const [input, setInputs] = useState<Record<string, any>>({});
   const [isSchemaDialogOpen, setIsSchemaDialogOpen] = useState(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [shareState, setShareState] = useState<ShareState>({
+    version: 1,
+    mode: "tokenscript",
+    code: "",
+    colorSchemas: [],
+    functionSchemas: [],
+  });
 
   const handleSchemaSelect = useCallback(
     (url: string, spec: any, type?: "color" | "function") => {
@@ -197,7 +211,30 @@ function App() {
 
   useEffect(() => {
     awakenSchemaServer();
-  }, []);
+    
+    // Load share state from URL if available
+    const sharedState = getShareStateFromUrl();
+    if (sharedState) {
+      console.log('Loading shared state:', sharedState);
+      setCode(sharedState.code);
+      setInputMode(sharedState.mode);
+      if (sharedState.mode === "json") {
+        setJsonInput(sharedState.code);
+      }
+      
+      // Load color schemas
+      const colorSchemasMap = new Map(sharedState.colorSchemas);
+      if (colorSchemasMap.size > 0) {
+        _setColorSchemas(colorSchemasMap);
+      }
+      
+      // Load function schemas
+      const functionSchemasMap = new Map(sharedState.functionSchemas);
+      if (functionSchemasMap.size > 0) {
+        _setFunctionSchemas(functionSchemasMap);
+      }
+    }
+  }, [_setColorSchemas, _setFunctionSchemas]);
 
   // In development mode, persist code to sessionStorage for HMR preservation
   useEffect(() => {
@@ -212,6 +249,12 @@ function App() {
       sessionStorage.setItem("repl:jsonInput", jsonInput);
     }
   }, [jsonInput]);
+
+  // Update share state whenever code, mode, or schemas change
+  useEffect(() => {
+    const currentCode = inputMode === "tokenscript" ? code : jsonInput;
+    setShareState(createShareState(inputMode, currentCode, colorSchemas, functionSchemas));
+  }, [code, jsonInput, inputMode, colorSchemas, functionSchemas]);
 
   const executeCode = useCallback(async () => {
     const currentInput = inputMode === "tokenscript" ? code : jsonInput;
@@ -318,6 +361,10 @@ function App() {
       setInputMode("json");
       setJsonInput(preset.code);
     }
+  }, []);
+
+  const handleShare = useCallback(() => {
+    setIsShareDialogOpen(true);
   }, []);
 
   useEffect(() => {
@@ -430,6 +477,17 @@ function App() {
             >
               <Docs />
             </a>
+            <button
+              type="button"
+              onClick={handleShare}
+              className="transition-colors"
+              style={{ color: currentTheme.textMuted }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = currentTheme.textSecondary)}
+              onMouseLeave={(e) => (e.currentTarget.style.color = currentTheme.textMuted)}
+              aria-label="Share"
+            >
+              <Share />
+            </button>
           </div>
         </header>
 
@@ -442,6 +500,12 @@ function App() {
           onClearAllSchemas={handleClearAllSchemas}
           existingColorSchemas={colorSchemas}
           existingFunctionSchemas={functionSchemas}
+        />
+
+        <ShareDialog
+          isOpen={isShareDialogOpen}
+          onClose={() => setIsShareDialogOpen(false)}
+          shareState={shareState}
         />
 
         {/* Main Grid Layout */}
