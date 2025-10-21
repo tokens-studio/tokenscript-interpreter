@@ -11,6 +11,26 @@
       "import": "./dist/lib/index.js",
       "require": "./dist/lib/index.cjs"
     },
+    "./interpreter": {
+      "types": "./dist/lib/interpreter.d.ts",
+      "import": "./dist/lib/interpreter.js",
+      "require": "./dist/lib/interpreter.cjs"
+    },
+    "./processors": {
+      "types": "./dist/lib/processors.d.ts",
+      "import": "./dist/lib/processors.js",
+      "require": "./dist/lib/processors.cjs"
+    },
+    "./schema": {
+      "types": "./dist/lib/schema.d.ts",
+      "import": "./dist/lib/schema.js",
+      "require": "./dist/lib/schema.cjs"
+    },
+    "./types": {
+      "types": "./dist/lib/types.d.ts",
+      "import": "./dist/lib/types.js",
+      "require": "./dist/lib/types.cjs"
+    },
     "./cli": {
       "types": "./dist/cli.d.ts",
       "import": "./dist/cli.js"
