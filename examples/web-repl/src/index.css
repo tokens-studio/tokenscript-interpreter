@@ -19,21 +19,27 @@ body,
   font-family: "Fira Code", "Monaco", "Courier New", monospace;
 }
 
-.scrollbar-thin::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* Dark mode scrollbar styling */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
 }
 
-.scrollbar-thin::-webkit-scrollbar-track {
-  @apply bg-gray-100;
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.scrollbar-thin::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 rounded;
+::-webkit-scrollbar-thumb {
+  background: rgba(107, 114, 128, 0.6);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background 0.2s ease;
 }
 
-.scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-400;
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 114, 128, 0.9);
+  background-clip: padding-box;
 }
 
 /* CSS custom properties for shared theme colors - Dark Theme */
