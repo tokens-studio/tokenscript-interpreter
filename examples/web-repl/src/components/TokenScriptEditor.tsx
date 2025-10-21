@@ -1,5 +1,7 @@
 import { useAtom } from "jotai";
 import { inputsPanelCollapsedAtom } from "../store/atoms";
+import { useTheme } from "../contexts/ThemeContext";
+import { getTheme } from "../theme/colors";
 import InputsPanel from "./InputsPanel";
 import MonacoEditor, { type ErrorInfo } from "./MonacoEditor";
 
@@ -21,15 +23,25 @@ function TokenScriptEditor({
   onReferencesChange,
 }: TokenScriptEditorProps) {
   const [inputsPanelCollapsed, _setInputsPanelCollapsed] = useAtom(inputsPanelCollapsedAtom);
+  const { theme } = useTheme();
+  const currentTheme = getTheme(theme);
+  const monacoTheme = theme === "light" ? "tokenscript-theme-light" : "tokenscript-theme-dark";
 
   return (
     <div
-      className={`h-full flex flex-col bg-zinc-900 ${className}`}
+      className={`h-full flex flex-col ${className}`}
+      style={{ backgroundColor: currentTheme.editorBackground }}
       data-testid="tokenscript-editor"
     >
       {/* Inputs Panel */}
       {!inputsPanelCollapsed && (
-        <div className="p-3 bg-zinc-900/50 border-b border-zinc-800">
+        <div
+          className="p-3 border-b"
+          style={{
+            backgroundColor: currentTheme.surface,
+            borderColor: currentTheme.border,
+          }}
+        >
           <InputsPanel
             onInputsChange={onReferencesChange}
             initialInputs={[]}
@@ -45,7 +57,7 @@ function TokenScriptEditor({
           onKeyDown={onKeyDown}
           error={error}
           language="tokenscript"
-          theme="tokenscript-theme"
+          theme={monacoTheme}
           className="h-full"
         />
       </div>

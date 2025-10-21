@@ -16,6 +16,7 @@ import JsonTokenEditor from "./components/JsonTokenEditor";
 import OutputPanel from "./components/OutputPanel";
 import PresetSelector from "./components/PresetSelector";
 import SchemaManager from "./components/SchemaManager";
+import { ThemeToggle } from "./components/ThemeToggle";
 import TokenScriptEditor from "./components/TokenScriptEditor";
 import {
   autoRunAtom,
@@ -23,6 +24,8 @@ import {
   functionSchemasAtom,
   schemaPanelCollapsedAtom,
 } from "./store/atoms";
+import { useTheme } from "./contexts/ThemeContext";
+import { getTheme } from "./theme/colors";
 import { DEFAULT_COLOR_SCHEMAS } from "./utils/default-schemas";
 import type { Preset } from "./utils/presets";
 
@@ -145,6 +148,8 @@ function setupFunctionsManager(schemas: Map<string, FunctionSpecification>): Fun
 }
 
 function App() {
+  const { theme } = useTheme();
+  const currentTheme = getTheme(theme);
   const [code, setCode] = useState(getInitialCode);
   const [jsonInput, setJsonInput] = useState(getInitialJson);
   const [inputMode, setInputMode] = useState<InputMode>("tokenscript");
@@ -299,23 +304,38 @@ function App() {
 
   return (
     <div
-      className="h-screen flex bg-zinc-950"
+      className="h-screen flex"
+      style={{ backgroundColor: currentTheme.background }}
       data-testid="app-container"
     >
       {/* Left Sidebar */}
-      <aside className="w-12 bg-zinc-900 border-r border-zinc-800 flex flex-col items-center py-4">
+      <aside
+        className="w-12 border-r flex flex-col items-center py-4"
+        style={{
+          backgroundColor: currentTheme.surface,
+          borderColor: currentTheme.border,
+        }}
+      >
         <div className="w-8 h-8 bg-emerald-500/20 rounded-lg flex items-center justify-center text-emerald-400 font-bold text-sm">
           T
         </div>
+        <div className="flex-1" />
+        <ThemeToggle />
       </aside>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Top Navigation Bar */}
-        <header className="h-12 bg-zinc-900 border-b border-zinc-800 flex items-center px-4 gap-4">
+        <header
+          className="h-12 border-b flex items-center px-4 gap-4"
+          style={{
+            backgroundColor: currentTheme.surface,
+            borderColor: currentTheme.border,
+          }}
+        >
           <div className="flex items-center gap-3 text-sm">
             <span className="text-emerald-400 font-medium">tokenscript</span>
-            <span className="text-zinc-600">/</span>
+            <span style={{ color: currentTheme.textMuted }}>/</span>
             
             {/* Mode Selector (tokenscript | json) */}
             <div className="flex items-center">
@@ -327,7 +347,7 @@ function App() {
               />
             </div>
             
-            <span className="text-zinc-600">/</span>
+            <span style={{ color: currentTheme.textMuted }}>/</span>
             
             {/* Preset Selector */}
             <PresetSelector
@@ -344,7 +364,10 @@ function App() {
           data-testid="app-main"
         >
           {/* Left Column: Editor + Schemas */}
-          <div className="w-1/2 flex flex-col border-r border-zinc-800">
+          <div
+            className="w-1/2 flex flex-col border-r"
+            style={{ borderColor: currentTheme.border }}
+          >
             {/* Code Editor */}
             <div
               className="flex-1 overflow-hidden"
@@ -371,14 +394,29 @@ function App() {
             {/* Schema Panel - Below Editor */}
             <div
               data-testid="schema-panel"
-              className="border-t border-zinc-800 bg-zinc-900"
+              className="border-t"
+              style={{
+                backgroundColor: currentTheme.surface,
+                borderColor: currentTheme.border,
+              }}
             >
-              <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-800">
-                <h3 className="text-sm font-medium text-zinc-300">Schemas</h3>
+              <div
+                className="flex items-center justify-between px-4 py-2 border-b"
+                style={{ borderColor: currentTheme.border }}
+              >
+                <h3
+                  className="text-sm font-medium"
+                  style={{ color: currentTheme.textSecondary }}
+                >
+                  Schemas
+                </h3>
                 <button
                   type="button"
                   onClick={() => setSchemaPanelCollapsed(!schemaPanelCollapsed)}
-                  className="text-zinc-500 hover:text-zinc-300 transition-colors"
+                  className="transition-colors"
+                  style={{ color: currentTheme.textMuted }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = currentTheme.textSecondary)}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = currentTheme.textMuted)}
                   data-testid="schema-panel-toggle"
                   aria-label={
                     schemaPanelCollapsed ? "Expand schema panel" : "Collapse schema panel"

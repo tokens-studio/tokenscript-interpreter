@@ -1,3 +1,5 @@
+import { useTheme } from "../contexts/ThemeContext";
+import { getTheme } from "../theme/colors";
 import MonacoEditor from "./MonacoEditor";
 
 export interface JsonErrorInfo {
@@ -19,9 +21,14 @@ function JsonTokenEditor({
   onKeyDown,
   className = "",
 }: JsonTokenEditorProps) {
+  const { theme } = useTheme();
+  const currentTheme = getTheme(theme);
+  const monacoTheme = theme === "light" ? "tokenscript-theme-light" : "tokenscript-theme-dark";
+
   return (
     <div
-      className={`h-full flex flex-col bg-zinc-900 ${className}`}
+      className={`h-full flex flex-col ${className}`}
+      style={{ backgroundColor: currentTheme.editorBackground }}
       data-testid="json-editor"
     >
       {/* Editor */}
@@ -31,7 +38,7 @@ function JsonTokenEditor({
           onChange={onChange}
           onKeyDown={onKeyDown}
           language="json"
-          theme="tokenscript-theme"
+          theme={monacoTheme}
           className="h-full"
         />
       </div>

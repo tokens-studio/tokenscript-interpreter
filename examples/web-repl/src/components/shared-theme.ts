@@ -32,7 +32,7 @@ export const tokenscriptThemeColors = {
   gutterBorder: "#27272a",
 };
 
-// Monaco theme definition
+// Monaco theme definitions
 export const monacoThemeDefinition = {
   base: "vs-dark" as const,
   inherit: true,
@@ -98,6 +98,103 @@ export const monacoThemeDefinition = {
     "editor.wordHighlightStrongBackground": "#C586C025",
     "editorBracketMatch.background": "#C586C025",
     "editorBracketMatch.border": "#C586C0",
+  },
+};
+
+// Light theme colors
+export const tokenscriptLightThemeColors = {
+  keyword: "#0000FF",
+  type: "#267f99",
+  function: "#795da3",
+  variable: "#001080",
+  reference: "#af00db",
+  string: "#a31515",
+  number: "#098658",
+  hexColor: "#D73A49",
+  comment: "#008000",
+  operator: "#000000",
+  delimiter: "#000000",
+  jsonString: "#a31515",
+  jsonNumber: "#098658",
+  jsonBoolean: "#0000ff",
+  jsonNull: "#0000ff",
+  jsonProperty: "#001080",
+  jsonPunctuation: "#000000",
+  background: "#ffffff",
+  foreground: "#000000",
+  lineHighlight: "#f8f8f6",
+  selection: "#add6ff",
+  lineNumber: "#999999",
+  lineNumberActive: "#333333",
+  gutterBackground: "#fafafa",
+  gutterBorder: "#e8e8e8",
+};
+
+export const monacoLightThemeDefinition = {
+  base: "vs" as const,
+  inherit: true,
+  rules: [
+    {
+      token: "keyword",
+      foreground: tokenscriptLightThemeColors.keyword.substring(1),
+    },
+    { token: "type", foreground: tokenscriptLightThemeColors.type.substring(1) },
+    {
+      token: "function",
+      foreground: tokenscriptLightThemeColors.function.substring(1),
+    },
+    { token: "variable.name", foreground: tokenscriptLightThemeColors.variable.substring(1) },
+    { token: "identifier", foreground: tokenscriptLightThemeColors.variable.substring(1) },
+    {
+      token: "reference",
+      foreground: tokenscriptLightThemeColors.reference.substring(1),
+      fontStyle: "italic",
+    },
+    { token: "string", foreground: tokenscriptLightThemeColors.string.substring(1) },
+    { token: "string.invalid", foreground: "cd3131" },
+    { token: "number", foreground: tokenscriptLightThemeColors.number.substring(1) },
+    { token: "number.float", foreground: tokenscriptLightThemeColors.number.substring(1) },
+    {
+      token: "number.hex",
+      foreground: tokenscriptLightThemeColors.hexColor.substring(1),
+    },
+    {
+      token: "number.unit",
+      foreground: tokenscriptLightThemeColors.number.substring(1),
+    },
+    {
+      token: "comment",
+      foreground: tokenscriptLightThemeColors.comment.substring(1),
+      fontStyle: "italic",
+    },
+    {
+      token: "operator",
+      foreground: tokenscriptLightThemeColors.operator.substring(1),
+    },
+    { token: "delimiter", foreground: tokenscriptLightThemeColors.delimiter.substring(1) },
+  ],
+  colors: {
+    "editor.background": tokenscriptLightThemeColors.background,
+    "editor.foreground": tokenscriptLightThemeColors.foreground,
+    "editor.lineHighlightBackground": tokenscriptLightThemeColors.lineHighlight,
+    "editor.selectionBackground": tokenscriptLightThemeColors.selection,
+    "editorLineNumber.foreground": tokenscriptLightThemeColors.lineNumber,
+    "editorLineNumber.activeForeground": tokenscriptLightThemeColors.lineNumberActive,
+    "editorGutter.background": tokenscriptLightThemeColors.gutterBackground,
+    "editorCursor.foreground": "#0000ff",
+    "editor.selectionHighlightBackground": "#add6ff26",
+    "editor.inactiveSelectionBackground": "#e5ebf1",
+    "editorWhitespace.foreground": "#33333333",
+    "editorIndentGuide.background": "#d3d3d3",
+    "editorIndentGuide.activeBackground": "#939393",
+    "scrollbar.shadow": "#00000033",
+    "scrollbarSlider.background": "#79797966",
+    "scrollbarSlider.hoverBackground": "#64646466",
+    "scrollbarSlider.activeBackground": "#bfbfbf66",
+    "editor.wordHighlightBackground": "#add6ff26",
+    "editor.wordHighlightStrongBackground": "#add6ff40",
+    "editorBracketMatch.background": "#add6ff26",
+    "editorBracketMatch.border": "#0000ff",
   },
 };
 

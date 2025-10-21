@@ -3,6 +3,8 @@ import { useEffect } from "react";
 
 import "prismjs/themes/prism.css";
 import "prismjs/components/prism-json";
+import { useTheme } from "../contexts/ThemeContext";
+import { getTheme } from "../theme/colors";
 import { isNonEmptyObject, when } from "@interpreter/utils/type";
 import {
   BaseSymbolType,
@@ -46,6 +48,8 @@ const ColorOutput = ({
   colorManager: ColorManager;
   compact?: boolean;
 }) => {
+  const { theme } = useTheme();
+  const currentTheme = getTheme(theme);
   const cssColor = toCssColor(color, colorManager);
 
   if (compact) {
@@ -55,22 +59,22 @@ const ColorOutput = ({
         data-testid="color-output-compact"
       >
         <div
-          className="w-20 h-10 flex-shrink-0"
-          style={{ backgroundColor: cssColor }}
+          className="w-20 h-10 flex-shrink-0 border"
+          style={{ backgroundColor: cssColor, borderColor: currentTheme.border }}
           title={`Color: ${cssColor}`}
           data-testid="color-swatch-compact"
         />
         <div className="flex-1 min-w-0">
           <div
-            className="text-sm font-medium text-zinc-200 truncate"
-            style={{ fontSize: "0.8em" }}
+            className="text-sm font-medium truncate"
+            style={{ fontSize: "0.8em", color: currentTheme.textPrimary }}
             data-testid="color-type-compact"
           >
             {colorManager.formatColorMethod(color)}
           </div>
           <div
-            className="text-zinc-500 font-mono truncate"
-            style={{ fontSize: "0.65em" }}
+            className="font-mono truncate"
+            style={{ fontSize: "0.65em", color: currentTheme.textMuted }}
             data-testid="color-value-compact"
           >
             {color.getTypeName()}
@@ -86,24 +90,30 @@ const ColorOutput = ({
       data-testid="color-output"
     >
       <div
-        className="flex items-center space-x-4 p-5 bg-zinc-800/30 rounded-lg border border-zinc-700/50"
+        className="flex items-center space-x-4 p-5 rounded-lg border"
+        style={{
+          backgroundColor: currentTheme.surface,
+          borderColor: currentTheme.border,
+        }}
         data-testid="color-preview-section"
       >
         <div
-          className="w-20 h-20 rounded-lg border-2 border-zinc-700"
-          style={{ backgroundColor: cssColor }}
+          className="w-20 h-20 rounded-lg border-2"
+          style={{ backgroundColor: cssColor, borderColor: currentTheme.border }}
           title={`Color: ${cssColor}`}
           data-testid="color-swatch"
         />
         <div>
           <div
-            className="font-semibold text-zinc-100 text-lg"
+            className="font-semibold text-lg"
+            style={{ color: currentTheme.textPrimary }}
             data-testid="color-type-label"
           >
             Color Object
           </div>
           <div
-            className="text-sm text-zinc-400 mt-1"
+            className="text-sm mt-1"
+            style={{ color: currentTheme.textSecondary }}
             data-testid="color-type-value"
           >
             Type: {color.getTypeName()}
@@ -113,11 +123,22 @@ const ColorOutput = ({
 
       {(isNonEmptyObject(color.value) || color.isHex()) && (
         <div>
-          <div className="font-semibold text-sm text-zinc-300 mb-2">Properties</div>
-          <div className="bg-zinc-800/40 border border-zinc-700/50 rounded-lg p-4 text-sm font-mono space-y-2">
+          <div
+            className="font-semibold text-sm mb-2"
+            style={{ color: currentTheme.textSecondary }}
+          >
+            Properties
+          </div>
+          <div
+            className="border rounded-lg p-4 text-sm font-mono space-y-2"
+            style={{
+              backgroundColor: currentTheme.surface,
+              borderColor: currentTheme.border,
+            }}
+          >
             {color.isHex() ? (
               <div className="flex justify-between">
-                <span className="text-zinc-300">{color.toString()}</span>
+                <span style={{ color: currentTheme.textPrimary }}>{color.toString()}</span>
               </div>
             ) : (
               Object.entries(color.value).map(([key, value]) => (
@@ -125,8 +146,8 @@ const ColorOutput = ({
                   key={key}
                   className="flex justify-between items-center"
                 >
-                  <span className="text-zinc-400">{key}:</span>
-                  <span className="text-zinc-300">{String(value)}</span>
+                  <span style={{ color: currentTheme.textSecondary }}>{key}:</span>
+                  <span style={{ color: currentTheme.textPrimary }}>{String(value)}</span>
                 </div>
               ))
             )}
@@ -138,6 +159,8 @@ const ColorOutput = ({
 };
 
 function JsonOutput({ value }: { value: any }) {
+  const { theme } = useTheme();
+  const currentTheme = getTheme(theme);
   const jsonString = typeof value === "string" ? value : JSON.stringify(value, null, 2);
 
   useEffect(() => {
@@ -158,7 +181,12 @@ function JsonOutput({ value }: { value: any }) {
 
   return (
     <div
-      className="bg-zinc-900/40 border border-zinc-800 rounded-lg p-4 text-sm font-mono overflow-auto"
+      className="border rounded-lg p-4 text-sm font-mono overflow-auto"
+      style={{
+        backgroundColor: currentTheme.surface,
+        borderColor: currentTheme.border,
+        color: currentTheme.foreground,
+      }}
       data-testid="json-output"
     >
       <pre className="whitespace-pre-wrap">
@@ -169,21 +197,33 @@ function JsonOutput({ value }: { value: any }) {
 }
 
 const StringOutput = ({ str, compact = false }: { str: string; compact?: boolean }) => {
+  const { theme } = useTheme();
+  const currentTheme = getTheme(theme);
+
   if (compact) {
     return (
       <div
-        className="flex items-center p-3 bg-zinc-800/30 rounded-lg border border-zinc-700/50"
+        className="flex items-center p-3 rounded-lg border"
+        style={{
+          backgroundColor: currentTheme.surface,
+          borderColor: currentTheme.border,
+        }}
         data-testid="string-output-compact"
       >
         <div className="flex-1 min-w-0">
-          <div className="text-xs text-zinc-400 font-mono truncate">{str}</div>
+          <div
+            className="text-xs font-mono truncate"
+            style={{ color: currentTheme.textSecondary }}
+          >
+            {str}
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="text-zinc-300">
+    <div style={{ color: currentTheme.textPrimary }}>
       <pre className="whitespace-pre-wrap text-sm font-mono">{str}</pre>
     </div>
   );
@@ -204,14 +244,20 @@ const ErrorOutput = ({ error }: { error: string }) => (
   </div>
 );
 
-const EmptyOutput = () => (
-  <div
-    className="text-zinc-500 italic text-center py-8"
-    data-testid="empty-output"
-  >
-    Run some code to see the output here...
-  </div>
-);
+const EmptyOutput = () => {
+  const { theme } = useTheme();
+  const currentTheme = getTheme(theme);
+
+  return (
+    <div
+      className="italic text-center py-8"
+      style={{ color: currentTheme.textMuted }}
+      data-testid="empty-output"
+    >
+      Run some code to see the output here...
+    </div>
+  );
+};
 
 interface UnifiedOutputPanelProps {
   result: OutputResult;
@@ -227,23 +273,41 @@ const ListOutput = ({
   colorManager: ColorManager;
   compact?: boolean;
 }) => {
+  const { theme } = useTheme();
+  const currentTheme = getTheme(theme);
+
   if (list.elements.length === 0) {
     if (compact) {
       return (
         <div
-          className="flex items-center p-3 bg-zinc-800/30 rounded-lg border border-zinc-700/50"
+          className="flex items-center p-3 rounded-lg border"
+          style={{
+            backgroundColor: currentTheme.surface,
+            borderColor: currentTheme.border,
+          }}
           data-testid="empty-list-compact"
         >
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium text-zinc-300">List</div>
-            <div className="text-xs text-zinc-500">Empty list</div>
+            <div
+              className="text-sm font-medium"
+              style={{ color: currentTheme.textPrimary }}
+            >
+              List
+            </div>
+            <div
+              className="text-xs"
+              style={{ color: currentTheme.textMuted }}
+            >
+              Empty list
+            </div>
           </div>
         </div>
       );
     }
     return (
       <div
-        className="text-zinc-500 italic text-center py-4"
+        className="italic text-center py-4"
+        style={{ color: currentTheme.textMuted }}
         data-testid="empty-list"
       >
         Empty list
@@ -254,7 +318,11 @@ const ListOutput = ({
   if (compact) {
     return (
       <div
-        className="p-3 bg-zinc-800/30 rounded-lg border border-zinc-700/50"
+        className="p-3 rounded-lg border"
+        style={{
+          backgroundColor: currentTheme.surface,
+          borderColor: currentTheme.border,
+        }}
         data-testid="list-output-compact"
       >
         <div className="space-y-1">
@@ -299,6 +367,8 @@ const DictionaryOutput = ({
   colorManager: ColorManager;
   compact?: boolean;
 }) => {
+  const { theme } = useTheme();
+  const currentTheme = getTheme(theme);
   const dictObject = Object.fromEntries(
     [...dictionary.value].map(([key, value]) => [
       key,
@@ -311,12 +381,26 @@ const DictionaryOutput = ({
   if (compact) {
     return (
       <div
-        className="p-3 bg-zinc-800/30 rounded-lg border border-zinc-700/50"
+        className="p-3 rounded-lg border"
+        style={{
+          backgroundColor: currentTheme.surface,
+          borderColor: currentTheme.border,
+        }}
         data-testid="dictionary-output-compact"
       >
         <div className="flex items-center space-x-2 mb-2">
-          <div className="text-sm font-medium text-zinc-300">Dictionary</div>
-          <span className="text-xs text-zinc-500">({dictionary.value.size} keys)</span>
+          <div
+            className="text-sm font-medium"
+            style={{ color: currentTheme.textPrimary }}
+          >
+            Dictionary
+          </div>
+          <span
+            className="text-xs"
+            style={{ color: currentTheme.textMuted }}
+          >
+            ({dictionary.value.size} keys)
+          </span>
         </div>
         <JsonOutput value={dictObject} />
       </div>
@@ -329,8 +413,18 @@ const DictionaryOutput = ({
       data-testid="dictionary-output"
     >
       <div className="flex items-center space-x-2 mb-3">
-        <div className="font-semibold text-zinc-300">Dictionary</div>
-        <span className="text-sm text-zinc-500">({dictionary.value.size} keys)</span>
+        <div
+          className="font-semibold"
+          style={{ color: currentTheme.textPrimary }}
+        >
+          Dictionary
+        </div>
+        <span
+          className="text-sm"
+          style={{ color: currentTheme.textMuted }}
+        >
+          ({dictionary.value.size} keys)
+        </span>
       </div>
 
       <JsonOutput value={dictObject} />
@@ -408,29 +502,55 @@ const Output = ({ result }: { result: OutputResult }) => {
   return null;
 };
 
-const OutputPanelTitle = ({ error, output }: { error?: string; output?: BaseSymbolType }) => (
-  <div
-    className="flex items-center space-x-2"
-    data-testid="output-panel-title"
-  >
-    <div
-      className={`w-2 h-2 rounded-full ${error ? "bg-red-400" : "bg-emerald-400"}`}
-    />
-    <span className="font-semibold text-zinc-200">Output</span>
-    {output?.type && <span className="text-zinc-500 text-xs">{output.getTypeName()}</span>}
-  </div>
-);
-
-function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
-  const { error, output } = result;
+const OutputPanelTitle = ({ error, output }: { error?: string; output?: BaseSymbolType }) => {
+  const { theme } = useTheme();
+  const currentTheme = getTheme(theme);
 
   return (
     <div
-      className={`h-full flex flex-col bg-zinc-900 ${className}`}
+      className="flex items-center space-x-2"
+      data-testid="output-panel-title"
+    >
+      <div
+        className={`w-2 h-2 rounded-full ${error ? "bg-red-400" : "bg-emerald-400"}`}
+      />
+      <span
+        className="font-semibold"
+        style={{ color: currentTheme.textPrimary }}
+      >
+        Output
+      </span>
+      {output?.type && (
+        <span
+          className="text-xs"
+          style={{ color: currentTheme.textMuted }}
+        >
+          {output.getTypeName()}
+        </span>
+      )}
+    </div>
+  );
+};
+
+function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
+  const { error, output } = result;
+  const { theme } = useTheme();
+  const currentTheme = getTheme(theme);
+
+  return (
+    <div
+      className={`h-full flex flex-col ${className}`}
+      style={{ backgroundColor: currentTheme.background }}
       data-testid="output-panel"
     >
       {/* Header */}
-      <div className="flex items-center px-4 py-2 border-b border-zinc-800 bg-zinc-900/50">
+      <div
+        className="flex items-center px-4 py-2 border-b"
+        style={{
+          backgroundColor: currentTheme.surface,
+          borderColor: currentTheme.border,
+        }}
+      >
         <OutputPanelTitle
           error={error}
           output={output instanceof BaseSymbolType ? output : undefined}
@@ -440,6 +560,7 @@ function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
       {/* Content */}
       <div
         className="flex-1 overflow-auto p-4 sm:p-5"
+        style={{ color: currentTheme.textPrimary }}
         data-testid="output-panel-content"
       >
         <Output result={result} />
