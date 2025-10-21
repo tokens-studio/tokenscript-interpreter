@@ -13,7 +13,7 @@ import {
 import { useTheme } from "../contexts/ThemeContext";
 import { getTheme } from "../theme/colors";
 import { DEFAULT_COLOR_SCHEMAS } from "../utils/default-schemas";
-import SchemaCombobox from "./SchemaCombobox";
+import SchemaDialog from "./SchemaDialog";
 import SchemaEditorModal from "./SchemaEditorModal";
 import Link from "./Link";
 
@@ -30,6 +30,7 @@ export default function SchemaManager() {
     type: "color" | "function";
   } | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const handleAddNew = useCallback(() => {
     setEditingSchema(null);
@@ -160,22 +161,16 @@ export default function SchemaManager() {
   };
 
   return (
+    <>
+      <SchemaDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onSchemaSelect={handleSchemaSelect}
+        onCreateCustom={handleAddNew}
+        existingColorSchemas={colorSchemas}
+        existingFunctionSchemas={functionSchemas}
+      />
     <div className="flex flex-col h-full">
-      <div className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <SchemaCombobox
-              onSchemaSelect={handleSchemaSelect}
-              onCreateCustom={handleAddNew}
-              onRestoreDefaults={handleLoadDefaults}
-              onClearAllSchemas={handleClearAllSchemas}
-              placeholder="Add or search schemas..."
-              existingColorSchemas={colorSchemas}
-              existingFunctionSchemas={functionSchemas}
-            />
-          </div>
-        </div>
-      </div>
 
       {/* Schema list */}
       <div className="flex-1 px-4 pb-4 overflow-auto">
@@ -394,5 +389,6 @@ export default function SchemaManager() {
         />
       )}
     </div>
+    </>
   );
 }

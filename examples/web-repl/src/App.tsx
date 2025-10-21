@@ -15,6 +15,7 @@ import EditorModeTitle from "./components/EditorModeTitle";
 import JsonTokenEditor from "./components/JsonTokenEditor";
 import OutputPanel from "./components/OutputPanel";
 import PresetSelector from "./components/PresetSelector";
+import SchemaDialog from "./components/SchemaDialog";
 import SchemaManager from "./components/SchemaManager";
 import { HEADER_HEIGHT } from "./components/shared-theme";
 import SlantedSeparator from "./components/SlantedSeparator";
@@ -162,6 +163,37 @@ function App() {
   const [colorSchemas, _setColorSchemas] = useAtom(colorSchemasAtom);
   const [functionSchemas, _setFunctionSchemas] = useAtom(functionSchemasAtom);
   const [input, setInputs] = useState<Record<string, any>>({});
+  const [isSchemaDialogOpen, setIsSchemaDialogOpen] = useState(false);
+
+  const handleSchemaSelect = useCallback(
+    (url: string, spec: any, type?: "color" | "function") => {
+      const schemaType = type || (spec.type === "function" ? "function" : "color");
+      if (schemaType === "color") {
+        _setColorSchemas((current) => {
+          const updated = new Map(current);
+          updated.set(url, spec);
+          return updated;
+        });
+      } else {
+        _setFunctionSchemas((current) => {
+          const updated = new Map(current);
+          updated.set(url, spec);
+          return updated;
+        });
+      }
+    },
+    [_setColorSchemas, _setFunctionSchemas],
+  );
+
+  const handleRestoreDefaults = useCallback(() => {
+    _setColorSchemas(new Map(DEFAULT_COLOR_SCHEMAS));
+    _setFunctionSchemas(new Map());
+  }, [_setColorSchemas, _setFunctionSchemas]);
+
+  const handleClearAllSchemas = useCallback(() => {
+    _setColorSchemas(new Map());
+    _setFunctionSchemas(new Map());
+  }, [_setColorSchemas, _setFunctionSchemas]);
 
   useEffect(() => {
     awakenSchemaServer();
@@ -373,6 +405,17 @@ function App() {
           </div>
         </header>
 
+        <SchemaDialog
+          isOpen={isSchemaDialogOpen}
+          onClose={() => setIsSchemaDialogOpen(false)}
+          onSchemaSelect={handleSchemaSelect}
+          onCreateCustom={() => setIsSchemaDialogOpen(false)}
+          onRestoreDefaults={handleRestoreDefaults}
+          onClearAllSchemas={handleClearAllSchemas}
+          existingColorSchemas={colorSchemas}
+          existingFunctionSchemas={functionSchemas}
+        />
+
         {/* Main Grid Layout */}
         <main
           className="flex-1 flex overflow-hidden"
@@ -416,7 +459,7 @@ function App() {
               }}
             >
               <div
-                className="flex items-center justify-between px-4 py-2 border-b"
+                className="flex items-center justify-between px-4 py-2 border-b gap-2"
                 style={{ borderColor: currentTheme.border }}
               >
                 <h3
@@ -425,22 +468,48 @@ function App() {
                 >
                   Schemas
                 </h3>
-                <button
-                  type="button"
-                  onClick={() => setSchemaPanelCollapsed(!schemaPanelCollapsed)}
-                  className="transition-colors"
-                  style={{ color: currentTheme.textMuted }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = currentTheme.textSecondary)}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = currentTheme.textMuted)}
-                  data-testid="schema-panel-toggle"
-                  aria-label={
-                    schemaPanelCollapsed ? "Expand schema panel" : "Collapse schema panel"
-                  }
-                >
-                  <ArrowDown
-                    className={`${schemaPanelCollapsed ? "rotate-180" : ""} transition-transform`}
-                  />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsSchemaDialogOpen(true)}
+                    className="transition-colors flex items-center gap-1 text-sm"
+                    style={{ color: currentTheme.textMuted }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = currentTheme.textSecondary)}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = currentTheme.textMuted)}
+                    data-testid="schema-panel-add"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                    <span>Load schema</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSchemaPanelCollapsed(!schemaPanelCollapsed)}
+                    className="transition-colors"
+                    style={{ color: currentTheme.textMuted }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = currentTheme.textSecondary)}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = currentTheme.textMuted)}
+                    data-testid="schema-panel-toggle"
+                    aria-label={
+                      schemaPanelCollapsed ? "Expand schema panel" : "Collapse schema panel"
+                    }
+                  >
+                    <ArrowDown
+                      className={`${schemaPanelCollapsed ? "rotate-180" : ""} transition-transform`}
+                    />
+                  </button>
+                </div>
               </div>
               {!schemaPanelCollapsed && (
                 <div className="max-h-64 overflow-auto">
