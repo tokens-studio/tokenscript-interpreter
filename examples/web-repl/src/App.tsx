@@ -10,7 +10,7 @@ import {
 } from "@tokens-studio/tokenscript-interpreter";
 import { useAtom } from "jotai";
 import { useCallback, useEffect, useState } from "react";
-import { ArrowDown } from "./components/icons";
+import { ArrowDown, Docs, Github } from "./components/icons";
 import EditorModeTitle from "./components/EditorModeTitle";
 import JsonTokenEditor from "./components/JsonTokenEditor";
 import OutputPanel from "./components/OutputPanel";
@@ -361,7 +361,7 @@ function App() {
       <div className="flex-1 flex flex-col">
         {/* Top Navigation Bar */}
         <header
-          className="border-b flex items-center px-4 gap-4"
+          className="border-b flex items-center justify-between px-4 gap-4"
           style={{
             backgroundColor: currentTheme.surface,
             borderColor: currentTheme.border,
@@ -402,6 +402,34 @@ function App() {
                 }}
               />
             </div>
+          </div>
+
+          {/* Right Navigation Icons */}
+          <div className="flex items-center gap-4">
+            <a
+              href="https://github.com/tokens-studio/tokenscript-interpreter"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition-colors"
+              style={{ color: currentTheme.textMuted }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = currentTheme.textSecondary)}
+              onMouseLeave={(e) => (e.currentTarget.style.color = currentTheme.textMuted)}
+              aria-label="GitHub repository"
+            >
+              <Github />
+            </a>
+            <a
+              href="https://docs.tokenscript.dev.gcp.tokens.studio/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition-colors"
+              style={{ color: currentTheme.textMuted }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = currentTheme.textSecondary)}
+              onMouseLeave={(e) => (e.currentTarget.style.color = currentTheme.textMuted)}
+              aria-label="Documentation"
+            >
+              <Docs />
+            </a>
           </div>
         </header>
 
@@ -472,8 +500,11 @@ function App() {
                   <button
                     type="button"
                     onClick={() => setIsSchemaDialogOpen(true)}
-                    className="transition-colors flex items-center gap-1 text-sm"
-                    style={{ color: currentTheme.textMuted }}
+                    className="transition-colors flex items-center gap-1 text-sm pr-2 border-r"
+                    style={{ 
+                      color: currentTheme.textMuted,
+                      borderColor: currentTheme.border,
+                    }}
                     onMouseEnter={(e) => (e.currentTarget.style.color = currentTheme.textSecondary)}
                     onMouseLeave={(e) => (e.currentTarget.style.color = currentTheme.textMuted)}
                     data-testid="schema-panel-add"
