@@ -298,72 +298,17 @@ function App() {
 
   return (
     <div
-      className="h-screen flex flex-col"
+      className="h-screen flex flex-col bg-zinc-950"
       data-testid="app-container"
     >
-      <header
-        className="bg-white shadow-sm border-b flex-shrink-0"
-        data-testid="app-header"
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1
-                className="text-xl font-bold text-gray-900"
-                data-testid="app-title"
-              >
-                Tokenscript REPL
-              </h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={autoRun}
-                  onChange={(e) => setAutoRun(e.target.checked)}
-                  className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                  data-testid="auto-run-checkbox"
-                />
-                <label
-                  htmlFor="auto-run"
-                  className="text-sm text-gray-700"
-                >
-                  Auto-run
-                </label>
-              </div>
-              <button
-                type="button"
-                onClick={executeCode}
-                className="w-10 h-10 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
-                data-testid="run-code-button"
-                title="Run Code (Ctrl+Enter)"
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M8 5.14v13.72L19 12L8 5.14z"
-                    fill="currentColor"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
       <main
-        className="flex-1 px-4 sm:px-6 lg:px-8 py-4 sm:py-8 w-full"
+        className="flex-1 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 w-full overflow-hidden"
         data-testid="app-main"
       >
-        <div className="mx-auto grid grid-cols-1 max-w-7xl lg:grid-cols-2 gap-4 lg:gap-8 lg:items-start">
+        <div className="mx-auto flex flex-col lg:flex-row max-w-full xl:max-w-[1800px] gap-3 lg:gap-4 h-full">
           {/* Editor Panel */}
           <div
-            className="min-h-[400px] lg:h-[70vh] lg:sticky lg:top-4 rounded-lg shadow-sm overflow-hidden"
+            className="min-h-[400px] lg:h-full lg:flex-shrink-0 lg:w-1/2 rounded-lg overflow-hidden"
             data-testid="editor-panel"
           >
             {inputMode === "tokenscript" ? (
@@ -390,10 +335,10 @@ function App() {
             )}
           </div>
 
-          {/* Right Column: Schema Panel + Output Panel */}
-          <div className="flex flex-col gap-4 pb-8">
+          {/* Right Column: Output Panel + Schema Panel */}
+          <div className="flex flex-col gap-3 lg:gap-4 lg:flex-1 lg:min-h-0 lg:overflow-auto">
             <div
-              className="rounded-lg shadow-sm"
+              className="rounded-lg"
               data-testid="app-output-panel"
             >
               <OutputPanel result={result} />
@@ -402,7 +347,7 @@ function App() {
             {/* Schema Panel */}
             <div
               data-testid="schema-panel"
-              className="flex-shrink-0 lg:max-h-full"
+              className="flex-shrink-0"
             >
               <ShellPanel
                 title="Schemas"
@@ -410,13 +355,15 @@ function App() {
                   <button
                     type="button"
                     onClick={() => setSchemaPanelCollapsed(!schemaPanelCollapsed)}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    className="text-gray-500 hover:text-gray-300 transition-colors"
                     data-testid="schema-panel-toggle"
                     aria-label={
                       schemaPanelCollapsed ? "Expand schema panel" : "Collapse schema panel"
                     }
                   >
-                    <ArrowDown className={`${schemaPanelCollapsed ? "rotate-180" : ""}`} />
+                    <ArrowDown
+                      className={`${schemaPanelCollapsed ? "rotate-180" : ""} transition-transform`}
+                    />
                   </button>
                 }
                 className={`transition-all duration-200 ${schemaPanelCollapsed && "h-10"}`}

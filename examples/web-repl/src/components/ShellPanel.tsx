@@ -16,7 +16,7 @@ interface ShellPanelProps {
 
 export const DefaultShellTitle = ({ children, className }: ShellTitleProps) => (
   <div
-    className={`text-xs sm:text-sm text-gray-600 font-mono truncate h-full flex items-center px-3 ${className}`}
+    className={`text-xs sm:text-sm text-zinc-400 font-medium truncate h-full flex items-center px-4 ${className}`}
   >
     {children}
   </div>
@@ -32,13 +32,13 @@ function ShellPanel({
 }: ShellPanelProps) {
   return (
     <div
-      className={`flex flex-col bg-white rounded-lg border shadow-sm ${className}`}
+      className={`flex flex-col bg-zinc-900 rounded-lg border border-zinc-800 ${className}`}
       {...rest}
     >
-      <div className="border-b bg-gray-50 rounded-t-lg flex-shrink-0 h-10">
+      <div className="border-b border-zinc-800 bg-zinc-900/50 rounded-t-lg flex-shrink-0 h-11">
         <div className="flex items-center justify-between h-full w-full select-none">
           <ShellTitle>{title}</ShellTitle>
-          {headerRight && <div className="ml-2 min-w-0 flex-shrink-0 px-3">{headerRight}</div>}
+          {headerRight && <div className="ml-2 min-w-0 flex-shrink-0 px-4">{headerRight}</div>}
         </div>
       </div>
       <div className="flex-1 min-h-0 rounded-b-lg overflow-auto">{children}</div>

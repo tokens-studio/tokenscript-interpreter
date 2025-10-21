@@ -51,24 +51,26 @@ const ColorOutput = ({
   if (compact) {
     return (
       <div
-        className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border"
+        className="flex items-center space-x-3 rounded-lg"
         data-testid="color-output-compact"
       >
         <div
-          className="w-8 h-8 rounded border border-gray-300 flex-shrink-0"
+          className="w-20 h-10 flex-shrink-0"
           style={{ backgroundColor: cssColor }}
           title={`Color: ${cssColor}`}
           data-testid="color-swatch-compact"
         />
         <div className="flex-1 min-w-0">
           <div
-            className="text-sm font-medium text-gray-900 truncate"
+            className="text-sm font-medium text-zinc-200 truncate"
+            style={{ fontSize: "0.8em" }}
             data-testid="color-type-compact"
           >
             {colorManager.formatColorMethod(color)}
           </div>
           <div
-            className="text-xs text-gray-600 font-mono truncate"
+            className="text-zinc-500 font-mono truncate"
+            style={{ fontSize: "0.65em" }}
             data-testid="color-value-compact"
           >
             {color.getTypeName()}
@@ -84,24 +86,24 @@ const ColorOutput = ({
       data-testid="color-output"
     >
       <div
-        className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg"
+        className="flex items-center space-x-4 p-5 bg-zinc-800/30 rounded-lg border border-zinc-700/50"
         data-testid="color-preview-section"
       >
         <div
-          className="w-16 h-16 rounded-lg border-2 border-gray-200 shadow-inner"
+          className="w-20 h-20 rounded-lg border-2 border-zinc-700"
           style={{ backgroundColor: cssColor }}
           title={`Color: ${cssColor}`}
           data-testid="color-swatch"
         />
         <div>
           <div
-            className="font-semibold text-gray-900"
+            className="font-semibold text-zinc-100 text-lg"
             data-testid="color-type-label"
           >
             Color Object
           </div>
           <div
-            className="text-sm text-gray-600"
+            className="text-sm text-zinc-400 mt-1"
             data-testid="color-type-value"
           >
             Type: {color.getTypeName()}
@@ -111,20 +113,20 @@ const ColorOutput = ({
 
       {(isNonEmptyObject(color.value) || color.isHex()) && (
         <div>
-          <div className="font-semibold text-sm text-gray-800 mb-2">Properties</div>
-          <div className="bg-gray-50 rounded p-3 text-sm font-mono space-y-1">
+          <div className="font-semibold text-sm text-zinc-300 mb-2">Properties</div>
+          <div className="bg-zinc-800/40 border border-zinc-700/50 rounded-lg p-4 text-sm font-mono space-y-2">
             {color.isHex() ? (
               <div className="flex justify-between">
-                <span className="text-gray-800">{color.toString()}</span>
+                <span className="text-zinc-300">{color.toString()}</span>
               </div>
             ) : (
               Object.entries(color.value).map(([key, value]) => (
                 <div
                   key={key}
-                  className="flex justify-between"
+                  className="flex justify-between items-center"
                 >
-                  <span className="text-blue-600">{key}:</span>
-                  <span className="text-gray-800">{String(value)}</span>
+                  <span className="text-zinc-400">{key}:</span>
+                  <span className="text-zinc-300">{String(value)}</span>
                 </div>
               ))
             )}
@@ -156,7 +158,7 @@ function JsonOutput({ value }: { value: any }) {
 
   return (
     <div
-      className="bg-gray-50 rounded p-3 text-sm font-mono overflow-auto"
+      className="bg-zinc-900/40 border border-zinc-800 rounded-lg p-4 text-sm font-mono overflow-auto"
       data-testid="json-output"
     >
       <pre className="whitespace-pre-wrap">
@@ -170,18 +172,18 @@ const StringOutput = ({ str, compact = false }: { str: string; compact?: boolean
   if (compact) {
     return (
       <div
-        className="flex items-center p-3 bg-gray-50 rounded-lg border"
+        className="flex items-center p-3 bg-zinc-800/30 rounded-lg border border-zinc-700/50"
         data-testid="string-output-compact"
       >
         <div className="flex-1 min-w-0">
-          <div className="text-xs text-gray-600 font-mono truncate">{str}</div>
+          <div className="text-xs text-zinc-400 font-mono truncate">{str}</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="text-gray-800">
+    <div className="text-zinc-300">
       <pre className="whitespace-pre-wrap text-sm font-mono">{str}</pre>
     </div>
   );
@@ -189,12 +191,12 @@ const StringOutput = ({ str, compact = false }: { str: string; compact?: boolean
 
 const ErrorOutput = ({ error }: { error: string }) => (
   <div
-    className="text-red-600"
+    className="text-red-400"
     data-testid="error-output"
   >
-    <div className="font-semibold mb-2">Error:</div>
+    <div className="font-semibold mb-3 text-red-300">Error:</div>
     <pre
-      className="whitespace-pre-wrap text-sm"
+      className="whitespace-pre-wrap text-sm bg-red-950/30 border border-red-900/50 rounded-lg p-4"
       data-testid="error-message"
     >
       {error}
@@ -204,7 +206,7 @@ const ErrorOutput = ({ error }: { error: string }) => (
 
 const EmptyOutput = () => (
   <div
-    className="text-gray-500 italic"
+    className="text-zinc-500 italic text-center py-8"
     data-testid="empty-output"
   >
     Run some code to see the output here...
@@ -229,19 +231,19 @@ const ListOutput = ({
     if (compact) {
       return (
         <div
-          className="flex items-center p-3 bg-gray-50 rounded-lg border"
+          className="flex items-center p-3 bg-zinc-800/30 rounded-lg border border-zinc-700/50"
           data-testid="empty-list-compact"
         >
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium text-gray-900">List</div>
-            <div className="text-xs text-gray-500">Empty list</div>
+            <div className="text-sm font-medium text-zinc-300">List</div>
+            <div className="text-xs text-zinc-500">Empty list</div>
           </div>
         </div>
       );
     }
     return (
       <div
-        className="text-gray-500 italic"
+        className="text-zinc-500 italic text-center py-4"
         data-testid="empty-list"
       >
         Empty list
@@ -252,13 +254,9 @@ const ListOutput = ({
   if (compact) {
     return (
       <div
-        className="p-3 bg-gray-50 rounded-lg border"
+        className="p-3 bg-zinc-800/30 rounded-lg border border-zinc-700/50"
         data-testid="list-output-compact"
       >
-        <div className="flex items-center space-x-2 mb-2">
-          <div className="text-sm font-medium text-gray-900">List</div>
-          <span className="text-xs text-gray-600">({list.elements.length} items)</span>
-        </div>
         <div className="space-y-1">
           {list.elements.map((element, index) => (
             <SymbolOutput
@@ -276,25 +274,18 @@ const ListOutput = ({
 
   return (
     <div
-      className="space-y-3"
+      className=""
       data-testid="list-output"
     >
-      <div className="flex items-center space-x-2 mb-3">
-        <div className="font-semibold text-gray-900">List</div>
-        <span className="text-sm text-gray-600">({list.elements.length} items)</span>
-      </div>
-
-      <div className="space-y-2">
-        {list.elements.map((element, index) => (
-          <SymbolOutput
-            key={index}
-            symbol={element}
-            colorManager={colorManager}
-            compact={true}
-            data-testid={`list-item-${index}`}
-          />
-        ))}
-      </div>
+      {list.elements.map((element, index) => (
+        <SymbolOutput
+          key={index}
+          symbol={element}
+          colorManager={colorManager}
+          compact={true}
+          data-testid={`list-item-${index}`}
+        />
+      ))}
     </div>
   );
 };
@@ -320,12 +311,12 @@ const DictionaryOutput = ({
   if (compact) {
     return (
       <div
-        className="p-3 bg-gray-50 rounded-lg border"
+        className="p-3 bg-zinc-800/30 rounded-lg border border-zinc-700/50"
         data-testid="dictionary-output-compact"
       >
         <div className="flex items-center space-x-2 mb-2">
-          <div className="text-sm font-medium text-gray-900">Dictionary</div>
-          <span className="text-xs text-gray-600">({dictionary.value.size} keys)</span>
+          <div className="text-sm font-medium text-zinc-300">Dictionary</div>
+          <span className="text-xs text-zinc-500">({dictionary.value.size} keys)</span>
         </div>
         <JsonOutput value={dictObject} />
       </div>
@@ -338,8 +329,8 @@ const DictionaryOutput = ({
       data-testid="dictionary-output"
     >
       <div className="flex items-center space-x-2 mb-3">
-        <div className="font-semibold text-gray-900">Dictionary</div>
-        <span className="text-sm text-gray-600">({dictionary.value.size} keys)</span>
+        <div className="font-semibold text-zinc-300">Dictionary</div>
+        <span className="text-sm text-zinc-500">({dictionary.value.size} keys)</span>
       </div>
 
       <JsonOutput value={dictObject} />
@@ -422,14 +413,16 @@ const OutputPanelTitle = ({ error, output }: { error?: string; output?: BaseSymb
     className="flex items-center space-x-2"
     data-testid="output-panel-title"
   >
-    <div className={`w-3 h-3 bg-blue-500 rounded-full ${error ? "bg-red-500" : "bg-blue-500"}`} />
-    <span className="font-bold">Output</span>
-    {output?.type && <span>{output.getTypeName()}</span>}
+    <div
+      className={`w-2 h-2 rounded-full ${error ? "bg-red-400" : "bg-emerald-400"}`}
+    />
+    <span className="font-semibold text-zinc-200">Output</span>
+    {output?.type && <span className="text-zinc-500 text-xs">{output.getTypeName()}</span>}
   </div>
 );
 
 function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
-  const { executionTime, error, output } = result;
+  const { error, output } = result;
 
   return (
     <ShellPanel
@@ -439,20 +432,11 @@ function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
           output={output instanceof BaseSymbolType ? output : undefined}
         />
       }
-      headerRight={when(
-        executionTime,
-        <div
-          className="text-sm text-gray-500"
-          data-testid="execution-time"
-        >
-          {executionTime}ms
-        </div>,
-      )}
       className={`lg:h-full ${className}`}
       data-testid="output-panel"
     >
       <div
-        className="p-3 sm:p-4"
+        className="p-4 sm:p-5"
         data-testid="output-panel-content"
       >
         <Output result={result} />

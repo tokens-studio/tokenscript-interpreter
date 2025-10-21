@@ -310,19 +310,21 @@ export default function SchemaEditorModal({
       aria-modal="true"
     >
       <div
-        className="bg-white rounded-lg shadow-xl w-full max-w-4xl h-5/6 flex flex-col"
+        className="bg-zinc-900 rounded-lg shadow-xl w-full max-w-4xl h-5/6 flex flex-col"
         role="presentation"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
         tabIndex={-1}
         aria-hidden="true"
       >
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">{schema ? "Edit Schema" : "Add New Schema"}</h2>
+        <div className="flex items-center justify-between p-4 border-b border-zinc-800">
+          <h2 className="text-lg font-semibold text-zinc-100">
+            {schema ? "Edit Schema" : "Add New Schema"}
+          </h2>
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-zinc-400 hover:text-zinc-300"
             data-testid="close-modal"
           >
             <svg
@@ -341,11 +343,11 @@ export default function SchemaEditorModal({
           </button>
         </div>
 
-        <div className="p-4 border-b space-y-4">
+        <div className="p-4 border-b border-zinc-800 space-y-4">
           <div>
             <label
               htmlFor={`${uniqueId}-schema-url`}
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-zinc-300 mb-1"
             >
               Schema URL *
             </label>
@@ -357,7 +359,7 @@ export default function SchemaEditorModal({
                   value={url || ""}
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="https://schema.example.com/color/v1/"
-                  className="h-10 w-full pr-10 px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="h-10 w-full pr-10 px-3 bg-zinc-800 border border-zinc-700 text-zinc-100 placeholder-zinc-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   data-testid="schema-url-input"
                   disabled={fetchState.status === "loading"}
                 />

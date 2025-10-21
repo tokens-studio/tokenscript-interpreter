@@ -96,7 +96,7 @@ const InputsPanel: React.FC<InputsPanelProps> = ({ onInputsChange, initialInputs
             type="text"
             value={input.value as string}
             onChange={(e) => handleValueChange(index, e.target.value)}
-            className="w-full px-2 py-1 text-xs border rounded"
+            className="w-full px-2 py-1.5 text-xs border border-zinc-700 bg-zinc-800/50 text-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-transparent placeholder-zinc-500"
             placeholder={`Enter ${input.name}`}
           />
         );
@@ -106,7 +106,7 @@ const InputsPanel: React.FC<InputsPanelProps> = ({ onInputsChange, initialInputs
             type="number"
             value={input.value as number}
             onChange={(e) => handleValueChange(index, Number(e.target.value))}
-            className="w-full px-2 py-1 text-xs border rounded"
+            className="w-full px-2 py-1.5 text-xs border border-zinc-700 bg-zinc-800/50 text-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-transparent placeholder-zinc-500"
             placeholder={`Enter ${input.name}`}
           />
         );
@@ -128,7 +128,7 @@ const InputsPanel: React.FC<InputsPanelProps> = ({ onInputsChange, initialInputs
             type="color"
             value={input.value as string}
             onChange={(e) => handleValueChange(index, e.target.value)}
-            className="w-full px-2 py-1 text-xs border rounded"
+            className="w-full h-8 px-1 py-1 border border-zinc-700 bg-zinc-800/50 rounded-md cursor-pointer"
           />
         );
       default:
@@ -137,15 +137,15 @@ const InputsPanel: React.FC<InputsPanelProps> = ({ onInputsChange, initialInputs
   };
 
   return (
-    <div className="bg-gray-50">
+    <div className="bg-zinc-900/20 p-3 rounded-lg border border-zinc-800">
       <div className="flex justify-between items-center mb-3">
-        <h3 className="text-sm font-medium text-gray-700">Inputs</h3>
+        <h3 className="text-sm font-medium text-zinc-300">Inputs</h3>
         <button
           type="button"
           onClick={addInput}
-          className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition-colors"
+          className="text-xs bg-zinc-100 text-zinc-900 px-3 py-1.5 rounded-lg hover:bg-zinc-200 transition-colors shadow-sm font-medium"
         >
-          + Add Inputs
+          + Add Input
         </button>
       </div>
       <div className={"space-y-2"}>
@@ -158,7 +158,7 @@ const InputsPanel: React.FC<InputsPanelProps> = ({ onInputsChange, initialInputs
               type="text"
               value={input.name}
               onChange={(e) => handleNameChange(index, e.target.value)}
-              className="w-full px-2 py-1 text-xs border rounded"
+              className="w-full px-2 py-1.5 text-xs border border-zinc-700 bg-zinc-800/50 text-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-transparent placeholder-zinc-500"
               placeholder="Input name"
             />
             <Select
@@ -171,7 +171,7 @@ const InputsPanel: React.FC<InputsPanelProps> = ({ onInputsChange, initialInputs
             <button
               type="button"
               onClick={() => removeInput(index)}
-              className="text-xs bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 transition-colors"
+              className="text-xs bg-red-600/80 text-white px-2 py-1.5 rounded-md hover:bg-red-700 transition-colors"
             >
               Remove
             </button>
