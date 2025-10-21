@@ -10,4 +10,5 @@ export default defineConfig({
   sourcemap: true,
   treeshake: true,
   tsconfig: "tsconfig.build.json",
+  target: "es2021",
 });
