@@ -178,7 +178,7 @@ function JsonOutput({ value }: { value: any }) {
     );
 
     Prism.highlightAll();
-  }, [themeColors]);
+  }, [themeColors, jsonString]);
 
   return (
     <div
