@@ -15,6 +15,7 @@ import { getTheme } from "../theme/colors";
 import { DEFAULT_COLOR_SCHEMAS } from "../utils/default-schemas";
 import SchemaCombobox from "./SchemaCombobox";
 import SchemaEditorModal from "./SchemaEditorModal";
+import Link from "./Link";
 
 export default function SchemaManager() {
   const { theme } = useTheme();
@@ -281,13 +282,13 @@ export default function SchemaManager() {
                                 ? (spec as FunctionSpecification).name
                                 : (spec as ColorSpecification).name || url}
                             </div>
-                            <div
-                              className="text-xs truncate font-mono"
-                              style={{ color: currentTheme.textMuted }}
+                            <Link
+                              href={url}
+                              className="text-xs truncate font-mono block"
                               title={url}
                             >
                               {formatUrl(url)}
-                            </div>
+                            </Link>
                           </div>
                           <div className="flex items-center gap-1 ml-2">
                             <button

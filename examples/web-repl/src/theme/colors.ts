@@ -17,6 +17,9 @@ interface ColorTheme {
   primary: string;
   primaryHover: string;
   
+  // Logo/Brand colors
+  logoAction: string;
+  
   // Status colors
   error: string;
   errorLight: string;
@@ -62,6 +65,8 @@ export const lightTheme: ColorTheme = {
   primary: "#8b7355",
   primaryHover: "#6e5c45",
   
+  logoAction: "#10b981", // emerald-500
+  
   error: "#d14343",
   errorLight: "#fef2f2",
   success: "#4ade80",
@@ -102,6 +107,8 @@ export const darkTheme: ColorTheme = {
   
   primary: "#a1a1aa",
   primaryHover: "#d4d4d8",
+  
+  logoAction: "#34d399", // emerald-400 (matches the logo color)
   
   error: "#f87171",
   errorLight: "#450a0a",

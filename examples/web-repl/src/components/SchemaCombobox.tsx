@@ -18,6 +18,7 @@ import {
 import { useTheme } from "../contexts/ThemeContext";
 import { getTheme } from "../theme/colors";
 import { fetchTokenScriptSchema } from "../utils/schema-fetcher";
+import Link from "./Link";
 
 interface SchemaOption {
   id: string;
@@ -414,12 +415,14 @@ export default function SchemaCombobox({
                                   {schema.description}
                                 </span>
                               )}
-                              <span
-                                className="text-xs text-zinc-500 mt-1 truncate font-mono"
+                              <Link
+                                href={schema.url}
+                                className="text-xs mt-1 truncate font-mono block"
                                 title={schema.url}
+                                onClick={(e) => e.stopPropagation()}
                               >
                                 {schema.url}
-                              </span>
+                              </Link>
                             </div>
                             {isDownloaded && (
                               <div className="flex-shrink-0 mt-0.5">
