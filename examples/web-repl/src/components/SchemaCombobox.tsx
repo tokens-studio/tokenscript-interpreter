@@ -15,6 +15,8 @@ import {
   Popover,
   Separator,
 } from "react-aria-components";
+import { useTheme } from "../contexts/ThemeContext";
+import { getTheme } from "../theme/colors";
 import { fetchTokenScriptSchema } from "../utils/schema-fetcher";
 
 interface SchemaOption {
@@ -48,6 +50,8 @@ export default function SchemaCombobox({
   existingColorSchemas = new Map(),
   existingFunctionSchemas = new Map(),
 }: SchemaComboboxProps) {
+  const { theme } = useTheme();
+  const currentTheme = getTheme(theme);
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [availableSchemas, setAvailableSchemas] = useState<SchemaOption[]>([]);
@@ -213,11 +217,17 @@ export default function SchemaCombobox({
         <Label className="sr-only">Select or search for a schema</Label>
         <Input
           placeholder={placeholder}
-          className="w-48 px-3 py-1.5 text-sm bg-zinc-800/50 text-zinc-300 border border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-transparent pr-8 placeholder-zinc-500"
+          className="w-48 px-3 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:border-transparent pr-8"
+          style={{
+            backgroundColor: currentTheme.surface,
+            color: currentTheme.textPrimary,
+            borderColor: currentTheme.border,
+          }}
         />
         <Button className="absolute inset-y-0 right-0 flex items-center px-2">
           <svg
-            className="w-4 h-4 text-zinc-500"
+            className="w-4 h-4"
+            style={{ color: currentTheme.textMuted }}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -232,16 +242,29 @@ export default function SchemaCombobox({
         </Button>
       </div>
 
-      <Popover className="w-80 mt-1 bg-zinc-900 border border-zinc-800 rounded-lg shadow-2xl z-50 max-h-80 overflow-auto">
+      <Popover
+        className="w-80 mt-1 border rounded-lg shadow-2xl z-50 max-h-80 overflow-auto"
+        style={{
+          backgroundColor: currentTheme.surface,
+          borderColor: currentTheme.border,
+        }}
+      >
         <ListBox>
           <ListBoxSection>
-            <Header className="px-3 py-2 text-xs font-medium text-zinc-500 uppercase tracking-wide border-b border-zinc-800">
+            <Header
+              className="px-3 py-2 text-xs font-medium uppercase tracking-wide border-b"
+              style={{
+                color: currentTheme.textMuted,
+                borderColor: currentTheme.border,
+              }}
+            >
               Actions
             </Header>
             <ListBoxItem
               id="create-custom"
               textValue="Create custom schema"
-              className="px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800 cursor-pointer focus:bg-zinc-800 focus:outline-none data-[focused]:bg-zinc-800 data-[hovered]:bg-zinc-800"
+              className="px-3 py-2 text-sm cursor-pointer focus:outline-none"
+              style={{ color: currentTheme.textPrimary }}
               onAction={() => onCreateCustom()}
             >
               <div className="flex items-center gap-2">

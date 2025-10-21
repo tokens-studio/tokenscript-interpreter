@@ -3,11 +3,11 @@ import type {
   FunctionSpecification,
 } from "@tokens-studio/tokenscript-interpreter";
 import { useAtom } from "jotai";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { colorSchemasAtom, functionSchemasAtom } from "../store/atoms";
 import { JSON_PRESETS, type Preset, TOKENSCRIPT_PRESETS } from "../utils/presets";
 import { fetchTokenScriptSchema } from "../utils/schema-fetcher";
-import Select from "./Select";
+import TitleBarComboBox from "./TitleBarComboBox";
 
 interface PresetSelectorProps {
   inputMode: "tokenscript" | "json";
@@ -19,6 +19,7 @@ function PresetSelector({ inputMode, onPresetSelect, testId }: PresetSelectorPro
   const presets = inputMode === "tokenscript" ? TOKENSCRIPT_PRESETS : JSON_PRESETS;
   const [colorSchemas, setColorSchemas] = useAtom(colorSchemasAtom);
   const [functionSchemas, setFunctionSchemas] = useAtom(functionSchemasAtom);
+  const [selectedPreset, setSelectedPreset] = useState("");
 
   const loadDependencies = useCallback(
     async (dependencies: string[]) => {
@@ -105,23 +106,26 @@ function PresetSelector({ inputMode, onPresetSelect, testId }: PresetSelectorPro
         }
 
         onPresetSelect(preset);
+        setSelectedPreset(presetName);
+
+        // Reset after a short delay
+        setTimeout(() => setSelectedPreset(""), 100);
       }
     },
     [presets, loadDependencies, onPresetSelect, setColorSchemas, setFunctionSchemas],
   );
 
-  const options = presets.map((preset) => ({
+  const options = [{ value: "", label: "Load preset" }, ...presets.map((preset) => ({
     value: preset.name,
     label: preset.name,
-  }));
+  }))];
 
   return (
-    <Select
-      value=""
+    <TitleBarComboBox
+      value={selectedPreset}
       onChange={handlePresetChange}
       options={options}
       placeholder="Load preset"
-      showCheckmarks={false}
       testId={testId}
     />
   );

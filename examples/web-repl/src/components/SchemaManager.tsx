@@ -10,11 +10,15 @@ import {
   deletedFunctionSchemasAtom,
   functionSchemasAtom,
 } from "../store/atoms";
+import { useTheme } from "../contexts/ThemeContext";
+import { getTheme } from "../theme/colors";
 import { DEFAULT_COLOR_SCHEMAS } from "../utils/default-schemas";
 import SchemaCombobox from "./SchemaCombobox";
 import SchemaEditorModal from "./SchemaEditorModal";
 
 export default function SchemaManager() {
+  const { theme } = useTheme();
+  const currentTheme = getTheme(theme);
   const [colorSchemas, setColorSchemas] = useAtom(colorSchemasAtom);
   const [functionSchemas, setFunctionSchemas] = useAtom(functionSchemasAtom);
   const [deletedColorSchemas, setDeletedColorSchemas] = useAtom(deletedColorSchemasAtom);
@@ -175,12 +179,18 @@ export default function SchemaManager() {
       {/* Schema list */}
       <div className="flex-1 px-4 pb-4 overflow-auto">
         {colorSchemas.size === 0 && functionSchemas.size === 0 ? (
-          <div className="text-center py-8 text-zinc-500">
+          <div
+            className="text-center py-8"
+            style={{ color: currentTheme.textMuted }}
+          >
             <div className="text-sm">No schemas configured</div>
             <button
               type="button"
               onClick={handleAddNew}
-              className="mt-2 text-zinc-400 hover:text-zinc-300 underline text-sm transition-colors"
+              className="mt-2 underline text-sm transition-colors"
+              style={{ color: currentTheme.textSecondary }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = currentTheme.textPrimary)}
+              onMouseLeave={(e) => (e.currentTarget.style.color = currentTheme.textSecondary)}
             >
               Add your first schema
             </button>
@@ -239,7 +249,10 @@ export default function SchemaManager() {
                     className="space-y-2"
                   >
                     <div className="px-0 py-2">
-                      <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
+                      <h4
+                        className="text-xs font-medium uppercase tracking-wide"
+                        style={{ color: currentTheme.textMuted }}
+                      >
                         {groupName} ({groupSchemas.length})
                       </h4>
                     </div>
@@ -247,17 +260,30 @@ export default function SchemaManager() {
                       {groupSchemas.map(([url, spec, schemaType]) => (
                         <div
                           key={url}
-                          className="flex items-center justify-between p-2 hover:bg-zinc-800/30 transition-colors"
+                          className="flex items-center justify-between p-2 transition-colors"
+                          style={{
+                            backgroundColor: "transparent",
+                          }}
+                          onMouseEnter={(e) =>
+                            (e.currentTarget.style.backgroundColor = currentTheme.surfaceHover)
+                          }
+                          onMouseLeave={(e) =>
+                            (e.currentTarget.style.backgroundColor = "transparent")
+                          }
                           data-testid={`schema-${url}`}
                         >
                           <div className="flex-1 min-w-0">
-                            <div className="text-sm text-zinc-300 truncate">
+                            <div
+                              className="text-sm truncate"
+                              style={{ color: currentTheme.textPrimary }}
+                            >
                               {schemaType === "function"
                                 ? (spec as FunctionSpecification).name
                                 : (spec as ColorSpecification).name || url}
                             </div>
                             <div
-                              className="text-xs text-zinc-600 truncate font-mono"
+                              className="text-xs truncate font-mono"
+                              style={{ color: currentTheme.textMuted }}
                               title={url}
                             >
                               {formatUrl(url)}
@@ -267,7 +293,14 @@ export default function SchemaManager() {
                             <button
                               type="button"
                               onClick={() => handleEdit(url, spec, schemaType)}
-                              className="px-2 py-1 text-xs text-zinc-400 hover:text-zinc-300 transition-colors"
+                              className="px-2 py-1 text-xs transition-colors"
+                              style={{ color: currentTheme.textSecondary }}
+                              onMouseEnter={(e) =>
+                                (e.currentTarget.style.color = currentTheme.textPrimary)
+                              }
+                              onMouseLeave={(e) =>
+                                (e.currentTarget.style.color = currentTheme.textSecondary)
+                              }
                               data-testid={`edit-${url}`}
                             >
                               Edit
@@ -275,7 +308,10 @@ export default function SchemaManager() {
                             <button
                               type="button"
                               onClick={() => handleDelete(url, spec, schemaType)}
-                              className="px-2 py-1 text-xs text-red-400 hover:text-red-300 transition-colors"
+                              className="px-2 py-1 text-xs transition-colors"
+                              style={{ color: currentTheme.error }}
+                              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
+                              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
                               data-testid={`delete-${url}`}
                             >
                               Delete
@@ -294,13 +330,22 @@ export default function SchemaManager() {
 
       {/* Footer */}
       {(deletedColorSchemas.length > 0 || deletedFunctionSchemas.length > 0) && (
-        <div className="p-3 border-t border-zinc-800 bg-zinc-900/20">
+        <div
+          className="p-3 border-t"
+          style={{
+            borderColor: currentTheme.border,
+            backgroundColor: currentTheme.surface,
+          }}
+        >
           <div className="flex items-center justify-between gap-2">
             {deletedColorSchemas.length > 0 && (
               <button
                 type="button"
                 onClick={handleUndoColor}
-                className="px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-300 transition-colors"
+                className="px-3 py-1.5 text-xs transition-colors"
+                style={{ color: currentTheme.textSecondary }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = currentTheme.textPrimary)}
+                onMouseLeave={(e) => (e.currentTarget.style.color = currentTheme.textSecondary)}
                 data-testid="undo-color-button"
               >
                 Undo Color ({deletedColorSchemas.length})
@@ -310,7 +355,10 @@ export default function SchemaManager() {
               <button
                 type="button"
                 onClick={handleUndoFunction}
-                className="px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-300 transition-colors"
+                className="px-3 py-1.5 text-xs transition-colors"
+                style={{ color: currentTheme.textSecondary }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = currentTheme.textPrimary)}
+                onMouseLeave={(e) => (e.currentTarget.style.color = currentTheme.textSecondary)}
                 data-testid="undo-function-button"
               >
                 Undo Function ({deletedFunctionSchemas.length})

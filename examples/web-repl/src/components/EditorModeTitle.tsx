@@ -1,4 +1,4 @@
-import TitleBarSelect from "./TitleBarSelect";
+import TitleBarComboBox from "./TitleBarComboBox";
 
 interface EditorModeTitleProps {
   inputMode?: "tokenscript" | "json";
@@ -8,7 +8,7 @@ interface EditorModeTitleProps {
 }
 
 const INPUT_MODE_OPTIONS = [
-  { value: "tokenscript", label: "Tokenscript" },
+  { value: "tokenscript", label: "Script" },
   { value: "json", label: "JSON" },
 ];
 
@@ -20,8 +20,7 @@ function EditorModeTitle({
 }: EditorModeTitleProps) {
   if (inputMode && onInputModeChange) {
     return (
-      <TitleBarSelect
-        label="Input"
+      <TitleBarComboBox
         value={inputMode}
         onChange={onInputModeChange}
         options={INPUT_MODE_OPTIONS}

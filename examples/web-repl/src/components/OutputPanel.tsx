@@ -59,8 +59,8 @@ const ColorOutput = ({
         data-testid="color-output-compact"
       >
         <div
-          className="w-20 h-10 flex-shrink-0 border"
-          style={{ backgroundColor: cssColor, borderColor: currentTheme.border }}
+          className="w-20 h-10 flex-shrink-0"
+          style={{ backgroundColor: cssColor }}
           title={`Color: ${cssColor}`}
           data-testid="color-swatch-compact"
         />

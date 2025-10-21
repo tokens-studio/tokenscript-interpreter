@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { useTheme } from "../contexts/ThemeContext";
+import { getTheme } from "../theme/colors";
 
 interface SelectOption {
   value: string;
@@ -25,6 +27,9 @@ function Select({
   className = "",
   testId,
 }: SelectProps) {
+  const { theme } = useTheme();
+  const currentTheme = getTheme(theme);
+
   return (
     <div className={`relative ${className}`}>
       <style>
@@ -35,35 +40,35 @@ function Select({
           }
 
           .customizable-select {
-            border: 1px solid #52525b;
-            background: #27272a;
+            border: 1px solid ${currentTheme.border};
+            background: ${currentTheme.surface};
             border-radius: 0.375rem;
             padding: 0.25rem 0.75rem 0.25rem 0.375rem;
             font-size: 0.75rem;
             font-weight: 500;
-            color: #d4d4d8;
+            color: ${currentTheme.textPrimary};
             cursor: pointer;
             transition: all 0.2s ease;
             min-width: 120px;
           }
 
           .customizable-select:hover {
-            background: #3f3f46;
-            border-color: #71717a;
+            background: ${currentTheme.surfaceHover};
+            border-color: ${currentTheme.textMuted};
           }
 
           .customizable-select:focus {
             outline: none;
             ring: 2px;
-            ring-color: #71717a;
-            border-color: #71717a;
+            ring-color: ${currentTheme.textMuted};
+            border-color: ${currentTheme.textMuted};
           }
 
           .customizable-select::picker(select) {
-            background: #27272a;
-            border: 1px solid #3f3f46;
+            background: ${currentTheme.surface};
+            border: 1px solid ${currentTheme.border};
             border-radius: 0.5rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
             padding: 0.5rem 0;
             margin-top: 0.25rem;
             min-width: max-content;
@@ -76,18 +81,18 @@ function Select({
           .customizable-select option {
             padding: 0.5rem 0.75rem;
             font-size: 0.875rem;
-            color: #d4d4d8;
+            color: ${currentTheme.textPrimary};
             cursor: pointer;
             transition: background-color 0.15s ease;
           }
 
           .customizable-select option:hover {
-            background-color: #3f3f46;
+            background-color: ${currentTheme.surfaceHover};
           }
 
           .customizable-select option:checked {
-            background-color: #52525b;
-            color: #fafafa;
+            background-color: ${currentTheme.surfaceActive};
+            color: ${currentTheme.textPrimary};
             font-weight: 500;
           }
 

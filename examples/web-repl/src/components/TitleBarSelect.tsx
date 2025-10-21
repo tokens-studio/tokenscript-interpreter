@@ -12,7 +12,7 @@ interface TitleBarSelectProps {
 function TitleBarSelect({ value, onChange, options, testId }: Omit<TitleBarSelectProps, "label">) {
   return (
     <div className="flex h-full items-center">
-      <div className="relative flex items-center h-full hover:bg-zinc-800/50 border-l border-r border-solid border-zinc-800 transition-colors">
+      <div className="relative flex items-center h-full hover:bg-zinc-800/50 transition-colors">
         <DefaultShellTitle className="px-0">
           <select
             value={value}
