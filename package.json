@@ -7,29 +7,54 @@
   "types": "./dist/lib/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/lib/index.d.ts",
-      "import": "./dist/lib/index.js",
-      "require": "./dist/lib/index.cjs"
+      "import": {
+        "types": "./dist/lib/index.d.ts",
+        "default": "./dist/lib/index.js"
+      },
+      "require": {
+        "types": "./dist/lib/index.d.cts",
+        "default": "./dist/lib/index.cjs"
+      }
     },
     "./interpreter": {
-      "types": "./dist/lib/interpreter.d.ts",
-      "import": "./dist/lib/interpreter.js",
-      "require": "./dist/lib/interpreter.cjs"
+      "import": {
+        "types": "./dist/lib/interpreter.d.ts",
+        "default": "./dist/lib/interpreter.js"
+      },
+      "require": {
+        "types": "./dist/lib/interpreter.d.cts",
+        "default": "./dist/lib/interpreter.cjs"
+      }
     },
     "./processors": {
-      "types": "./dist/lib/processors.d.ts",
-      "import": "./dist/lib/processors.js",
-      "require": "./dist/lib/processors.cjs"
+      "import": {
+        "types": "./dist/lib/processors.d.ts",
+        "default": "./dist/lib/processors.js"
+      },
+      "require": {
+        "types": "./dist/lib/processors.d.cts",
+        "default": "./dist/lib/processors.cjs"
+      }
     },
     "./schema": {
-      "types": "./dist/lib/schema.d.ts",
-      "import": "./dist/lib/schema.js",
-      "require": "./dist/lib/schema.cjs"
+      "import": {
+        "types": "./dist/lib/schema.d.ts",
+        "default": "./dist/lib/schema.js"
+      },
+      "require": {
+        "types": "./dist/lib/schema.d.cts",
+        "default": "./dist/lib/schema.cjs"
+      }
     },
     "./types": {
-      "types": "./dist/lib/types.d.ts",
-      "import": "./dist/lib/types.js",
-      "require": "./dist/lib/types.cjs"
+      "import": {
+        "types": "./dist/lib/types.d.ts",
+        "default": "./dist/lib/types.js"
+      },
+      "require": {
+        "types": "./dist/lib/types.d.cts",
+        "default": "./dist/lib/types.cjs"
+      }
     },
     "./cli": {
       "types": "./dist/cli.d.ts",
