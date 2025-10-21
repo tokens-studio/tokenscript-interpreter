@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
+    "target": "ES2021",
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "useDefineForClassFields": false,
     "module": "ESNext",
     "lib": [
-      "esnext"
+      "ES2021"
     ],
     "skipLibCheck": true,
     "types": [

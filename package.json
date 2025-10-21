@@ -1,36 +1,66 @@
 {
   "name": "@tokens-studio/tokenscript-interpreter",
-  "version": "0.2.3",
+  "version": "0.5.2",
   "description": "A TypeScript interpreter for TokenScript, a domain-specific language for design token manipulation and computation",
-  "author": "Tokens Studio (https://tokens.studio)",
-  "license": "MPL-2.0",
-  "homepage": "https://github.com/tokens-studio/tokenscript-interpreter#readme",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/tokens-studio/tokenscript-interpreter.git"
-  },
-  "bugs": {
-    "url": "https://github.com/tokens-studio/tokenscript-interpreter/issues"
-  },
-  "keywords": [
-    "tokenscript",
-    "design-tokens",
-    "design-system",
-    "interpreter",
-    "cli"
-  ],
   "type": "module",
   "main": "./dist/lib/index.js",
   "types": "./dist/lib/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/lib/index.js",
-      "types": "./dist/lib/index.d.ts"
+      "import": {
+        "types": "./dist/lib/index.d.ts",
+        "default": "./dist/lib/index.js"
+      },
+      "require": {
+        "types": "./dist/lib/index.d.cts",
+        "default": "./dist/lib/index.cjs"
+      }
+    },
+    "./interpreter": {
+      "import": {
+        "types": "./dist/lib/interpreter.d.ts",
+        "default": "./dist/lib/interpreter.js"
+      },
+      "require": {
+        "types": "./dist/lib/interpreter.d.cts",
+        "default": "./dist/lib/interpreter.cjs"
+      }
+    },
+    "./processors": {
+      "import": {
+        "types": "./dist/lib/processors.d.ts",
+        "default": "./dist/lib/processors.js"
+      },
+      "require": {
+        "types": "./dist/lib/processors.d.cts",
+        "default": "./dist/lib/processors.cjs"
+      }
+    },
+    "./schema": {
+      "import": {
+        "types": "./dist/lib/schema.d.ts",
+        "default": "./dist/lib/schema.js"
+      },
+      "require": {
+        "types": "./dist/lib/schema.d.cts",
+        "default": "./dist/lib/schema.cjs"
+      }
+    },
+    "./types": {
+      "import": {
+        "types": "./dist/lib/types.d.ts",
+        "default": "./dist/lib/types.js"
+      },
+      "require": {
+        "types": "./dist/lib/types.d.cts",
+        "default": "./dist/lib/types.cjs"
+      }
     },
     "./cli": {
-      "import": "./dist/cli.js",
-      "types": "./dist/cli.d.ts"
-    }
+      "types": "./dist/cli.d.ts",
+      "import": "./dist/cli.js"
+    },
+    "./package.json": "./package.json"
   },
   "bin": {
     "tokenscript": "dist/cli.js"
@@ -40,18 +70,29 @@
     "README.md",
     "LICENSE"
   ],
+  "sideEffects": false,
   "engines": {
     "node": ">=16.0.0"
   },
   "scripts": {
     "build": "npm run build:lib && npm run build:cli",
-    "build:cli": "tsup --config tsup.cli.config.ts",
     "build:lib": "tsup --config tsup.lib.config.ts",
+    "build:cli": "tsup --config tsup.cli.config.ts",
     "build:watch": "tsup --watch",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "check": "biome ci . --diagnostic-level=error",
     "check:all": "npm run check && npm run test",
     "check:errors": "biome ci . --diagnostic-level=error",
-    "clean": "rm -rf dist",
+    "lint": "biome lint --max-diagnostics=none .",
+    "lint:fix": "biome lint --write .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "fix": "biome check --write .",
+    "ts:typecheck": "tsc -p tsconfig.build.json",
+    "ts:typecheck:watch": "tsc -p tsconfig.build.json --watch",
     "cli": "tsx src/cli.ts",
     "cli:built": "node dist/cli.js",
     "cli:interactive": "tsx src/cli.ts interactive",
@@ -61,23 +102,31 @@
     "compliance_test:built": "node dist/cli.js evaluate_standard_compliance --test-dir ./data/compliance-suite/tests/ --output compliance-report.json",
     "compliance_test:failed": "npm run compliance_test && jq '.results | map(select(.status == \"failed\"))' compliance-report.json",
     "dev:repl": "cd examples/web-repl && npm run dev:watch",
-    "fix": "biome check --write .",
-    "format": "biome format --write .",
-    "format:check": "biome format .",
-    "lint": "biome lint --max-diagnostics=none .",
-    "lint:fix": "biome lint --write .",
-    "postversion": "git push && git push --tags",
     "prepublishOnly": "npm run test && npm run build:lib",
-    "release:major": "npm version major && npm publish",
-    "release:minor": "npm version minor && npm publish",
+    "version": "npm run build:lib",
+    "postversion": "git push && git push --tags",
     "release:patch": "npm version patch && npm publish",
-    "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
-    "test:watch": "vitest",
-    "ts:typecheck": "tsc -p tsconfig.build.json",
-    "ts:typecheck:watch": "tsc -p tsconfig.build.json --watch",
-    "version": "npm run build:lib"
+    "release:minor": "npm version minor && npm publish",
+    "release:major": "npm version major && npm publish",
+    "package:validate": "npx @arethetypeswrong/cli --pack ."
   },
+  "keywords": [
+    "tokenscript",
+    "design-tokens",
+    "design-system",
+    "interpreter",
+    "cli"
+  ],
+  "author": "Tokens Studio (https://tokens.studio)",
+  "license": "MPL-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tokens-studio/tokenscript-interpreter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tokens-studio/tokenscript-interpreter/issues"
+  },
+  "homepage": "https://github.com/tokens-studio/tokenscript-interpreter#readme",
   "dependencies": {
     "commander": "^14.0.1",
     "readline-sync": "^1.4.10",
