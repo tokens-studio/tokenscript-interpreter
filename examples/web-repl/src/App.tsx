@@ -11,10 +11,11 @@ import {
 import { useAtom } from "jotai";
 import { useCallback, useEffect, useState } from "react";
 import { ArrowDown } from "./components/icons";
+import EditorModeTitle from "./components/EditorModeTitle";
 import JsonTokenEditor from "./components/JsonTokenEditor";
 import OutputPanel from "./components/OutputPanel";
+import PresetSelector from "./components/PresetSelector";
 import SchemaManager from "./components/SchemaManager";
-import ShellPanel from "./components/ShellPanel";
 import TokenScriptEditor from "./components/TokenScriptEditor";
 import {
   autoRunAtom,
@@ -298,83 +299,113 @@ function App() {
 
   return (
     <div
-      className="h-screen flex flex-col bg-zinc-950"
+      className="h-screen flex bg-zinc-950"
       data-testid="app-container"
     >
-      <main
-        className="flex-1 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 w-full overflow-hidden"
-        data-testid="app-main"
-      >
-        <div className="mx-auto flex flex-col lg:flex-row max-w-full xl:max-w-[1800px] gap-3 lg:gap-4 h-full">
-          {/* Editor Panel */}
-          <div
-            className="min-h-[400px] lg:h-full lg:flex-shrink-0 lg:w-1/2 rounded-lg overflow-hidden"
-            data-testid="editor-panel"
-          >
-            {inputMode === "tokenscript" ? (
-              <TokenScriptEditor
-                value={code}
-                onChange={setCode}
-                onKeyDown={handleKeyDown}
-                error={result.errorInfo}
-                inputMode={inputMode}
-                onInputModeChange={setInputMode}
-                onPresetSelect={handlePresetSelect}
-                onReferencesChange={setInputs}
-              />
-            ) : (
-              <JsonTokenEditor
-                value={jsonInput}
-                onChange={setJsonInput}
-                onKeyDown={handleKeyDown}
-                error={jsonError}
-                inputMode={inputMode}
-                onInputModeChange={setInputMode}
-                onPresetSelect={handlePresetSelect}
-              />
-            )}
-          </div>
+      {/* Left Sidebar */}
+      <aside className="w-12 bg-zinc-900 border-r border-zinc-800 flex flex-col items-center py-4">
+        <div className="w-8 h-8 bg-emerald-500/20 rounded-lg flex items-center justify-center text-emerald-400 font-bold text-sm">
+          T
+        </div>
+      </aside>
 
-          {/* Right Column: Output Panel + Schema Panel */}
-          <div className="flex flex-col gap-3 lg:gap-4 lg:flex-1 lg:min-h-0 lg:overflow-auto">
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col">
+        {/* Top Navigation Bar */}
+        <header className="h-12 bg-zinc-900 border-b border-zinc-800 flex items-center px-4 gap-4">
+          <div className="flex items-center gap-3 text-sm">
+            <span className="text-emerald-400 font-medium">tokenscript</span>
+            <span className="text-zinc-600">/</span>
+            
+            {/* Mode Selector (tokenscript | json) */}
+            <div className="flex items-center">
+              <EditorModeTitle
+                inputMode={inputMode}
+                onInputModeChange={setInputMode}
+                testId="input-mode-dropdown"
+                defaultLabel="tokenscript"
+              />
+            </div>
+            
+            <span className="text-zinc-600">/</span>
+            
+            {/* Preset Selector */}
+            <PresetSelector
+              inputMode={inputMode}
+              onPresetSelect={handlePresetSelect}
+              testId="preset-selector"
+            />
+          </div>
+        </header>
+
+        {/* Main Grid Layout */}
+        <main
+          className="flex-1 flex overflow-hidden"
+          data-testid="app-main"
+        >
+          {/* Left Column: Editor + Schemas */}
+          <div className="w-1/2 flex flex-col border-r border-zinc-800">
+            {/* Code Editor */}
             <div
-              className="rounded-lg"
-              data-testid="app-output-panel"
+              className="flex-1 overflow-hidden"
+              data-testid="editor-panel"
             >
-              <OutputPanel result={result} />
+              {inputMode === "tokenscript" ? (
+                <TokenScriptEditor
+                  value={code}
+                  onChange={setCode}
+                  onKeyDown={handleKeyDown}
+                  error={result.errorInfo}
+                  onReferencesChange={setInputs}
+                />
+              ) : (
+                <JsonTokenEditor
+                  value={jsonInput}
+                  onChange={setJsonInput}
+                  onKeyDown={handleKeyDown}
+                  error={jsonError}
+                />
+              )}
             </div>
 
-            {/* Schema Panel */}
+            {/* Schema Panel - Below Editor */}
             <div
               data-testid="schema-panel"
-              className="flex-shrink-0"
+              className="border-t border-zinc-800 bg-zinc-900"
             >
-              <ShellPanel
-                title="Schemas"
-                headerRight={
-                  <button
-                    type="button"
-                    onClick={() => setSchemaPanelCollapsed(!schemaPanelCollapsed)}
-                    className="text-gray-500 hover:text-gray-300 transition-colors"
-                    data-testid="schema-panel-toggle"
-                    aria-label={
-                      schemaPanelCollapsed ? "Expand schema panel" : "Collapse schema panel"
-                    }
-                  >
-                    <ArrowDown
-                      className={`${schemaPanelCollapsed ? "rotate-180" : ""} transition-transform`}
-                    />
-                  </button>
-                }
-                className={`transition-all duration-200 ${schemaPanelCollapsed && "h-10"}`}
-                data-testid="schema-shell-panel"
-              >
-                {!schemaPanelCollapsed && <SchemaManager />}
-              </ShellPanel>
+              <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-800">
+                <h3 className="text-sm font-medium text-zinc-300">Schemas</h3>
+                <button
+                  type="button"
+                  onClick={() => setSchemaPanelCollapsed(!schemaPanelCollapsed)}
+                  className="text-zinc-500 hover:text-zinc-300 transition-colors"
+                  data-testid="schema-panel-toggle"
+                  aria-label={
+                    schemaPanelCollapsed ? "Expand schema panel" : "Collapse schema panel"
+                  }
+                >
+                  <ArrowDown
+                    className={`${schemaPanelCollapsed ? "rotate-180" : ""} transition-transform`}
+                  />
+                </button>
+              </div>
+              {!schemaPanelCollapsed && (
+                <div className="max-h-64 overflow-auto">
+                  <SchemaManager />
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      </main>
+
+          {/* Right Column: Output (Full Height) */}
+          <div
+            className="flex-1 overflow-hidden"
+            data-testid="app-output-panel"
+          >
+            <OutputPanel result={result} />
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

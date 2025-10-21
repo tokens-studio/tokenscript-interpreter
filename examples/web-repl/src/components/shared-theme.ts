@@ -1,27 +1,27 @@
 // Shared theme configuration for both Monaco editor and Prism.js syntax highlighting
 export const tokenscriptThemeColors = {
-  // Core syntax colors (dark theme)
-  keyword: "#C586C0", // Keywords (variable, if, else, etc.)
-  type: "#4EC9B0", // Types (String, Number, Color, etc.)
-  function: "#DCDCAA", // Functions (rgb, hsl, lighten, etc.)
-  variable: "#9CDCFE", // Variables and identifiers
-  reference: "#FF6B6B", // References (curly braces like {variable.name})
-  string: "#CE9178", // Strings
-  number: "#B5CEA8", // Numbers
-  hexColor: "#FFB86C", // Hex colors
-  comment: "#6A9955", // Comments
-  operator: "#D4D4D4", // Operators (+, -, *, /, =, etc.)
-  delimiter: "#D4D4D4", // Delimiters (parentheses, brackets, semicolons, etc.)
+  // Core syntax colors (muted cool dark theme)
+  keyword: "#D19ECF", // Keywords (variable, if, else, etc.) - muted purple-pink
+  type: "#7EC8E3", // Types (String, Number, Color, etc.) - muted cyan
+  function: "#E6C068", // Functions (rgb, hsl, lighten, etc.) - muted yellow
+  variable: "#A2C4A0", // Variables and identifiers - muted sage green
+  reference: "#E88A85", // References (curly braces like {variable.name}) - muted red
+  string: "#D49B6A", // Strings - muted orange
+  number: "#9BC49E", // Numbers - muted green
+  hexColor: "#D49BC4", // Hex colors - muted rose
+  comment: "#747D8C", // Comments - muted blue-gray
+  operator: "#C5A3C5", // Operators (+, -, *, /, =, etc.) - muted purple
+  delimiter: "#8FA6D4", // Delimiters (parentheses, brackets, semicolons, etc.) - muted blue
 
   // JSON-specific mappings
-  jsonString: "#CE9178", // JSON string values
-  jsonNumber: "#B5CEA8", // JSON number values
-  jsonBoolean: "#569CD6", // JSON boolean values
-  jsonNull: "#569CD6", // JSON null values
-  jsonProperty: "#9CDCFE", // JSON property names
-  jsonPunctuation: "#D4D4D4", // JSON punctuation
+  jsonString: "#D49B6A", // JSON string values - muted orange
+  jsonNumber: "#9BC49E", // JSON number values - muted green
+  jsonBoolean: "#7EC8E3", // JSON boolean values - muted cyan
+  jsonNull: "#747D8C", // JSON null values - muted gray
+  jsonProperty: "#A2C4A0", // JSON property names - muted sage green
+  jsonPunctuation: "#8FA6D4", // JSON punctuation - muted blue
 
-  // Editor colors (dark theme)
+  // Editor colors (keeping original neutral dark theme)
   background: "#18181b",
   foreground: "#e4e4e7",
   lineHighlight: "#27272a",

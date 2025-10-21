@@ -156,9 +156,8 @@ export default function SchemaManager() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-zinc-800">
+      <div className="p-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-zinc-300">Schemas</h3>
           <div className="flex items-center gap-2">
             <SchemaCombobox
               onSchemaSelect={handleSchemaSelect}
@@ -240,35 +239,35 @@ export default function SchemaManager() {
                     className="space-y-2"
                   >
                     <div className="px-0 py-2">
-                      <h4 className="text-xs font-medium text-zinc-400 uppercase tracking-wide">
+                      <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
                         {groupName} ({groupSchemas.length})
                       </h4>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       {groupSchemas.map(([url, spec, schemaType]) => (
                         <div
                           key={url}
-                          className="flex items-center justify-between p-3 hover:bg-zinc-800/30 transition-colors bg-zinc-900/30 rounded-lg border border-zinc-800"
+                          className="flex items-center justify-between p-2 hover:bg-zinc-800/30 transition-colors"
                           data-testid={`schema-${url}`}
                         >
                           <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-zinc-300 truncate">
+                            <div className="text-sm text-zinc-300 truncate">
                               {schemaType === "function"
                                 ? (spec as FunctionSpecification).name
                                 : (spec as ColorSpecification).name || url}
                             </div>
                             <div
-                              className="text-xs text-zinc-500 truncate font-mono"
+                              className="text-xs text-zinc-600 truncate font-mono"
                               title={url}
                             >
                               {formatUrl(url)}
                             </div>
                           </div>
-                          <div className="flex items-center gap-2 ml-2">
+                          <div className="flex items-center gap-1 ml-2">
                             <button
                               type="button"
                               onClick={() => handleEdit(url, spec, schemaType)}
-                              className="px-2 py-1 text-xs text-zinc-400 border border-zinc-700 rounded hover:bg-zinc-800 hover:text-zinc-300 transition-colors"
+                              className="px-2 py-1 text-xs text-zinc-400 hover:text-zinc-300 transition-colors"
                               data-testid={`edit-${url}`}
                             >
                               Edit
@@ -276,7 +275,7 @@ export default function SchemaManager() {
                             <button
                               type="button"
                               onClick={() => handleDelete(url, spec, schemaType)}
-                              className="px-2 py-1 text-xs text-red-400 border border-red-900/50 rounded hover:bg-red-950/30 transition-colors"
+                              className="px-2 py-1 text-xs text-red-400 hover:text-red-300 transition-colors"
                               data-testid={`delete-${url}`}
                             >
                               Delete
@@ -301,7 +300,7 @@ export default function SchemaManager() {
               <button
                 type="button"
                 onClick={handleUndoColor}
-                className="px-3 py-1.5 text-xs text-zinc-400 border border-zinc-700 rounded-lg hover:bg-zinc-800 hover:text-zinc-300 transition-colors"
+                className="px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-300 transition-colors"
                 data-testid="undo-color-button"
               >
                 Undo Color ({deletedColorSchemas.length})
@@ -311,7 +310,7 @@ export default function SchemaManager() {
               <button
                 type="button"
                 onClick={handleUndoFunction}
-                className="px-3 py-1.5 text-xs text-zinc-400 border border-zinc-700 rounded-lg hover:bg-zinc-800 hover:text-zinc-300 transition-colors"
+                className="px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-300 transition-colors"
                 data-testid="undo-function-button"
               >
                 Undo Function ({deletedFunctionSchemas.length})

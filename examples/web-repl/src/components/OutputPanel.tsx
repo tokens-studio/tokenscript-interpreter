@@ -425,23 +425,26 @@ function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
   const { error, output } = result;
 
   return (
-    <ShellPanel
-      title={
+    <div
+      className={`h-full flex flex-col bg-zinc-900 ${className}`}
+      data-testid="output-panel"
+    >
+      {/* Header */}
+      <div className="flex items-center px-4 py-2 border-b border-zinc-800 bg-zinc-900/50">
         <OutputPanelTitle
           error={error}
           output={output instanceof BaseSymbolType ? output : undefined}
         />
-      }
-      className={`lg:h-full ${className}`}
-      data-testid="output-panel"
-    >
+      </div>
+
+      {/* Content */}
       <div
-        className="p-4 sm:p-5"
+        className="flex-1 overflow-auto p-4 sm:p-5"
         data-testid="output-panel-content"
       >
         <Output result={result} />
       </div>
-    </ShellPanel>
+    </div>
   );
 }
 
