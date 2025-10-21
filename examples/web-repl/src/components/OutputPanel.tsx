@@ -14,7 +14,7 @@ import {
   type ListSymbol,
 } from "@tokens-studio/tokenscript-interpreter";
 import ShellPanel from "./ShellPanel";
-import { tokenscriptThemeColors } from "./shared-theme";
+import { tokenscriptThemeColors, tokenscriptLightThemeColors } from "./shared-theme";
 
 export interface OutputResult {
   error?: string;
@@ -162,34 +162,33 @@ function JsonOutput({ value }: { value: any }) {
   const { theme } = useTheme();
   const currentTheme = getTheme(theme);
   const jsonString = typeof value === "string" ? value : JSON.stringify(value, null, 2);
+  const themeColors = theme === "light" ? tokenscriptLightThemeColors : tokenscriptThemeColors;
 
   useEffect(() => {
     // Ensure theme colors are applied to CSS custom properties
     const root = document.documentElement;
-    root.style.setProperty("--tokenscript-json-string", tokenscriptThemeColors.jsonString);
-    root.style.setProperty("--tokenscript-json-number", tokenscriptThemeColors.jsonNumber);
-    root.style.setProperty("--tokenscript-json-boolean", tokenscriptThemeColors.jsonBoolean);
-    root.style.setProperty("--tokenscript-json-null", tokenscriptThemeColors.jsonNull);
-    root.style.setProperty("--tokenscript-json-property", tokenscriptThemeColors.jsonProperty);
+    root.style.setProperty("--tokenscript-json-string", themeColors.jsonString);
+    root.style.setProperty("--tokenscript-json-number", themeColors.jsonNumber);
+    root.style.setProperty("--tokenscript-json-boolean", themeColors.jsonBoolean);
+    root.style.setProperty("--tokenscript-json-null", themeColors.jsonNull);
+    root.style.setProperty("--tokenscript-json-property", themeColors.jsonProperty);
     root.style.setProperty(
       "--tokenscript-json-punctuation",
-      tokenscriptThemeColors.jsonPunctuation,
+      themeColors.jsonPunctuation,
     );
 
     Prism.highlightAll();
-  }, []);
+  }, [themeColors]);
 
   return (
     <div
-      className="border rounded-lg p-4 text-sm font-mono overflow-auto"
+      className="text-sm font-mono overflow-auto"
       style={{
-        backgroundColor: currentTheme.surface,
-        borderColor: currentTheme.border,
-        color: currentTheme.foreground,
+        color: currentTheme.textPrimary,
       }}
       data-testid="json-output"
     >
-      <pre className="whitespace-pre-wrap">
+      <pre className="whitespace-pre-wrap p-3">
         <code className="language-json">{jsonString}</code>
       </pre>
     </div>
@@ -558,7 +557,7 @@ function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
 
       {/* Content */}
       <div
-        className="flex-1 overflow-auto p-4 sm:p-5"
+        className="flex-1 overflow-auto"
         style={{ color: currentTheme.textPrimary }}
         data-testid="output-panel-content"
       >

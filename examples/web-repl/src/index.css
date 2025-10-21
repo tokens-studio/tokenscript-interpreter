@@ -65,34 +65,33 @@ body,
 }
 
 /* JSON syntax highlighting using shared theme colors */
+.token {
+  background: transparent !important;
+  text-shadow: none !important;
+}
+
 .token.string {
   color: var(--tokenscript-json-string) !important;
-  text-shadow: none !important;
 }
 
 .token.number {
   color: var(--tokenscript-json-number) !important;
-  text-shadow: none !important;
 }
 
 .token.boolean {
   color: var(--tokenscript-json-boolean) !important;
-  text-shadow: none !important;
 }
 
 .token.null {
   color: var(--tokenscript-json-null) !important;
-  text-shadow: none !important;
 }
 
 .token.property {
   color: var(--tokenscript-json-property) !important;
-  text-shadow: none !important;
 }
 
 .token.punctuation {
   color: var(--tokenscript-json-punctuation) !important;
-  text-shadow: none !important;
 }
 
 /* Override Prism's background and shadows for better integration */
@@ -107,4 +106,15 @@ code[class*="language-"] {
   background: transparent !important;
   text-shadow: none !important;
   color: var(--tokenscript-json-punctuation) !important;
+}
+
+/* Text selection styling */
+code[class*="language-"]::selection {
+  background-color: rgba(107, 114, 128, 0.4) !important;
+  color: inherit !important;
+}
+
+code[class*="language-"] ::selection {
+  background-color: rgba(107, 114, 128, 0.4) !important;
+  color: inherit !important;
 }

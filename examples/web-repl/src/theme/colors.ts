@@ -54,46 +54,46 @@ interface ColorTheme {
 }
 
 export const lightTheme: ColorTheme = {
-  background: "#ffffff",
-  foreground: "#3c3c3c",
-  border: "#d4d4d0",
+  background: "#fafbfc",
+  foreground: "#24292e",
+  border: "#d0d7de",
   
   surface: "#ffffff",
-  surfaceHover: "#f8f8f6",
-  surfaceActive: "#f0f0ec",
+  surfaceHover: "#f6f8fa",
+  surfaceActive: "#eaeef2",
   
-  primary: "#8b7355",
-  primaryHover: "#6e5c45",
+  primary: "#0969da",
+  primaryHover: "#0860ca",
   
   logoAction: "#10b981", // emerald-500
   
-  error: "#d14343",
-  errorLight: "#fef2f2",
-  success: "#4ade80",
-  successLight: "#f0fdf4",
-  warning: "#fb923c",
+  error: "#cf222e",
+  errorLight: "#ffebe6",
+  success: "#1a7f37",
+  successLight: "#dafbe1",
+  warning: "#fb8500",
   
-  textPrimary: "#1a1a1a",
-  textSecondary: "#525252",
-  textMuted: "#a3a3a3",
+  textPrimary: "#24292e",
+  textSecondary: "#57606a",
+  textMuted: "#848d97",
   
   editorBackground: "#ffffff",
-  editorForeground: "#000000",
-  editorLineHighlight: "#f8f8f6",
-  editorSelection: "#e8e8e4",
-  editorLineNumber: "#999999",
-  editorLineNumberActive: "#333333",
-  editorGutterBackground: "#fafafa",
-  editorGutterBorder: "#e8e8e8",
+  editorForeground: "#24292e",
+  editorLineHighlight: "#f6f8fa",
+  editorSelection: "#d0d7de",
+  editorLineNumber: "#848d97",
+  editorLineNumberActive: "#24292e",
+  editorGutterBackground: "#fafbfc",
+  editorGutterBorder: "#d0d7de",
   
-  syntaxKeyword: "#0000FF",
-  syntaxType: "#267f99",
-  syntaxFunction: "#795da3",
-  syntaxVariable: "#001080",
-  syntaxString: "#a31515",
-  syntaxNumber: "#098658",
-  syntaxComment: "#999999",
-  syntaxOperator: "#D73A49",
+  syntaxKeyword: "#d2691e",
+  syntaxType: "#005a9c",
+  syntaxFunction: "#6e40c4",
+  syntaxVariable: "#24292e",
+  syntaxString: "#0a3069",
+  syntaxNumber: "#0550ae",
+  syntaxComment: "#57606a",
+  syntaxOperator: "#24292e",
 };
 
 export const darkTheme: ColorTheme = {
