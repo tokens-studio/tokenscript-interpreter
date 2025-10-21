@@ -51,7 +51,7 @@ interface ColorTheme {
 }
 
 export const lightTheme: ColorTheme = {
-  background: "#f5f5f0",
+  background: "#ffffff",
   foreground: "#3c3c3c",
   border: "#d4d4d0",
   

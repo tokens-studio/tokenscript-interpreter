@@ -234,7 +234,6 @@ const ErrorOutput = ({ error }: { error: string }) => (
     className="text-red-400"
     data-testid="error-output"
   >
-    <div className="font-semibold mb-3 text-red-300">Error:</div>
     <pre
       className="whitespace-pre-wrap text-sm bg-red-950/30 border border-red-900/50 rounded-lg p-4"
       data-testid="error-message"
@@ -516,11 +515,11 @@ const OutputPanelTitle = ({ error, output }: { error?: string; output?: BaseSymb
       />
       <span
         className="font-semibold"
-        style={{ color: currentTheme.textPrimary }}
+        style={{ color: error ? "#f87171" : currentTheme.textPrimary }}
       >
-        Output
+        {error ? "Error" : "Output"}
       </span>
-      {output?.type && (
+      {output?.type && !error && (
         <span
           className="text-xs"
           style={{ color: currentTheme.textMuted }}

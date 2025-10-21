@@ -293,14 +293,18 @@ export default function SchemaManager() {
                             <button
                               type="button"
                               onClick={() => handleEdit(url, spec, schemaType)}
-                              className="px-2 py-1 text-xs transition-colors"
-                              style={{ color: currentTheme.textSecondary }}
-                              onMouseEnter={(e) =>
-                                (e.currentTarget.style.color = currentTheme.textPrimary)
-                              }
-                              onMouseLeave={(e) =>
-                                (e.currentTarget.style.color = currentTheme.textSecondary)
-                              }
+                              className="px-2 py-1 text-xs border rounded transition-colors"
+                              style={{ 
+                                color: currentTheme.textPrimary,
+                                borderColor: currentTheme.border,
+                                backgroundColor: 'transparent'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = currentTheme.surfaceHover;
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = 'transparent';
+                              }}
                               data-testid={`edit-${url}`}
                             >
                               Edit
@@ -308,10 +312,22 @@ export default function SchemaManager() {
                             <button
                               type="button"
                               onClick={() => handleDelete(url, spec, schemaType)}
-                              className="px-2 py-1 text-xs transition-colors"
-                              style={{ color: currentTheme.error }}
-                              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
-                              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+                              className="px-2 py-1 text-xs border rounded transition-colors"
+                              style={{ 
+                                color: currentTheme.textPrimary,
+                                borderColor: currentTheme.border,
+                                backgroundColor: 'transparent'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.color = currentTheme.error;
+                                e.currentTarget.style.borderColor = currentTheme.error;
+                                e.currentTarget.style.backgroundColor = currentTheme.surfaceHover;
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.color = currentTheme.textPrimary;
+                                e.currentTarget.style.borderColor = currentTheme.border;
+                                e.currentTarget.style.backgroundColor = 'transparent';
+                              }}
                               data-testid={`delete-${url}`}
                             >
                               Delete

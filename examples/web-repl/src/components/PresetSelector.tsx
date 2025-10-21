@@ -7,7 +7,7 @@ import { useCallback, useState } from "react";
 import { colorSchemasAtom, functionSchemasAtom } from "../store/atoms";
 import { JSON_PRESETS, type Preset, TOKENSCRIPT_PRESETS } from "../utils/presets";
 import { fetchTokenScriptSchema } from "../utils/schema-fetcher";
-import TitleBarComboBox from "./TitleBarComboBox";
+import CleanSelect from "./CleanSelect";
 
 interface PresetSelectorProps {
   inputMode: "tokenscript" | "json";
@@ -115,13 +115,14 @@ function PresetSelector({ inputMode, onPresetSelect, testId }: PresetSelectorPro
     [presets, loadDependencies, onPresetSelect, setColorSchemas, setFunctionSchemas],
   );
 
-  const options = [{ value: "", label: "Load preset" }, ...presets.map((preset) => ({
+  // Only show actual preset options (no placeholder in dropdown)
+  const options = presets.map((preset) => ({
     value: preset.name,
     label: preset.name,
-  }))];
+  }));
 
   return (
-    <TitleBarComboBox
+    <CleanSelect
       value={selectedPreset}
       onChange={handlePresetChange}
       options={options}
