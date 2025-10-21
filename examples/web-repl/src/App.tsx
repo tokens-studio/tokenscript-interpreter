@@ -9,14 +9,14 @@ import {
   Parser,
 } from "@tokens-studio/tokenscript-interpreter";
 import { useAtom } from "jotai";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowDown, Docs, Github, Share } from "./components/icons";
 import EditorModeTitle from "./components/EditorModeTitle";
 import JsonTokenEditor from "./components/JsonTokenEditor";
 import OutputPanel from "./components/OutputPanel";
 import PresetSelector from "./components/PresetSelector";
 import SchemaDialog from "./components/SchemaDialog";
-import ShareDialog from "./components/ShareDialog";
+import SharePopover from "./components/SharePopover";
 import SchemaManager from "./components/SchemaManager";
 import { HEADER_HEIGHT } from "./components/shared-theme";
 import SlantedSeparator from "./components/SlantedSeparator";
@@ -170,7 +170,8 @@ function App() {
   const [functionSchemas, _setFunctionSchemas] = useAtom(functionSchemasAtom);
   const [input, setInputs] = useState<Record<string, any>>({});
   const [isSchemaDialogOpen, setIsSchemaDialogOpen] = useState(false);
-  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [isSharePopoverOpen, setIsSharePopoverOpen] = useState(false);
+  const shareButtonRef = useRef<HTMLButtonElement>(null);
   const [shareState, setShareState] = useState<ShareState>({
     version: 1,
     mode: "tokenscript",
@@ -364,8 +365,8 @@ function App() {
   }, []);
 
   const handleShare = useCallback(() => {
-    setIsShareDialogOpen(true);
-  }, []);
+    setIsSharePopoverOpen(!isSharePopoverOpen);
+  }, [isSharePopoverOpen]);
 
   useEffect(() => {
     if (!autoRun) return;
@@ -453,18 +454,21 @@ function App() {
 
           {/* Right Navigation Icons */}
           <div className="flex items-center gap-4">
-            <a
-              href="https://github.com/tokens-studio/tokenscript-interpreter"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="transition-colors"
-              style={{ color: currentTheme.textMuted }}
+            <button
+              ref={shareButtonRef}
+              type="button"
+              onClick={handleShare}
+              className="transition-colors pr-4"
+              style={{
+                color: currentTheme.textMuted,
+                borderRight: `1px solid ${currentTheme.border}`,
+              }}
               onMouseEnter={(e) => (e.currentTarget.style.color = currentTheme.textSecondary)}
               onMouseLeave={(e) => (e.currentTarget.style.color = currentTheme.textMuted)}
-              aria-label="GitHub repository"
+              aria-label="Share"
             >
-              <Github />
-            </a>
+              <Share />
+            </button>
             <a
               href="https://docs.tokenscript.dev.gcp.tokens.studio/"
               target="_blank"
@@ -477,17 +481,18 @@ function App() {
             >
               <Docs />
             </a>
-            <button
-              type="button"
-              onClick={handleShare}
+            <a
+              href="https://github.com/tokens-studio/tokenscript-interpreter"
+              target="_blank"
+              rel="noopener noreferrer"
               className="transition-colors"
               style={{ color: currentTheme.textMuted }}
               onMouseEnter={(e) => (e.currentTarget.style.color = currentTheme.textSecondary)}
               onMouseLeave={(e) => (e.currentTarget.style.color = currentTheme.textMuted)}
-              aria-label="Share"
+              aria-label="GitHub repository"
             >
-              <Share />
-            </button>
+              <Github />
+            </a>
           </div>
         </header>
 
@@ -502,10 +507,11 @@ function App() {
           existingFunctionSchemas={functionSchemas}
         />
 
-        <ShareDialog
-          isOpen={isShareDialogOpen}
-          onClose={() => setIsShareDialogOpen(false)}
+        <SharePopover
+          isOpen={isSharePopoverOpen}
+          onClose={() => setIsSharePopoverOpen(false)}
           shareState={shareState}
+          anchorRef={shareButtonRef}
         />
 
         {/* Main Grid Layout */}
