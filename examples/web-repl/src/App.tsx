@@ -16,6 +16,8 @@ import JsonTokenEditor from "./components/JsonTokenEditor";
 import OutputPanel from "./components/OutputPanel";
 import PresetSelector from "./components/PresetSelector";
 import SchemaManager from "./components/SchemaManager";
+import { HEADER_HEIGHT } from "./components/shared-theme";
+import SlantedSeparator from "./components/SlantedSeparator";
 import { ThemeToggle } from "./components/ThemeToggle";
 import TokenScriptEditor from "./components/TokenScriptEditor";
 import {
@@ -327,15 +329,16 @@ function App() {
       <div className="flex-1 flex flex-col">
         {/* Top Navigation Bar */}
         <header
-          className="h-12 border-b flex items-center px-4 gap-4"
+          className="border-b flex items-center px-4 gap-4"
           style={{
             backgroundColor: currentTheme.surface,
             borderColor: currentTheme.border,
+            height: HEADER_HEIGHT,
           }}
         >
-          <div className="flex items-center gap-3 text-sm">
-            <span className="text-emerald-400 font-medium">tokenscript</span>
-            <span style={{ color: currentTheme.textMuted }}>/</span>
+          <div className="flex items-center gap-1 text-sm h-full">
+            <span className="text-emerald-400 font-medium px-3 select-none">tokenscript</span>
+            <SlantedSeparator />
             
             {/* Mode Selector (tokenscript | json) */}
             <div className="flex items-center">
@@ -347,7 +350,7 @@ function App() {
               />
             </div>
             
-            <span style={{ color: currentTheme.textMuted }}>/</span>
+            <SlantedSeparator />
             
             {/* Preset Selector */}
             <PresetSelector
@@ -355,6 +358,18 @@ function App() {
               onPresetSelect={handlePresetSelect}
               testId="preset-selector"
             />
+            
+            {/* Slanted border after last item */}
+            <div className="flex items-center h-full px-2">
+              <div 
+                className="transform -skew-x-12 opacity-20"
+                style={{
+                  backgroundColor: currentTheme.textMuted,
+                  width: "1px",
+                  height: "calc(100% - 4px)",
+                }}
+              />
+            </div>
           </div>
         </header>
 

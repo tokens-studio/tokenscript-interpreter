@@ -1,4 +1,7 @@
 // Shared theme configuration for both Monaco editor and Prism.js syntax highlighting
+
+// Layout constants
+export const HEADER_HEIGHT = "48px"; // 3rem or h-12
 export const tokenscriptThemeColors = {
   // Core syntax colors (muted cool dark theme)
   keyword: "#D19ECF", // Keywords (variable, if, else, etc.) - muted purple-pink

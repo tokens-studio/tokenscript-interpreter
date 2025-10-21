@@ -441,7 +441,9 @@ export default function SchemaEditorModal({
 
           {fetchState.status === "error" && (
             <div
-              className="text-red-600 text-sm"
+              className={`text-sm ${
+                theme === "dark" ? "text-red-400" : "text-red-600"
+              }`}
               data-testid="schema-fetch-error"
             >
               {fetchState.error}
@@ -450,7 +452,9 @@ export default function SchemaEditorModal({
 
           {error && (
             <div
-              className="text-red-600 text-sm"
+              className={`text-sm ${
+                theme === "dark" ? "text-red-400" : "text-red-600"
+              }`}
               data-testid="schema-error"
             >
               {error.message}
@@ -459,17 +463,27 @@ export default function SchemaEditorModal({
 
           {validationErrors.length > 0 && (
             <div
-              className="bg-red-50 border border-red-200 rounded-md p-3"
+              className={`rounded-md p-3 ${
+                theme === "dark" 
+                  ? "bg-red-950 border border-red-800" 
+                  : "bg-red-50 border border-red-200"
+              }`}
               data-testid="validation-errors"
             >
-              <div className="text-red-800 text-sm font-medium mb-2">Schema Validation Errors:</div>
-              <ul className="text-red-700 text-sm space-y-1">
+              <div className={`text-sm font-medium mb-2 ${
+                theme === "dark" ? "text-red-300" : "text-red-800"
+              }`}>Schema Validation Errors:</div>
+              <ul className={`text-sm space-y-1 ${
+                theme === "dark" ? "text-red-400" : "text-red-700"
+              }`}>
                 {validationErrors.map((error, index) => (
                   <li
                     key={index}
                     className="flex items-start"
                   >
-                    <span className="text-red-500 mr-2">•</span>
+                    <span className={`mr-2 ${
+                      theme === "dark" ? "text-red-500" : "text-red-500"
+                    }`}>•</span>
                     <span>{error.message}</span>
                   </li>
                 ))}
@@ -479,25 +493,36 @@ export default function SchemaEditorModal({
         </div>
 
         <div className="flex-1 p-4 flex flex-col min-h-[180px] max-h-full overflow-y-auto">
-          <span className="block text-sm font-medium text-gray-700 mb-2">Schema JSON</span>
-          <div className="h-full flex-1 min-h-[160px] h-full border rounded-md">
+          <span className={`block text-sm font-medium mb-2 ${
+            theme === "dark" ? "text-zinc-300" : "text-gray-700"
+          }`}>Schema JSON</span>
+          <div className={`h-full flex-1 min-h-[160px] h-full border rounded-md ${
+            theme === "dark" ? "border-zinc-700" : "border-gray-300"
+          }`}>
             <MonacoEditor
               value={schemaJson}
               onChange={setSchemaJson}
               onKeyDown={handleKeyDown}
               validationErrors={validationErrors}
               language="json"
+              theme={theme === "dark" ? "tokenscript-theme-dark" : "tokenscript-theme-light"}
               options={jsonEditorOptions}
               disabled={fetchState.status === "loading"}
             />
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 p-4 border-t">
+        <div className={`flex items-center justify-end gap-3 p-4 border-t ${
+          theme === "dark" ? "border-zinc-800" : "border-gray-200"
+        }`}>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+            className={`px-4 py-2 border rounded-md ${
+              theme === "dark"
+                ? "text-zinc-300 border-zinc-600 hover:bg-zinc-800"
+                : "text-gray-600 border-gray-300 hover:bg-gray-50"
+            }`}
             data-testid="cancel-button"
             disabled={fetchState.status === "loading"}
           >
@@ -509,8 +534,12 @@ export default function SchemaEditorModal({
             disabled={!!error || validationErrors.length > 0 || fetchState.status === "loading"}
             className={`px-4 py-2 rounded-md ${
               !!error || validationErrors.length > 0 || fetchState.status === "loading"
-                ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-                : "bg-blue-600 text-white hover:bg-blue-700"
+                ? theme === "dark"
+                  ? "bg-zinc-700 text-zinc-500 cursor-not-allowed"
+                  : "bg-gray-400 text-gray-700 cursor-not-allowed"
+                : theme === "dark"
+                  ? "bg-blue-600 text-white hover:bg-blue-700"
+                  : "bg-blue-600 text-white hover:bg-blue-700"
             }`}
             data-testid="save-button"
           >
