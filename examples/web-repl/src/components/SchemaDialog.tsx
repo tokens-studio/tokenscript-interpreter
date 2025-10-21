@@ -125,9 +125,10 @@ export default function SchemaDialog({
     }
   }, [isOpen, availableSchemas.length, fetchAvailableSchemas]);
 
-  // Focus input when dialog opens
+  // Focus input and clear value when dialog opens
   useEffect(() => {
     if (isOpen) {
+      setInputValue("");
       setTimeout(() => inputRef.current?.focus(), 0);
     }
   }, [isOpen]);
