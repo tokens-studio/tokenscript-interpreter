@@ -49,7 +49,6 @@ export default function SchemaDialog({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch available schemas from API
   const fetchAvailableSchemas = useCallback(async () => {
     setLoading(true);
     try {
@@ -82,7 +81,6 @@ export default function SchemaDialog({
     }
   }, []);
 
-  // Group and filter schemas based on input
   useEffect(() => {
     let schemasToProcess = availableSchemas;
 
@@ -117,7 +115,6 @@ export default function SchemaDialog({
     setSelectedIndex(0);
   }, [inputValue, availableSchemas]);
 
-  // Fetch schemas when dialog opens
   useEffect(() => {
     if (isOpen && availableSchemas.length === 0) {
       fetchAvailableSchemas();
@@ -125,7 +122,6 @@ export default function SchemaDialog({
     }
   }, [isOpen, availableSchemas.length, fetchAvailableSchemas]);
 
-  // Focus input and clear value when dialog opens
   useEffect(() => {
     if (isOpen) {
       setInputValue("");

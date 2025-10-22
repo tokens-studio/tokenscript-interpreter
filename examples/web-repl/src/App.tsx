@@ -117,7 +117,6 @@ type AppState = {
   functionSchemas: Map<string, any>;
 };
 
-// Serialize app state for persistence
 function serializeAppState(
   mode: InputMode,
   code: string,
@@ -145,7 +144,6 @@ function serializeAppState(
   };
 }
 
-// Restore state from persistent storage (sessionStorage for HMR, localStorage for production)
 function getPersistedState(): PersistentState | null {
   const stored = sessionStorage.getItem("repl:state") || localStorage.getItem("repl:state");
   if (!stored) {
@@ -159,16 +157,13 @@ function getPersistedState(): PersistentState | null {
   }
 }
 
-// Get design system preset
 function getDesignSystemPreset(): Preset {
   return JSON_PRESETS.find((p) => p.name === "Design system") || JSON_PRESETS[1];
 }
 
-// Initialize app state based on priority: URL → Persisted State → Design System Preset
 function getInitialAppState(): AppState {
   const designSystemPreset = getDesignSystemPreset();
 
-  // Priority 1: Load from URL
   const sharedState = getShareStateFromUrl();
   if (sharedState) {
     const colorSchemasMap = new Map(sharedState.colorSchemas);
@@ -183,7 +178,6 @@ function getInitialAppState(): AppState {
     };
   }
 
-  // Priority 2: Restore from persistent storage
   const persisted = getPersistedState();
   if (persisted) {
     const colorSchemasMap = new Map<string, any>();
@@ -208,8 +202,6 @@ function getInitialAppState(): AppState {
       functionSchemas: functionSchemasMap,
     };
   }
-
-  // Priority 3: Load design system preset as default
   return {
     code: designSystemPreset.code,
     jsonInput: designSystemPreset.code,
@@ -317,7 +309,7 @@ function App() {
     _setFunctionSchemas(new Map());
   }, [_setColorSchemas, _setFunctionSchemas]);
 
-  // Apply initial schemas from restored state
+  // Apply initial schemas from restored state (run once on mount)
   useEffect(() => {
     if (initialState.colorSchemas.size > 0) {
       _setColorSchemas(initialState.colorSchemas);
@@ -326,9 +318,9 @@ function App() {
       _setFunctionSchemas(initialState.functionSchemas);
     }
     awakenSchemaServer();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Persist state to storage (sessionStorage for HMR in dev, localStorage for production)
   useEffect(() => {
     const currentCode = inputMode === "tokenscript" ? code : jsonInput;
     const persistedState = serializeAppState(
@@ -340,17 +332,11 @@ function App() {
       functionSchemas,
       theme,
     );
-    
-    // Dev: use sessionStorage for HMR preservation
-    if (import.meta.env.DEV) {
-      sessionStorage.setItem("repl:state", JSON.stringify(persistedState));
-    } else {
-      // Production: use localStorage for persistence across sessions
-      localStorage.setItem("repl:state", JSON.stringify(persistedState));
-    }
+
+    const storage = import.meta.env.DEV ? sessionStorage : localStorage;
+    storage.setItem("repl:state", JSON.stringify(persistedState));
   }, [code, jsonInput, inputMode, currentPresetName, jsonMode, colorSchemas, functionSchemas, theme]);
 
-  // Clear preset when code is manually edited
   useEffect(() => {
     if (currentPresetName) {
       const currentPreset = [...TOKENSCRIPT_PRESETS, ...JSON_PRESETS].find(
@@ -365,18 +351,8 @@ function App() {
     }
   }, [code, jsonInput, currentPresetName, inputMode]);
 
-  // Update share state - convert current state to shareable format
   useEffect(() => {
     const currentCode = inputMode === "tokenscript" ? code : jsonInput;
-    const persistedState = serializeAppState(
-      inputMode,
-      currentCode,
-      currentPresetName,
-      jsonMode,
-      colorSchemas,
-      functionSchemas,
-      theme,
-    );
     setShareState(createShareState(inputMode, currentCode, colorSchemas, functionSchemas));
   }, [code, jsonInput, inputMode, colorSchemas, functionSchemas, currentPresetName, jsonMode, theme]);
 
@@ -431,10 +407,6 @@ function App() {
         const output = interpretTokens(jsonTokens, config);
         const executionTime = performance.now() - startTime;
 
-        console.log("JSON Tokens Output", { input: jsonTokens, output, executionTime });
-
-        const _outputString = JSON.stringify(output, null, 2);
-
         setResult({
           type: "json",
           executionTime: Math.round(executionTime * 100) / 100,
@@ -446,7 +418,6 @@ function App() {
     } catch (error) {
       const executionTime = performance.now() - startTime;
 
-      // Extract error information including line number if available
       const errorInfo = {
         message: error instanceof Error ? error.message : String(error),
         line: undefined as number | undefined,
@@ -459,7 +430,6 @@ function App() {
         }
         if ("token" in error) {
           errorInfo.token = (error as any).token;
-          // If token has line but error doesn't
           if (!errorInfo.line && (error as any).token?.line) {
             errorInfo.line = (error as any).token.line;
           }
@@ -478,7 +448,6 @@ function App() {
   }, [code, jsonInput, inputMode, colorSchemas, functionSchemas, input]);
 
   const handleInputModeChange = useCallback((newMode: InputMode) => {
-    // Sync current content to the new mode's storage
     if (newMode === "tokenscript" && inputMode === "json") {
       setCode(jsonInput);
     } else if (newMode === "json" && inputMode === "tokenscript") {
@@ -614,9 +583,7 @@ function App() {
       style={{ backgroundColor: currentTheme.background }}
       data-testid="app-container"
     >
-      {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        {/* Top Navigation Bar */}
         <header
           className="border-b flex items-center justify-between px-4 gap-4"
           style={{
@@ -627,8 +594,7 @@ function App() {
         >
           <div className="flex items-center gap-3 text-sm h-full">
             <span className="text-emerald-400 font-medium px-3 select-none">tokenscript</span>
-            
-            {/* Mode Switch */}
+
             <div className="flex items-center gap-1 px-3 py-1 rounded"
               style={{
                 backgroundColor: currentTheme.background,
@@ -701,7 +667,6 @@ function App() {
 
           </div>
 
-          {/* Right Navigation Icons and Controls */}
           <div className="flex items-center gap-4">
             <ThemeToggle />
             
@@ -765,24 +730,20 @@ function App() {
           anchorRef={shareButtonRef}
         />
 
-        {/* Main Grid Layout */}
         <main
           className="flex-1 flex overflow-hidden"
           data-testid="app-main"
         >
-          {/* Left Column: Editor + Schemas */}
           <div
             className="w-1/2 flex flex-col border-r"
             style={{ borderColor: currentTheme.border }}
           >
-            {/* Editor Title Bar */}
             <EditorTitleBar
               allPresets={[...TOKENSCRIPT_PRESETS, ...JSON_PRESETS]}
               onPresetSelect={handlePresetSelect}
               currentPresetName={currentPresetName}
             />
 
-            {/* Code Editor */}
             <div
               className="flex-1 overflow-hidden"
               data-testid="editor-panel"
@@ -805,7 +766,6 @@ function App() {
               )}
             </div>
 
-            {/* Schema Panel - Below Editor */}
             <div
               data-testid="schema-panel"
               className="border-t"
@@ -878,7 +838,6 @@ function App() {
             </div>
           </div>
 
-          {/* Right Column: Output (Full Height) */}
           <div
             className="flex-1 overflow-hidden"
             data-testid="app-output-panel"

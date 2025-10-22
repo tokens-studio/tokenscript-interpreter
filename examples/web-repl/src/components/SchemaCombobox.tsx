@@ -56,7 +56,6 @@ export default function SchemaCombobox({
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [availableSchemas, setAvailableSchemas] = useState<SchemaOption[]>([]);
-  const [_filteredSchemas, setFilteredSchemas] = useState<SchemaOption[]>([]);
   const [groupedSchemas, setGroupedSchemas] = useState<Record<string, SchemaOption[]>>({});
   const [loading, setLoading] = useState(false);
 
@@ -79,9 +78,6 @@ export default function SchemaCombobox({
       }
 
       const data = await response.json();
-      // console.log("Fetched schemas:", data);
-
-      // Transform the API response to our schema format
       const schemas: SchemaOption[] = Array.isArray(data)
         ? data.map((item: any) => ({
             id: item.id || "",
@@ -96,7 +92,6 @@ export default function SchemaCombobox({
         : [];
 
       setAvailableSchemas(schemas);
-      setFilteredSchemas(schemas);
     } catch (err) {
       console.error("Failed to fetch schemas:", err);
     } finally {
@@ -108,7 +103,6 @@ export default function SchemaCombobox({
   useEffect(() => {
     let schemasToProcess = availableSchemas;
 
-    // Filter by input if provided
     if (inputValue.trim()) {
       schemasToProcess = availableSchemas.filter(
         (schema) =>
@@ -117,7 +111,6 @@ export default function SchemaCombobox({
       );
     }
 
-    // Group by type
     const grouped = schemasToProcess.reduce(
       (acc, schema) => {
         const type = schema.type || "unknown";
@@ -137,7 +130,6 @@ export default function SchemaCombobox({
       {} as Record<string, SchemaOption[]>,
     );
 
-    setFilteredSchemas(schemasToProcess);
     setGroupedSchemas(grouped);
   }, [inputValue, availableSchemas]);
 
@@ -172,14 +164,12 @@ export default function SchemaCombobox({
   const handleCreateCustom = useCallback(() => {
     onCreateCustom();
     setIsOpen(false);
-    // Don't clear input value - keep it as is
   }, [onCreateCustom]);
 
   const handleRestoreDefaults = useCallback(() => {
     if (onRestoreDefaults) {
       onRestoreDefaults();
       setIsOpen(false);
-      // Don't clear input value - keep it as is
     }
   }, [onRestoreDefaults]);
 
@@ -187,7 +177,6 @@ export default function SchemaCombobox({
     if (onClearAllSchemas) {
       onClearAllSchemas();
       setIsOpen(false);
-      // Don't clear input value - keep it as is
     }
   }, [onClearAllSchemas]);
 
