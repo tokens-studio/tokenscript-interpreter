@@ -614,21 +614,6 @@ function App() {
       style={{ backgroundColor: currentTheme.background }}
       data-testid="app-container"
     >
-      {/* Left Sidebar */}
-      <aside
-        className="w-12 border-r flex flex-col items-center py-4"
-        style={{
-          backgroundColor: currentTheme.surface,
-          borderColor: currentTheme.border,
-        }}
-      >
-        <div className="w-8 h-8 bg-emerald-500/20 rounded-lg flex items-center justify-center text-emerald-400 font-bold text-sm">
-          T
-        </div>
-        <div className="flex-1" />
-        <ThemeToggle />
-      </aside>
-
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Top Navigation Bar */}
@@ -646,6 +631,9 @@ function App() {
 
           {/* Right Navigation Icons */}
           <div className="flex items-center gap-4">
+            <div style={{ borderRight: `1px solid ${currentTheme.border}`}}>
+            <ThemeToggle />
+            </div>
             <button
               ref={shareButtonRef}
               type="button"
