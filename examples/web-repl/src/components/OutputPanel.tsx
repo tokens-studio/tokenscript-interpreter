@@ -209,7 +209,7 @@ function JsonOutput({ value, visualMode = false }: { value: any; visualMode?: bo
           return (
             <div
               key={key}
-              className="p-4 flex items-center justify-between gap-4 mx-4"
+              className="p-2 flex items-center justify-between gap-4 mx-4"
               style={{
                 borderBottomColor: index < entries.length - 1 ? "rgba(128, 128, 128, 0.15)" : "transparent",
                 borderBottomWidth: index < entries.length - 1 ? "1px" : "0px",
@@ -649,7 +649,7 @@ function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
   return (
     <div
       className={`h-full flex flex-col ${className}`}
-      style={{ backgroundColor: currentTheme.background }}
+      style={{ backgroundColor: currentTheme.outputBackground }}
       data-testid="output-panel"
     >
       {/* Header */}

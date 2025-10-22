@@ -41,6 +41,8 @@ interface ColorTheme {
   editorLineNumberActive: string;
   editorGutterBackground: string;
   editorGutterBorder: string;
+
+  outputBackground: string;
   
   // Syntax highlighting
   syntaxKeyword: string;
@@ -85,7 +87,9 @@ export const lightTheme: ColorTheme = {
   editorLineNumberActive: "#24292e",
   editorGutterBackground: "#fafbfc",
   editorGutterBorder: "#d0d7de",
-  
+
+  outputBackground: "#ffffff",
+
   syntaxKeyword: "#d2691e",
   syntaxType: "#005a9c",
   syntaxFunction: "#6e40c4",
@@ -128,6 +132,8 @@ export const darkTheme: ColorTheme = {
   editorLineNumberActive: "#a1a1aa",
   editorGutterBackground: "#18181b",
   editorGutterBorder: "#27272a",
+
+  outputBackground: "#18181a",
   
   syntaxKeyword: "#C586C0",
   syntaxType: "#4EC9B0",
