@@ -34,14 +34,27 @@ function EditorTitleBar({
 
   return (
     <div
-      className="flex items-center justify-end px-4 border-b"
+      className="flex items-center justify-between px-4 border-b"
       style={{
         backgroundColor: currentTheme.surface,
         borderColor: currentTheme.border,
         height: HEADER_HEIGHT,
       }}
     >
-      {/* Preset selector */}
+      {/* Left: Loaded Preset Display */}
+      <div className="flex items-center">
+        {currentPresetName && (
+          <span
+            className="text-sm"
+            style={{ color: currentTheme.textMuted }}
+          >
+            Input: {currentPresetName}
+          </span>
+        )}
+        {!currentPresetName && <div />}
+      </div>
+
+      {/* Right: Preset selector */}
       <div className="relative">
         <button
           ref={presetButtonRef}
@@ -69,7 +82,7 @@ function EditorTitleBar({
               d="M12 4v16m8-8H4"
             />
           </svg>
-          <span>{currentPresetName || "Preset"}</span>
+          <span>Load preset</span>
           <svg
             className="w-3 h-3"
             fill="none"
