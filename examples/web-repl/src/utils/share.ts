@@ -2,6 +2,7 @@ import type {
   ColorSpecification,
   FunctionSpecification,
 } from "@tokens-studio/tokenscript-interpreter";
+import LZ from "lz-string";
 
 // Current share format version for backwards compatibility
 const SHARE_VERSION = 1;
@@ -19,9 +20,9 @@ export interface ShareState {
  */
 export function encodeShareState(state: ShareState): string {
   const json = JSON.stringify(state);
-  // Convert to base64 for URL safety
-  const base64 = btoa(unescape(encodeURIComponent(json)));
-  return base64;
+  // Compress JSON and encode to URL-safe format
+  const compressed = LZ.compressToEncodedURIComponent(json);
+  return compressed;
 }
 
 /**
@@ -29,7 +30,11 @@ export function encodeShareState(state: ShareState): string {
  */
 export function decodeShareState(encoded: string): ShareState | null {
   try {
-    const json = decodeURIComponent(escape(atob(encoded)));
+    const json = LZ.decompressFromEncodedURIComponent(encoded);
+    if (!json) {
+      console.error("Failed to decompress share state");
+      return null;
+    }
     const state = JSON.parse(json);
     // Validate version
     if (!state.version || state.version !== SHARE_VERSION) {
