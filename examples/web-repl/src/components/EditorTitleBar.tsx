@@ -5,21 +5,12 @@ import { HEADER_HEIGHT } from "./shared-theme";
 import type { Preset } from "../utils/presets";
 
 interface EditorTitleBarProps {
-  inputMode: "tokenscript" | "json";
-  onInputModeChange: (mode: "tokenscript" | "json") => void;
   allPresets: Preset[];
   onPresetSelect: (preset: Preset) => void;
   currentPresetName: string | null;
 }
 
-const INPUT_MODE_OPTIONS = [
-  { value: "tokenscript", label: "TokenScript" },
-  { value: "json", label: "JSON" },
-];
-
 function EditorTitleBar({
-  inputMode,
-  onInputModeChange,
   allPresets,
   onPresetSelect,
   currentPresetName,
@@ -43,14 +34,14 @@ function EditorTitleBar({
 
   return (
     <div
-      className="flex items-center justify-between px-4 border-b"
+      className="flex items-center justify-end px-4 border-b"
       style={{
         backgroundColor: currentTheme.surface,
         borderColor: currentTheme.border,
         height: HEADER_HEIGHT,
       }}
     >
-      {/* Left: Preset selector */}
+      {/* Preset selector */}
       <div className="relative">
         <button
           ref={presetButtonRef}
@@ -169,49 +160,6 @@ function EditorTitleBar({
             )}
           </div>
         )}
-      </div>
-
-      {/* Right: Mode Switch */}
-      <div className="flex items-center gap-1 px-3 py-1 rounded"
-        style={{
-          backgroundColor: currentTheme.background,
-          border: `1px solid ${currentTheme.border}`,
-        }}
-      >
-        {INPUT_MODE_OPTIONS.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            onClick={() => onInputModeChange(option.value as "tokenscript" | "json")}
-            className="px-2 py-1 rounded text-xs font-medium transition-colors"
-            style={{
-              backgroundColor:
-                inputMode === option.value
-                  ? currentTheme.background
-                  : "transparent",
-              color:
-                inputMode === option.value
-                  ? currentTheme.textPrimary
-                  : currentTheme.textMuted,
-              border:
-                inputMode === option.value
-                  ? `1px solid ${currentTheme.border}`
-                  : "1px solid transparent",
-            }}
-            onMouseEnter={(e) => {
-              if (inputMode !== option.value) {
-                e.currentTarget.style.color = currentTheme.textSecondary;
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (inputMode !== option.value) {
-                e.currentTarget.style.color = currentTheme.textMuted;
-              }
-            }}
-          >
-            {option.label}
-          </button>
-        ))}
       </div>
     </div>
   );

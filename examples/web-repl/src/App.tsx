@@ -625,15 +625,85 @@ function App() {
             height: HEADER_HEIGHT,
           }}
         >
-          <div className="flex items-center gap-1 text-sm h-full">
+          <div className="flex items-center gap-3 text-sm h-full">
             <span className="text-emerald-400 font-medium px-3 select-none">tokenscript</span>
+            
+            {/* Mode Switch */}
+            <div className="flex items-center gap-1 px-3 py-1 rounded"
+              style={{
+                backgroundColor: currentTheme.background,
+                border: `1px solid ${currentTheme.border}`,
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => handleInputModeChange("tokenscript")}
+                className="px-2 py-1 rounded text-xs font-medium transition-colors"
+                style={{
+                  backgroundColor:
+                    inputMode === "tokenscript"
+                      ? currentTheme.background
+                      : "transparent",
+                  color:
+                    inputMode === "tokenscript"
+                      ? currentTheme.textPrimary
+                      : currentTheme.textMuted,
+                  border:
+                    inputMode === "tokenscript"
+                      ? `1px solid ${currentTheme.border}`
+                      : "1px solid transparent",
+                }}
+                onMouseEnter={(e) => {
+                  if (inputMode !== "tokenscript") {
+                    e.currentTarget.style.color = currentTheme.textSecondary;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (inputMode !== "tokenscript") {
+                    e.currentTarget.style.color = currentTheme.textMuted;
+                  }
+                }}
+              >
+                TokenScript
+              </button>
+              <button
+                type="button"
+                onClick={() => handleInputModeChange("json")}
+                className="px-2 py-1 rounded text-xs font-medium transition-colors"
+                style={{
+                  backgroundColor:
+                    inputMode === "json"
+                      ? currentTheme.background
+                      : "transparent",
+                  color:
+                    inputMode === "json"
+                      ? currentTheme.textPrimary
+                      : currentTheme.textMuted,
+                  border:
+                    inputMode === "json"
+                      ? `1px solid ${currentTheme.border}`
+                      : "1px solid transparent",
+                }}
+                onMouseEnter={(e) => {
+                  if (inputMode !== "json") {
+                    e.currentTarget.style.color = currentTheme.textSecondary;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (inputMode !== "json") {
+                    e.currentTarget.style.color = currentTheme.textMuted;
+                  }
+                }}
+              >
+                JSON
+              </button>
+            </div>
           </div>
 
-          {/* Right Navigation Icons */}
+          {/* Right Navigation Icons and Controls */}
           <div className="flex items-center gap-4">
-            <div style={{ borderRight: `1px solid ${currentTheme.border}`}}>
             <ThemeToggle />
-            </div>
+            
             <button
               ref={shareButtonRef}
               type="button"
@@ -706,8 +776,6 @@ function App() {
           >
             {/* Editor Title Bar */}
             <EditorTitleBar
-              inputMode={inputMode}
-              onInputModeChange={handleInputModeChange}
               allPresets={[...TOKENSCRIPT_PRESETS, ...JSON_PRESETS]}
               onPresetSelect={handlePresetSelect}
               currentPresetName={currentPresetName}
