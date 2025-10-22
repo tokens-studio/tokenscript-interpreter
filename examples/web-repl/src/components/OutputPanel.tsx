@@ -1,5 +1,5 @@
 import Prism from "prismjs";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import "prismjs/themes/prism.css";
 import "prismjs/components/prism-json";
@@ -159,7 +159,21 @@ const ColorOutput = ({
   );
 };
 
-function JsonOutput({ value }: { value: any }) {
+const isValidColor = (value: string): boolean => {
+  if (!value) return false;
+  const hexRegex = /^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{4}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})$/;
+  const rgbRegex = /^rgb(a)?\(/i;
+  const hslRegex = /^hsl(a)?\(/i;
+  return hexRegex.test(value) || rgbRegex.test(value) || hslRegex.test(value);
+};
+
+const extractUnit = (value: string): string | null => {
+  const unitRegex = /^[\d.]+\s*([a-zA-Z%]+)$/;
+  const match = value.match(unitRegex);
+  return match ? match[1] : null;
+};
+
+function JsonOutput({ value, visualMode = false }: { value: any; visualMode?: boolean }) {
   const { theme } = useTheme();
   const currentTheme = getTheme(theme);
   const jsonString = typeof value === "string" ? value : JSON.stringify(value, null, 2);
@@ -180,6 +194,96 @@ function JsonOutput({ value }: { value: any }) {
 
     Prism.highlightAll();
   }, [themeColors, jsonString]);
+
+  if (visualMode && typeof value === "object" && value !== null && !Array.isArray(value)) {
+    const entries = Object.entries(value).sort(([keyA], [keyB]) => keyA.localeCompare(keyB));
+    return (
+      <div
+        data-testid="json-output-visual"
+      >
+        {entries.map(([key, val], index) => {
+          const stringVal = String(val);
+          const isColor = isValidColor(stringVal);
+          const unit = extractUnit(stringVal);
+
+          return (
+            <div
+              key={key}
+              className="p-4 flex items-center justify-between gap-4 mx-4"
+              style={{
+                borderBottomColor: index < entries.length - 1 ? "rgba(128, 128, 128, 0.15)" : "transparent",
+                borderBottomWidth: index < entries.length - 1 ? "1px" : "0px",
+              }}
+              data-testid={`json-item-${key}`}
+            >
+              <div className="flex-1 min-w-0">
+                <div
+                  className="text-sm font-mono"
+                  style={{ color: currentTheme.textSecondary }}
+                >
+                  {key}
+                </div>
+              </div>
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <div
+                  className="text-xs font-mono truncate max-w-xs"
+                  style={{ color: "rgba(255, 255, 255, 0.7)" }}
+                >
+                  {stringVal}
+                </div>
+                {isColor ? (
+                  <div
+                    className="w-8 h-8 rounded border flex-shrink-0"
+                    style={{
+                      backgroundColor: stringVal,
+                      borderColor: currentTheme.border,
+                    }}
+                    title={`Color: ${stringVal}`}
+                    data-testid={`color-swatch-${key}`}
+                  />
+                ) : unit ? (
+                  <div
+                    className="w-8 h-8 rounded flex items-center justify-center flex-shrink-0 text-xs font-semibold"
+                    style={{
+                      backgroundColor: currentTheme.background,
+                      borderColor: currentTheme.border,
+                      border: `1px solid ${currentTheme.border}`,
+                      color: currentTheme.textPrimary,
+                    }}
+                    title={`Unit: ${unit}`}
+                    data-testid={`unit-badge-${key}`}
+                  >
+                    {unit}
+                  </div>
+                ) : (
+                  <div
+                    className="w-8 h-8 flex items-center justify-center flex-shrink-0"
+                    style={{ color: currentTheme.textMuted }}
+                    title="Value"
+                    data-testid={`value-icon-${key}`}
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -475,7 +579,7 @@ const SymbolOutput = ({
   }
 };
 
-const Output = ({ result }: { result: OutputResult }) => {
+const Output = ({ result, visualMode }: { result: OutputResult; visualMode?: boolean }) => {
   const { output, error, colorManager, type } = result;
   if (error) {
     return <ErrorOutput error={error} />;
@@ -495,7 +599,7 @@ const Output = ({ result }: { result: OutputResult }) => {
   }
 
   if (type === "json") {
-    return <JsonOutput value={output} />;
+    return <JsonOutput value={output} visualMode={visualMode} />;
   }
 
   return null;
@@ -531,10 +635,16 @@ const OutputPanelTitle = ({ error, output }: { error?: string; output?: BaseSymb
   );
 };
 
+const VIEW_MODE_OPTIONS = [
+  { value: "visual", label: "Visual" },
+  { value: "text", label: "Text" },
+];
+
 function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
   const { error, output } = result;
   const { theme } = useTheme();
   const currentTheme = getTheme(theme);
+  const [viewMode, setViewMode] = useState<"visual" | "text">("visual");
 
   return (
     <div
@@ -544,7 +654,7 @@ function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
     >
       {/* Header */}
       <div
-        className="flex items-center px-4 border-b"
+        className="flex items-center justify-between px-4 border-b"
         style={{
           backgroundColor: currentTheme.surface,
           borderColor: currentTheme.border,
@@ -555,6 +665,52 @@ function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
           error={error}
           output={output instanceof BaseSymbolType ? output : undefined}
         />
+
+        {/* View Mode Toggle */}
+        {!error && result.type === "json" && (
+          <div className="flex items-center gap-1 px-3 py-1 rounded"
+            style={{
+              backgroundColor: currentTheme.background,
+              border: `1px solid ${currentTheme.border}`,
+            }}
+          >
+            {VIEW_MODE_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setViewMode(option.value as "visual" | "text")}
+                className="px-2 py-1 rounded text-xs font-medium transition-colors"
+                style={{
+                  backgroundColor:
+                    viewMode === option.value
+                      ? currentTheme.background
+                      : "transparent",
+                  color:
+                    viewMode === option.value
+                      ? currentTheme.textPrimary
+                      : currentTheme.textMuted,
+                  border:
+                    viewMode === option.value
+                      ? `1px solid ${currentTheme.border}`
+                      : "1px solid transparent",
+                }}
+                onMouseEnter={(e) => {
+                  if (viewMode !== option.value) {
+                    e.currentTarget.style.color = currentTheme.textSecondary;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (viewMode !== option.value) {
+                    e.currentTarget.style.color = currentTheme.textMuted;
+                  }
+                }}
+                data-testid={`view-mode-${option.value}`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Content */}
@@ -563,7 +719,7 @@ function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
         style={{ color: currentTheme.textPrimary }}
         data-testid="output-panel-content"
       >
-        <Output result={result} />
+        <Output result={result} visualMode={viewMode === "visual"} />
       </div>
     </div>
   );
