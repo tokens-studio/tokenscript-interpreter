@@ -97,27 +97,127 @@ const DEFAULT_JSON = `{
 }`;
 
 type InputMode = "tokenscript" | "json";
+type JsonMode = "visual" | "text";
 
-// Helper to get code from sessionStorage (HMR-preserved) or default
-function getInitialCode(): string {
-  if (import.meta.env.DEV) {
-    const stored = sessionStorage.getItem("repl:code");
-    if (stored !== null) {
-      return stored;
-    }
-  }
-  return DEFAULT_CODE;
+type PersistentState = {
+  mode: InputMode;
+  code: string;
+  preset: string | null;
+  jsonMode: JsonMode;
+  schemas: Array<[string, any]>;
+  theme: string;
+};
+
+type AppState = {
+  code: string;
+  jsonInput: string;
+  inputMode: InputMode;
+  presetName: string | null;
+  colorSchemas: Map<string, any>;
+  functionSchemas: Map<string, any>;
+};
+
+// Serialize app state for persistence
+function serializeAppState(
+  mode: InputMode,
+  code: string,
+  preset: string | null,
+  jsonMode: JsonMode,
+  colorSchemas: Map<string, any>,
+  functionSchemas: Map<string, any>,
+  theme: string,
+): PersistentState {
+  const schemas: Array<[string, any]> = [];
+  colorSchemas.forEach((spec, url) => {
+    schemas.push([`color:${url}`, spec]);
+  });
+  functionSchemas.forEach((spec, url) => {
+    schemas.push([`function:${url}`, spec]);
+  });
+
+  return {
+    mode,
+    code,
+    preset,
+    jsonMode,
+    schemas,
+    theme,
+  };
 }
 
-// Helper to get JSON from sessionStorage (HMR-preserved) or default
-function getInitialJson(): string {
-  if (import.meta.env.DEV) {
-    const stored = sessionStorage.getItem("repl:jsonInput");
-    if (stored !== null) {
-      return stored;
-    }
+// Restore state from persistent storage (sessionStorage for HMR, localStorage for production)
+function getPersistedState(): PersistentState | null {
+  const stored = sessionStorage.getItem("repl:state") || localStorage.getItem("repl:state");
+  if (!stored) {
+    return null;
   }
-  return DEFAULT_JSON;
+
+  try {
+    return JSON.parse(stored) as PersistentState;
+  } catch {
+    return null;
+  }
+}
+
+// Get design system preset
+function getDesignSystemPreset(): Preset {
+  return JSON_PRESETS.find((p) => p.name === "Design system") || JSON_PRESETS[1];
+}
+
+// Initialize app state based on priority: URL → Persisted State → Design System Preset
+function getInitialAppState(): AppState {
+  const designSystemPreset = getDesignSystemPreset();
+
+  // Priority 1: Load from URL
+  const sharedState = getShareStateFromUrl();
+  if (sharedState) {
+    const colorSchemasMap = new Map(sharedState.colorSchemas);
+    const functionSchemasMap = new Map(sharedState.functionSchemas);
+    return {
+      code: sharedState.code,
+      jsonInput: sharedState.mode === "json" ? sharedState.code : "",
+      inputMode: sharedState.mode,
+      presetName: null,
+      colorSchemas: colorSchemasMap,
+      functionSchemas: functionSchemasMap,
+    };
+  }
+
+  // Priority 2: Restore from persistent storage
+  const persisted = getPersistedState();
+  if (persisted) {
+    const colorSchemasMap = new Map<string, any>();
+    const functionSchemasMap = new Map<string, any>();
+
+    persisted.schemas.forEach(([key, spec]) => {
+      if (key.startsWith("color:")) {
+        const url = key.slice(6);
+        colorSchemasMap.set(url, spec);
+      } else if (key.startsWith("function:")) {
+        const url = key.slice(9);
+        functionSchemasMap.set(url, spec);
+      }
+    });
+
+    return {
+      code: persisted.code,
+      jsonInput: persisted.mode === "json" ? persisted.code : "",
+      inputMode: persisted.mode,
+      presetName: persisted.preset,
+      colorSchemas: colorSchemasMap,
+      functionSchemas: functionSchemasMap,
+    };
+  }
+
+  // Priority 3: Load design system preset as default
+  return {
+    code: designSystemPreset.code,
+    jsonInput: designSystemPreset.code,
+    inputMode: "json",
+    presetName: designSystemPreset.name,
+    colorSchemas: new Map(),
+    functionSchemas: new Map(),
+  };
 }
 
 function setupColorManager(schemas: typeof DEFAULT_COLOR_SCHEMAS): ColorManager {
@@ -162,10 +262,13 @@ function setupFunctionsManager(schemas: Map<string, FunctionSpecification>): Fun
 function App() {
   const { theme } = useTheme();
   const currentTheme = getTheme(theme);
-  const [code, setCode] = useState(getInitialCode);
-  const [jsonInput, setJsonInput] = useState(getInitialJson);
-  const [inputMode, setInputMode] = useState<InputMode>("tokenscript");
-  const [currentPresetName, setCurrentPresetName] = useState<string | null>(null);
+  
+  const initialState = getInitialAppState();
+  const [code, setCode] = useState(initialState.code);
+  const [jsonInput, setJsonInput] = useState(initialState.jsonInput);
+  const [inputMode, setInputMode] = useState<InputMode>(initialState.inputMode);
+  const [currentPresetName, setCurrentPresetName] = useState<string | null>(initialState.presetName);
+  const [jsonMode, setJsonMode] = useState<JsonMode>("text");
   const [result, setResult] = useState<UnifiedExecutionResult>({ type: "tokenscript" });
   const [autoRun, setAutoRun] = useAtom(autoRunAtom);
   const [jsonError, setJsonError] = useState<string>();
@@ -214,46 +317,38 @@ function App() {
     _setFunctionSchemas(new Map());
   }, [_setColorSchemas, _setFunctionSchemas]);
 
+  // Apply initial schemas from restored state
   useEffect(() => {
+    if (initialState.colorSchemas.size > 0) {
+      _setColorSchemas(initialState.colorSchemas);
+    }
+    if (initialState.functionSchemas.size > 0) {
+      _setFunctionSchemas(initialState.functionSchemas);
+    }
     awakenSchemaServer();
+  }, []);
+
+  // Persist state to storage (sessionStorage for HMR in dev, localStorage for production)
+  useEffect(() => {
+    const currentCode = inputMode === "tokenscript" ? code : jsonInput;
+    const persistedState = serializeAppState(
+      inputMode,
+      currentCode,
+      currentPresetName,
+      jsonMode,
+      colorSchemas,
+      functionSchemas,
+      theme,
+    );
     
-    // Load share state from URL if available
-    const sharedState = getShareStateFromUrl();
-    if (sharedState) {
-      console.log('Loading shared state:', sharedState);
-      setCode(sharedState.code);
-      setInputMode(sharedState.mode);
-      if (sharedState.mode === "json") {
-        setJsonInput(sharedState.code);
-      }
-      
-      // Load color schemas
-      const colorSchemasMap = new Map(sharedState.colorSchemas);
-      if (colorSchemasMap.size > 0) {
-        _setColorSchemas(colorSchemasMap);
-      }
-      
-      // Load function schemas
-      const functionSchemasMap = new Map(sharedState.functionSchemas);
-      if (functionSchemasMap.size > 0) {
-        _setFunctionSchemas(functionSchemasMap);
-      }
-    }
-  }, [_setColorSchemas, _setFunctionSchemas]);
-
-  // In development mode, persist code to sessionStorage for HMR preservation
-  useEffect(() => {
+    // Dev: use sessionStorage for HMR preservation
     if (import.meta.env.DEV) {
-      sessionStorage.setItem("repl:code", code);
+      sessionStorage.setItem("repl:state", JSON.stringify(persistedState));
+    } else {
+      // Production: use localStorage for persistence across sessions
+      localStorage.setItem("repl:state", JSON.stringify(persistedState));
     }
-  }, [code]);
-
-  // In development mode, persist JSON input to sessionStorage for HMR preservation
-  useEffect(() => {
-    if (import.meta.env.DEV) {
-      sessionStorage.setItem("repl:jsonInput", jsonInput);
-    }
-  }, [jsonInput]);
+  }, [code, jsonInput, inputMode, currentPresetName, jsonMode, colorSchemas, functionSchemas, theme]);
 
   // Clear preset when code is manually edited
   useEffect(() => {
@@ -270,11 +365,20 @@ function App() {
     }
   }, [code, jsonInput, currentPresetName, inputMode]);
 
-  // Update share state whenever code, mode, or schemas change
+  // Update share state - convert current state to shareable format
   useEffect(() => {
     const currentCode = inputMode === "tokenscript" ? code : jsonInput;
+    const persistedState = serializeAppState(
+      inputMode,
+      currentCode,
+      currentPresetName,
+      jsonMode,
+      colorSchemas,
+      functionSchemas,
+      theme,
+    );
     setShareState(createShareState(inputMode, currentCode, colorSchemas, functionSchemas));
-  }, [code, jsonInput, inputMode, colorSchemas, functionSchemas]);
+  }, [code, jsonInput, inputMode, colorSchemas, functionSchemas, currentPresetName, jsonMode, theme]);
 
   const executeCode = useCallback(async () => {
     const currentInput = inputMode === "tokenscript" ? code : jsonInput;
@@ -448,6 +552,18 @@ function App() {
     },
     [colorSchemas, functionSchemas, _setColorSchemas, _setFunctionSchemas],
   );
+
+  // Load preset dependencies if using design system preset and it's a fresh load
+  useEffect(() => {
+    if (currentPresetName === "Design system" && initialState.colorSchemas.size === 0) {
+      const preset = getDesignSystemPreset();
+      if (preset.dependencies && preset.dependencies.length > 0) {
+        loadDependencies(preset.dependencies).catch((error) => {
+          console.error('Failed to load design system preset dependencies:', error);
+        });
+      }
+    }
+  }, [currentPresetName, initialState.colorSchemas.size, loadDependencies]);
 
   const handlePresetSelect = useCallback(
     async (preset: Preset) => {
