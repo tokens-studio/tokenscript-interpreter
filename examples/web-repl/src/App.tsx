@@ -1,6 +1,7 @@
 import {
   ColorManager,
   Config,
+  type ColorSpecification,
   type FunctionSpecification,
   FunctionsManager,
   Interpreter,
@@ -33,6 +34,7 @@ import { getTheme } from "./theme/colors";
 import { DEFAULT_COLOR_SCHEMAS } from "./utils/default-schemas";
 import type { Preset } from "./utils/presets";
 import { JSON_PRESETS, TOKENSCRIPT_PRESETS } from "./utils/presets";
+import { fetchTokenScriptSchema } from "./utils/schema-fetcher";
 import {
   createShareState,
   getShareStateFromUrl,
@@ -382,16 +384,93 @@ function App() {
     setCurrentPresetName(null);
   }, [inputMode, code, jsonInput]);
 
-  const handlePresetSelect = useCallback((preset: Preset) => {
-    if (preset.type === "code") {
-      setInputMode("tokenscript");
-      setCode(preset.code);
-    } else if (preset.type === "json") {
-      setInputMode("json");
-      setJsonInput(preset.code);
-    }
-    setCurrentPresetName(preset.name);
-  }, []);
+  const loadDependencies = useCallback(
+    async (dependencies: string[]) => {
+      const visited = new Set<string>();
+      const colorSchemasToAdd = new Map<string, ColorSpecification>();
+      const functionSchemasToAdd = new Map<string, FunctionSpecification>();
+
+      const fetchDependency = async (url: string): Promise<void> => {
+        if (visited.has(url) || colorSchemas.has(url) || functionSchemas.has(url)) {
+          return;
+        }
+
+        visited.add(url);
+
+        try {
+          const response = await fetchTokenScriptSchema(url);
+          const spec = response.content;
+
+          if (spec.type === "function") {
+            functionSchemasToAdd.set(url, spec as FunctionSpecification);
+          } else {
+            colorSchemasToAdd.set(url, spec as ColorSpecification);
+          }
+
+          if (
+            spec.requirements &&
+            Array.isArray(spec.requirements) &&
+            spec.requirements.length > 0
+          ) {
+            const requirementPromises = spec.requirements.map((reqUrl) =>
+              fetchDependency(reqUrl),
+            );
+            await Promise.all(requirementPromises);
+          }
+        } catch (error) {
+          console.error(`Failed to load dependency ${url}:`, error);
+          throw error;
+        }
+      };
+
+      const fetchPromises = dependencies.map((url) => fetchDependency(url));
+      await Promise.all(fetchPromises);
+
+      if (colorSchemasToAdd.size > 0) {
+        _setColorSchemas((current) => {
+          const updated = new Map(current);
+          colorSchemasToAdd.forEach((spec, url) => {
+            updated.set(url, spec);
+          });
+          return updated;
+        });
+      }
+
+      if (functionSchemasToAdd.size > 0) {
+        _setFunctionSchemas((current) => {
+          const updated = new Map(current);
+          functionSchemasToAdd.forEach((spec, url) => {
+            updated.set(url, spec);
+          });
+          return updated;
+        });
+      }
+    },
+    [colorSchemas, functionSchemas, _setColorSchemas, _setFunctionSchemas],
+  );
+
+  const handlePresetSelect = useCallback(
+    async (preset: Preset) => {
+      if (preset.clearDependencies) {
+        _setColorSchemas(new Map());
+        _setFunctionSchemas(new Map());
+      }
+
+      if (preset.dependencies && preset.dependencies.length > 0) {
+        await loadDependencies(preset.dependencies);
+      }
+
+      if (preset.type === "code") {
+        setInputMode("tokenscript");
+        setCode(preset.code);
+      } else if (preset.type === "json") {
+        setInputMode("json");
+        setJsonInput(preset.code);
+      }
+      setCurrentPresetName(preset.name);
+    },
+    [loadDependencies, _setColorSchemas, _setFunctionSchemas],
+  );
 
   const handleShare = useCallback(() => {
     setIsSharePopoverOpen(!isSharePopoverOpen);
