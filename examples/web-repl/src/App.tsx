@@ -11,7 +11,7 @@ import {
 import { useAtom } from "jotai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowDown, Docs, Github, Share } from "./components/icons";
-import EditorModeTitle from "./components/EditorModeTitle";
+import EditorTitleBar from "./components/EditorTitleBar";
 import JsonTokenEditor from "./components/JsonTokenEditor";
 import OutputPanel from "./components/OutputPanel";
 import PresetSelector from "./components/PresetSelector";
@@ -32,6 +32,7 @@ import { useTheme } from "./contexts/ThemeContext";
 import { getTheme } from "./theme/colors";
 import { DEFAULT_COLOR_SCHEMAS } from "./utils/default-schemas";
 import type { Preset } from "./utils/presets";
+import { JSON_PRESETS, TOKENSCRIPT_PRESETS } from "./utils/presets";
 import {
   createShareState,
   getShareStateFromUrl,
@@ -162,6 +163,7 @@ function App() {
   const [code, setCode] = useState(getInitialCode);
   const [jsonInput, setJsonInput] = useState(getInitialJson);
   const [inputMode, setInputMode] = useState<InputMode>("tokenscript");
+  const [currentPresetName, setCurrentPresetName] = useState<string | null>(null);
   const [result, setResult] = useState<UnifiedExecutionResult>({ type: "tokenscript" });
   const [autoRun, setAutoRun] = useAtom(autoRunAtom);
   const [jsonError, setJsonError] = useState<string>();
@@ -250,6 +252,21 @@ function App() {
       sessionStorage.setItem("repl:jsonInput", jsonInput);
     }
   }, [jsonInput]);
+
+  // Clear preset when code is manually edited
+  useEffect(() => {
+    if (currentPresetName) {
+      const currentPreset = [...TOKENSCRIPT_PRESETS, ...JSON_PRESETS].find(
+        (p) => p.name === currentPresetName,
+      );
+      if (currentPreset) {
+        const currentContent = inputMode === "tokenscript" ? code : jsonInput;
+        if (currentContent !== currentPreset.code) {
+          setCurrentPresetName(null);
+        }
+      }
+    }
+  }, [code, jsonInput, currentPresetName, inputMode]);
 
   // Update share state whenever code, mode, or schemas change
   useEffect(() => {
@@ -354,6 +371,17 @@ function App() {
     }
   }, [code, jsonInput, inputMode, colorSchemas, functionSchemas, input]);
 
+  const handleInputModeChange = useCallback((newMode: InputMode) => {
+    // Sync current content to the new mode's storage
+    if (newMode === "tokenscript" && inputMode === "json") {
+      setCode(jsonInput);
+    } else if (newMode === "json" && inputMode === "tokenscript") {
+      setJsonInput(code);
+    }
+    setInputMode(newMode);
+    setCurrentPresetName(null);
+  }, [inputMode, code, jsonInput]);
+
   const handlePresetSelect = useCallback((preset: Preset) => {
     if (preset.type === "code") {
       setInputMode("tokenscript");
@@ -362,6 +390,7 @@ function App() {
       setInputMode("json");
       setJsonInput(preset.code);
     }
+    setCurrentPresetName(preset.name);
   }, []);
 
   const handleShare = useCallback(() => {
@@ -418,38 +447,6 @@ function App() {
         >
           <div className="flex items-center gap-1 text-sm h-full">
             <span className="text-emerald-400 font-medium px-3 select-none">tokenscript</span>
-            <SlantedSeparator />
-            
-            {/* Mode Selector (tokenscript | json) */}
-            <div className="flex items-center">
-              <EditorModeTitle
-                inputMode={inputMode}
-                onInputModeChange={setInputMode}
-                testId="input-mode-dropdown"
-                defaultLabel="tokenscript"
-              />
-            </div>
-            
-            <SlantedSeparator />
-            
-            {/* Preset Selector */}
-            <PresetSelector
-              inputMode={inputMode}
-              onPresetSelect={handlePresetSelect}
-              testId="preset-selector"
-            />
-            
-            {/* Slanted border after last item */}
-            <div className="flex items-center h-full px-2">
-              <div 
-                className="transform -skew-x-12 opacity-20"
-                style={{
-                  backgroundColor: currentTheme.textMuted,
-                  width: "1px",
-                  height: "calc(100% - 4px)",
-                }}
-              />
-            </div>
           </div>
 
           {/* Right Navigation Icons */}
@@ -524,6 +521,15 @@ function App() {
             className="w-1/2 flex flex-col border-r"
             style={{ borderColor: currentTheme.border }}
           >
+            {/* Editor Title Bar */}
+            <EditorTitleBar
+              inputMode={inputMode}
+              onInputModeChange={handleInputModeChange}
+              allPresets={[...TOKENSCRIPT_PRESETS, ...JSON_PRESETS]}
+              onPresetSelect={handlePresetSelect}
+              currentPresetName={currentPresetName}
+            />
+
             {/* Code Editor */}
             <div
               className="flex-1 overflow-hidden"

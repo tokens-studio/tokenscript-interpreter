@@ -5,6 +5,7 @@ import "prismjs/themes/prism.css";
 import "prismjs/components/prism-json";
 import { useTheme } from "../contexts/ThemeContext";
 import { getTheme } from "../theme/colors";
+import { HEADER_HEIGHT } from "./shared-theme";
 import { isNonEmptyObject, when } from "@interpreter/utils/type";
 import {
   BaseSymbolType,
@@ -543,10 +544,11 @@ function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
     >
       {/* Header */}
       <div
-        className="flex items-center px-4 py-2 border-b"
+        className="flex items-center px-4 border-b"
         style={{
           backgroundColor: currentTheme.surface,
           borderColor: currentTheme.border,
+          height: HEADER_HEIGHT,
         }}
       >
         <OutputPanelTitle
