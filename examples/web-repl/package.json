@@ -25,12 +25,12 @@
     "@tokens-studio/tokenscript-interpreter": "file:../../",
     "@types/prismjs": "^1.26.5",
     "jotai": "^2.14.0",
+    "lz-string": "^1.5.0",
     "monaco-editor": "^0.53.0",
     "prismjs": "^1.30.0",
     "react": "^19.1.1",
     "react-aria-components": "^1.13.0",
-    "react-dom": "^19.1.1",
-    "lz-string": "^1.5.0"
+    "react-dom": "^19.1.1"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.4",
