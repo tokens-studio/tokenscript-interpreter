@@ -160,6 +160,50 @@ describe("Lexer", () => {
     expect(lexer.nextToken()).toEqual({ type: TokenType.NUMBER, value: "123", line: 2 });
   });
 
+  it("should allow trailing comments at end of line", () => {
+    const lexer = new Lexer("123 // this is a trailing comment");
+    expect(lexer.nextToken()).toEqual({ type: TokenType.NUMBER, value: "123", line: 1 });
+    expect(lexer.nextToken()).toEqual({ type: TokenType.EOF, value: null, line: 1 });
+  });
+
+  it("should allow trailing comments at end of statement", () => {
+    const lexer = new Lexer("123; // comment");
+    expect(lexer.nextToken()).toEqual({ type: TokenType.NUMBER, value: "123", line: 1 });
+    expect(lexer.nextToken()).toEqual({ type: TokenType.SEMICOLON, value: ";", line: 1 });
+    expect(lexer.nextToken()).toEqual({ type: TokenType.EOF, value: null, line: 1 });
+  });
+
+  it("should handle trailing comments with newline", () => {
+    const lexer = new Lexer("123 // trailing comment\n456");
+    expect(lexer.nextToken()).toEqual({ type: TokenType.NUMBER, value: "123", line: 1 });
+    expect(lexer.nextToken()).toEqual({ type: TokenType.NUMBER, value: "456", line: 2 });
+    expect(lexer.nextToken()).toEqual({ type: TokenType.EOF, value: null, line: 2 });
+  });
+
+  it("should handle multiple statements with trailing comments", () => {
+    const lexer = new Lexer("1 // comment1\n2 // comment2");
+    expect(lexer.nextToken()).toEqual({ type: TokenType.NUMBER, value: "1", line: 1 });
+    expect(lexer.nextToken()).toEqual({ type: TokenType.NUMBER, value: "2", line: 2 });
+    expect(lexer.nextToken()).toEqual({ type: TokenType.EOF, value: null, line: 2 });
+  });
+
+  it("should allow trailing comments on complex expressions", () => {
+    const lexer = new Lexer("1 + 2 * 3 // complex expression");
+    const tokens = [];
+    let token = lexer.nextToken();
+    while (token.type !== TokenType.EOF) {
+      tokens.push(token);
+      token = lexer.nextToken();
+    }
+    expect(tokens).toEqual([
+      { type: TokenType.NUMBER, value: "1", line: 1 },
+      { type: TokenType.OPERATION, value: Operations.ADD, line: 1 },
+      { type: TokenType.NUMBER, value: "2", line: 1 },
+      { type: TokenType.OPERATION, value: Operations.MULTIPLY, line: 1 },
+      { type: TokenType.NUMBER, value: "3", line: 1 },
+    ]);
+  });
+
   it("should tokenize a sequence of tokens", () => {
     const lexer = new Lexer("variable size: Number = {baseSize} * 2px;\nreturn size;");
     const tokens = [];

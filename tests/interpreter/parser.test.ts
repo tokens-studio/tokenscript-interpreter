@@ -168,3 +168,79 @@ if(x == 72) [
     expect(() => parser.parse()).not.toThrow();
   });
 });
+
+describe("Parser - Trailing Comments", () => {
+  it("should parse simple number with trailing comment", () => {
+    const code = "1 // Some comment here";
+
+    const lexer = new Lexer(code);
+    const parser = new Parser(lexer);
+
+    expect(() => parser.parse()).not.toThrow();
+  });
+
+  it("should parse return statement with trailing comment", () => {
+    const code = `return "hello"; // comment at end`;
+
+    const lexer = new Lexer(code);
+    const parser = new Parser(lexer);
+
+    expect(() => parser.parse()).not.toThrow();
+  });
+
+  it("should parse expression with trailing comment", () => {
+    const code = `{value} * 2px // multiply value by 2`;
+
+    const lexer = new Lexer(code);
+    const parser = new Parser(lexer);
+
+    expect(() => parser.parse(true)).not.toThrow();
+  });
+
+  it("should parse variable declaration with trailing comment", () => {
+    const code = `variable x: Number = 10; // set initial value`;
+
+    const lexer = new Lexer(code);
+    const parser = new Parser(lexer);
+
+    expect(() => parser.parse()).not.toThrow();
+  });
+
+  it("should interpret expression with trailing comment", () => {
+    const code = `return 10 + 5; // addition`;
+
+    const lexer = new Lexer(code);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+
+    const result = interpreter.interpret();
+    expect(result).not.toBeNull();
+    expect(result?.toString()).toBe("15");
+  });
+
+  it("should parse multiple statements with trailing comments", () => {
+    const code = `
+variable x: Number = 10; // first statement
+variable y: Number = 20; // second statement
+return x + y; // final result
+`;
+
+    const lexer = new Lexer(code);
+    const parser = new Parser(lexer);
+
+    expect(() => parser.parse()).not.toThrow();
+  });
+
+  it("should parse block with statements having trailing comments", () => {
+    const code = `
+if(true) [
+  return 1; // inside block
+] // comment after block
+`;
+
+    const lexer = new Lexer(code);
+    const parser = new Parser(lexer);
+
+    expect(() => parser.parse()).not.toThrow();
+  });
+});

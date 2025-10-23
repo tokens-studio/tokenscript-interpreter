@@ -66,7 +66,9 @@ export class Lexer {
     while (this.currentChar !== null && this.currentChar !== "\n") {
       this.advance();
     }
-    this.eat("\n");
+    if (this.currentChar === "\n") {
+      this.eat("\n");
+    }
   }
 
   private isComment(): boolean {
