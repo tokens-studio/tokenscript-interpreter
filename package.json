@@ -70,7 +70,9 @@
     "README.md",
     "LICENSE"
   ],
-  "sideEffects": false,
+  "sideEffects": [
+    "src/standalone-polyfills.ts"
+  ],
   "engines": {
     "node": ">=16.0.0"
   },
