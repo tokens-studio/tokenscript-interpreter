@@ -3,7 +3,7 @@ import { z } from "zod";
 // Utility Schemas -------------------------------------------------------------
 
 const ScriptBlockSchema = z.object({
-  type: z.string().url(),
+  type: z.string(),
   script: z.string(),
 });
 

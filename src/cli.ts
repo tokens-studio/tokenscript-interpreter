@@ -1,4 +1,3 @@
-import * as fs from "node:fs";
 import { Interpreter } from "@interpreter/interpreter";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
@@ -229,7 +228,7 @@ async function parseTokenset(tokensetPath: string, outputPath: string): Promise<
     const output = await processThemes(themes, { enablePerformanceTracking: true });
 
     // Write output
-    await fs.promises.writeFile(outputPath, JSON.stringify(output, null, 2), "utf8");
+    // await fs.promises.writeFile(outputPath, JSON.stringify(output, null, 2), "utf8");
     console.log(`💾 Output written to: ${outputPath}`);
   } catch (error: any) {
     console.error(`❌ Error parsing tokenset: ${error.message}`);
@@ -291,7 +290,7 @@ async function permutateTokenset(
     }
 
     // Write output
-    await fs.promises.writeFile(outputPath, JSON.stringify(output, null, 2), "utf8");
+    // await fs.promises.writeFile(outputPath, JSON.stringify(output, null, 2), "utf8");
     console.log(`💾 Permutations written to: ${outputPath}`);
   } catch (error: any) {
     console.error(`❌ Error permutating tokenset: ${error.message}`);
@@ -305,15 +304,15 @@ async function parseJsonFile(jsonPath: string, outputPath: string): Promise<void
 
   try {
     // Read JSON file
-    const jsonContent = await fs.promises.readFile(jsonPath, "utf8");
-    const dtcgJson = JSON.parse(jsonContent);
+    // const jsonContent = await fs.promises.readFile(jsonPath, "utf8");
+    // const dtcgJson = JSON.parse(jsonContent);
 
-    // Process the JSON blob - returns flat tokens (aligned with Python implementation)
-    const output = interpretTokens(dtcgJson);
+    // // Process the JSON blob - returns flat tokens (aligned with Python implementation)
+    // const output = interpretTokens(dtcgJson);
 
-    // Write output
-    await fs.promises.writeFile(outputPath, JSON.stringify(output, null, 2), "utf8");
-    console.log(`💾 Output written to: ${outputPath}`);
+    // // Write output
+    // // await fs.promises.writeFile(outputPath, JSON.stringify(output, null, 2), "utf8");
+    // console.log(`💾 Output written to: ${outputPath}`);
   } catch (error: any) {
     console.error(`❌ Error parsing JSON: ${error.message}`);
     process.exit(1);

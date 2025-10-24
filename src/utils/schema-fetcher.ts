@@ -10,7 +10,7 @@ const SchemaContentSchema = z.discriminatedUnion("type", [
 const TokenScriptSchemaResponseSchema = z.object({
   id: z.string(),
   type: z.string(),
-  schema: z.string().url(),
+  schema: z.string(),
   slug: z.string(),
   version: z.string(),
   content: SchemaContentSchema,

@@ -78,6 +78,8 @@
     "build": "npm run build:lib && npm run build:cli",
     "build:lib": "tsup --config tsup.lib.config.ts",
     "build:cli": "tsup --config tsup.cli.config.ts",
+    "build:standalone": "tsup --config tsup.standalone.config.ts",
+    "build:standalone-cli": "tsup --config tsup.standalone-cli.config.ts",
     "build:watch": "tsup --watch",
     "clean": "rm -rf dist",
     "test": "vitest run",

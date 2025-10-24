@@ -1,12 +1,12 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig([
-  // CLI build
+  // CLI build with all dependencies bundled
   {
     entry: ["src/cli.ts"],
     format: ["esm"],
     outDir: "dist",
-    external: ["yauzl", "chalk", "commander", "readline-sync"],
+    noExternal: [/.*/],
     banner: {
       js: "#!/usr/bin/env node",
     },
@@ -15,6 +15,8 @@ export default defineConfig([
     treeshake: true,
     tsconfig: "tsconfig.build.json",
     target: "es2021",
+    splitting: false,
+    bundle: true,
   },
   // Supporting files needed by CLI
   {
