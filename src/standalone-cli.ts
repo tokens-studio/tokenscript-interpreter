@@ -8,6 +8,37 @@ import type { ISymbolType } from "@src/types";
 // and made available as globalThis.std
 declare const std: any;
 
+function writeFile(path: string, content: string): void {
+  const stdModule = (globalThis as any).std || (typeof std !== "undefined" ? std : undefined);
+  
+  if (stdModule && stdModule.open) {
+    try {
+      const file = stdModule.open(path, "w");
+      if (!file) {
+        throw new Error(`Failed to open file for writing: ${path}`);
+      }
+      file.puts(content);
+      file.close();
+      return;
+    } catch (error) {
+      throw new Error(`Failed to write file '${path}': ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+  }
+  
+  // Fallback for Node.js (for testing)
+  if (typeof process !== "undefined" && typeof require !== "undefined") {
+    try {
+      const fs = require("fs");
+      fs.writeFileSync(path, content, "utf8");
+      return;
+    } catch (error) {
+      throw new Error(`Failed to write file '${path}': ${error instanceof Error ? error.message : "File write failed"}`);
+    }
+  }
+  
+  throw new Error("File writing not supported in this environment");
+}
+
 interface InterpretResult {
   value: unknown;
   stringValue: string;
@@ -89,18 +120,25 @@ function main() {
     : (typeof process !== "undefined" ? process.argv.slice(2) : []);
 
   if (args.length === 0) {
-    console.log("Usage: tokenscript-standalone <script> [--refs <json>]");
-    console.log("       tokenscript-standalone --file <path> [--refs <json>]");
-    console.log("       tokenscript-standalone --process-json <dtcg-json>");
-    console.log("       tokenscript-standalone --process-json-file <path>");
+    console.log("Usage: tokenscript-standalone <script> [--refs <json>] [--output <path>]");
+    console.log("       tokenscript-standalone --file <path> [--refs <json>] [--output <path>]");
+    console.log("       tokenscript-standalone --process-json <dtcg-json> [--output <path>]");
+    console.log("       tokenscript-standalone --process-json-file <path> [--output <path>]");
     console.log("");
     console.log("Examples:");
     console.log('  tokenscript-standalone "1 + 2"');
     console.log('  tokenscript-standalone "{x} + {y}" --refs \'{"x": 5, "y": 10}\'');
     console.log('  tokenscript-standalone --file script.txt --refs \'{"x": 5}\'');
     console.log('  tokenscript-standalone --process-json \'{"color": {"$value": "red"}}\'');
-    console.log('  tokenscript-standalone --process-json-file tokens.json');
+    console.log('  tokenscript-standalone --process-json-file tokens.json --output result.json');
     throw new Error("Missing arguments");
+  }
+
+  // Check for --output argument
+  let outputPath: string | undefined;
+  const outputIndex = args.indexOf("--output");
+  if (outputIndex !== -1 && args[outputIndex + 1]) {
+    outputPath = args[outputIndex + 1];
   }
 
   // Check for --process-json-file mode (DTCG token file)
@@ -111,7 +149,13 @@ function main() {
       const fileContent = loadFile(filePath);
       const dtcgJson = JSON.parse(fileContent);
       const output = processJson(dtcgJson);
-      console.log(output);
+      
+      if (outputPath) {
+        writeFile(outputPath, output);
+        console.log(`Output written to: ${outputPath}`);
+      } else {
+        console.log(output);
+      }
       return;
     } catch (error) {
       console.log(`Error processing JSON file: ${error instanceof Error ? error.message : "Unknown error"}`);
@@ -125,7 +169,13 @@ function main() {
     try {
       const dtcgJson = JSON.parse(args[processJsonIndex + 1]);
       const output = processJson(dtcgJson);
-      console.log(output);
+      
+      if (outputPath) {
+        writeFile(outputPath, output);
+        console.log(`Output written to: ${outputPath}`);
+      } else {
+        console.log(output);
+      }
       return;
     } catch (error) {
       console.log(`Error processing JSON: ${error instanceof Error ? error.message : "Unknown error"}`);
@@ -148,7 +198,13 @@ function main() {
         try {
           const dtcgJson = JSON.parse(script);
           const output = processJson(dtcgJson);
-          console.log(output);
+          
+          if (outputPath) {
+            writeFile(outputPath, output);
+            console.log(`Output written to: ${outputPath}`);
+          } else {
+            console.log(output);
+          }
           return;
         } catch (error) {
           console.log(`Error processing JSON file: ${error instanceof Error ? error.message : "Unknown error"}`);
@@ -178,7 +234,13 @@ function main() {
 
   try {
     const result = interpret(script, references);
-    console.log(result.stringValue);
+    
+    if (outputPath) {
+      writeFile(outputPath, result.stringValue);
+      console.log(`Output written to: ${outputPath}`);
+    } else {
+      console.log(result.stringValue);
+    }
   } catch (error) {
     if (error instanceof Error) {
       console.log(`Error: ${error.message}`);
