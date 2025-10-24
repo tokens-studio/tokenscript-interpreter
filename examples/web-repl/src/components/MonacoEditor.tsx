@@ -1,12 +1,11 @@
 import Editor, { useMonaco } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
 import { useEffect, useRef } from "react";
-import ErrorStatusBar from "./ErrorStatusBar";
 import {
   tokenscriptLanguageConfig,
   tokenscriptLanguageDefinition,
 } from "./monaco-tokenscript-lang";
-import { monacoThemeDefinition } from "./shared-theme";
+import { monacoLightThemeDefinition, monacoThemeDefinition } from "./shared-theme";
 import { TokenScriptCompletionProvider } from "./tokenscript-completion-provider";
 
 export interface ErrorInfo {
@@ -91,7 +90,8 @@ function MonacoEditor({
       monaco.languages.register({ id: "tokenscript" });
       monaco.languages.setLanguageConfiguration("tokenscript", tokenscriptLanguageConfig);
       monaco.languages.setMonarchTokensProvider("tokenscript", tokenscriptLanguageDefinition);
-      monaco.editor.defineTheme("tokenscript-theme", monacoThemeDefinition);
+      monaco.editor.defineTheme("tokenscript-theme-dark", monacoThemeDefinition);
+      monaco.editor.defineTheme("tokenscript-theme-light", monacoLightThemeDefinition);
 
       languageRegisteredRef.current = true;
     }
@@ -115,8 +115,8 @@ function MonacoEditor({
       });
       completionProviderDisposableRef.current = disposable;
 
-      // Set theme each time
-      monaco.editor.setTheme("tokenscript-theme");
+      // Set theme based on prop
+      monaco.editor.setTheme(theme);
     }
 
     // Cleanup function to dispose completion provider
@@ -126,7 +126,7 @@ function MonacoEditor({
         completionProviderDisposableRef.current = null;
       }
     };
-  }, [monaco]);
+  }, [monaco, theme]);
 
   // Handle error markers and validation errors
   useEffect(() => {
@@ -198,7 +198,7 @@ function MonacoEditor({
 
     // Force theme application
     if (monaco) {
-      monaco.editor.setTheme("tokenscript-theme");
+      monaco.editor.setTheme(theme);
     }
 
     // Set focus to editor
@@ -213,8 +213,6 @@ function MonacoEditor({
       onChange(newValue);
     }
   };
-
-  const hasError = error?.message || validationErrors.length > 0;
 
   return (
     <div
@@ -238,14 +236,6 @@ function MonacoEditor({
           }}
         />
       </div>
-      {hasError && (
-        <div className="flex-shrink-0">
-          <ErrorStatusBar
-            error={error?.message}
-            errorInfo={error}
-          />
-        </div>
-      )}
     </div>
   );
 }

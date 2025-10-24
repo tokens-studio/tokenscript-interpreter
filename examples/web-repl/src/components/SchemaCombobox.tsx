@@ -15,7 +15,10 @@ import {
   Popover,
   Separator,
 } from "react-aria-components";
+import { useTheme } from "../contexts/ThemeContext";
+import { getTheme } from "../theme/colors";
 import { fetchTokenScriptSchema } from "../utils/schema-fetcher";
+import Link from "./Link";
 
 interface SchemaOption {
   id: string;
@@ -48,10 +51,11 @@ export default function SchemaCombobox({
   existingColorSchemas = new Map(),
   existingFunctionSchemas = new Map(),
 }: SchemaComboboxProps) {
+  const { theme } = useTheme();
+  const currentTheme = getTheme(theme);
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [availableSchemas, setAvailableSchemas] = useState<SchemaOption[]>([]);
-  const [_filteredSchemas, setFilteredSchemas] = useState<SchemaOption[]>([]);
   const [groupedSchemas, setGroupedSchemas] = useState<Record<string, SchemaOption[]>>({});
   const [loading, setLoading] = useState(false);
 
@@ -74,9 +78,6 @@ export default function SchemaCombobox({
       }
 
       const data = await response.json();
-      // console.log("Fetched schemas:", data);
-
-      // Transform the API response to our schema format
       const schemas: SchemaOption[] = Array.isArray(data)
         ? data.map((item: any) => ({
             id: item.id || "",
@@ -91,7 +92,6 @@ export default function SchemaCombobox({
         : [];
 
       setAvailableSchemas(schemas);
-      setFilteredSchemas(schemas);
     } catch (err) {
       console.error("Failed to fetch schemas:", err);
     } finally {
@@ -103,7 +103,6 @@ export default function SchemaCombobox({
   useEffect(() => {
     let schemasToProcess = availableSchemas;
 
-    // Filter by input if provided
     if (inputValue.trim()) {
       schemasToProcess = availableSchemas.filter(
         (schema) =>
@@ -112,7 +111,6 @@ export default function SchemaCombobox({
       );
     }
 
-    // Group by type
     const grouped = schemasToProcess.reduce(
       (acc, schema) => {
         const type = schema.type || "unknown";
@@ -132,7 +130,6 @@ export default function SchemaCombobox({
       {} as Record<string, SchemaOption[]>,
     );
 
-    setFilteredSchemas(schemasToProcess);
     setGroupedSchemas(grouped);
   }, [inputValue, availableSchemas]);
 
@@ -167,14 +164,12 @@ export default function SchemaCombobox({
   const handleCreateCustom = useCallback(() => {
     onCreateCustom();
     setIsOpen(false);
-    // Don't clear input value - keep it as is
   }, [onCreateCustom]);
 
   const handleRestoreDefaults = useCallback(() => {
     if (onRestoreDefaults) {
       onRestoreDefaults();
       setIsOpen(false);
-      // Don't clear input value - keep it as is
     }
   }, [onRestoreDefaults]);
 
@@ -182,7 +177,6 @@ export default function SchemaCombobox({
     if (onClearAllSchemas) {
       onClearAllSchemas();
       setIsOpen(false);
-      // Don't clear input value - keep it as is
     }
   }, [onClearAllSchemas]);
 
@@ -213,11 +207,17 @@ export default function SchemaCombobox({
         <Label className="sr-only">Select or search for a schema</Label>
         <Input
           placeholder={placeholder}
-          className="w-48 px-3 py-1 text-sm bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-8"
+          className="w-48 px-3 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:border-transparent pr-8"
+          style={{
+            backgroundColor: currentTheme.surface,
+            color: currentTheme.textPrimary,
+            borderColor: currentTheme.border,
+          }}
         />
         <Button className="absolute inset-y-0 right-0 flex items-center px-2">
           <svg
-            className="w-4 h-4 text-gray-400"
+            className="w-4 h-4"
+            style={{ color: currentTheme.textMuted }}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -232,21 +232,34 @@ export default function SchemaCombobox({
         </Button>
       </div>
 
-      <Popover className="w-80 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-80 overflow-auto">
+      <Popover
+        className="w-80 mt-1 border rounded-lg shadow-2xl z-50 max-h-80 overflow-auto"
+        style={{
+          backgroundColor: currentTheme.surface,
+          borderColor: currentTheme.border,
+        }}
+      >
         <ListBox>
           <ListBoxSection>
-            <Header className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide border-b border-gray-100">
+            <Header
+              className="px-3 py-2 text-xs font-medium uppercase tracking-wide border-b"
+              style={{
+                color: currentTheme.textMuted,
+                borderColor: currentTheme.border,
+              }}
+            >
               Actions
             </Header>
             <ListBoxItem
               id="create-custom"
               textValue="Create custom schema"
-              className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer focus:bg-blue-50 focus:outline-none data-[focused]:bg-blue-50 data-[hovered]:bg-gray-50"
+              className="px-3 py-2 text-sm cursor-pointer focus:outline-none"
+              style={{ color: currentTheme.textPrimary }}
               onAction={() => onCreateCustom()}
             >
               <div className="flex items-center gap-2">
                 <svg
-                  className="w-4 h-4 text-gray-500"
+                  className="w-4 h-4 text-zinc-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -266,12 +279,12 @@ export default function SchemaCombobox({
               <ListBoxItem
                 id="restore-defaults"
                 textValue="Restore defaults"
-                className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer focus:bg-blue-50 focus:outline-none data-[focused]:bg-blue-50 data-[hovered]:bg-gray-50"
+                className="px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800 cursor-pointer focus:bg-zinc-800 focus:outline-none data-[focused]:bg-zinc-800 data-[hovered]:bg-zinc-800"
                 onAction={() => onRestoreDefaults()}
               >
                 <div className="flex items-center gap-2">
                   <svg
-                    className="w-4 h-4 text-gray-500"
+                    className="w-4 h-4 text-zinc-400"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -292,12 +305,12 @@ export default function SchemaCombobox({
               <ListBoxItem
                 id="clear-all-schemas"
                 textValue="Clear all schemas"
-                className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer focus:bg-blue-50 focus:outline-none data-[focused]:bg-blue-50 data-[hovered]:bg-gray-50"
+                className="px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800 cursor-pointer focus:bg-zinc-800 focus:outline-none data-[focused]:bg-zinc-800 data-[hovered]:bg-zinc-800"
                 onAction={() => onClearAllSchemas()}
               >
                 <div className="flex items-center gap-2">
                   <svg
-                    className="w-4 h-4 text-red-500"
+                    className="w-4 h-4 text-red-400"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -315,20 +328,20 @@ export default function SchemaCombobox({
             )}
           </ListBoxSection>
 
-          <Separator className="border-t border-gray-200 my-1" />
+          <Separator className="border-t border-zinc-800 my-1" />
 
           {loading && (
             <ListBoxSection>
-              <Header className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
+              <Header className="px-3 py-2 text-xs font-medium text-zinc-500 uppercase tracking-wide">
                 Loading schemas...
               </Header>
               <ListBoxItem
                 id="loading"
                 textValue="Loading schemas"
-                className="px-3 py-4 text-sm text-gray-500 text-center cursor-default data-[focused]:bg-transparent"
+                className="px-3 py-4 text-sm text-zinc-400 text-center cursor-default data-[focused]:bg-transparent"
               >
                 <div className="flex items-center justify-center gap-2">
-                  <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+                  <div className="w-4 h-4 border-2 border-zinc-700 border-t-zinc-400 rounded-full animate-spin"></div>
                   <span>Loading schemas...</span>
                 </div>
               </ListBoxItem>
@@ -337,13 +350,13 @@ export default function SchemaCombobox({
 
           {!loading && Object.keys(groupedSchemas).length === 0 && inputValue && (
             <ListBoxSection>
-              <Header className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
+              <Header className="px-3 py-2 text-xs font-medium text-zinc-500 uppercase tracking-wide">
                 No Results
               </Header>
               <ListBoxItem
                 id="no-results"
                 textValue="No results found"
-                className="px-3 py-4 text-sm text-gray-500 text-center cursor-default data-[focused]:bg-transparent"
+                className="px-3 py-4 text-sm text-zinc-400 text-center cursor-default data-[focused]:bg-transparent"
               >
                 <span>No schemas found matching "{inputValue}"</span>
               </ListBoxItem>
@@ -368,7 +381,7 @@ export default function SchemaCombobox({
 
                 return (
                   <ListBoxSection key={groupName}>
-                    <Header className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    <Header className="px-3 py-2 text-xs font-medium text-zinc-500 uppercase tracking-wide">
                       {groupName} ({schemas.length})
                     </Header>
                     {schemas.map((schema) => {
@@ -381,27 +394,29 @@ export default function SchemaCombobox({
                           key={schema.id}
                           id={schema.id}
                           textValue={schema.name}
-                          className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer focus:bg-blue-50 focus:outline-none data-[focused]:bg-blue-50 data-[hovered]:bg-gray-50"
+                          className="px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800 cursor-pointer focus:bg-zinc-800 focus:outline-none data-[focused]:bg-zinc-800 data-[hovered]:bg-zinc-800"
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex flex-col flex-1 min-w-0">
-                              <span className="font-medium text-gray-900">{schema.name}</span>
+                              <span className="font-medium text-zinc-200">{schema.name}</span>
                               {schema.description && (
-                                <span className="text-xs text-gray-500 mt-1">
+                                <span className="text-xs text-zinc-400 mt-1">
                                   {schema.description}
                                 </span>
                               )}
-                              <span
-                                className="text-xs text-gray-400 mt-1 truncate"
+                              <Link
+                                href={schema.url}
+                                className="text-xs mt-1 truncate font-mono block"
                                 title={schema.url}
+                                onClick={(e) => e.stopPropagation()}
                               >
                                 {schema.url}
-                              </span>
+                              </Link>
                             </div>
                             {isDownloaded && (
                               <div className="flex-shrink-0 mt-0.5">
                                 <svg
-                                  className="w-4 h-4 text-green-600"
+                                  className="w-4 h-4 text-emerald-500"
                                   fill="none"
                                   stroke="currentColor"
                                   viewBox="0 0 24 24"
@@ -420,7 +435,7 @@ export default function SchemaCombobox({
                       );
                     })}
                     {groupName !== allGroups[allGroups.length - 1] && (
-                      <Separator className="border-t border-gray-200 my-1" />
+                      <Separator className="border-t border-zinc-800 my-1" />
                     )}
                   </ListBoxSection>
                 );

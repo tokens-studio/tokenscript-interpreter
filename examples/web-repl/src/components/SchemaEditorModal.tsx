@@ -10,6 +10,7 @@ import { createPortal } from "react-dom";
 import type { ZodError } from "zod";
 import { fetchTokenScriptSchema } from "../utils/schema-fetcher";
 import MonacoEditor, { jsonEditorOptions, type ValidationError } from "./MonacoEditor";
+import { useTheme } from "../contexts/ThemeContext";
 
 interface SchemaEditorModalProps {
   onClose: () => void;
@@ -32,6 +33,7 @@ export default function SchemaEditorModal({
   onSave,
   existingSchemas = new Map(),
 }: SchemaEditorModalProps) {
+  const { theme } = useTheme();
   const [url, setUrl] = useState<string | undefined>(schema?.url);
 
   const defaultSpec = schema?.spec || MINIMAL_COLOR_SPECIFICATION;
@@ -310,19 +312,31 @@ export default function SchemaEditorModal({
       aria-modal="true"
     >
       <div
-        className="bg-white rounded-lg shadow-xl w-full max-w-4xl h-5/6 flex flex-col"
+        className={`${
+          theme === "dark" ? "bg-zinc-900" : "bg-white"
+        } rounded-lg shadow-xl w-full max-w-4xl h-5/6 flex flex-col`}
         role="presentation"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
         tabIndex={-1}
         aria-hidden="true"
       >
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">{schema ? "Edit Schema" : "Add New Schema"}</h2>
+        <div className={`flex items-center justify-between p-4 border-b ${
+          theme === "dark" ? "border-zinc-800" : "border-gray-200"
+        }`}>
+          <h2 className={`text-lg font-semibold ${
+            theme === "dark" ? "text-zinc-100" : "text-gray-900"
+          }`}>
+            {schema ? "Edit Schema" : "Add New Schema"}
+          </h2>
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className={`${
+              theme === "dark" 
+                ? "text-zinc-400 hover:text-zinc-300" 
+                : "text-gray-400 hover:text-gray-600"
+            }`}
             data-testid="close-modal"
           >
             <svg
@@ -341,11 +355,15 @@ export default function SchemaEditorModal({
           </button>
         </div>
 
-        <div className="p-4 border-b space-y-4">
+        <div className={`p-4 border-b ${
+          theme === "dark" ? "border-zinc-800" : "border-gray-200"
+        } space-y-4`}>
           <div>
             <label
               htmlFor={`${uniqueId}-schema-url`}
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className={`block text-sm font-medium mb-1 ${
+                theme === "dark" ? "text-zinc-300" : "text-gray-700"
+              }`}
             >
               Schema URL *
             </label>
@@ -357,7 +375,11 @@ export default function SchemaEditorModal({
                   value={url || ""}
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="https://schema.example.com/color/v1/"
-                  className="h-10 w-full pr-10 px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={`h-10 w-full pr-10 px-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    theme === "dark"
+                      ? "bg-zinc-800 border border-zinc-700 text-zinc-100 placeholder-zinc-500"
+                      : "bg-white border border-gray-300 text-gray-900 placeholder-gray-400"
+                  }`}
                   data-testid="schema-url-input"
                   disabled={fetchState.status === "loading"}
                 />
@@ -388,12 +410,20 @@ export default function SchemaEditorModal({
                   error?.type === "empty" ||
                   error?.type === "invalid" ||
                   fetchState.status === "loading"
-                    ? "bg-gray-200 text-gray-400 border-gray-300 cursor-not-allowed"
+                    ? theme === "dark"
+                      ? "bg-zinc-700 text-zinc-500 border-zinc-600 cursor-not-allowed"
+                      : "bg-gray-200 text-gray-400 border-gray-300 cursor-not-allowed"
                     : fetchState.status === "success"
-                      ? "bg-green-50 text-green-800 border-green-500"
+                      ? theme === "dark"
+                        ? "bg-green-900 text-green-300 border-green-600"
+                        : "bg-green-50 text-green-800 border-green-500"
                       : fetchState.status === "loading"
-                        ? "bg-orange-50 text-orange-800 border-orange-500 hover:bg-orange-100"
-                        : "bg-blue-50 text-blue-800 border-blue-500 hover:bg-blue-100"
+                        ? theme === "dark"
+                          ? "bg-orange-900 text-orange-300 border-orange-600 hover:bg-orange-800"
+                          : "bg-orange-50 text-orange-800 border-orange-500 hover:bg-orange-100"
+                        : theme === "dark"
+                          ? "bg-blue-900 text-blue-300 border-blue-600 hover:bg-blue-800"
+                          : "bg-blue-50 text-blue-800 border-blue-500 hover:bg-blue-100"
                 }`}
                 data-testid="fetch-schema-button"
                 disabled={
@@ -411,7 +441,9 @@ export default function SchemaEditorModal({
 
           {fetchState.status === "error" && (
             <div
-              className="text-red-600 text-sm"
+              className={`text-sm ${
+                theme === "dark" ? "text-red-400" : "text-red-600"
+              }`}
               data-testid="schema-fetch-error"
             >
               {fetchState.error}
@@ -420,7 +452,9 @@ export default function SchemaEditorModal({
 
           {error && (
             <div
-              className="text-red-600 text-sm"
+              className={`text-sm ${
+                theme === "dark" ? "text-red-400" : "text-red-600"
+              }`}
               data-testid="schema-error"
             >
               {error.message}
@@ -429,17 +463,27 @@ export default function SchemaEditorModal({
 
           {validationErrors.length > 0 && (
             <div
-              className="bg-red-50 border border-red-200 rounded-md p-3"
+              className={`rounded-md p-3 ${
+                theme === "dark" 
+                  ? "bg-red-950 border border-red-800" 
+                  : "bg-red-50 border border-red-200"
+              }`}
               data-testid="validation-errors"
             >
-              <div className="text-red-800 text-sm font-medium mb-2">Schema Validation Errors:</div>
-              <ul className="text-red-700 text-sm space-y-1">
+              <div className={`text-sm font-medium mb-2 ${
+                theme === "dark" ? "text-red-300" : "text-red-800"
+              }`}>Schema Validation Errors:</div>
+              <ul className={`text-sm space-y-1 ${
+                theme === "dark" ? "text-red-400" : "text-red-700"
+              }`}>
                 {validationErrors.map((error, index) => (
                   <li
                     key={index}
                     className="flex items-start"
                   >
-                    <span className="text-red-500 mr-2">•</span>
+                    <span className={`mr-2 ${
+                      theme === "dark" ? "text-red-500" : "text-red-500"
+                    }`}>•</span>
                     <span>{error.message}</span>
                   </li>
                 ))}
@@ -449,25 +493,36 @@ export default function SchemaEditorModal({
         </div>
 
         <div className="flex-1 p-4 flex flex-col min-h-[180px] max-h-full overflow-y-auto">
-          <span className="block text-sm font-medium text-gray-700 mb-2">Schema JSON</span>
-          <div className="h-full flex-1 min-h-[160px] h-full border rounded-md">
+          <span className={`block text-sm font-medium mb-2 ${
+            theme === "dark" ? "text-zinc-300" : "text-gray-700"
+          }`}>Schema JSON</span>
+          <div className={`h-full flex-1 min-h-[160px] h-full border rounded-md ${
+            theme === "dark" ? "border-zinc-700" : "border-gray-300"
+          }`}>
             <MonacoEditor
               value={schemaJson}
               onChange={setSchemaJson}
               onKeyDown={handleKeyDown}
               validationErrors={validationErrors}
               language="json"
+              theme={theme === "dark" ? "tokenscript-theme-dark" : "tokenscript-theme-light"}
               options={jsonEditorOptions}
               disabled={fetchState.status === "loading"}
             />
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 p-4 border-t">
+        <div className={`flex items-center justify-end gap-3 p-4 border-t ${
+          theme === "dark" ? "border-zinc-800" : "border-gray-200"
+        }`}>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+            className={`px-4 py-2 border rounded-md ${
+              theme === "dark"
+                ? "text-zinc-300 border-zinc-600 hover:bg-zinc-800"
+                : "text-gray-600 border-gray-300 hover:bg-gray-50"
+            }`}
             data-testid="cancel-button"
             disabled={fetchState.status === "loading"}
           >
@@ -479,8 +534,12 @@ export default function SchemaEditorModal({
             disabled={!!error || validationErrors.length > 0 || fetchState.status === "loading"}
             className={`px-4 py-2 rounded-md ${
               !!error || validationErrors.length > 0 || fetchState.status === "loading"
-                ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-                : "bg-blue-600 text-white hover:bg-blue-700"
+                ? theme === "dark"
+                  ? "bg-zinc-700 text-zinc-500 cursor-not-allowed"
+                  : "bg-gray-400 text-gray-700 cursor-not-allowed"
+                : theme === "dark"
+                  ? "bg-blue-600 text-white hover:bg-blue-700"
+                  : "bg-blue-600 text-white hover:bg-blue-700"
             }`}
             data-testid="save-button"
           >

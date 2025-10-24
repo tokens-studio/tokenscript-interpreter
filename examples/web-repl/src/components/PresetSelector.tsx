@@ -3,11 +3,11 @@ import type {
   FunctionSpecification,
 } from "@tokens-studio/tokenscript-interpreter";
 import { useAtom } from "jotai";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { colorSchemasAtom, functionSchemasAtom } from "../store/atoms";
 import { JSON_PRESETS, type Preset, TOKENSCRIPT_PRESETS } from "../utils/presets";
 import { fetchTokenScriptSchema } from "../utils/schema-fetcher";
-import Select from "./Select";
+import CleanSelect from "./CleanSelect";
 
 interface PresetSelectorProps {
   inputMode: "tokenscript" | "json";
@@ -19,6 +19,7 @@ function PresetSelector({ inputMode, onPresetSelect, testId }: PresetSelectorPro
   const presets = inputMode === "tokenscript" ? TOKENSCRIPT_PRESETS : JSON_PRESETS;
   const [colorSchemas, setColorSchemas] = useAtom(colorSchemasAtom);
   const [functionSchemas, setFunctionSchemas] = useAtom(functionSchemasAtom);
+  const [selectedPreset, setSelectedPreset] = useState("");
 
   const loadDependencies = useCallback(
     async (dependencies: string[]) => {
@@ -27,7 +28,6 @@ function PresetSelector({ inputMode, onPresetSelect, testId }: PresetSelectorPro
       const functionSchemasToAdd = new Map<string, FunctionSpecification>();
 
       const fetchDependency = async (url: string): Promise<void> => {
-        // Avoid infinite loops and duplicate loading
         if (visited.has(url) || colorSchemas.has(url) || functionSchemas.has(url)) {
           return;
         }
@@ -38,14 +38,12 @@ function PresetSelector({ inputMode, onPresetSelect, testId }: PresetSelectorPro
           const response = await fetchTokenScriptSchema(url);
           const spec = response.content;
 
-          // Collect schema for later addition
           if (spec.type === "function") {
             functionSchemasToAdd.set(url, spec as FunctionSpecification);
           } else {
             colorSchemasToAdd.set(url, spec as ColorSpecification);
           }
 
-          // Recursively load requirements if they exist
           if (
             spec.requirements &&
             Array.isArray(spec.requirements) &&
@@ -56,15 +54,13 @@ function PresetSelector({ inputMode, onPresetSelect, testId }: PresetSelectorPro
           }
         } catch (error) {
           console.error(`Failed to load dependency ${url}:`, error);
-          throw error; // Re-throw to prevent partial loading
+          throw error;
         }
       };
 
-      // Fetch all dependencies recursively
       const fetchPromises = dependencies.map((url) => fetchDependency(url));
       await Promise.all(fetchPromises);
 
-      // Add all schemas at once after successful fetching
       if (colorSchemasToAdd.size > 0) {
         setColorSchemas((current) => {
           const updated = new Map(current);
@@ -105,23 +101,27 @@ function PresetSelector({ inputMode, onPresetSelect, testId }: PresetSelectorPro
         }
 
         onPresetSelect(preset);
+        setSelectedPreset(presetName);
+
+        // Reset after a short delay
+        setTimeout(() => setSelectedPreset(""), 100);
       }
     },
     [presets, loadDependencies, onPresetSelect, setColorSchemas, setFunctionSchemas],
   );
 
+  // Only show actual preset options (no placeholder in dropdown)
   const options = presets.map((preset) => ({
     value: preset.name,
     label: preset.name,
   }));
 
   return (
-    <Select
-      value=""
+    <CleanSelect
+      value={selectedPreset}
       onChange={handlePresetChange}
       options={options}
       placeholder="Load preset"
-      showCheckmarks={false}
       testId={testId}
     />
   );

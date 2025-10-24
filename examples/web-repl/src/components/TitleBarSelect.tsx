@@ -12,12 +12,12 @@ interface TitleBarSelectProps {
 function TitleBarSelect({ value, onChange, options, testId }: Omit<TitleBarSelectProps, "label">) {
   return (
     <div className="flex h-full items-center">
-      <div className="relative flex items-center h-full hover:bg-gray-100 border-l border-r border-solid border-gray-200">
+      <div className="relative flex items-center h-full hover:bg-zinc-800/50 transition-colors">
         <DefaultShellTitle className="px-0">
           <select
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            className="h-full appearance-none font-bold bg-transparent border-none outline-none truncate cursor-pointer px-3 pr-10"
+            className="h-full appearance-none font-semibold bg-transparent border-none outline-none truncate cursor-pointer px-3 pr-10 text-zinc-300"
             data-testid={testId}
           >
             {options.map((option) => (
@@ -29,7 +29,7 @@ function TitleBarSelect({ value, onChange, options, testId }: Omit<TitleBarSelec
               </option>
             ))}
           </select>
-          <span className="pointer-events-none absolute right-1 pr-1">
+          <span className="pointer-events-none absolute right-1 pr-1 text-zinc-500">
             <ArrowDown />
           </span>
         </DefaultShellTitle>

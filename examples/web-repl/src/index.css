@@ -8,7 +8,7 @@ body,
   height: 100%;
   margin: 0;
   padding: 0;
-  @apply bg-gray-100;
+  background: #09090b;
 }
 
 .code-editor {
@@ -19,77 +19,102 @@ body,
   font-family: "Fira Code", "Monaco", "Courier New", monospace;
 }
 
-.scrollbar-thin::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* Dark mode scrollbar styling */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
 }
 
-.scrollbar-thin::-webkit-scrollbar-track {
-  @apply bg-gray-100;
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.scrollbar-thin::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 rounded;
+::-webkit-scrollbar-thumb {
+  background: rgba(107, 114, 128, 0.6);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background 0.2s ease;
 }
 
-.scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-400;
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 114, 128, 0.9);
+  background-clip: padding-box;
 }
 
-/* CSS custom properties for shared theme colors */
+/* CSS custom properties for shared theme colors - Dark Theme */
 :root {
-  --tokenscript-keyword: #0000FF;
-  --tokenscript-type: #267f99;
-  --tokenscript-function: #795da3;
-  --tokenscript-variable: #001080;
-  --tokenscript-reference: #E31837;
-  --tokenscript-string: #a31515;
-  --tokenscript-number: #098658;
-  --tokenscript-hex-color: #E07B39;
-  --tokenscript-comment: #999999;
-  --tokenscript-operator: #D73A49;
-  --tokenscript-delimiter: #24292e;
+  --tokenscript-keyword: #C586C0;
+  --tokenscript-type: #4EC9B0;
+  --tokenscript-function: #DCDCAA;
+  --tokenscript-variable: #9CDCFE;
+  --tokenscript-reference: #FF6B6B;
+  --tokenscript-string: #CE9178;
+  --tokenscript-number: #B5CEA8;
+  --tokenscript-hex-color: #FFB86C;
+  --tokenscript-comment: #6A9955;
+  --tokenscript-operator: #D4D4D4;
+  --tokenscript-delimiter: #D4D4D4;
   
-  --tokenscript-json-string: #a31515;
-  --tokenscript-json-number: #098658;
-  --tokenscript-json-boolean: #795da3;
-  --tokenscript-json-null: #D73A49;
-  --tokenscript-json-property: #267f99;
-  --tokenscript-json-punctuation: #24292e;
+  --tokenscript-json-string: #CE9178;
+  --tokenscript-json-number: #B5CEA8;
+  --tokenscript-json-boolean: #569CD6;
+  --tokenscript-json-null: #569CD6;
+  --tokenscript-json-property: #9CDCFE;
+  --tokenscript-json-punctuation: #D4D4D4;
 }
 
 /* JSON syntax highlighting using shared theme colors */
+.token {
+  background: transparent !important;
+  text-shadow: none !important;
+}
+
 .token.string {
-  color: var(--tokenscript-json-string);
+  color: var(--tokenscript-json-string) !important;
 }
 
 .token.number {
-  color: var(--tokenscript-json-number);
+  color: var(--tokenscript-json-number) !important;
 }
 
 .token.boolean {
-  color: var(--tokenscript-json-boolean);
+  color: var(--tokenscript-json-boolean) !important;
 }
 
 .token.null {
-  color: var(--tokenscript-json-null);
+  color: var(--tokenscript-json-null) !important;
 }
 
 .token.property {
-  color: var(--tokenscript-json-property);
+  color: var(--tokenscript-json-property) !important;
 }
 
 .token.punctuation {
-  color: var(--tokenscript-json-punctuation);
+  color: var(--tokenscript-json-punctuation) !important;
 }
 
-/* Override Prism's background for better integration */
+/* Override Prism's background and shadows for better integration */
 pre[class*="language-"] {
   background: transparent !important;
   margin: 0 !important;
   padding: 0 !important;
+  text-shadow: none !important;
 }
 
 code[class*="language-"] {
   background: transparent !important;
+  text-shadow: none !important;
+  color: var(--tokenscript-json-punctuation) !important;
+}
+
+/* Text selection styling */
+code[class*="language-"]::selection {
+  background-color: rgba(107, 114, 128, 0.4) !important;
+  color: inherit !important;
+}
+
+code[class*="language-"] ::selection {
+  background-color: rgba(107, 114, 128, 0.4) !important;
+  color: inherit !important;
 }

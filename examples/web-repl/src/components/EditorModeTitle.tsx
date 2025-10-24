@@ -1,4 +1,4 @@
-import TitleBarSelect from "./TitleBarSelect";
+import CleanSelect from "./CleanSelect";
 
 interface EditorModeTitleProps {
   inputMode?: "tokenscript" | "json";
@@ -8,8 +8,8 @@ interface EditorModeTitleProps {
 }
 
 const INPUT_MODE_OPTIONS = [
-  { value: "tokenscript", label: "Tokenscript" },
-  { value: "json", label: "JSON" },
+  { value: "tokenscript", label: "tokenscript" },
+  { value: "json", label: "json" },
 ];
 
 function EditorModeTitle({
@@ -20,8 +20,7 @@ function EditorModeTitle({
 }: EditorModeTitleProps) {
   if (inputMode && onInputModeChange) {
     return (
-      <TitleBarSelect
-        label="Input"
+      <CleanSelect
         value={inputMode}
         onChange={onInputModeChange}
         options={INPUT_MODE_OPTIONS}

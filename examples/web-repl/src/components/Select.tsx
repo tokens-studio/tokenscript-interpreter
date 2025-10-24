@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { useTheme } from "../contexts/ThemeContext";
+import { getTheme } from "../theme/colors";
 
 interface SelectOption {
   value: string;
@@ -25,6 +27,9 @@ function Select({
   className = "",
   testId,
 }: SelectProps) {
+  const { theme } = useTheme();
+  const currentTheme = getTheme(theme);
+
   return (
     <div className={`relative ${className}`}>
       <style>
@@ -35,33 +40,35 @@ function Select({
           }
 
           .customizable-select {
-            border: 1px solid #d1d5db;
+            border: 1px solid ${currentTheme.border};
+            background: ${currentTheme.surface};
             border-radius: 0.375rem;
             padding: 0.25rem 0.75rem 0.25rem 0.375rem;
             font-size: 0.75rem;
             font-weight: 500;
-            color: #374151;
+            color: ${currentTheme.textPrimary};
             cursor: pointer;
             transition: all 0.2s ease;
             min-width: 120px;
           }
 
           .customizable-select:hover {
-            background: linear-gradient(to bottom, #f3f4f6, #e5e7eb);
-            border-color: #9ca3af;
+            background: ${currentTheme.surfaceHover};
+            border-color: ${currentTheme.textMuted};
           }
 
           .customizable-select:focus {
             outline: none;
             ring: 2px;
-            ring-color: #3b82f6;
+            ring-color: ${currentTheme.textMuted};
+            border-color: ${currentTheme.textMuted};
           }
 
           .customizable-select::picker(select) {
-            background: white;
-            border: 1px solid #e5e7eb;
+            background: ${currentTheme.surface};
+            border: 1px solid ${currentTheme.border};
             border-radius: 0.5rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
             padding: 0.5rem 0;
             margin-top: 0.25rem;
             min-width: max-content;
@@ -74,18 +81,18 @@ function Select({
           .customizable-select option {
             padding: 0.5rem 0.75rem;
             font-size: 0.875rem;
-            color: #1f2937;
+            color: ${currentTheme.textPrimary};
             cursor: pointer;
             transition: background-color 0.15s ease;
           }
 
           .customizable-select option:hover {
-            background-color: #f3f4f6;
+            background-color: ${currentTheme.surfaceHover};
           }
 
           .customizable-select option:checked {
-            background-color: #eff6ff;
-            color: #1d4ed8;
+            background-color: ${currentTheme.surfaceActive};
+            color: ${currentTheme.textPrimary};
             font-weight: 500;
           }
 
@@ -116,14 +123,14 @@ function Select({
           @supports not (appearance: base-select) {
             .customizable-select {
               appearance: none;
-              background: #f9fafb;
+              background: #27272a;
               padding-right: 2rem;
             }
           }
 
           .customizable-select:open {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+            border-color: #71717a;
+            box-shadow: 0 0 0 2px rgba(113, 113, 122, 0.1);
           }
 
           .customizable-select::picker(select) {

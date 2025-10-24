@@ -1,6 +1,7 @@
 import {
   ColorManager,
   Config,
+  type ColorSpecification,
   type FunctionSpecification,
   FunctionsManager,
   Interpreter,
@@ -9,12 +10,18 @@ import {
   Parser,
 } from "@tokens-studio/tokenscript-interpreter";
 import { useAtom } from "jotai";
-import { useCallback, useEffect, useState } from "react";
-import { ArrowDown } from "./components/icons";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ArrowDown, Docs, Github, Share } from "./components/icons";
+import EditorTitleBar from "./components/EditorTitleBar";
 import JsonTokenEditor from "./components/JsonTokenEditor";
 import OutputPanel from "./components/OutputPanel";
+import PresetSelector from "./components/PresetSelector";
+import SchemaDialog from "./components/SchemaDialog";
+import SharePopover from "./components/SharePopover";
 import SchemaManager from "./components/SchemaManager";
-import ShellPanel from "./components/ShellPanel";
+import { HEADER_HEIGHT } from "./components/shared-theme";
+import SlantedSeparator from "./components/SlantedSeparator";
+import { ThemeToggle } from "./components/ThemeToggle";
 import TokenScriptEditor from "./components/TokenScriptEditor";
 import {
   autoRunAtom,
@@ -22,8 +29,17 @@ import {
   functionSchemasAtom,
   schemaPanelCollapsedAtom,
 } from "./store/atoms";
+import { useTheme } from "./contexts/ThemeContext";
+import { getTheme } from "./theme/colors";
 import { DEFAULT_COLOR_SCHEMAS } from "./utils/default-schemas";
 import type { Preset } from "./utils/presets";
+import { JSON_PRESETS, TOKENSCRIPT_PRESETS } from "./utils/presets";
+import { fetchTokenScriptSchema } from "./utils/schema-fetcher";
+import {
+  createShareState,
+  getShareStateFromUrl,
+  type ShareState,
+} from "./utils/share";
 
 const awakenSchemaServer = async () => {
   await fetch("https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/", {
@@ -81,27 +97,119 @@ const DEFAULT_JSON = `{
 }`;
 
 type InputMode = "tokenscript" | "json";
+type JsonMode = "visual" | "text";
 
-// Helper to get code from sessionStorage (HMR-preserved) or default
-function getInitialCode(): string {
-  if (import.meta.env.DEV) {
-    const stored = sessionStorage.getItem("repl:code");
-    if (stored !== null) {
-      return stored;
-    }
-  }
-  return DEFAULT_CODE;
+type PersistentState = {
+  mode: InputMode;
+  code: string;
+  preset: string | null;
+  jsonMode: JsonMode;
+  schemas: Array<[string, any]>;
+  theme: string;
+};
+
+type AppState = {
+  code: string;
+  jsonInput: string;
+  inputMode: InputMode;
+  presetName: string | null;
+  colorSchemas: Map<string, any>;
+  functionSchemas: Map<string, any>;
+};
+
+function serializeAppState(
+  mode: InputMode,
+  code: string,
+  preset: string | null,
+  jsonMode: JsonMode,
+  colorSchemas: Map<string, any>,
+  functionSchemas: Map<string, any>,
+  theme: string,
+): PersistentState {
+  const schemas: Array<[string, any]> = [];
+  colorSchemas.forEach((spec, url) => {
+    schemas.push([`color:${url}`, spec]);
+  });
+  functionSchemas.forEach((spec, url) => {
+    schemas.push([`function:${url}`, spec]);
+  });
+
+  return {
+    mode,
+    code,
+    preset,
+    jsonMode,
+    schemas,
+    theme,
+  };
 }
 
-// Helper to get JSON from sessionStorage (HMR-preserved) or default
-function getInitialJson(): string {
-  if (import.meta.env.DEV) {
-    const stored = sessionStorage.getItem("repl:jsonInput");
-    if (stored !== null) {
-      return stored;
-    }
+function getPersistedState(): PersistentState | null {
+  const stored = sessionStorage.getItem("repl:state") || localStorage.getItem("repl:state");
+  if (!stored) {
+    return null;
   }
-  return DEFAULT_JSON;
+
+  try {
+    return JSON.parse(stored) as PersistentState;
+  } catch {
+    return null;
+  }
+}
+
+function getDesignSystemPreset(): Preset {
+  return JSON_PRESETS.find((p) => p.name === "Design system") || JSON_PRESETS[1];
+}
+
+function getInitialAppState(): AppState {
+  const designSystemPreset = getDesignSystemPreset();
+
+  const sharedState = getShareStateFromUrl();
+  if (sharedState) {
+    const colorSchemasMap = new Map(sharedState.colorSchemas);
+    const functionSchemasMap = new Map(sharedState.functionSchemas);
+    return {
+      code: sharedState.code,
+      jsonInput: sharedState.mode === "json" ? sharedState.code : "",
+      inputMode: sharedState.mode,
+      presetName: null,
+      colorSchemas: colorSchemasMap,
+      functionSchemas: functionSchemasMap,
+    };
+  }
+
+  const persisted = getPersistedState();
+  if (persisted) {
+    const colorSchemasMap = new Map<string, any>();
+    const functionSchemasMap = new Map<string, any>();
+
+    persisted.schemas.forEach(([key, spec]) => {
+      if (key.startsWith("color:")) {
+        const url = key.slice(6);
+        colorSchemasMap.set(url, spec);
+      } else if (key.startsWith("function:")) {
+        const url = key.slice(9);
+        functionSchemasMap.set(url, spec);
+      }
+    });
+
+    return {
+      code: persisted.code,
+      jsonInput: persisted.mode === "json" ? persisted.code : "",
+      inputMode: persisted.mode,
+      presetName: persisted.preset,
+      colorSchemas: colorSchemasMap,
+      functionSchemas: functionSchemasMap,
+    };
+  }
+  return {
+    code: designSystemPreset.code,
+    jsonInput: designSystemPreset.code,
+    inputMode: "json",
+    presetName: designSystemPreset.name,
+    colorSchemas: new Map(),
+    functionSchemas: new Map(),
+  };
 }
 
 function setupColorManager(schemas: typeof DEFAULT_COLOR_SCHEMAS): ColorManager {
@@ -144,9 +252,15 @@ function setupFunctionsManager(schemas: Map<string, FunctionSpecification>): Fun
 }
 
 function App() {
-  const [code, setCode] = useState(getInitialCode);
-  const [jsonInput, setJsonInput] = useState(getInitialJson);
-  const [inputMode, setInputMode] = useState<InputMode>("tokenscript");
+  const { theme } = useTheme();
+  const currentTheme = getTheme(theme);
+  
+  const initialState = getInitialAppState();
+  const [code, setCode] = useState(initialState.code);
+  const [jsonInput, setJsonInput] = useState(initialState.jsonInput);
+  const [inputMode, setInputMode] = useState<InputMode>(initialState.inputMode);
+  const [currentPresetName, setCurrentPresetName] = useState<string | null>(initialState.presetName);
+  const [jsonMode, setJsonMode] = useState<JsonMode>("text");
   const [result, setResult] = useState<UnifiedExecutionResult>({ type: "tokenscript" });
   const [autoRun, setAutoRun] = useAtom(autoRunAtom);
   const [jsonError, setJsonError] = useState<string>();
@@ -154,24 +268,93 @@ function App() {
   const [colorSchemas, _setColorSchemas] = useAtom(colorSchemasAtom);
   const [functionSchemas, _setFunctionSchemas] = useAtom(functionSchemasAtom);
   const [input, setInputs] = useState<Record<string, any>>({});
+  const [isSchemaDialogOpen, setIsSchemaDialogOpen] = useState(false);
+  const [isSharePopoverOpen, setIsSharePopoverOpen] = useState(false);
+  const shareButtonRef = useRef<HTMLButtonElement>(null);
+  const [shareState, setShareState] = useState<ShareState>({
+    version: 1,
+    mode: "tokenscript",
+    code: "",
+    colorSchemas: [],
+    functionSchemas: [],
+  });
 
+  const handleSchemaSelect = useCallback(
+    (url: string, spec: any, type?: "color" | "function") => {
+      const schemaType = type || (spec.type === "function" ? "function" : "color");
+      if (schemaType === "color") {
+        _setColorSchemas((current) => {
+          const updated = new Map(current);
+          updated.set(url, spec);
+          return updated;
+        });
+      } else {
+        _setFunctionSchemas((current) => {
+          const updated = new Map(current);
+          updated.set(url, spec);
+          return updated;
+        });
+      }
+    },
+    [_setColorSchemas, _setFunctionSchemas],
+  );
+
+  const handleRestoreDefaults = useCallback(() => {
+    _setColorSchemas(new Map(DEFAULT_COLOR_SCHEMAS));
+    _setFunctionSchemas(new Map());
+  }, [_setColorSchemas, _setFunctionSchemas]);
+
+  const handleClearAllSchemas = useCallback(() => {
+    _setColorSchemas(new Map());
+    _setFunctionSchemas(new Map());
+  }, [_setColorSchemas, _setFunctionSchemas]);
+
+  // Apply initial schemas from restored state (run once on mount)
   useEffect(() => {
+    if (initialState.colorSchemas.size > 0) {
+      _setColorSchemas(initialState.colorSchemas);
+    }
+    if (initialState.functionSchemas.size > 0) {
+      _setFunctionSchemas(initialState.functionSchemas);
+    }
     awakenSchemaServer();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // In development mode, persist code to sessionStorage for HMR preservation
   useEffect(() => {
-    if (import.meta.env.DEV) {
-      sessionStorage.setItem("repl:code", code);
-    }
-  }, [code]);
+    const currentCode = inputMode === "tokenscript" ? code : jsonInput;
+    const persistedState = serializeAppState(
+      inputMode,
+      currentCode,
+      currentPresetName,
+      jsonMode,
+      colorSchemas,
+      functionSchemas,
+      theme,
+    );
 
-  // In development mode, persist JSON input to sessionStorage for HMR preservation
+    const storage = import.meta.env.DEV ? sessionStorage : localStorage;
+    storage.setItem("repl:state", JSON.stringify(persistedState));
+  }, [code, jsonInput, inputMode, currentPresetName, jsonMode, colorSchemas, functionSchemas, theme]);
+
   useEffect(() => {
-    if (import.meta.env.DEV) {
-      sessionStorage.setItem("repl:jsonInput", jsonInput);
+    if (currentPresetName) {
+      const currentPreset = [...TOKENSCRIPT_PRESETS, ...JSON_PRESETS].find(
+        (p) => p.name === currentPresetName,
+      );
+      if (currentPreset) {
+        const currentContent = inputMode === "tokenscript" ? code : jsonInput;
+        if (currentContent !== currentPreset.code) {
+          setCurrentPresetName(null);
+        }
+      }
     }
-  }, [jsonInput]);
+  }, [code, jsonInput, currentPresetName, inputMode]);
+
+  useEffect(() => {
+    const currentCode = inputMode === "tokenscript" ? code : jsonInput;
+    setShareState(createShareState(inputMode, currentCode, colorSchemas, functionSchemas));
+  }, [code, jsonInput, inputMode, colorSchemas, functionSchemas, currentPresetName, jsonMode, theme]);
 
   const executeCode = useCallback(async () => {
     const currentInput = inputMode === "tokenscript" ? code : jsonInput;
@@ -224,10 +407,6 @@ function App() {
         const output = interpretTokens(jsonTokens, config);
         const executionTime = performance.now() - startTime;
 
-        console.log("JSON Tokens Output", { input: jsonTokens, output, executionTime });
-
-        const _outputString = JSON.stringify(output, null, 2);
-
         setResult({
           type: "json",
           executionTime: Math.round(executionTime * 100) / 100,
@@ -239,7 +418,6 @@ function App() {
     } catch (error) {
       const executionTime = performance.now() - startTime;
 
-      // Extract error information including line number if available
       const errorInfo = {
         message: error instanceof Error ? error.message : String(error),
         line: undefined as number | undefined,
@@ -252,7 +430,6 @@ function App() {
         }
         if ("token" in error) {
           errorInfo.token = (error as any).token;
-          // If token has line but error doesn't
           if (!errorInfo.line && (error as any).token?.line) {
             errorInfo.line = (error as any).token.line;
           }
@@ -270,15 +447,119 @@ function App() {
     }
   }, [code, jsonInput, inputMode, colorSchemas, functionSchemas, input]);
 
-  const handlePresetSelect = useCallback((preset: Preset) => {
-    if (preset.type === "code") {
-      setInputMode("tokenscript");
-      setCode(preset.code);
-    } else if (preset.type === "json") {
-      setInputMode("json");
-      setJsonInput(preset.code);
+  const handleInputModeChange = useCallback((newMode: InputMode) => {
+    if (newMode === "tokenscript" && inputMode === "json") {
+      setCode(jsonInput);
+    } else if (newMode === "json" && inputMode === "tokenscript") {
+      setJsonInput(code);
     }
-  }, []);
+    setInputMode(newMode);
+    setCurrentPresetName(null);
+  }, [inputMode, code, jsonInput]);
+
+  const loadDependencies = useCallback(
+    async (dependencies: string[]) => {
+      const visited = new Set<string>();
+      const colorSchemasToAdd = new Map<string, ColorSpecification>();
+      const functionSchemasToAdd = new Map<string, FunctionSpecification>();
+
+      const fetchDependency = async (url: string): Promise<void> => {
+        if (visited.has(url) || colorSchemas.has(url) || functionSchemas.has(url)) {
+          return;
+        }
+
+        visited.add(url);
+
+        try {
+          const response = await fetchTokenScriptSchema(url);
+          const spec = response.content;
+
+          if (spec.type === "function") {
+            functionSchemasToAdd.set(url, spec as FunctionSpecification);
+          } else {
+            colorSchemasToAdd.set(url, spec as ColorSpecification);
+          }
+
+          if (
+            spec.requirements &&
+            Array.isArray(spec.requirements) &&
+            spec.requirements.length > 0
+          ) {
+            const requirementPromises = spec.requirements.map((reqUrl) =>
+              fetchDependency(reqUrl),
+            );
+            await Promise.all(requirementPromises);
+          }
+        } catch (error) {
+          console.error(`Failed to load dependency ${url}:`, error);
+          throw error;
+        }
+      };
+
+      const fetchPromises = dependencies.map((url) => fetchDependency(url));
+      await Promise.all(fetchPromises);
+
+      if (colorSchemasToAdd.size > 0) {
+        _setColorSchemas((current) => {
+          const updated = new Map(current);
+          colorSchemasToAdd.forEach((spec, url) => {
+            updated.set(url, spec);
+          });
+          return updated;
+        });
+      }
+
+      if (functionSchemasToAdd.size > 0) {
+        _setFunctionSchemas((current) => {
+          const updated = new Map(current);
+          functionSchemasToAdd.forEach((spec, url) => {
+            updated.set(url, spec);
+          });
+          return updated;
+        });
+      }
+    },
+    [colorSchemas, functionSchemas, _setColorSchemas, _setFunctionSchemas],
+  );
+
+  // Load preset dependencies if using design system preset and it's a fresh load
+  useEffect(() => {
+    if (currentPresetName === "Design system" && initialState.colorSchemas.size === 0) {
+      const preset = getDesignSystemPreset();
+      if (preset.dependencies && preset.dependencies.length > 0) {
+        loadDependencies(preset.dependencies).catch((error) => {
+          console.error('Failed to load design system preset dependencies:', error);
+        });
+      }
+    }
+  }, [currentPresetName, initialState.colorSchemas.size, loadDependencies]);
+
+  const handlePresetSelect = useCallback(
+    async (preset: Preset) => {
+      if (preset.clearDependencies) {
+        _setColorSchemas(new Map());
+        _setFunctionSchemas(new Map());
+      }
+
+      if (preset.dependencies && preset.dependencies.length > 0) {
+        await loadDependencies(preset.dependencies);
+      }
+
+      if (preset.type === "code") {
+        setInputMode("tokenscript");
+        setCode(preset.code);
+      } else if (preset.type === "json") {
+        setInputMode("json");
+        setJsonInput(preset.code);
+      }
+      setCurrentPresetName(preset.name);
+    },
+    [loadDependencies, _setColorSchemas, _setFunctionSchemas],
+  );
+
+  const handleShare = useCallback(() => {
+    setIsSharePopoverOpen(!isSharePopoverOpen);
+  }, [isSharePopoverOpen]);
 
   useEffect(() => {
     if (!autoRun) return;
@@ -298,136 +579,273 @@ function App() {
 
   return (
     <div
-      className="h-screen flex flex-col"
+      className="h-screen flex"
+      style={{ backgroundColor: currentTheme.background }}
       data-testid="app-container"
     >
-      <header
-        className="bg-white shadow-sm border-b flex-shrink-0"
-        data-testid="app-header"
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1
-                className="text-xl font-bold text-gray-900"
-                data-testid="app-title"
-              >
-                Tokenscript REPL
-              </h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={autoRun}
-                  onChange={(e) => setAutoRun(e.target.checked)}
-                  className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                  data-testid="auto-run-checkbox"
-                />
-                <label
-                  htmlFor="auto-run"
-                  className="text-sm text-gray-700"
-                >
-                  Auto-run
-                </label>
-              </div>
+      <div className="flex-1 flex flex-col">
+        <header
+          className="border-b flex items-center justify-between px-4 gap-4"
+          style={{
+            backgroundColor: currentTheme.surface,
+            borderColor: currentTheme.border,
+            height: HEADER_HEIGHT,
+          }}
+        >
+          <div className="flex items-center gap-3 text-sm h-full">
+            <span className="text-emerald-400 font-medium px-3 select-none">tokenscript</span>
+
+            <div className="flex items-center gap-1 px-3 py-1 rounded"
+              style={{
+                backgroundColor: currentTheme.background,
+                border: `1px solid ${currentTheme.border}`,
+              }}
+            >
               <button
                 type="button"
-                onClick={executeCode}
-                className="w-10 h-10 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
-                data-testid="run-code-button"
-                title="Run Code (Ctrl+Enter)"
+                onClick={() => handleInputModeChange("tokenscript")}
+                className="px-2 py-1 rounded text-xs font-medium transition-colors"
+                style={{
+                  backgroundColor:
+                    inputMode === "tokenscript"
+                      ? currentTheme.background
+                      : "transparent",
+                  color:
+                    inputMode === "tokenscript"
+                      ? currentTheme.textPrimary
+                      : currentTheme.textMuted,
+                  border:
+                    inputMode === "tokenscript"
+                      ? `1px solid ${currentTheme.border}`
+                      : "1px solid transparent",
+                }}
+                onMouseEnter={(e) => {
+                  if (inputMode !== "tokenscript") {
+                    e.currentTarget.style.color = currentTheme.textSecondary;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (inputMode !== "tokenscript") {
+                    e.currentTarget.style.color = currentTheme.textMuted;
+                  }
+                }}
               >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M8 5.14v13.72L19 12L8 5.14z"
-                    fill="currentColor"
-                  />
-                </svg>
+                TokenScript
+              </button>
+              <button
+                type="button"
+                onClick={() => handleInputModeChange("json")}
+                className="px-2 py-1 rounded text-xs font-medium transition-colors"
+                style={{
+                  backgroundColor:
+                    inputMode === "json"
+                      ? currentTheme.background
+                      : "transparent",
+                  color:
+                    inputMode === "json"
+                      ? currentTheme.textPrimary
+                      : currentTheme.textMuted,
+                  border:
+                    inputMode === "json"
+                      ? `1px solid ${currentTheme.border}`
+                      : "1px solid transparent",
+                }}
+                onMouseEnter={(e) => {
+                  if (inputMode !== "json") {
+                    e.currentTarget.style.color = currentTheme.textSecondary;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (inputMode !== "json") {
+                    e.currentTarget.style.color = currentTheme.textMuted;
+                  }
+                }}
+              >
+                JSON
               </button>
             </div>
-          </div>
-        </div>
-      </header>
 
-      <main
-        className="flex-1 px-4 sm:px-6 lg:px-8 py-4 sm:py-8 w-full"
-        data-testid="app-main"
-      >
-        <div className="mx-auto grid grid-cols-1 max-w-7xl lg:grid-cols-2 gap-4 lg:gap-8 lg:items-start">
-          {/* Editor Panel */}
-          <div
-            className="min-h-[400px] lg:h-[70vh] lg:sticky lg:top-4 rounded-lg shadow-sm overflow-hidden"
-            data-testid="editor-panel"
-          >
-            {inputMode === "tokenscript" ? (
-              <TokenScriptEditor
-                value={code}
-                onChange={setCode}
-                onKeyDown={handleKeyDown}
-                error={result.errorInfo}
-                inputMode={inputMode}
-                onInputModeChange={setInputMode}
-                onPresetSelect={handlePresetSelect}
-                onReferencesChange={setInputs}
-              />
-            ) : (
-              <JsonTokenEditor
-                value={jsonInput}
-                onChange={setJsonInput}
-                onKeyDown={handleKeyDown}
-                error={jsonError}
-                inputMode={inputMode}
-                onInputModeChange={setInputMode}
-                onPresetSelect={handlePresetSelect}
-              />
-            )}
           </div>
 
-          {/* Right Column: Schema Panel + Output Panel */}
-          <div className="flex flex-col gap-4 pb-8">
-            <div
-              className="rounded-lg shadow-sm"
-              data-testid="app-output-panel"
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            
+            <button
+              ref={shareButtonRef}
+              type="button"
+              onClick={handleShare}
+              className="transition-colors pr-4"
+              style={{
+                color: currentTheme.textMuted,
+                borderRight: `1px solid ${currentTheme.border}`,
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = currentTheme.textSecondary)}
+              onMouseLeave={(e) => (e.currentTarget.style.color = currentTheme.textMuted)}
+              aria-label="Share"
             >
-              <OutputPanel result={result} />
+              <Share />
+            </button>
+            <a
+              href="https://docs.tokenscript.dev.gcp.tokens.studio/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition-colors"
+              style={{ color: currentTheme.textMuted }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = currentTheme.textSecondary)}
+              onMouseLeave={(e) => (e.currentTarget.style.color = currentTheme.textMuted)}
+              aria-label="Documentation"
+            >
+              <Docs />
+            </a>
+            <a
+              href="https://github.com/tokens-studio/tokenscript-interpreter"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition-colors"
+              style={{ color: currentTheme.textMuted }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = currentTheme.textSecondary)}
+              onMouseLeave={(e) => (e.currentTarget.style.color = currentTheme.textMuted)}
+              aria-label="GitHub repository"
+            >
+              <Github />
+            </a>
+          </div>
+        </header>
+
+        <SchemaDialog
+          isOpen={isSchemaDialogOpen}
+          onClose={() => setIsSchemaDialogOpen(false)}
+          onSchemaSelect={handleSchemaSelect}
+          onCreateCustom={() => setIsSchemaDialogOpen(false)}
+          onRestoreDefaults={handleRestoreDefaults}
+          onClearAllSchemas={handleClearAllSchemas}
+          existingColorSchemas={colorSchemas}
+          existingFunctionSchemas={functionSchemas}
+        />
+
+        <SharePopover
+          isOpen={isSharePopoverOpen}
+          onClose={() => setIsSharePopoverOpen(false)}
+          shareState={shareState}
+          anchorRef={shareButtonRef}
+        />
+
+        <main
+          className="flex-1 flex overflow-hidden"
+          data-testid="app-main"
+        >
+          <div
+            className="w-1/2 flex flex-col border-r"
+            style={{ borderColor: currentTheme.border }}
+          >
+            <EditorTitleBar
+              allPresets={[...TOKENSCRIPT_PRESETS, ...JSON_PRESETS]}
+              onPresetSelect={handlePresetSelect}
+              currentPresetName={currentPresetName}
+            />
+
+            <div
+              className="flex-1 overflow-hidden"
+              data-testid="editor-panel"
+            >
+              {inputMode === "tokenscript" ? (
+                <TokenScriptEditor
+                  value={code}
+                  onChange={setCode}
+                  onKeyDown={handleKeyDown}
+                  error={result.errorInfo}
+                  onReferencesChange={setInputs}
+                />
+              ) : (
+                <JsonTokenEditor
+                  value={jsonInput}
+                  onChange={setJsonInput}
+                  onKeyDown={handleKeyDown}
+                  error={jsonError}
+                />
+              )}
             </div>
 
-            {/* Schema Panel */}
             <div
               data-testid="schema-panel"
-              className="flex-shrink-0 lg:max-h-full"
+              className="border-t"
+              style={{
+                backgroundColor: currentTheme.surface,
+                borderColor: currentTheme.border,
+              }}
             >
-              <ShellPanel
-                title="Schemas"
-                headerRight={
+              <div
+                className="flex items-center justify-between px-4 py-2 border-b gap-2"
+                style={{ borderColor: currentTheme.border }}
+              >
+                <h3
+                  className="text-sm font-medium"
+                  style={{ color: currentTheme.textSecondary }}
+                >
+                  Schemas
+                </h3>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsSchemaDialogOpen(true)}
+                    className="transition-colors flex items-center gap-1 text-sm pr-2 border-r"
+                    style={{ 
+                      color: currentTheme.textMuted,
+                      borderColor: currentTheme.border,
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = currentTheme.textSecondary)}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = currentTheme.textMuted)}
+                    data-testid="schema-panel-add"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                    <span>Load schema</span>
+                  </button>
                   <button
                     type="button"
                     onClick={() => setSchemaPanelCollapsed(!schemaPanelCollapsed)}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    className="transition-colors"
+                    style={{ color: currentTheme.textMuted }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = currentTheme.textSecondary)}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = currentTheme.textMuted)}
                     data-testid="schema-panel-toggle"
                     aria-label={
                       schemaPanelCollapsed ? "Expand schema panel" : "Collapse schema panel"
                     }
                   >
-                    <ArrowDown className={`${schemaPanelCollapsed ? "rotate-180" : ""}`} />
+                    <ArrowDown
+                      className={`${schemaPanelCollapsed ? "rotate-180" : ""} transition-transform`}
+                    />
                   </button>
-                }
-                className={`transition-all duration-200 ${schemaPanelCollapsed && "h-10"}`}
-                data-testid="schema-shell-panel"
-              >
-                {!schemaPanelCollapsed && <SchemaManager />}
-              </ShellPanel>
+                </div>
+              </div>
+              {!schemaPanelCollapsed && (
+                <div className="max-h-64 overflow-auto">
+                  <SchemaManager />
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      </main>
+
+          <div
+            className="flex-1 overflow-hidden"
+            data-testid="app-output-panel"
+          >
+            <OutputPanel result={result} />
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
