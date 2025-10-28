@@ -1,4 +1,4 @@
-![banner.png](examples/repo-assets/banner.png)
+![banner.png](data/assets/banner.png)
 
 # Tokenscript
 
