@@ -16,7 +16,7 @@ With Tokenscript you can write custom functions and ship logic directly with you
 
 ## Talks
 
-- [Talk about tokenscript at Penpot Fest 2025](https://www.youtube.com/watch?v=H82szrnX4ws).
+- [Talk about tokenscript at Penpot Fest 2025](https://youtu.be/H82szrnX4ws?t=3938)
 
 ## About the language
 
