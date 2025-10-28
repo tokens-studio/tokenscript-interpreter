@@ -22,7 +22,7 @@ With Tokenscript you can write custom functions and ship logic directly with you
 
 ### Why a Custom DSL?
 
-We chose a domain-specific language with a compliance library because it provides a small subset of common language features, enabling fast and secure implementation without the complexity of thousands of custom transform functions with different color types. 
+Tokenscript is a domain-specific language with a compliance library because it provides a small subset of common language features, enabling fast and secure implementation without the complexity of thousands of custom transform functions with different color types. 
 
 The result is a powerful, type-safe environment that extends your design system capabilities.
 
@@ -81,7 +81,7 @@ const tokens = {
 };
 
 const result = interpretTokens(tokens);
-// => {"primary-color": "#ff6b35"}
+// => {"primary-color": "#ff6b35"
 //     "secondary-color": "#ff6b35"}
 ```
 
