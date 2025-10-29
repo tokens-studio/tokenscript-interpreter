@@ -1,0 +1,141 @@
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  color: #213547;
+  background-color: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.app {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-height: 100vh;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.app-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.theme-toggle {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.05);
+}
+
+.editors-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.editor-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 0;
+}
+
+.editor-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+:root .editor-title,
+:root[data-theme="dark"] .editor-title {
+  color: rgba(255, 255, 255, 0.87);
+}
+
+:root[data-theme="light"] .editor-title {
+  color: #213547;
+}
+
+.editor-container {
+  flex: 1;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  min-height: 0;
+  height: 100%;
+}
+
+:root .editor-container,
+:root[data-theme="dark"] .editor-container {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme="light"] .editor-container {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 1024px) {
+  .editors-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+:root[data-theme="light"] .theme-toggle {
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+:root[data-theme="light"] .theme-toggle:hover {
+  background: rgba(0, 0, 0, 0.05);
+}

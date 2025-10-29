@@ -1,0 +1,27 @@
+{
+  "name": "syntax-highlighter-demo",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
+    "@tokens-studio/tokenscript-interpreter": "file:../../",
+    "@types/prismjs": "^1.26.5",
+    "monaco-editor": "^0.53.0",
+    "prismjs": "^1.30.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.6.0",
+    "@types/react": "^19.1.16",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.0.4",
+    "typescript": "~5.9.3",
+    "vite": "^7.1.7"
+  }
+}
