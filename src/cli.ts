@@ -38,7 +38,7 @@ program
   .command("parse_tokenset")
   .description("Parse and process a tokenset from a ZIP file")
   .requiredOption("--tokenset <path>", "Path to the tokenset ZIP file")
-  .option("--output <path>", "Output file path", "output.json")
+  .option("--output <path>", "Output file path (if not provided, prints to console)")
   .action(async (options) => {
     await parseTokenset(options.tokenset, options.output);
   });
@@ -50,7 +50,7 @@ program
   .requiredOption("--tokenset <path>", "Path to the tokenset ZIP file")
   .requiredOption("--permutate-on <themes...>", "List of theme groups to permutate on")
   .requiredOption("--permutate-to <theme>", "Target theme group for permutation")
-  .option("--output <path>", "Output file path", "permutations.json")
+  .option("--output <path>", "Output file path (if not provided, prints to console)")
   .action(async (options) => {
     await permutateTokenset(
       options.tokenset,
@@ -65,8 +65,7 @@ program
   .command("parse_json")
   .description("Parse and process a DTCG JSON file directly")
   .requiredOption("--json <path>", "Path to the DTCG JSON file")
-  .option("--output <path>", "Output file path", "output.json")
-
+  .option("--output <path>", "Output file path (if not provided, prints to console)")
   .action(async (options) => {
     await parseJsonFile(options.json, options.output);
   });
@@ -208,7 +207,7 @@ async function interpretExpression(code: string, references: ReferenceRecord): P
 }
 
 // Parse tokenset from ZIP file
-async function parseTokenset(tokensetPath: string, outputPath: string): Promise<void> {
+async function parseTokenset(tokensetPath: string, outputPath?: string): Promise<void> {
   console.log(`📦 Parsing tokenset from: ${tokensetPath}`);
 
   try {
@@ -227,11 +226,17 @@ async function parseTokenset(tokensetPath: string, outputPath: string): Promise<
     console.log(`🎨 Loaded themes: ${Object.keys(themes).join(", ")}`);
 
     // Process themes
-    const output = await processThemes(themes, { enablePerformanceTracking: true });
+    const output = await processThemes(themes, {
+      enablePerformanceTracking: true,
+    });
 
-    // Write output
-    await fs.promises.writeFile(outputPath, JSON.stringify(output, null, 2), "utf8");
-    console.log(`💾 Output written to: ${outputPath}`);
+    // Write output or print to console
+    if (outputPath) {
+      await fs.promises.writeFile(outputPath, JSON.stringify(output, null, 2), "utf8");
+      console.log(`💾 Output written to: ${outputPath}`);
+    } else {
+      console.log(JSON.stringify(output, null, 2));
+    }
   } catch (error: any) {
     console.error(`❌ Error parsing tokenset: ${error.message}`);
     process.exit(1);
@@ -243,7 +248,7 @@ async function permutateTokenset(
   tokensetPath: string,
   permutateOn: string[],
   permutateTo: string,
-  outputPath: string,
+  outputPath?: string,
 ): Promise<void> {
   console.log(`🔄 Permutating tokenset from: ${tokensetPath}`);
   console.log(`📋 Permutating on: ${permutateOn.join(", ")}`);
@@ -291,9 +296,13 @@ async function permutateTokenset(
       };
     }
 
-    // Write output
-    await fs.promises.writeFile(outputPath, JSON.stringify(output, null, 2), "utf8");
-    console.log(`💾 Permutations written to: ${outputPath}`);
+    // Write output or print to console
+    if (outputPath) {
+      await fs.promises.writeFile(outputPath, JSON.stringify(output, null, 2), "utf8");
+      console.log(`💾 Permutations written to: ${outputPath}`);
+    } else {
+      console.log(JSON.stringify(output, null, 2));
+    }
   } catch (error: any) {
     console.error(`❌ Error permutating tokenset: ${error.message}`);
     process.exit(1);
@@ -301,9 +310,7 @@ async function permutateTokenset(
 }
 
 // Parse DTCG JSON file - simple unified API
-async function parseJsonFile(jsonPath: string, outputPath: string): Promise<void> {
-  console.log(`📄 Parsing JSON from: ${jsonPath}`);
-
+async function parseJsonFile(jsonPath: string, outputPath?: string): Promise<void> {
   try {
     // Read JSON file
     const jsonContent = await fs.promises.readFile(jsonPath, "utf8");
@@ -312,9 +319,13 @@ async function parseJsonFile(jsonPath: string, outputPath: string): Promise<void
     // Process the JSON blob - returns flat tokens (aligned with Python implementation)
     const output = interpretTokens(dtcgJson);
 
-    // Write output
-    await fs.promises.writeFile(outputPath, JSON.stringify(output, null, 2), "utf8");
-    console.log(`💾 Output written to: ${outputPath}`);
+    // Write output or print to console
+    if (outputPath) {
+      await fs.promises.writeFile(outputPath, JSON.stringify(output, null, 2), "utf8");
+      console.log(`💾 Output written to: ${outputPath}`);
+    } else {
+      console.log(JSON.stringify(output, null, 2));
+    }
   } catch (error: any) {
     console.error(`❌ Error parsing JSON: ${error.message}`);
     process.exit(1);
@@ -377,8 +388,7 @@ async function loadZipToMemory(zipPath: string): Promise<Record<string, any>> {
                 const fileName = entry.fileName.replace(".json", "");
                 filesContent[fileName] = JSON.parse(data);
                 zipfile.readEntry();
-              } catch (parseErr: any) {
-                console.warn(`Error parsing JSON from ${entry.fileName}: ${parseErr.message}`);
+              } catch (_parseErr: any) {
                 zipfile.readEntry();
               }
             });
