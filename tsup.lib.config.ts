@@ -7,6 +7,7 @@ export default defineConfig({
     processors: "src/lib/processors.ts",
     schema: "src/lib/schema.ts",
     types: "src/lib/types.ts",
+    "syntax-highlighting": "src/syntax-highlighter/index.ts",
   },
   format: ["esm", "cjs"],
   clean: true,

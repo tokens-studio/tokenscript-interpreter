@@ -41,6 +41,7 @@ export default defineConfig({
   resolve: {
     alias: {
       // Point directly to the source files instead of built files for HMR
+      "@tokens-studio/tokenscript-interpreter/syntax-highlighting": path.resolve(__dirname, "../../src/syntax-highlighter/index.ts"),
       "@tokens-studio/tokenscript-interpreter": path.resolve(__dirname, "../../src/lib/index.ts"),
       // Mirror the main library's path aliases for proper resolution
       "@src": path.resolve(__dirname, "../../src"),

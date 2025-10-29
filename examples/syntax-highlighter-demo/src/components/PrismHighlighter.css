@@ -1,0 +1,233 @@
+.prism-editor {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  font-family: Consolas, Monaco, Courier New, monospace;
+  font-size: 14px;
+  line-height: 19px;
+  overflow: hidden;
+}
+
+.prism-editor--dark {
+  background: #1e1e1e;
+}
+
+.prism-editor--light {
+  background: #ffffff;
+}
+
+.prism-editor--light .prism-highlight code {
+  color: #000000;
+}
+
+.prism-editor--dark .prism-highlight code {
+  color: #d4d4d4;
+}
+
+.prism-highlight {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none;
+  overflow: auto;
+  pointer-events: none;
+  white-space: pre;
+  background: transparent !important;
+}
+
+.prism-highlight code {
+  display: block;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  white-space: pre;
+}
+
+.prism-textarea {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  resize: none;
+  overflow: auto;
+  white-space: pre;
+  -webkit-text-fill-color: transparent;
+}
+
+.prism-editor--dark .prism-textarea {
+  caret-color: #d4d4d4;
+}
+
+.prism-editor--light .prism-textarea {
+  caret-color: #000000;
+}
+
+.prism-textarea::selection {
+  background-color: rgba(59, 130, 246, 0.3);
+}
+
+.prism-textarea::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.prism-editor--dark .prism-textarea::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.prism-editor--dark .prism-textarea::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+}
+
+.prism-editor--dark .prism-textarea::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.prism-editor--light .prism-textarea::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.prism-editor--light .prism-textarea::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 5px;
+}
+
+.prism-editor--light .prism-textarea::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.prism-highlight::-webkit-scrollbar {
+  display: none;
+}
+
+/* Custom token colors for TokenScript - Dark theme */
+.prism-editor--dark .token.comment {
+  color: #6a9955;
+  font-style: italic;
+}
+
+.prism-editor--dark .token.keyword {
+  color: #c586c0;
+}
+
+.prism-editor--dark .token.type,
+.prism-editor--dark .token.class-name {
+  color: #4ec9b0;
+}
+
+.prism-editor--dark .token.string {
+  color: #ce9178;
+}
+
+.prism-editor--dark .token.number {
+  color: #b5cea8;
+}
+
+.prism-editor--dark .token.hex-color {
+  color: #d19a66;
+}
+
+.prism-editor--dark .token.number-with-unit {
+  color: #d4a5ff;
+}
+
+.prism-editor--dark .token.function {
+  color: #dcdcaa;
+}
+
+.prism-editor--dark .token.operator {
+  color: #d4d4d4;
+}
+
+.prism-editor--dark .token.reference,
+.prism-editor--dark .token.variable {
+  color: #9cdcfe;
+  font-style: italic;
+}
+
+.prism-editor--dark .token.punctuation,
+.prism-editor--dark .token.delimiter {
+  color: #d4d4d4;
+}
+
+.prism-editor--dark .token.method {
+  color: #dcdcaa;
+}
+
+.prism-editor--dark .token.property {
+  color: #9cdcfe;
+}
+
+/* Custom token colors for TokenScript - Light theme */
+.prism-editor--light .token.comment {
+  color: #008000;
+  font-style: italic;
+}
+
+.prism-editor--light .token.keyword {
+  color: #af00db;
+}
+
+.prism-editor--light .token.type,
+.prism-editor--light .token.class-name {
+  color: #267f99;
+}
+
+.prism-editor--light .token.string {
+  color: #a31515;
+}
+
+.prism-editor--light .token.number {
+  color: #098658;
+}
+
+.prism-editor--light .token.hex-color {
+  color: #d97706;
+}
+
+.prism-editor--light .token.number-with-unit {
+  color: #9333ea;
+}
+
+.prism-editor--light .token.function {
+  color: #795e26;
+}
+
+.prism-editor--light .token.operator {
+  color: #000000;
+}
+
+.prism-editor--light .token.reference,
+.prism-editor--light .token.variable {
+  color: #0000ff;
+  font-style: italic;
+}
+
+.prism-editor--light .token.punctuation,
+.prism-editor--light .token.delimiter {
+  color: #000000;
+}
+
+.prism-editor--light .token.method {
+  color: #795e26;
+}
+
+.prism-editor--light .token.property {
+  color: #001080;
+}
