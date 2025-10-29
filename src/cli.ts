@@ -118,7 +118,7 @@ async function interactiveMode(schemas?: string[]): Promise<void> {
   console.log('Type "exit" or "quit" to exit, "set_variables" to set token references');
   console.log("");
 
-  const config = await fetchAndRegisterSchemas(schemas);
+  const config = await fetchAndRegisterSchemas(schemas ?? []);
   let references: ReferenceRecord = {};
 
   while (true) {
@@ -225,7 +225,7 @@ async function parseTokenset(
   console.log(`📦 Parsing tokenset from: ${tokensetPath}`);
 
   try {
-    const config = await fetchAndRegisterSchemas(schemas);
+    const config = await fetchAndRegisterSchemas(schemas ?? []);
     const filesContent = await loadZipToMemory(tokensetPath);
     const themes = loadThemes(filesContent);
     const output = await processThemes(themes, {
@@ -257,7 +257,7 @@ async function permutateTokenset(
   console.log(`🎯 Permutating to: ${permutateTo}`);
 
   try {
-    const config = await fetchAndRegisterSchemas(schemas);
+    const config = await fetchAndRegisterSchemas(schemas ?? []);
     const filesContent = await loadZipToMemory(tokensetPath);
     const themeTree = buildThemeTree(filesContent);
 
@@ -314,7 +314,7 @@ async function parseJsonFile(
   schemas?: string[],
 ): Promise<void> {
   try {
-    const config = await fetchAndRegisterSchemas(schemas);
+    const config = await fetchAndRegisterSchemas(schemas ?? []);
 
     // Read JSON file
     const jsonContent = await fs.promises.readFile(jsonPath, "utf8");
