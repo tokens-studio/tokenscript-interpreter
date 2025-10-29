@@ -4,7 +4,7 @@ import type {
 } from "@tokens-studio/tokenscript-interpreter";
 import { useAtom } from "jotai";
 import { useCallback, useState } from "react";
-import { colorSchemasAtom, functionSchemasAtom } from "../store/atoms";
+import { appStateAtom } from "../store/atoms";
 import { JSON_PRESETS, type Preset, TOKENSCRIPT_PRESETS } from "../utils/presets";
 import { fetchTokenScriptSchema } from "../utils/schema-fetcher";
 import CleanSelect from "./CleanSelect";
@@ -17,9 +17,11 @@ interface PresetSelectorProps {
 
 function PresetSelector({ inputMode, onPresetSelect, testId }: PresetSelectorProps) {
   const presets = inputMode === "tokenscript" ? TOKENSCRIPT_PRESETS : JSON_PRESETS;
-  const [colorSchemas, setColorSchemas] = useAtom(colorSchemasAtom);
-  const [functionSchemas, setFunctionSchemas] = useAtom(functionSchemasAtom);
+  const [appState, setAppState] = useAtom(appStateAtom);
   const [selectedPreset, setSelectedPreset] = useState("");
+
+  const colorSchemas = appState.colorSchemas;
+  const functionSchemas = appState.functionSchemas;
 
   const loadDependencies = useCallback(
     async (dependencies: string[]) => {
@@ -61,27 +63,15 @@ function PresetSelector({ inputMode, onPresetSelect, testId }: PresetSelectorPro
       const fetchPromises = dependencies.map((url) => fetchDependency(url));
       await Promise.all(fetchPromises);
 
-      if (colorSchemasToAdd.size > 0) {
-        setColorSchemas((current) => {
-          const updated = new Map(current);
-          colorSchemasToAdd.forEach((spec, url) => {
-            updated.set(url, spec);
-          });
-          return updated;
-        });
-      }
-
-      if (functionSchemasToAdd.size > 0) {
-        setFunctionSchemas((current) => {
-          const updated = new Map(current);
-          functionSchemasToAdd.forEach((spec, url) => {
-            updated.set(url, spec);
-          });
-          return updated;
-        });
+      if (colorSchemasToAdd.size > 0 || functionSchemasToAdd.size > 0) {
+        setAppState((prev) => ({
+          ...prev,
+          colorSchemas: new Map([...prev.colorSchemas, ...colorSchemasToAdd]),
+          functionSchemas: new Map([...prev.functionSchemas, ...functionSchemasToAdd]),
+        }));
       }
     },
-    [colorSchemas, functionSchemas, setColorSchemas, setFunctionSchemas],
+    [colorSchemas, functionSchemas, setAppState],
   );
 
   const handlePresetChange = useCallback(
@@ -91,8 +81,11 @@ function PresetSelector({ inputMode, onPresetSelect, testId }: PresetSelectorPro
       const preset = presets.find((p) => p.name === presetName);
       if (preset) {
         if (preset.clearDependencies) {
-          setColorSchemas(new Map());
-          setFunctionSchemas(new Map());
+          setAppState((prev) => ({
+            ...prev,
+            colorSchemas: new Map(),
+            functionSchemas: new Map(),
+          }));
         }
 
         // Load dependencies before selecting the preset
@@ -107,7 +100,7 @@ function PresetSelector({ inputMode, onPresetSelect, testId }: PresetSelectorPro
         setTimeout(() => setSelectedPreset(""), 100);
       }
     },
-    [presets, loadDependencies, onPresetSelect, setColorSchemas, setFunctionSchemas],
+    [presets, loadDependencies, onPresetSelect, setAppState],
   );
 
   // Only show actual preset options (no placeholder in dropdown)
