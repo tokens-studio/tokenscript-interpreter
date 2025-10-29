@@ -2,7 +2,9 @@ import type { ISymbolType } from "@src/types";
 import { InterpreterError } from "../errors";
 import { basicSymbolTypes, ColorSymbol } from "../symbols";
 import { ColorManager } from "./managers/color/manager";
+import type { ColorSpecification } from "./managers/color/schema";
 import { FunctionsManager } from "./managers/functions/manager";
+import type { FunctionSpecification } from "./managers/functions/schema";
 import { UnitManager } from "./managers/unit/manager";
 
 export interface LanguageOptions {
@@ -89,5 +91,24 @@ export class Config {
       unitManager: this.unitManager.clone(),
       functionsManager: this.functionsManager.clone(),
     });
+  }
+
+  registerSchemas(
+    schemas: Array<{
+      uri: string;
+      schema: ColorSpecification | FunctionSpecification;
+    }>,
+  ): Config {
+    for (const { uri, schema } of schemas) {
+      if (schema.type === "color") {
+        this.colorManager.register(uri, schema as ColorSpecification);
+      } else if (schema.type === "function") {
+        this.functionsManager.register(
+          (schema as FunctionSpecification).keyword,
+          schema as FunctionSpecification,
+        );
+      }
+    }
+    return this;
   }
 }

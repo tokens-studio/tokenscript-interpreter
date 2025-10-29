@@ -1,4 +1,5 @@
 import * as fs from "node:fs";
+import type { Config } from "@interpreter/config";
 import { Interpreter } from "@interpreter/interpreter";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
@@ -11,6 +12,7 @@ import {
   processThemes,
 } from "@src/tokenset-processor";
 import type { ReferenceRecord } from "@src/types";
+import { fetchAndRegisterSchemas } from "@src/utils/schema-fetcher";
 
 import { Command } from "commander";
 import * as readlineSync from "readline-sync";
@@ -29,8 +31,9 @@ program
 program
   .command("interactive")
   .description("Start interactive REPL mode for TokenScript")
-  .action(async () => {
-    await interactiveMode();
+  .option("--schema <uris...>", "Schema URIs to fetch and register")
+  .action(async (options) => {
+    await interactiveMode(options.schema);
   });
 
 // Parse tokenset command
@@ -39,8 +42,9 @@ program
   .description("Parse and process a tokenset from a ZIP file")
   .requiredOption("--tokenset <path>", "Path to the tokenset ZIP file")
   .option("--output <path>", "Output file path (if not provided, prints to console)")
+  .option("--schema <uris...>", "Schema URIs to fetch and register")
   .action(async (options) => {
-    await parseTokenset(options.tokenset, options.output);
+    await parseTokenset(options.tokenset, options.output, options.schema);
   });
 
 // Permutate tokenset command
@@ -51,12 +55,14 @@ program
   .requiredOption("--permutate-on <themes...>", "List of theme groups to permutate on")
   .requiredOption("--permutate-to <theme>", "Target theme group for permutation")
   .option("--output <path>", "Output file path (if not provided, prints to console)")
+  .option("--schema <uris...>", "Schema URIs to fetch and register")
   .action(async (options) => {
     await permutateTokenset(
       options.tokenset,
       options.permutateOn,
       options.permutateTo,
       options.output,
+      options.schema,
     );
   });
 
@@ -66,8 +72,9 @@ program
   .description("Parse and process a DTCG JSON file directly")
   .requiredOption("--json <path>", "Path to the DTCG JSON file")
   .option("--output <path>", "Output file path (if not provided, prints to console)")
+  .option("--schema <uris...>", "Schema URIs to fetch and register")
   .action(async (options) => {
-    await parseJsonFile(options.json, options.output);
+    await parseJsonFile(options.json, options.output, options.schema);
   });
 
 // Evaluate standard compliance command
@@ -106,12 +113,12 @@ program
     }
   });
 
-// Interactive REPL mode
-async function interactiveMode(): Promise<void> {
+async function interactiveMode(schemas?: string[]): Promise<void> {
   console.log("🚀 TokenScript Interactive Mode");
   console.log('Type "exit" or "quit" to exit, "set_variables" to set token references');
   console.log("");
 
+  const config = await fetchAndRegisterSchemas(schemas);
   let references: ReferenceRecord = {};
 
   while (true) {
@@ -133,7 +140,7 @@ async function interactiveMode(): Promise<void> {
       }
 
       // Parse and interpret the input
-      const result = await interpretExpression(input, references);
+      const result = await interpretExpression(input, references, config);
       console.log(`✅ Result: ${result}`);
     } catch (error: any) {
       console.error(`❌ Error: ${error.message}`);
@@ -181,7 +188,11 @@ async function setVariablesInteractively(
 }
 
 // Interpret a single expression
-async function interpretExpression(code: string, references: ReferenceRecord): Promise<string> {
+async function interpretExpression(
+  code: string,
+  references: ReferenceRecord,
+  config?: Config,
+): Promise<string> {
   try {
     const lexer = new Lexer(code);
     const parser = new Parser(lexer);
@@ -191,7 +202,7 @@ async function interpretExpression(code: string, references: ReferenceRecord): P
       return "No result (empty input)";
     }
 
-    const interpreter = new Interpreter(ast, { references });
+    const interpreter = new Interpreter(ast, { references, config });
     const result = interpreter.interpret();
 
     if (result === null) {
@@ -206,34 +217,25 @@ async function interpretExpression(code: string, references: ReferenceRecord): P
   }
 }
 
-// Parse tokenset from ZIP file
-async function parseTokenset(tokensetPath: string, outputPath?: string): Promise<void> {
+async function parseTokenset(
+  tokensetPath: string,
+  outputPath?: string,
+  schemas?: string[],
+): Promise<void> {
   console.log(`📦 Parsing tokenset from: ${tokensetPath}`);
 
   try {
-    // Clear any existing caches for fresh processing
-    const { clearFlatteningCaches } = await import("@src/utils/dtcg-adapter");
-    clearFlatteningCaches();
-
-    // Load ZIP file contents
+    const config = await fetchAndRegisterSchemas(schemas);
     const filesContent = await loadZipToMemory(tokensetPath);
-
-    // Debug: show what files were loaded
-    console.log(`📁 ${Object.keys(filesContent).length} Files loaded`);
-
-    // Load themes
     const themes = loadThemes(filesContent);
-    console.log(`🎨 Loaded themes: ${Object.keys(themes).join(", ")}`);
-
-    // Process themes
     const output = await processThemes(themes, {
       enablePerformanceTracking: true,
+      config,
     });
 
-    // Write output or print to console
     if (outputPath) {
       await fs.promises.writeFile(outputPath, JSON.stringify(output, null, 2), "utf8");
-      console.log(`💾 Output written to: ${outputPath}`);
+      console.log(`Output written to: ${outputPath}`);
     } else {
       console.log(JSON.stringify(output, null, 2));
     }
@@ -243,22 +245,20 @@ async function parseTokenset(tokensetPath: string, outputPath?: string): Promise
   }
 }
 
-// Permutate tokenset
 async function permutateTokenset(
   tokensetPath: string,
   permutateOn: string[],
   permutateTo: string,
   outputPath?: string,
+  schemas?: string[],
 ): Promise<void> {
   console.log(`🔄 Permutating tokenset from: ${tokensetPath}`);
   console.log(`📋 Permutating on: ${permutateOn.join(", ")}`);
   console.log(`🎯 Permutating to: ${permutateTo}`);
 
   try {
-    // Load ZIP file contents
+    const config = await fetchAndRegisterSchemas(schemas);
     const filesContent = await loadZipToMemory(tokensetPath);
-
-    // Build theme tree
     const themeTree = buildThemeTree(filesContent);
 
     // Validate permutation parameters
@@ -267,14 +267,12 @@ async function permutateTokenset(
         `Some themes in permutate-on not found. Available: ${Object.keys(themeTree).join(", ")}`,
       );
     }
-
     if (!(permutateTo in themeTree)) {
       throw new Error(
         `Target theme '${permutateTo}' not found. Available: ${Object.keys(themeTree).join(", ")}`,
       );
     }
 
-    // Generate permutations
     const permutations = permutateTokensets(themeTree, [...permutateOn]);
 
     // Create output structure
@@ -292,11 +290,11 @@ async function permutateTokenset(
           JSON.parse(JSON.stringify(permutations)),
           JSON.parse(JSON.stringify(permutationDimensions)),
           JSON.parse(JSON.stringify(themeTree[permutateTo][item])),
+          config,
         ),
       };
     }
 
-    // Write output or print to console
     if (outputPath) {
       await fs.promises.writeFile(outputPath, JSON.stringify(output, null, 2), "utf8");
       console.log(`💾 Permutations written to: ${outputPath}`);
@@ -310,14 +308,20 @@ async function permutateTokenset(
 }
 
 // Parse DTCG JSON file - simple unified API
-async function parseJsonFile(jsonPath: string, outputPath?: string): Promise<void> {
+async function parseJsonFile(
+  jsonPath: string,
+  outputPath?: string,
+  schemas?: string[],
+): Promise<void> {
   try {
+    const config = await fetchAndRegisterSchemas(schemas);
+
     // Read JSON file
     const jsonContent = await fs.promises.readFile(jsonPath, "utf8");
     const dtcgJson = JSON.parse(jsonContent);
 
     // Process the JSON blob - returns flat tokens (aligned with Python implementation)
-    const output = interpretTokens(dtcgJson);
+    const output = interpretTokens(dtcgJson, config);
 
     // Write output or print to console
     if (outputPath) {

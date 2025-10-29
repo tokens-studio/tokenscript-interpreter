@@ -1,3 +1,4 @@
+import { Config } from "@interpreter/config";
 import { ColorSpecificationSchema } from "@interpreter/config/managers/color/schema";
 import { FunctionSpecificationSchema } from "@interpreter/config/managers/functions/schema";
 import { z } from "zod";
@@ -76,4 +77,27 @@ export async function fetchTokenScriptSchema(
 
     throw new Error("Unknown error occurred while fetching schema");
   }
+}
+
+export async function fetchAndRegisterSchemas(
+  schemaUris: string[],
+  config?: Config,
+): Promise<Config> {
+  const configInstance = config || new Config();
+
+  if (!schemaUris || schemaUris.length === 0) {
+    return configInstance;
+  }
+
+  const schemas = await Promise.all(
+    schemaUris.map(async (uri) => {
+      const schemaResponse = await fetchTokenScriptSchema(uri);
+      return {
+        uri,
+        schema: schemaResponse.content,
+      };
+    }),
+  );
+
+  return configInstance.registerSchemas(schemas);
 }
