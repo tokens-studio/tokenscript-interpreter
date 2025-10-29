@@ -15,6 +15,7 @@ import type { ReferenceRecord } from "@src/types";
 import { Command } from "commander";
 import * as readlineSync from "readline-sync";
 import * as yauzl from "yauzl";
+import packageJson from "../package.json" with { type: "json" };
 
 const program = new Command();
 
@@ -22,7 +23,7 @@ const program = new Command();
 program
   .name("tokenscript")
   .description("TokenScript Interpreter CLI - A command-line interface for TokenScript language")
-  .version("1.0.0");
+  .version(packageJson.version);
 
 // Interactive mode command
 program
