@@ -7,7 +7,7 @@ export default function SlantedSeparator() {
 
   return (
     <div className="flex items-center h-full px-2">
-      <div 
+      <div
         className="transform -skew-x-12 opacity-20"
         style={{
           backgroundColor: currentTheme.textMuted,

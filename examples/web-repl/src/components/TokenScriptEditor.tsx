@@ -1,6 +1,6 @@
 import { useAtom } from "jotai";
-import { inputsPanelCollapsedAtom } from "../store/atoms";
 import { useTheme } from "../contexts/ThemeContext";
+import { inputsPanelCollapsedAtom } from "../store/atoms";
 import { getTheme } from "../theme/colors";
 import InputsPanel from "./InputsPanel";
 import MonacoEditor, { type ErrorInfo } from "./MonacoEditor";

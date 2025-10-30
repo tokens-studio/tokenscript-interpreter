@@ -7,31 +7,31 @@ interface ColorTheme {
   background: string;
   foreground: string;
   border: string;
-  
+
   // Surface colors (panels, cards)
   surface: string;
   surfaceHover: string;
   surfaceActive: string;
-  
+
   // Accent colors
   primary: string;
   primaryHover: string;
-  
+
   // Logo/Brand colors
   logoAction: string;
-  
+
   // Status colors
   error: string;
   errorLight: string;
   success: string;
   successLight: string;
   warning: string;
-  
+
   // Text colors
   textPrimary: string;
   textSecondary: string;
   textMuted: string;
-  
+
   // Editor specific
   editorBackground: string;
   editorForeground: string;
@@ -43,7 +43,7 @@ interface ColorTheme {
   editorGutterBorder: string;
 
   outputBackground: string;
-  
+
   // Syntax highlighting
   syntaxKeyword: string;
   syntaxType: string;
@@ -59,26 +59,26 @@ export const lightTheme: ColorTheme = {
   background: "#fafbfc",
   foreground: "#24292e",
   border: "#d0d7de",
-  
+
   surface: "#ffffff",
   surfaceHover: "#f6f8fa",
   surfaceActive: "#eaeef2",
-  
+
   primary: "#0969da",
   primaryHover: "#0860ca",
-  
+
   logoAction: "#10b981", // emerald-500
-  
+
   error: "#cf222e",
   errorLight: "#ffebe6",
   success: "#1a7f37",
   successLight: "#dafbe1",
   warning: "#fb8500",
-  
+
   textPrimary: "#24292e",
   textSecondary: "#57606a",
   textMuted: "#848d97",
-  
+
   editorBackground: "#ffffff",
   editorForeground: "#24292e",
   editorLineHighlight: "#f6f8fa",
@@ -104,26 +104,26 @@ export const darkTheme: ColorTheme = {
   background: "#09090b",
   foreground: "#e4e4e7",
   border: "#27272a",
-  
+
   surface: "#18181b",
   surfaceHover: "#27272a",
   surfaceActive: "#3f3f46",
-  
+
   primary: "#a1a1aa",
   primaryHover: "#d4d4d8",
-  
+
   logoAction: "#34d399", // emerald-400 (matches the logo color)
-  
+
   error: "#f87171",
   errorLight: "#450a0a",
   success: "#4ade80",
   successLight: "#052e16",
   warning: "#fb923c",
-  
+
   textPrimary: "#fafafa",
   textSecondary: "#d4d4d8",
   textMuted: "#71717a",
-  
+
   editorBackground: "#18181b",
   editorForeground: "#e4e4e7",
   editorLineHighlight: "#27272a",
@@ -134,7 +134,7 @@ export const darkTheme: ColorTheme = {
   editorGutterBorder: "#27272a",
 
   outputBackground: "#18181a",
-  
+
   syntaxKeyword: "#C586C0",
   syntaxType: "#4EC9B0",
   syntaxFunction: "#DCDCAA",

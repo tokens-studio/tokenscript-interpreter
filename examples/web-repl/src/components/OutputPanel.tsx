@@ -3,10 +3,7 @@ import { useEffect, useState } from "react";
 
 import "prismjs/themes/prism.css";
 import "prismjs/components/prism-json";
-import { useTheme } from "../contexts/ThemeContext";
-import { getTheme } from "../theme/colors";
-import { HEADER_HEIGHT } from "./shared-theme";
-import { isNonEmptyObject, when } from "@interpreter/utils/type";
+import { isNonEmptyObject } from "@interpreter/utils/type";
 import {
   BaseSymbolType,
   type ColorManager,
@@ -14,8 +11,9 @@ import {
   type DictionarySymbol,
   type ListSymbol,
 } from "@tokens-studio/tokenscript-interpreter";
-import ShellPanel from "./ShellPanel";
-import { tokenscriptThemeColors, tokenscriptLightThemeColors } from "./shared-theme";
+import { useTheme } from "../contexts/ThemeContext";
+import { getTheme } from "../theme/colors";
+import { HEADER_HEIGHT, tokenscriptLightThemeColors, tokenscriptThemeColors } from "./shared-theme";
 
 export interface OutputResult {
   error?: string;
@@ -187,10 +185,7 @@ function JsonOutput({ value, visualMode = false }: { value: any; visualMode?: bo
     root.style.setProperty("--tokenscript-json-boolean", themeColors.jsonBoolean);
     root.style.setProperty("--tokenscript-json-null", themeColors.jsonNull);
     root.style.setProperty("--tokenscript-json-property", themeColors.jsonProperty);
-    root.style.setProperty(
-      "--tokenscript-json-punctuation",
-      themeColors.jsonPunctuation,
-    );
+    root.style.setProperty("--tokenscript-json-punctuation", themeColors.jsonPunctuation);
 
     Prism.highlightAll();
   }, [themeColors, jsonString]);
@@ -198,9 +193,7 @@ function JsonOutput({ value, visualMode = false }: { value: any; visualMode?: bo
   if (visualMode && typeof value === "object" && value !== null && !Array.isArray(value)) {
     const entries = Object.entries(value).sort(([keyA], [keyB]) => keyA.localeCompare(keyB));
     return (
-      <div
-        data-testid="json-output-visual"
-      >
+      <div data-testid="json-output-visual">
         {entries.map(([key, val], index) => {
           const stringVal = String(val);
           const isColor = isValidColor(stringVal);
@@ -211,7 +204,8 @@ function JsonOutput({ value, visualMode = false }: { value: any; visualMode?: bo
               key={key}
               className="p-2 flex items-center justify-between gap-4 mx-4"
               style={{
-                borderBottomColor: index < entries.length - 1 ? "rgba(128, 128, 128, 0.15)" : "transparent",
+                borderBottomColor:
+                  index < entries.length - 1 ? "rgba(128, 128, 128, 0.15)" : "transparent",
                 borderBottomWidth: index < entries.length - 1 ? "1px" : "0px",
               }}
               data-testid={`json-item-${key}`}
@@ -599,7 +593,12 @@ const Output = ({ result, visualMode }: { result: OutputResult; visualMode?: boo
   }
 
   if (type === "json") {
-    return <JsonOutput value={output} visualMode={visualMode} />;
+    return (
+      <JsonOutput
+        value={output}
+        visualMode={visualMode}
+      />
+    );
   }
 
   return null;
@@ -614,9 +613,7 @@ const OutputPanelTitle = ({ error, output }: { error?: string; output?: BaseSymb
       className="flex items-center space-x-2"
       data-testid="output-panel-title"
     >
-      <div
-        className={`w-2 h-2 rounded-full ${error ? "bg-red-400" : "bg-emerald-400"}`}
-      />
+      <div className={`w-2 h-2 rounded-full ${error ? "bg-red-400" : "bg-emerald-400"}`} />
       <span
         className="font-semibold"
         style={{ color: error ? "#f87171" : currentTheme.textPrimary }}
@@ -668,7 +665,8 @@ function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
 
         {/* View Mode Toggle */}
         {!error && result.type === "json" && (
-          <div className="flex items-center gap-1 px-3 py-1 rounded"
+          <div
+            className="flex items-center gap-1 px-3 py-1 rounded"
             style={{
               backgroundColor: currentTheme.background,
               border: `1px solid ${currentTheme.border}`,
@@ -682,13 +680,9 @@ function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
                 className="px-2 py-1 rounded text-xs font-medium transition-colors"
                 style={{
                   backgroundColor:
-                    viewMode === option.value
-                      ? currentTheme.background
-                      : "transparent",
+                    viewMode === option.value ? currentTheme.background : "transparent",
                   color:
-                    viewMode === option.value
-                      ? currentTheme.textPrimary
-                      : currentTheme.textMuted,
+                    viewMode === option.value ? currentTheme.textPrimary : currentTheme.textMuted,
                   border:
                     viewMode === option.value
                       ? `1px solid ${currentTheme.border}`
@@ -719,7 +713,10 @@ function OutputPanel({ result, className = "" }: UnifiedOutputPanelProps) {
         style={{ color: currentTheme.textPrimary }}
         data-testid="output-panel-content"
       >
-        <Output result={result} visualMode={viewMode === "visual"} />
+        <Output
+          result={result}
+          visualMode={viewMode === "visual"}
+        />
       </div>
     </div>
   );

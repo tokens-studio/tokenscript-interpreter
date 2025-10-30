@@ -4,10 +4,7 @@ import type {
 } from "@tokens-studio/tokenscript-interpreter";
 import { useAtom } from "jotai";
 import { type RefObject, useCallback, useEffect, useState } from "react";
-import {
-  appStateAtom,
-  openDialogAtom,
-} from "../../store/atoms";
+import { appStateAtom, openDialogAtom } from "../../store/atoms";
 import { DEFAULT_COLOR_SCHEMAS } from "../../utils/default-schemas";
 import { createShareState, type ShareState } from "../../utils/share";
 import SchemaDialog from "./SchemaDialog";
@@ -21,7 +18,7 @@ interface DialogManagerProps {
 export default function DialogManager({ shareButtonRef }: DialogManagerProps) {
   const [openDialog, setOpenDialog] = useAtom(openDialogAtom);
   const [appState, setAppState] = useAtom(appStateAtom);
-  const [editingSchema, setEditingSchema] = useState<{
+  const [editingSchema, _setEditingSchema] = useState<{
     url: string;
     spec: ColorSpecification | FunctionSpecification;
     type: "color" | "function";
@@ -48,8 +45,7 @@ export default function DialogManager({ shareButtonRef }: DialogManagerProps) {
 
   const handleSchemaSelect = useCallback(
     (url: string, spec: any, type?: "color" | "function") => {
-      const schemaType =
-        type || (spec.type === "function" ? "function" : "color");
+      const schemaType = type || (spec.type === "function" ? "function" : "color");
       if (schemaType === "color") {
         setAppState((prev) => ({
           ...prev,

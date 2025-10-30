@@ -1,4 +1,4 @@
-import { type ReactNode, forwardRef } from "react";
+import { forwardRef, type ReactNode } from "react";
 import { useTheme } from "../contexts/ThemeContext";
 import { getTheme } from "../theme/colors";
 
@@ -13,7 +13,10 @@ interface LinkProps {
 }
 
 const Link = forwardRef<HTMLAnchorElement, LinkProps>(
-  ({ href, children, className = "", style = {}, title, target = "_blank", rel, ...props }, ref) => {
+  (
+    { href, children, className = "", style = {}, title, target = "_blank", rel, ...props },
+    ref,
+  ) => {
     const { theme } = useTheme();
     const currentTheme = getTheme(theme);
 

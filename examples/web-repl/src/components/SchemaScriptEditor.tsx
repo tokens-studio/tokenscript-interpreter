@@ -1,7 +1,7 @@
 import {
   ColorManager,
-  Config,
   type ColorSpecification,
+  Config,
   type FunctionSpecification,
   FunctionsManager,
   Interpreter,
@@ -12,10 +12,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTheme } from "../contexts/ThemeContext";
 import { getTheme } from "../theme/colors";
+import { DEFAULT_COLOR_SCHEMAS } from "../utils/default-schemas";
 import { fetchTokenScriptSchema } from "../utils/schema-fetcher";
 import MonacoEditor from "./MonacoEditor";
 import OutputPanel from "./OutputPanel";
-import { DEFAULT_COLOR_SCHEMAS } from "../utils/default-schemas";
 
 interface ConversionScript {
   script: {
@@ -163,10 +163,7 @@ export default function SchemaScriptEditor({
         for (const result of results) {
           if (!result) continue;
           if (result.spec.type === "function") {
-            functionSchemas.set(
-              result.url,
-              result.spec as FunctionSpecification,
-            );
+            functionSchemas.set(result.url, result.spec as FunctionSpecification);
           } else {
             colorSchemas.set(result.url, result.spec as ColorSpecification);
           }
@@ -305,14 +302,24 @@ export default function SchemaScriptEditor({
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
       onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") {
+          onClose();
+        }
+      }}
+      role="none"
     >
       <div
+        role="dialog"
+        tabIndex={-1}
         className="w-full h-full max-w-7xl max-h-[90vh] flex flex-col rounded-lg shadow-2xl overflow-hidden"
         style={{
           backgroundColor: currentTheme.surface,
           borderColor: currentTheme.border,
         }}
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+        aria-label="Schema script editor"
       >
         {/* Header */}
         <div
@@ -348,12 +355,12 @@ export default function SchemaScriptEditor({
             onClick={onClose}
             className="ml-4 transition-colors"
             style={{ color: currentTheme.textMuted }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.color = currentTheme.textSecondary)
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.color = currentTheme.textMuted)
-            }
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = currentTheme.textSecondary;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = currentTheme.textMuted;
+            }}
           >
             <svg
               className="w-6 h-6"
@@ -414,12 +421,7 @@ export default function SchemaScriptEditor({
                         id={`input-${key}`}
                         type="number"
                         value={inputs[key] || 0}
-                        onChange={(e) =>
-                          handleInputChange(
-                            key,
-                            parseFloat(e.target.value) || 0,
-                          )
-                        }
+                        onChange={(e) => handleInputChange(key, parseFloat(e.target.value) || 0)}
                         className="w-full px-2 py-1 text-sm rounded border"
                         style={{
                           backgroundColor: currentTheme.background,
@@ -432,9 +434,7 @@ export default function SchemaScriptEditor({
                         id={`input-${key}`}
                         type="checkbox"
                         checked={inputs[key] || false}
-                        onChange={(e) =>
-                          handleInputChange(key, e.target.checked)
-                        }
+                        onChange={(e) => handleInputChange(key, e.target.checked)}
                         className="w-4 h-4"
                       />
                     ) : prop.type === "color" || prop.type === "Color" ? (
@@ -448,12 +448,14 @@ export default function SchemaScriptEditor({
                         <div className="grid grid-cols-3 gap-2">
                           <div>
                             <label
+                              htmlFor={`input-${key}-r`}
                               className="text-xs"
                               style={{ color: currentTheme.textMuted }}
                             >
                               R
                             </label>
                             <input
+                              id={`input-${key}-r`}
                               type="number"
                               min="0"
                               max="255"
@@ -474,12 +476,14 @@ export default function SchemaScriptEditor({
                           </div>
                           <div>
                             <label
+                              htmlFor={`input-${key}-g`}
                               className="text-xs"
                               style={{ color: currentTheme.textMuted }}
                             >
                               G
                             </label>
                             <input
+                              id={`input-${key}-g`}
                               type="number"
                               min="0"
                               max="255"
@@ -500,12 +504,14 @@ export default function SchemaScriptEditor({
                           </div>
                           <div>
                             <label
+                              htmlFor={`input-${key}-b`}
                               className="text-xs"
                               style={{ color: currentTheme.textMuted }}
                             >
                               B
                             </label>
                             <input
+                              id={`input-${key}-b`}
                               type="number"
                               min="0"
                               max="255"
@@ -623,11 +629,7 @@ export default function SchemaScriptEditor({
                 onChange={setScript}
                 onKeyDown={handleKeyDown}
                 language="tokenscript"
-                theme={
-                  theme === "dark"
-                    ? "tokenscript-theme-dark"
-                    : "tokenscript-theme-light"
-                }
+                theme={theme === "dark" ? "tokenscript-theme-dark" : "tokenscript-theme-light"}
                 error={result?.errorInfo}
               />
             </div>
@@ -669,7 +671,10 @@ export default function SchemaScriptEditor({
           className="p-3 border-t flex items-center justify-between"
           style={{ borderColor: currentTheme.border }}
         >
-          <div className="text-xs" style={{ color: currentTheme.textMuted }}>
+          <div
+            className="text-xs"
+            style={{ color: currentTheme.textMuted }}
+          >
             <span className="mr-4">Ctrl+Enter: Execute</span>
             <span>Esc: Close</span>
           </div>
@@ -682,13 +687,12 @@ export default function SchemaScriptEditor({
               borderColor: currentTheme.border,
               color: currentTheme.textPrimary,
             }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.backgroundColor =
-                currentTheme.surfaceHover)
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = currentTheme.background)
-            }
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = currentTheme.surfaceHover;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = currentTheme.background;
+            }}
           >
             Run Script
           </button>

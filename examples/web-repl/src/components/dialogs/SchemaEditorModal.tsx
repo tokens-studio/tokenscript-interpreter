@@ -1,29 +1,15 @@
 import { MINIMAL_COLOR_SPECIFICATION } from "@interpreter/config/managers/color/schema";
-import {
-  type ColorSpecification,
-  type FunctionSpecification,
+import type {
+  ColorSpecification,
+  FunctionSpecification,
 } from "@tokens-studio/tokenscript-interpreter";
-import {
-  useCallback,
-  useEffect,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import MonacoEditor, { jsonEditorOptions } from "../MonacoEditor";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useSchemaFetch, useSchemaRequirements, useSchemaValidation } from "../../hooks";
+import { type ExecutionResult, executeSchemaScript } from "../../utils/executor";
+import MonacoEditor, { jsonEditorOptions } from "../MonacoEditor";
 import OutputPanel from "../OutputPanel";
-import {
-  executeSchemaScript,
-  type ExecutionResult,
-} from "../../utils/executor";
-import {
-  useSchemaFetch,
-  useSchemaValidation,
-  useSchemaRequirements,
-} from "../../hooks";
 
 interface ScriptEditorTabProps {
   currentParsedSpec: ColorSpecification | FunctionSpecification | null;
@@ -66,11 +52,7 @@ function ScriptEditorTab({
           theme === "dark" ? "border-zinc-800" : "border-gray-200"
         }`}
       >
-        <div
-          className={`p-3 border-b ${
-            theme === "dark" ? "border-zinc-800" : "border-gray-200"
-          }`}
-        >
+        <div className={`p-3 border-b ${theme === "dark" ? "border-zinc-800" : "border-gray-200"}`}>
           <h3
             className={`text-sm font-medium ${
               theme === "dark" ? "text-zinc-300" : "text-gray-700"
@@ -182,8 +164,7 @@ function ScriptEditorTab({
                           }
                           className="w-full h-10 rounded border cursor-pointer"
                           style={{
-                            borderColor:
-                              theme === "dark" ? "#3f3f46" : "#d1d5db",
+                            borderColor: theme === "dark" ? "#3f3f46" : "#d1d5db",
                           }}
                         />
                         <input
@@ -208,15 +189,15 @@ function ScriptEditorTab({
                         {["r", "g", "b"].map((channel) => (
                           <div key={channel}>
                             <label
+                              htmlFor={`script-input-${key}-${channel}`}
                               className={`text-xs ${
-                                theme === "dark"
-                                  ? "text-zinc-500"
-                                  : "text-gray-500"
+                                theme === "dark" ? "text-zinc-500" : "text-gray-500"
                               }`}
                             >
                               {channel.toUpperCase()}
                             </label>
                             <input
+                              id={`script-input-${key}-${channel}`}
                               type="number"
                               min="0"
                               max="255"
@@ -248,15 +229,15 @@ function ScriptEditorTab({
                         ].map((channel) => (
                           <div key={channel.key}>
                             <label
+                              htmlFor={`script-input-${key}-${channel.key}`}
                               className={`text-xs ${
-                                theme === "dark"
-                                  ? "text-zinc-500"
-                                  : "text-gray-500"
+                                theme === "dark" ? "text-zinc-500" : "text-gray-500"
                               }`}
                             >
                               {channel.label}
                             </label>
                             <input
+                              id={`script-input-${key}-${channel.key}`}
                               type="number"
                               min={channel.min}
                               max={channel.max}
@@ -266,8 +247,7 @@ function ScriptEditorTab({
                                   ...prev,
                                   [key]: {
                                     ...prev[key],
-                                    [channel.key]:
-                                      parseFloat(e.target.value) || 0,
+                                    [channel.key]: parseFloat(e.target.value) || 0,
                                   },
                                 }))
                               }
@@ -315,61 +295,56 @@ function ScriptEditorTab({
         </div>
 
         {/* Requirements */}
-        {currentParsedSpec?.requirements &&
-          currentParsedSpec.requirements.length > 0 && (
-            <>
-              <div
-                className={`p-3 border-t border-b ${
-                  theme === "dark" ? "border-zinc-800" : "border-gray-200"
+        {currentParsedSpec?.requirements && currentParsedSpec.requirements.length > 0 && (
+          <>
+            <div
+              className={`p-3 border-t border-b ${
+                theme === "dark" ? "border-zinc-800" : "border-gray-200"
+              }`}
+            >
+              <h3
+                className={`text-sm font-medium ${
+                  theme === "dark" ? "text-zinc-300" : "text-gray-700"
                 }`}
               >
-                <h3
-                  className={`text-sm font-medium ${
-                    theme === "dark" ? "text-zinc-300" : "text-gray-700"
+                Requirements
+              </h3>
+            </div>
+            <div className="p-3 space-y-2 max-h-48 overflow-auto">
+              {loadingRequirements ? (
+                <div
+                  className={`flex items-center gap-2 text-xs ${
+                    theme === "dark" ? "text-zinc-500" : "text-gray-500"
                   }`}
                 >
-                  Requirements
-                </h3>
-              </div>
-              <div className="p-3 space-y-2 max-h-48 overflow-auto">
-                {loadingRequirements ? (
+                  <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  <span>Loading...</span>
+                </div>
+              ) : (
+                currentParsedSpec.requirements.map((reqUrl) => (
                   <div
-                    className={`flex items-center gap-2 text-xs ${
+                    key={reqUrl}
+                    className={`text-xs truncate font-mono ${
                       theme === "dark" ? "text-zinc-500" : "text-gray-500"
                     }`}
+                    title={reqUrl}
                   >
-                    <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                    <span>Loading...</span>
+                    {requirements.colors.has(reqUrl)
+                      ? requirements.colors.get(reqUrl)?.name || reqUrl
+                      : requirements.functions.has(reqUrl)
+                        ? requirements.functions.get(reqUrl)?.name || reqUrl
+                        : reqUrl}
                   </div>
-                ) : (
-                  currentParsedSpec.requirements.map((reqUrl) => (
-                    <div
-                      key={reqUrl}
-                      className={`text-xs truncate font-mono ${
-                        theme === "dark" ? "text-zinc-500" : "text-gray-500"
-                      }`}
-                      title={reqUrl}
-                    >
-                      {requirements.colors.has(reqUrl)
-                        ? requirements.colors.get(reqUrl)?.name || reqUrl
-                        : requirements.functions.has(reqUrl)
-                          ? requirements.functions.get(reqUrl)?.name || reqUrl
-                          : reqUrl}
-                    </div>
-                  ))
-                )}
-              </div>
-            </>
-          )}
+                ))
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Middle panel - Script editor */}
       <div className="flex-1 flex flex-col">
-        <div
-          className={`p-3 border-b ${
-            theme === "dark" ? "border-zinc-800" : "border-gray-200"
-          }`}
-        >
+        <div className={`p-3 border-b ${theme === "dark" ? "border-zinc-800" : "border-gray-200"}`}>
           <h3
             className={`text-sm font-medium ${
               theme === "dark" ? "text-zinc-300" : "text-gray-700"
@@ -383,11 +358,7 @@ function ScriptEditorTab({
             value={currentScript}
             onChange={onScriptChange}
             language="tokenscript"
-            theme={
-              theme === "dark"
-                ? "tokenscript-theme-dark"
-                : "tokenscript-theme-light"
-            }
+            theme={theme === "dark" ? "tokenscript-theme-dark" : "tokenscript-theme-light"}
             error={scriptResult?.errorInfo}
           />
         </div>
@@ -399,11 +370,7 @@ function ScriptEditorTab({
           theme === "dark" ? "border-zinc-800" : "border-gray-200"
         }`}
       >
-        <div
-          className={`p-3 border-b ${
-            theme === "dark" ? "border-zinc-800" : "border-gray-200"
-          }`}
-        >
+        <div className={`p-3 border-b ${theme === "dark" ? "border-zinc-800" : "border-gray-200"}`}>
           <h3
             className={`text-sm font-medium ${
               theme === "dark" ? "text-zinc-300" : "text-gray-700"
@@ -455,21 +422,14 @@ export default function SchemaEditorModal({
   const [url, setUrl] = useState<string | undefined>(schema?.url);
 
   const defaultSpec = schema?.spec || MINIMAL_COLOR_SPECIFICATION;
-  const [schemaJson, setSchemaJson] = useState(
-    JSON.stringify(defaultSpec, null, 2),
-  );
+  const [schemaJson, setSchemaJson] = useState(JSON.stringify(defaultSpec, null, 2));
   type ErrorType = "empty" | "invalid" | "duplicate";
   type SchemaEditorError = { type: ErrorType; message: string } | undefined;
   const [error, setError] = useState<SchemaEditorError>();
 
   const { fetchState, fetchSchema, abortFetch } = useSchemaFetch();
-  const { validationErrors, validateSchema, setValidationErrors } =
-    useSchemaValidation();
-  const {
-    requirements,
-    loading: loadingRequirements,
-    loadRequirements,
-  } = useSchemaRequirements();
+  const { validationErrors, validateSchema, setValidationErrors } = useSchemaValidation();
+  const { requirements, loading: loadingRequirements, loadRequirements } = useSchemaRequirements();
 
   const uniqueId = useId();
   const [activeTab, setActiveTab] = useState<"json" | "script">("json");
@@ -478,9 +438,7 @@ export default function SchemaEditorModal({
   // Parse the current schema JSON to get the spec
   const currentParsedSpec = useMemo(() => {
     try {
-      return JSON.parse(schemaJson) as
-        | ColorSpecification
-        | FunctionSpecification;
+      return JSON.parse(schemaJson) as ColorSpecification | FunctionSpecification;
     } catch {
       return null;
     }
@@ -494,8 +452,7 @@ export default function SchemaEditorModal({
 
   // Check if this is a function schema with a script
   const hasFunction = useMemo(() => {
-    if (!currentParsedSpec || currentParsedSpec.type !== "function")
-      return false;
+    if (!currentParsedSpec || currentParsedSpec.type !== "function") return false;
     const funcSpec = currentParsedSpec as FunctionSpecification;
     return !!funcSpec.script?.script;
   }, [currentParsedSpec]);
@@ -505,9 +462,7 @@ export default function SchemaEditorModal({
 
   // Script editor state
   const [scriptInputs, setScriptInputs] = useState<Record<string, any>>({});
-  const [scriptResult, setScriptResult] = useState<ExecutionResult | null>(
-    null,
-  );
+  const [scriptResult, setScriptResult] = useState<ExecutionResult | null>(null);
 
   // Get the current script to edit
   const currentScript = useMemo(() => {
@@ -518,10 +473,7 @@ export default function SchemaEditorModal({
       return funcSpec.script?.script || "";
     }
 
-    if (
-      "conversions" in currentParsedSpec &&
-      Array.isArray(currentParsedSpec.conversions)
-    ) {
+    if ("conversions" in currentParsedSpec && Array.isArray(currentParsedSpec.conversions)) {
       const conversion = currentParsedSpec.conversions[selectedConversionIndex];
       return conversion?.script?.script || "";
     }
@@ -547,10 +499,7 @@ export default function SchemaEditorModal({
           } else {
             updatedSpec.script.script = newScript;
           }
-        } else if (
-          updatedSpec.conversions &&
-          Array.isArray(updatedSpec.conversions)
-        ) {
+        } else if (updatedSpec.conversions && Array.isArray(updatedSpec.conversions)) {
           // Update conversion script
           if (updatedSpec.conversions[selectedConversionIndex]) {
             if (!updatedSpec.conversions[selectedConversionIndex].script) {
@@ -559,8 +508,7 @@ export default function SchemaEditorModal({
                 script: newScript,
               };
             } else {
-              updatedSpec.conversions[selectedConversionIndex].script.script =
-                newScript;
+              updatedSpec.conversions[selectedConversionIndex].script.script = newScript;
             }
           }
         }
@@ -614,8 +562,7 @@ export default function SchemaEditorModal({
       return;
     }
 
-    const editorMode =
-      currentParsedSpec?.type === "function" ? "function" : "conversion";
+    const editorMode = currentParsedSpec?.type === "function" ? "function" : "conversion";
 
     // Get color formats from inputs
     const colorFormats: Record<string, string> = {};
@@ -643,13 +590,7 @@ export default function SchemaEditorModal({
     });
 
     setScriptResult(result);
-  }, [
-    currentScript,
-    scriptInputs,
-    requirements,
-    currentParsedSpec,
-    schemaProperties,
-  ]);
+  }, [currentScript, scriptInputs, requirements, currentParsedSpec, schemaProperties]);
 
   // Auto-execute on script or input change
   useEffect(() => {
@@ -713,15 +654,7 @@ export default function SchemaEditorModal({
     const schemaType = validatedSpec.type === "function" ? "function" : "color";
     onSave(trimmedUrl, validatedSpec, schemaType);
     onClose();
-  }, [
-    error,
-    validationErrors.length,
-    url,
-    schemaJson,
-    onSave,
-    onClose,
-    validateSchema,
-  ]);
+  }, [error, validationErrors.length, url, schemaJson, onSave, onClose, validateSchema]);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
@@ -778,10 +711,7 @@ export default function SchemaEditorModal({
       }}
       onKeyDown={(e) => {
         // Only trigger on Enter or Space for accessibility
-        if (
-          (e.key === "Enter" || e.key === " ") &&
-          e.target === e.currentTarget
-        ) {
+        if ((e.key === "Enter" || e.key === " ") && e.target === e.currentTarget) {
           onClose();
         }
       }}
@@ -886,11 +816,7 @@ export default function SchemaEditorModal({
               </div>
               <button
                 type="button"
-                onClick={
-                  fetchState.status === "loading"
-                    ? abortFetch
-                    : handleFetchSchema
-                }
+                onClick={fetchState.status === "loading" ? abortFetch : handleFetchSchema}
                 className={`h-10 px-3 rounded-md text-sm border flex items-center justify-center gap-1 min-w-[80px] ${
                   url === undefined ||
                   url === "" ||
@@ -928,9 +854,7 @@ export default function SchemaEditorModal({
 
           {fetchState.status === "error" && (
             <div
-              className={`text-sm ${
-                theme === "dark" ? "text-red-400" : "text-red-600"
-              }`}
+              className={`text-sm ${theme === "dark" ? "text-red-400" : "text-red-600"}`}
               data-testid="schema-fetch-error"
             >
               {fetchState.error}
@@ -939,9 +863,7 @@ export default function SchemaEditorModal({
 
           {error && (
             <div
-              className={`text-sm ${
-                theme === "dark" ? "text-red-400" : "text-red-600"
-              }`}
+              className={`text-sm ${theme === "dark" ? "text-red-400" : "text-red-600"}`}
               data-testid="schema-error"
             >
               {error.message}
@@ -970,12 +892,11 @@ export default function SchemaEditorModal({
                 }`}
               >
                 {validationErrors.map((error, index) => (
-                  <li key={index} className="flex items-start">
-                    <span
-                      className={`mr-2 ${
-                        theme === "dark" ? "text-red-500" : "text-red-500"
-                      }`}
-                    >
+                  <li
+                    key={index}
+                    className="flex items-start"
+                  >
+                    <span className={`mr-2 ${theme === "dark" ? "text-red-500" : "text-red-500"}`}>
                       •
                     </span>
                     <span>{error.message}</span>
@@ -1056,18 +977,14 @@ export default function SchemaEditorModal({
                 {conversions.length > 0 && (
                   <div className="flex items-center gap-2">
                     <span
-                      className={`text-xs ${
-                        theme === "dark" ? "text-zinc-400" : "text-gray-600"
-                      }`}
+                      className={`text-xs ${theme === "dark" ? "text-zinc-400" : "text-gray-600"}`}
                     >
                       {conversions.length} conversion
                       {conversions.length > 1 ? "s" : ""}
                     </span>
                     <select
                       value={selectedConversionIndex}
-                      onChange={(e) =>
-                        setSelectedConversionIndex(Number(e.target.value))
-                      }
+                      onChange={(e) => setSelectedConversionIndex(Number(e.target.value))}
                       className={`text-xs px-2 py-1 rounded border ${
                         theme === "dark"
                           ? "bg-zinc-800 border-zinc-700 text-zinc-300"
@@ -1075,7 +992,10 @@ export default function SchemaEditorModal({
                       }`}
                     >
                       {conversions.map((conv: any, idx: number) => (
-                        <option key={idx} value={idx}>
+                        <option
+                          key={idx}
+                          value={idx}
+                        >
                           {conv.description || `Conversion ${idx + 1}`}
                         </option>
                       ))}
@@ -1094,11 +1014,7 @@ export default function SchemaEditorModal({
                   onKeyDown={handleKeyDown}
                   validationErrors={validationErrors}
                   language="json"
-                  theme={
-                    theme === "dark"
-                      ? "tokenscript-theme-dark"
-                      : "tokenscript-theme-light"
-                  }
+                  theme={theme === "dark" ? "tokenscript-theme-dark" : "tokenscript-theme-light"}
                   options={jsonEditorOptions}
                   disabled={fetchState.status === "loading"}
                 />
@@ -1142,15 +1058,9 @@ export default function SchemaEditorModal({
           <button
             type="button"
             onClick={handleSave}
-            disabled={
-              !!error ||
-              validationErrors.length > 0 ||
-              fetchState.status === "loading"
-            }
+            disabled={!!error || validationErrors.length > 0 || fetchState.status === "loading"}
             className={`px-4 py-2 rounded-md ${
-              !!error ||
-              validationErrors.length > 0 ||
-              fetchState.status === "loading"
+              !!error || validationErrors.length > 0 || fetchState.status === "loading"
                 ? theme === "dark"
                   ? "bg-zinc-700 text-zinc-500 cursor-not-allowed"
                   : "bg-gray-400 text-gray-700 cursor-not-allowed"

@@ -1,41 +1,31 @@
-import {
-  ColorManager,
-  FunctionsManager,
-} from "@tokens-studio/tokenscript-interpreter";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import { useHydrateAtoms } from "jotai/utils";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDown, Docs, Github, Share } from "./components/icons";
+import DialogManager from "./components/dialogs/DialogManager";
 import EditorTitleBar from "./components/EditorTitleBar";
+import { ArrowDown, Docs, Github, Share } from "./components/icons";
 import JsonTokenEditor from "./components/JsonTokenEditor";
 import OutputPanel from "./components/OutputPanel";
-import PresetSelector from "./components/PresetSelector";
 import SchemaManager from "./components/SchemaManager";
-import DialogManager from "./components/dialogs/DialogManager";
 import { HEADER_HEIGHT } from "./components/shared-theme";
-import SlantedSeparator from "./components/SlantedSeparator";
 import { ThemeToggle } from "./components/ThemeToggle";
 import TokenScriptEditor from "./components/TokenScriptEditor";
+import { useTheme } from "./contexts/ThemeContext";
 import {
   appStateAtom,
   colorManagerAtom,
   functionsManagerAtom,
-  openDialogAtom,
   type InputMode,
   type JsonMode,
+  openDialogAtom,
 } from "./store/atoms";
-import { useTheme } from "./contexts/ThemeContext";
 import { getTheme } from "./theme/colors";
 import { DEFAULT_COLOR_SCHEMAS } from "./utils/default-schemas";
+import { createEmptyResult, type ExecutionResult, executeCode as runCode } from "./utils/executor";
 import type { Preset } from "./utils/presets";
 import { JSON_PRESETS, TOKENSCRIPT_PRESETS } from "./utils/presets";
 import { fetchTokenScriptSchema } from "./utils/schema-fetcher";
 import { decodeShareStateUrl } from "./utils/share";
-import {
-  createEmptyResult,
-  executeCode as runCode,
-  type ExecutionResult,
-} from "./utils/executor";
 
 const awakenSchemaServer = async () => {
   await fetch("https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/", {
@@ -68,9 +58,7 @@ type InitialAppState = {
 };
 
 function getPersistedAppState(): PersistentAppState | null {
-  const stored =
-    sessionStorage.getItem("repl:appState") ||
-    localStorage.getItem("repl:appState");
+  const stored = sessionStorage.getItem("repl:appState") || localStorage.getItem("repl:appState");
   if (!stored) {
     return null;
   }
@@ -83,9 +71,7 @@ function getPersistedAppState(): PersistentAppState | null {
 }
 
 function getDesignSystemPreset(): Preset {
-  return (
-    JSON_PRESETS.find((p) => p.name === "Design system") || JSON_PRESETS[1]
-  );
+  return JSON_PRESETS.find((p) => p.name === "Design system") || JSON_PRESETS[1];
 }
 
 function getInitialAppState(): InitialAppState {
@@ -150,12 +136,10 @@ function App() {
   useHydrateAtoms([[appStateAtom, initialAppState]]);
 
   const [appState, setAppState] = useAtom(appStateAtom);
-  const [result, setResult] = useState<ExecutionResult>(
-    createEmptyResult("tokenscript"),
-  );
+  const [result, setResult] = useState<ExecutionResult>(createEmptyResult("tokenscript"));
   const [jsonError, setJsonError] = useState<string>();
-  const colorManager = useAtomValue(colorManagerAtom);
-  const functionsManager = useAtomValue(functionsManagerAtom);
+  const _colorManager = useAtomValue(colorManagerAtom);
+  const _functionsManager = useAtomValue(functionsManagerAtom);
   const [openDialog, setOpenDialog] = useAtom(openDialogAtom);
   const shareButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -196,16 +180,13 @@ function App() {
         JSON.parse(appState.code);
         setJsonError(undefined);
       } catch (jsonErr) {
-        setJsonError(
-          jsonErr instanceof Error ? jsonErr.message : String(jsonErr),
-        );
+        setJsonError(jsonErr instanceof Error ? jsonErr.message : String(jsonErr));
         const emptyResult = createEmptyResult("json");
         setResult({
           ...emptyResult,
           error: jsonErr instanceof Error ? jsonErr.message : String(jsonErr),
           errorInfo: {
-            message:
-              jsonErr instanceof Error ? jsonErr.message : String(jsonErr),
+            message: jsonErr instanceof Error ? jsonErr.message : String(jsonErr),
           },
         });
         return;
@@ -269,9 +250,7 @@ function App() {
             Array.isArray(spec.requirements) &&
             spec.requirements.length > 0
           ) {
-            const requirementPromises = spec.requirements.map((reqUrl) =>
-              fetchDependency(reqUrl),
-            );
+            const requirementPromises = spec.requirements.map((reqUrl) => fetchDependency(reqUrl));
             await Promise.all(requirementPromises);
           }
         } catch (error) {
@@ -287,10 +266,7 @@ function App() {
         setAppState((prev) => ({
           ...prev,
           colorSchemas: new Map([...prev.colorSchemas, ...colorSchemasToAdd]),
-          functionSchemas: new Map([
-            ...prev.functionSchemas,
-            ...functionSchemasToAdd,
-          ]),
+          functionSchemas: new Map([...prev.functionSchemas, ...functionSchemasToAdd]),
         }));
       }
     },
@@ -366,9 +342,7 @@ function App() {
           }}
         >
           <div className="flex items-center gap-3 text-sm h-full">
-            <span className="text-emerald-400 font-medium px-3 select-none">
-              tokenscript
-            </span>
+            <span className="text-emerald-400 font-medium px-3 select-none">tokenscript</span>
 
             <div
               className="flex items-center gap-1 px-3 py-1 rounded"
@@ -383,9 +357,7 @@ function App() {
                 className="px-2 py-1 rounded text-xs font-medium transition-colors"
                 style={{
                   backgroundColor:
-                    appState.inputMode === "tokenscript"
-                      ? currentTheme.background
-                      : "transparent",
+                    appState.inputMode === "tokenscript" ? currentTheme.background : "transparent",
                   color:
                     appState.inputMode === "tokenscript"
                       ? currentTheme.textPrimary
@@ -414,9 +386,7 @@ function App() {
                 className="px-2 py-1 rounded text-xs font-medium transition-colors"
                 style={{
                   backgroundColor:
-                    appState.inputMode === "json"
-                      ? currentTheme.background
-                      : "transparent",
+                    appState.inputMode === "json" ? currentTheme.background : "transparent",
                   color:
                     appState.inputMode === "json"
                       ? currentTheme.textPrimary
@@ -454,12 +424,12 @@ function App() {
                 color: currentTheme.textMuted,
                 borderRight: `1px solid ${currentTheme.border}`,
               }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.color = currentTheme.textSecondary)
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.color = currentTheme.textMuted)
-              }
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = currentTheme.textSecondary;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = currentTheme.textMuted;
+              }}
               aria-label="Share"
             >
               <Share />
@@ -470,12 +440,12 @@ function App() {
               rel="noopener noreferrer"
               className="transition-colors"
               style={{ color: currentTheme.textMuted }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.color = currentTheme.textSecondary)
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.color = currentTheme.textMuted)
-              }
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = currentTheme.textSecondary;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = currentTheme.textMuted;
+              }}
               aria-label="Documentation"
             >
               <Docs />
@@ -486,12 +456,12 @@ function App() {
               rel="noopener noreferrer"
               className="transition-colors"
               style={{ color: currentTheme.textMuted }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.color = currentTheme.textSecondary)
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.color = currentTheme.textMuted)
-              }
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = currentTheme.textSecondary;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = currentTheme.textMuted;
+              }}
               aria-label="GitHub repository"
             >
               <Github />
@@ -501,7 +471,10 @@ function App() {
 
         <DialogManager shareButtonRef={shareButtonRef} />
 
-        <main className="flex-1 flex overflow-hidden" data-testid="app-main">
+        <main
+          className="flex-1 flex overflow-hidden"
+          data-testid="app-main"
+        >
           <div
             className="w-1/2 flex flex-col border-r"
             style={{ borderColor: currentTheme.border }}
@@ -512,25 +485,22 @@ function App() {
               currentPresetName={appState.currentPresetName}
             />
 
-            <div className="flex-1 overflow-hidden" data-testid="editor-panel">
+            <div
+              className="flex-1 overflow-hidden"
+              data-testid="editor-panel"
+            >
               {appState.inputMode === "tokenscript" ? (
                 <TokenScriptEditor
                   value={appState.code}
-                  onChange={(code) =>
-                    setAppState((prev) => ({ ...prev, code }))
-                  }
+                  onChange={(code) => setAppState((prev) => ({ ...prev, code }))}
                   onKeyDown={handleKeyDown}
                   error={result.errorInfo}
-                  onReferencesChange={(input) =>
-                    setAppState((prev) => ({ ...prev, input }))
-                  }
+                  onReferencesChange={(input) => setAppState((prev) => ({ ...prev, input }))}
                 />
               ) : (
                 <JsonTokenEditor
                   value={appState.code}
-                  onChange={(code) =>
-                    setAppState((prev) => ({ ...prev, code }))
-                  }
+                  onChange={(code) => setAppState((prev) => ({ ...prev, code }))}
                   onKeyDown={handleKeyDown}
                   error={jsonError}
                 />
@@ -564,12 +534,12 @@ function App() {
                       color: currentTheme.textMuted,
                       borderColor: currentTheme.border,
                     }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.color = currentTheme.textSecondary)
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.color = currentTheme.textMuted)
-                    }
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = currentTheme.textSecondary;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = currentTheme.textMuted;
+                    }}
                     data-testid="schema-panel-add"
                   >
                     <svg
@@ -597,12 +567,12 @@ function App() {
                     }
                     className="transition-colors"
                     style={{ color: currentTheme.textMuted }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.color = currentTheme.textSecondary)
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.color = currentTheme.textMuted)
-                    }
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = currentTheme.textSecondary;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = currentTheme.textMuted;
+                    }}
                     data-testid="schema-panel-toggle"
                     aria-label={
                       appState.schemaPanelCollapsed

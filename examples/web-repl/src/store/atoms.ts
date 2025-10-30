@@ -2,10 +2,7 @@ import type {
   ColorSpecification,
   FunctionSpecification,
 } from "@tokens-studio/tokenscript-interpreter";
-import {
-  ColorManager,
-  FunctionsManager,
-} from "@tokens-studio/tokenscript-interpreter";
+import { ColorManager, FunctionsManager } from "@tokens-studio/tokenscript-interpreter";
 import { atom } from "jotai";
 import { DEFAULT_COLOR_SCHEMAS } from "../utils/default-schemas";
 

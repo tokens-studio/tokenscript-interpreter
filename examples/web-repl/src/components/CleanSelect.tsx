@@ -28,7 +28,7 @@ export default function CleanSelect({
   const currentTheme = getTheme(theme);
 
   // Only show actual options (no placeholder in dropdown)
-  const validOptions = options.filter(option => option.value !== "");
+  const validOptions = options.filter((option) => option.value !== "");
 
   return (
     <Select
@@ -47,7 +47,7 @@ export default function CleanSelect({
         }}
       >
         {/* Slanted background that appears on hover, pressed, or focus */}
-        <div 
+        <div
           className="absolute -skew-x-12 transform origin-left opacity-80 scale-x-0 group-hover:scale-x-100 group-data-[pressed]:scale-x-100 group-data-[focus-visible]:scale-x-100"
           style={{
             backgroundColor: currentTheme.surfaceHover,
@@ -57,7 +57,7 @@ export default function CleanSelect({
             right: "-15px", // Extend to cover full button area
           }}
         />
-        
+
         <SelectValue className="font-semibold text-sm relative z-10">
           {validOptions.find((opt) => opt.value === value)?.label || placeholder}
         </SelectValue>

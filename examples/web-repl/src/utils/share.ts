@@ -2,8 +2,8 @@ import type {
   ColorSpecification,
   FunctionSpecification,
 } from "@tokens-studio/tokenscript-interpreter";
-import type { AppState } from "../store/atoms";
 import LZ from "lz-string";
+import type { AppState } from "../store/atoms";
 
 const SHARE_VERSION = 2;
 

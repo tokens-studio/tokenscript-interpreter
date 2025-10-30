@@ -44,9 +44,7 @@ export default function SchemaDialog({
   const currentTheme = getTheme(theme);
   const [inputValue, setInputValue] = useState("");
   const [availableSchemas, setAvailableSchemas] = useState<SchemaOption[]>([]);
-  const [groupedSchemas, setGroupedSchemas] = useState<
-    Record<string, SchemaOption[]>
-  >({});
+  const [groupedSchemas, setGroupedSchemas] = useState<Record<string, SchemaOption[]>>({});
   const [loading, setLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -178,10 +176,7 @@ export default function SchemaDialog({
     const otherGroups = Object.keys(groupedSchemas)
       .filter((group) => !orderedGroups.includes(group))
       .sort();
-    const allGroups = [
-      ...orderedGroups.filter((group) => groupedSchemas[group]),
-      ...otherGroups,
-    ];
+    const allGroups = [...orderedGroups.filter((group) => groupedSchemas[group]), ...otherGroups];
 
     let allSchemas: SchemaOption[] = [];
     allGroups.forEach((group) => {
@@ -189,9 +184,7 @@ export default function SchemaDialog({
     });
 
     // Add action options first
-    const actionOptions: any[] = [
-      { id: "create-custom", name: "Create custom schema..." },
-    ];
+    const actionOptions: any[] = [{ id: "create-custom", name: "Create custom schema..." }];
     if (onRestoreDefaults) {
       actionOptions.push({ id: "restore-defaults", name: "Restore defaults" });
     }
@@ -208,9 +201,7 @@ export default function SchemaDialog({
       setSelectedIndex((prev) => (prev + 1) % allOptions.length);
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setSelectedIndex(
-        (prev) => (prev - 1 + allOptions.length) % allOptions.length,
-      );
+      setSelectedIndex((prev) => (prev - 1 + allOptions.length) % allOptions.length);
     } else if (e.key === "Enter") {
       e.preventDefault();
       const selected = allOptions[selectedIndex];
@@ -232,19 +223,14 @@ export default function SchemaDialog({
   const otherGroups = Object.keys(groupedSchemas)
     .filter((group) => !orderedGroups.includes(group))
     .sort();
-  const allGroups = [
-    ...orderedGroups.filter((group) => groupedSchemas[group]),
-    ...otherGroups,
-  ];
+  const allGroups = [...orderedGroups.filter((group) => groupedSchemas[group]), ...otherGroups];
 
   let allSchemas: SchemaOption[] = [];
   allGroups.forEach((group) => {
     allSchemas = allSchemas.concat(groupedSchemas[group] || []);
   });
 
-  const actionOptions: any[] = [
-    { id: "create-custom", name: "Create custom schema..." },
-  ];
+  const actionOptions: any[] = [{ id: "create-custom", name: "Create custom schema..." }];
   if (onRestoreDefaults) {
     actionOptions.push({ id: "restore-defaults", name: "Restore defaults" });
   }
@@ -259,6 +245,12 @@ export default function SchemaDialog({
       <div
         className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
         onClick={onClose}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            onClose();
+          }
+        }}
+        role="none"
       />
 
       {/* Dialog */}
@@ -314,13 +306,12 @@ export default function SchemaDialog({
             ) : (
               <div>
                 {/* Create custom option */}
-                <div
-                  className="px-4 py-2 cursor-pointer transition-colors"
+                <button
+                  type="button"
+                  className="px-4 py-2 cursor-pointer transition-colors w-full text-left"
                   style={{
                     backgroundColor:
-                      selectedIndex === 0
-                        ? currentTheme.surfaceHover
-                        : "transparent",
+                      selectedIndex === 0 ? currentTheme.surfaceHover : "transparent",
                     color: currentTheme.textPrimary,
                   }}
                   onClick={() => handleCreateCustom()}
@@ -343,17 +334,16 @@ export default function SchemaDialog({
                     </svg>
                     <span>Create custom schema...</span>
                   </div>
-                </div>
+                </button>
 
                 {/* Restore defaults option */}
                 {onRestoreDefaults && (
-                  <div
-                    className="px-4 py-2 cursor-pointer transition-colors border-b"
+                  <button
+                    type="button"
+                    className="px-4 py-2 cursor-pointer transition-colors border-b w-full text-left"
                     style={{
                       backgroundColor:
-                        selectedIndex === 1
-                          ? currentTheme.surfaceHover
-                          : "transparent",
+                        selectedIndex === 1 ? currentTheme.surfaceHover : "transparent",
                       color: currentTheme.textPrimary,
                       borderColor: currentTheme.border,
                     }}
@@ -377,18 +367,17 @@ export default function SchemaDialog({
                       </svg>
                       <span>Restore defaults</span>
                     </div>
-                  </div>
+                  </button>
                 )}
 
                 {/* Clear all schemas option */}
                 {onClearAllSchemas && (
-                  <div
-                    className="px-4 py-2 cursor-pointer transition-colors border-b"
+                  <button
+                    type="button"
+                    className="px-4 py-2 cursor-pointer transition-colors border-b w-full text-left"
                     style={{
                       backgroundColor:
-                        selectedIndex === 2
-                          ? currentTheme.surfaceHover
-                          : "transparent",
+                        selectedIndex === 2 ? currentTheme.surfaceHover : "transparent",
                       color: currentTheme.textPrimary,
                       borderColor: currentTheme.border,
                     }}
@@ -412,7 +401,7 @@ export default function SchemaDialog({
                       </svg>
                       <span>Clear all schemas</span>
                     </div>
-                  </div>
+                  </button>
                 )}
 
                 {/* Schema groups */}
@@ -431,19 +420,19 @@ export default function SchemaDialog({
                       >
                         {groupName}
                       </div>
-                      {groupSchemas.map((schema, idx) => {
+                      {groupSchemas.map((schema, _idx) => {
                         const actionOptionsCount = actionOptions.length;
-                        const optionIndex =
-                          actionOptionsCount + allSchemas.indexOf(schema);
+                        const optionIndex = actionOptionsCount + allSchemas.indexOf(schema);
                         const isDownloaded =
                           schema.type === "function"
                             ? existingFunctionSchemas.has(schema.url)
                             : existingColorSchemas.has(schema.url);
 
                         return (
-                          <div
+                          <button
+                            type="button"
                             key={schema.id}
-                            className="px-4 py-3 cursor-pointer transition-colors border-b"
+                            className="px-4 py-3 cursor-pointer transition-colors border-b w-full text-left"
                             style={{
                               backgroundColor:
                                 selectedIndex === optionIndex
@@ -496,7 +485,7 @@ export default function SchemaDialog({
                                 </div>
                               )}
                             </div>
-                          </div>
+                          </button>
                         );
                       })}
                     </div>

@@ -5,19 +5,14 @@ import {
   FunctionSpecificationSchema,
 } from "@tokens-studio/tokenscript-interpreter";
 import { type } from "arktype";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import type { ValidationError } from "../components/MonacoEditor";
 
 export function useSchemaValidation() {
-  const [validationErrors, setValidationErrors] = useState<ValidationError[]>(
-    [],
-  );
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
 
   const findJsonPathPosition = useCallback(
-    (
-      jsonString: string,
-      path: (string | number)[],
-    ): { line: number; column: number } | null => {
+    (jsonString: string, path: (string | number)[]): { line: number; column: number } | null => {
       if (path.length === 0) return { line: 1, column: 1 };
 
       const lines = jsonString.split("\n");
@@ -29,10 +24,7 @@ export function useSchemaValidation() {
         for (const pathPart of path) {
           const keyPattern =
             typeof pathPart === "string"
-              ? new RegExp(
-                  `"${pathPart.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"\\s*:`,
-                  "g",
-                )
+              ? new RegExp(`"${pathPart.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"\\s*:`, "g")
               : null;
 
           if (keyPattern && typeof pathPart === "string") {
@@ -79,8 +71,7 @@ export function useSchemaValidation() {
         parsedJson = JSON.parse(jsonString);
       } catch (err) {
         const errorMsg = `Invalid JSON: ${err instanceof Error ? err.message : "Unknown error"}`;
-        const lineMatch =
-          err instanceof Error ? err.message.match(/line (\d+)/i) : null;
+        const lineMatch = err instanceof Error ? err.message.match(/line (\d+)/i) : null;
         const line = lineMatch ? parseInt(lineMatch[1], 10) : 1;
         setValidationErrors([{ message: errorMsg, line, column: 1 }]);
         return null;
@@ -102,10 +93,7 @@ export function useSchemaValidation() {
         const errors: ValidationError[] = [];
         for (const issue of result.issues) {
           const position = findJsonPathPosition(jsonString, issue.path || []);
-          const pathStr =
-            issue.path && issue.path.length > 0
-              ? `${issue.path.join(".")}: `
-              : "";
+          const pathStr = issue.path && issue.path.length > 0 ? `${issue.path.join(".")}: ` : "";
 
           errors.push({
             message: `${pathStr}${issue.message}`,

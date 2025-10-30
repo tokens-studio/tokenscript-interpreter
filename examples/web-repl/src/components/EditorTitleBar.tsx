@@ -1,8 +1,8 @@
 import { useCallback, useRef, useState } from "react";
 import { useTheme } from "../contexts/ThemeContext";
 import { getTheme } from "../theme/colors";
-import { HEADER_HEIGHT } from "./shared-theme";
 import type { Preset } from "../utils/presets";
+import { HEADER_HEIGHT } from "./shared-theme";
 
 interface EditorTitleBarProps {
   allPresets: Preset[];
@@ -10,11 +10,7 @@ interface EditorTitleBarProps {
   currentPresetName: string | null;
 }
 
-function EditorTitleBar({
-  allPresets,
-  onPresetSelect,
-  currentPresetName,
-}: EditorTitleBarProps) {
+function EditorTitleBar({ allPresets, onPresetSelect, currentPresetName }: EditorTitleBarProps) {
   const { theme } = useTheme();
   const currentTheme = getTheme(theme);
   const [isPresetOpen, setIsPresetOpen] = useState(false);
@@ -66,8 +62,12 @@ function EditorTitleBar({
             color: currentTheme.textMuted,
             border: `1px solid ${currentTheme.border}`,
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = currentTheme.textSecondary)}
-          onMouseLeave={(e) => (e.currentTarget.style.color = currentTheme.textMuted)}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = currentTheme.textSecondary;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = currentTheme.textMuted;
+          }}
         >
           <svg
             className="w-4 h-4"
@@ -130,8 +130,12 @@ function EditorTitleBar({
                       color: currentTheme.textPrimary,
                       backgroundColor: "transparent",
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = currentTheme.background)}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = currentTheme.background;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "transparent";
+                    }}
                   >
                     {preset.name}
                   </button>
@@ -163,8 +167,12 @@ function EditorTitleBar({
                       color: currentTheme.textPrimary,
                       backgroundColor: "transparent",
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = currentTheme.background)}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = currentTheme.background;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "transparent";
+                    }}
                   >
                     {preset.name}
                   </button>
