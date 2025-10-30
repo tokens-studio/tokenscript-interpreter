@@ -923,14 +923,7 @@ export class DictionarySymbol extends BaseSymbolType {
     return isMap(val) || isNull(val);
   }
 
-  expectSafeValue(val: any): asserts val is Map<string, ISymbolType> {
-    if (isNone(val)) {
-      throw new InterpreterError("Dictionary value cannot be null.");
-    }
-  }
-
   toString(): string {
-    this.expectSafeValue(this.value);
     return formatObjectEntries(this.value);
   }
 
@@ -945,56 +938,47 @@ export class DictionarySymbol extends BaseSymbolType {
   }
 
   getImpl(key: StringSymbol): ISymbolType {
-    this.expectSafeValue(this.value);
     const keyStr = this.ensureKeyIsString(key);
     return this.value.get(keyStr) || new NullSymbol(this.config);
   }
 
   setImpl(key: StringSymbol, value: ISymbolType): DictionarySymbol {
-    this.expectSafeValue(this.value);
     const keyStr = this.ensureKeyIsString(key);
     this.value.set(keyStr, value.cloneIfMutable());
     return this;
   }
 
   deleteImpl(key: StringSymbol): DictionarySymbol {
-    this.expectSafeValue(this.value);
     const keyStr = this.ensureKeyIsString(key);
     this.value.delete(keyStr);
     return this;
   }
 
   keysImpl(): ListSymbol {
-    this.expectSafeValue(this.value);
     const keys = Array.from(this.value.keys()).map((key) => new StringSymbol(key, this.config));
     return new ListSymbol(keys, false, this.config);
   }
 
   valuesImpl(): ListSymbol {
-    this.expectSafeValue(this.value);
     const values = Array.from(this.value.values());
     return new ListSymbol(values, false, this.config);
   }
 
   keyExistsImpl(key: StringSymbol): BooleanSymbol {
-    this.expectSafeValue(this.value);
     const keyStr = this.ensureKeyIsString(key);
     return new BooleanSymbol(this.value.has(keyStr), this.config);
   }
 
   lengthImpl(): NumberSymbol {
-    this.expectSafeValue(this.value);
     return new NumberSymbol(this.value.size, this.config);
   }
 
   clearImpl(): DictionarySymbol {
-    this.expectSafeValue(this.value);
     this.value.clear();
     return this;
   }
 
   deepCopy(): DictionarySymbol {
-    this.expectSafeValue(this.value);
     const copiedMap = new Map<string, ISymbolType>();
     for (const [key, value] of this.value.entries()) {
       copiedMap.set(key, value.deepCopy());
@@ -1011,12 +995,10 @@ export class DictionarySymbol extends BaseSymbolType {
   }
 
   hasAttribute(attributeName: string): boolean {
-    this.expectSafeValue(this.value);
     return this.value.has(attributeName);
   }
 
   getAttribute(attributeName: string): ISymbolType | null {
-    this.expectSafeValue(this.value);
     const value = this.value.get(attributeName);
     if (value === undefined) {
       return null;
