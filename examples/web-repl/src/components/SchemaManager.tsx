@@ -5,82 +5,80 @@ import type {
 import { useAtom } from "jotai";
 import { useCallback, useState } from "react";
 import {
-  colorSchemasAtom,
+  appStateAtom,
   deletedColorSchemasAtom,
   deletedFunctionSchemasAtom,
-  functionSchemasAtom,
+  openDialogAtom,
 } from "../store/atoms";
 import { useTheme } from "../contexts/ThemeContext";
 import { getTheme } from "../theme/colors";
 import { DEFAULT_COLOR_SCHEMAS } from "../utils/default-schemas";
-import SchemaDialog from "./SchemaDialog";
-import SchemaEditorModal from "./SchemaEditorModal";
+import SchemaEditorModal from "./dialogs/SchemaEditorModal";
 import Link from "./Link";
 
 export default function SchemaManager() {
   const { theme } = useTheme();
   const currentTheme = getTheme(theme);
-  const [colorSchemas, setColorSchemas] = useAtom(colorSchemasAtom);
-  const [functionSchemas, setFunctionSchemas] = useAtom(functionSchemasAtom);
+  const [appState, setAppState] = useAtom(appStateAtom);
   const [deletedColorSchemas, setDeletedColorSchemas] = useAtom(deletedColorSchemasAtom);
   const [deletedFunctionSchemas, setDeletedFunctionSchemas] = useAtom(deletedFunctionSchemasAtom);
+  const [openDialog, setOpenDialog] = useAtom(openDialogAtom);
   const [editingSchema, setEditingSchema] = useState<{
     url: string;
     spec: ColorSpecification | FunctionSpecification;
     type: "color" | "function";
   } | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const colorSchemas = appState.colorSchemas;
+  const functionSchemas = appState.functionSchemas;
 
   const handleAddNew = useCallback(() => {
     setEditingSchema(null);
-    setIsModalOpen(true);
-  }, []);
+    setOpenDialog("schemaEditor");
+  }, [setOpenDialog]);
 
   const handleEdit = useCallback(
     (url: string, spec: ColorSpecification | FunctionSpecification, type: "color" | "function") => {
       setEditingSchema({ url, spec, type });
-      setIsModalOpen(true);
+      setOpenDialog("schemaEditor");
     },
-    [],
+    [setOpenDialog],
   );
 
   const handleSave = useCallback(
     (url: string, spec: ColorSpecification | FunctionSpecification, type: "color" | "function") => {
       if (type === "color") {
-        setColorSchemas((current) => {
-          const updated = new Map(current);
-          updated.set(url, spec as ColorSpecification);
-          return updated;
-        });
+        setAppState((prev) => ({
+          ...prev,
+          colorSchemas: new Map(prev.colorSchemas).set(url, spec as ColorSpecification),
+        }));
       } else {
-        setFunctionSchemas((current) => {
-          const updated = new Map(current);
-          updated.set(url, spec as FunctionSpecification);
-          return updated;
-        });
+        setAppState((prev) => ({
+          ...prev,
+          functionSchemas: new Map(prev.functionSchemas).set(url, spec as FunctionSpecification),
+        }));
       }
     },
-    [setColorSchemas, setFunctionSchemas],
+    [setAppState],
   );
 
   const handleDelete = useCallback(
     (url: string, spec: ColorSpecification | FunctionSpecification, type: "color" | "function") => {
       if (type === "color") {
-        setColorSchemas((current) => {
-          const updated = new Map(current);
+        setAppState((prev) => {
+          const updated = new Map(prev.colorSchemas);
           updated.delete(url);
-          return updated;
+          return { ...prev, colorSchemas: updated };
         });
         setDeletedColorSchemas((current) => [
           ...current,
           { url, spec: spec as ColorSpecification, deletedAt: Date.now() },
         ]);
       } else {
-        setFunctionSchemas((current) => {
-          const updated = new Map(current);
+        setAppState((prev) => {
+          const updated = new Map(prev.functionSchemas);
           updated.delete(url);
-          return updated;
+          return { ...prev, functionSchemas: updated };
         });
         setDeletedFunctionSchemas((current) => [
           ...current,
@@ -88,7 +86,7 @@ export default function SchemaManager() {
         ]);
       }
     },
-    [setColorSchemas, setFunctionSchemas, setDeletedColorSchemas, setDeletedFunctionSchemas],
+    [setAppState, setDeletedColorSchemas, setDeletedFunctionSchemas],
   );
 
   const handleUndoColor = useCallback(() => {
@@ -96,38 +94,42 @@ export default function SchemaManager() {
     if (!mostRecentDeleted) return;
 
     setDeletedColorSchemas((current) => current.slice(0, -1));
-    setColorSchemas((current) => {
-      const updated = new Map(current);
-      updated.set(mostRecentDeleted.url, mostRecentDeleted.spec);
-      return updated;
-    });
-  }, [deletedColorSchemas, setColorSchemas, setDeletedColorSchemas]);
+    setAppState((prev) => ({
+      ...prev,
+      colorSchemas: new Map(prev.colorSchemas).set(mostRecentDeleted.url, mostRecentDeleted.spec),
+    }));
+  }, [deletedColorSchemas, setAppState, setDeletedColorSchemas]);
 
   const handleUndoFunction = useCallback(() => {
     const mostRecentDeleted = deletedFunctionSchemas[deletedFunctionSchemas.length - 1];
     if (!mostRecentDeleted) return;
 
     setDeletedFunctionSchemas((current) => current.slice(0, -1));
-    setFunctionSchemas((current) => {
-      const updated = new Map(current);
-      updated.set(mostRecentDeleted.url, mostRecentDeleted.spec);
-      return updated;
-    });
-  }, [deletedFunctionSchemas, setFunctionSchemas, setDeletedFunctionSchemas]);
+    setAppState((prev) => ({
+      ...prev,
+      functionSchemas: new Map(prev.functionSchemas).set(mostRecentDeleted.url, mostRecentDeleted.spec),
+    }));
+  }, [deletedFunctionSchemas, setAppState, setDeletedFunctionSchemas]);
 
   const handleLoadDefaults = useCallback(() => {
-    setColorSchemas(new Map(DEFAULT_COLOR_SCHEMAS));
-    setFunctionSchemas(new Map());
+    setAppState((prev) => ({
+      ...prev,
+      colorSchemas: new Map(DEFAULT_COLOR_SCHEMAS),
+      functionSchemas: new Map(),
+    }));
     setDeletedColorSchemas([]);
     setDeletedFunctionSchemas([]);
-  }, [setColorSchemas, setFunctionSchemas, setDeletedColorSchemas, setDeletedFunctionSchemas]);
+  }, [setAppState, setDeletedColorSchemas, setDeletedFunctionSchemas]);
 
   const handleClearAllSchemas = useCallback(() => {
-    setColorSchemas(new Map());
-    setFunctionSchemas(new Map());
+    setAppState((prev) => ({
+      ...prev,
+      colorSchemas: new Map(),
+      functionSchemas: new Map(),
+    }));
     setDeletedColorSchemas([]);
     setDeletedFunctionSchemas([]);
-  }, [setColorSchemas, setFunctionSchemas, setDeletedColorSchemas, setDeletedFunctionSchemas]);
+  }, [setAppState, setDeletedColorSchemas, setDeletedFunctionSchemas]);
 
   const handleSchemaSelect = useCallback(
     (
@@ -139,20 +141,18 @@ export default function SchemaManager() {
       const schemaType = type || (spec.type === "function" ? "function" : "color");
 
       if (schemaType === "color") {
-        setColorSchemas((current) => {
-          const updated = new Map(current);
-          updated.set(url, spec as ColorSpecification);
-          return updated;
-        });
+        setAppState((prev) => ({
+          ...prev,
+          colorSchemas: new Map(prev.colorSchemas).set(url, spec as ColorSpecification),
+        }));
       } else {
-        setFunctionSchemas((current) => {
-          const updated = new Map(current);
-          updated.set(url, spec as FunctionSpecification);
-          return updated;
-        });
+        setAppState((prev) => ({
+          ...prev,
+          functionSchemas: new Map(prev.functionSchemas).set(url, spec as FunctionSpecification),
+        }));
       }
     },
-    [setColorSchemas, setFunctionSchemas],
+    [setAppState],
   );
 
   const formatUrl = (url: string) => {
@@ -161,15 +161,6 @@ export default function SchemaManager() {
   };
 
   return (
-    <>
-      <SchemaDialog
-        isOpen={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
-        onSchemaSelect={handleSchemaSelect}
-        onCreateCustom={handleAddNew}
-        existingColorSchemas={colorSchemas}
-        existingFunctionSchemas={functionSchemas}
-      />
     <div className="flex flex-col h-full">
 
       {/* Schema list */}
@@ -380,15 +371,14 @@ export default function SchemaManager() {
         </div>
       )}
 
-      {isModalOpen && (
+      {openDialog === "schemaEditor" && (
         <SchemaEditorModal
-          onClose={() => setIsModalOpen(false)}
+          onClose={() => setOpenDialog(null)}
           schema={editingSchema}
           onSave={handleSave}
           existingSchemas={new Map([...colorSchemas, ...functionSchemas])}
         />
       )}
     </div>
-    </>
   );
 }

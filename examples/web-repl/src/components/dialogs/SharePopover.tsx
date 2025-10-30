@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from "react";
-import { useTheme } from "../contexts/ThemeContext";
-import { getTheme } from "../theme/colors";
-import type { ShareState } from "../utils/share";
-import { getShareUrl } from "../utils/share";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useTheme } from "../../contexts/ThemeContext";
+import { getTheme } from "../../theme/colors";
+import type { ShareState } from "../../utils/share";
+import { encodeShareStateUrl } from "../../utils/share";
 
 interface SharePopoverProps {
   isOpen: boolean;
@@ -11,18 +11,18 @@ interface SharePopoverProps {
   anchorRef?: React.RefObject<HTMLElement>;
 }
 
-export default function SharePopover({ isOpen, onClose, shareState, anchorRef }: SharePopoverProps) {
+export default function SharePopover({
+  isOpen,
+  onClose,
+  shareState,
+  anchorRef,
+}: SharePopoverProps) {
   const { theme } = useTheme();
   const currentTheme = getTheme(theme);
   const [copied, setCopied] = useState(false);
-  const [shareUrl, setShareUrl] = useState("");
   const popoverRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (isOpen) {
-      setShareUrl(getShareUrl(shareState));
-    }
-  }, [isOpen, shareState]);
+  const shareUrl = useMemo(() => encodeShareStateUrl(shareState), [shareState]);
 
   useEffect(() => {
     if (!isOpen) return;

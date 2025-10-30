@@ -6,10 +6,10 @@
   "scripts": {
     "dev": "vite",
     "dev:watch": "npm-run-all --parallel dev:lib dev:vite",
-    "dev:lib": "cd ../../ && npm run build:watch",
+    "dev:lib": "cd ../../ && npm run build:lib --watch",
     "dev:vite": "vite",
-    "build": "cd ../../ && npm run build && cd examples/web-repl && vite build",
-    "build:with-tsc": "cd ../../ && npm run build && tsc && vite build",
+    "build": "cd ../../ && npm run build:lib && cd examples/web-repl && vite build",
+    "build:with-tsc": "cd ../../ && npm run build:lib && tsc && vite build",
     "preview": "vite preview",
     "lint": "biome lint --max-diagnostics=none .",
     "lint:fix": "biome lint --write .",

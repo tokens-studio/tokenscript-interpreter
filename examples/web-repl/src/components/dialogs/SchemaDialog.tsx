@@ -3,9 +3,9 @@ import type {
   FunctionSpecification,
 } from "@tokens-studio/tokenscript-interpreter";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useTheme } from "../contexts/ThemeContext";
-import { getTheme } from "../theme/colors";
-import { fetchTokenScriptSchema } from "../utils/schema-fetcher";
+import { useTheme } from "../../contexts/ThemeContext";
+import { getTheme } from "../../theme/colors";
+import { fetchTokenScriptSchema } from "../../utils/schema-fetcher";
 
 interface SchemaOption {
   id: string;
@@ -44,7 +44,9 @@ export default function SchemaDialog({
   const currentTheme = getTheme(theme);
   const [inputValue, setInputValue] = useState("");
   const [availableSchemas, setAvailableSchemas] = useState<SchemaOption[]>([]);
-  const [groupedSchemas, setGroupedSchemas] = useState<Record<string, SchemaOption[]>>({});
+  const [groupedSchemas, setGroupedSchemas] = useState<
+    Record<string, SchemaOption[]>
+  >({});
   const [loading, setLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -176,7 +178,10 @@ export default function SchemaDialog({
     const otherGroups = Object.keys(groupedSchemas)
       .filter((group) => !orderedGroups.includes(group))
       .sort();
-    const allGroups = [...orderedGroups.filter((group) => groupedSchemas[group]), ...otherGroups];
+    const allGroups = [
+      ...orderedGroups.filter((group) => groupedSchemas[group]),
+      ...otherGroups,
+    ];
 
     let allSchemas: SchemaOption[] = [];
     allGroups.forEach((group) => {
@@ -191,7 +196,10 @@ export default function SchemaDialog({
       actionOptions.push({ id: "restore-defaults", name: "Restore defaults" });
     }
     if (onClearAllSchemas) {
-      actionOptions.push({ id: "clear-all-schemas", name: "Clear all schemas" });
+      actionOptions.push({
+        id: "clear-all-schemas",
+        name: "Clear all schemas",
+      });
     }
     const allOptions = [...actionOptions, ...allSchemas];
 
@@ -200,7 +208,9 @@ export default function SchemaDialog({
       setSelectedIndex((prev) => (prev + 1) % allOptions.length);
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setSelectedIndex((prev) => (prev - 1 + allOptions.length) % allOptions.length);
+      setSelectedIndex(
+        (prev) => (prev - 1 + allOptions.length) % allOptions.length,
+      );
     } else if (e.key === "Enter") {
       e.preventDefault();
       const selected = allOptions[selectedIndex];
@@ -222,7 +232,10 @@ export default function SchemaDialog({
   const otherGroups = Object.keys(groupedSchemas)
     .filter((group) => !orderedGroups.includes(group))
     .sort();
-  const allGroups = [...orderedGroups.filter((group) => groupedSchemas[group]), ...otherGroups];
+  const allGroups = [
+    ...orderedGroups.filter((group) => groupedSchemas[group]),
+    ...otherGroups,
+  ];
 
   let allSchemas: SchemaOption[] = [];
   allGroups.forEach((group) => {
@@ -251,12 +264,13 @@ export default function SchemaDialog({
       {/* Dialog */}
       <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
         <div
-          className="w-full max-w-2xl rounded-lg shadow-2xl overflow-hidden flex flex-col pointer-events-auto"
+          className="w-full rounded-lg shadow-2xl overflow-hidden flex flex-col pointer-events-auto"
           style={{
             backgroundColor: currentTheme.surface,
             borderColor: currentTheme.border,
-            height: '100vh',
-            maxHeight: '900px',
+            height: "100vh",
+            maxHeight: "1200px",
+            maxWidth: "600px",
           }}
         >
           {/* Search Input */}
@@ -303,7 +317,10 @@ export default function SchemaDialog({
                 <div
                   className="px-4 py-2 cursor-pointer transition-colors"
                   style={{
-                    backgroundColor: selectedIndex === 0 ? currentTheme.surfaceHover : "transparent",
+                    backgroundColor:
+                      selectedIndex === 0
+                        ? currentTheme.surfaceHover
+                        : "transparent",
                     color: currentTheme.textPrimary,
                   }}
                   onClick={() => handleCreateCustom()}
@@ -333,7 +350,10 @@ export default function SchemaDialog({
                   <div
                     className="px-4 py-2 cursor-pointer transition-colors border-b"
                     style={{
-                      backgroundColor: selectedIndex === 1 ? currentTheme.surfaceHover : "transparent",
+                      backgroundColor:
+                        selectedIndex === 1
+                          ? currentTheme.surfaceHover
+                          : "transparent",
                       color: currentTheme.textPrimary,
                       borderColor: currentTheme.border,
                     }}
@@ -365,7 +385,10 @@ export default function SchemaDialog({
                   <div
                     className="px-4 py-2 cursor-pointer transition-colors border-b"
                     style={{
-                      backgroundColor: selectedIndex === 2 ? currentTheme.surfaceHover : "transparent",
+                      backgroundColor:
+                        selectedIndex === 2
+                          ? currentTheme.surfaceHover
+                          : "transparent",
                       color: currentTheme.textPrimary,
                       borderColor: currentTheme.border,
                     }}
@@ -410,7 +433,8 @@ export default function SchemaDialog({
                       </div>
                       {groupSchemas.map((schema, idx) => {
                         const actionOptionsCount = actionOptions.length;
-                        const optionIndex = actionOptionsCount + allSchemas.indexOf(schema);
+                        const optionIndex =
+                          actionOptionsCount + allSchemas.indexOf(schema);
                         const isDownloaded =
                           schema.type === "function"
                             ? existingFunctionSchemas.has(schema.url)
