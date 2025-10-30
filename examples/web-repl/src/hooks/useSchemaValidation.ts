@@ -4,12 +4,14 @@ import {
   type FunctionSpecification,
   FunctionSpecificationSchema,
 } from "@tokens-studio/tokenscript-interpreter";
+import { type } from "arktype";
 import { useCallback, useMemo, useState } from "react";
-import type { ZodError } from "zod";
 import type { ValidationError } from "../components/MonacoEditor";
 
 export function useSchemaValidation() {
-  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>(
+    [],
+  );
 
   const findJsonPathPosition = useCallback(
     (
@@ -86,37 +88,38 @@ export function useSchemaValidation() {
 
       const schemaType = (parsedJson as any)?.type;
 
-      try {
-        switch (schemaType) {
-          case "color":
-            return ColorSpecificationSchema.parse(parsedJson);
-          case "function":
-            return FunctionSpecificationSchema.parse(parsedJson);
-        }
-      } catch (err) {
-        const primaryError = err as ZodError;
-        if (primaryError instanceof Error && "issues" in primaryError) {
-          const zodError = primaryError as ZodError;
-          const errors: ValidationError[] = zodError.issues.map((issue) => {
-            const position = findJsonPathPosition(jsonString, issue.path);
-            const pathStr =
-              issue.path.length > 0 ? `${issue.path.join(".")}: ` : "";
+      let result: any;
+      switch (schemaType) {
+        case "color":
+          result = ColorSpecificationSchema(parsedJson);
+          break;
+        case "function":
+          result = FunctionSpecificationSchema(parsedJson);
+          break;
+      }
 
-            return {
-              message: `${pathStr}${issue.message}`,
-              path: issue.path.join("."),
-              line: position?.line || 1,
-              column: position?.column || 1,
-            };
+      if (result instanceof type.errors) {
+        const errors: ValidationError[] = [];
+        for (const issue of result.issues) {
+          const position = findJsonPathPosition(jsonString, issue.path || []);
+          const pathStr =
+            issue.path && issue.path.length > 0
+              ? `${issue.path.join(".")}: `
+              : "";
+
+          errors.push({
+            message: `${pathStr}${issue.message}`,
+            path: issue.path?.join(".") || "",
+            line: position?.line || 1,
+            column: position?.column || 1,
           });
-
-          setValidationErrors(errors);
-        } else {
-          const errorMsg = `Schema validation failed: ${primaryError instanceof Error ? primaryError.message : "Unknown error"}`;
-          setValidationErrors([{ message: errorMsg, line: 1, column: 1 }]);
         }
+
+        setValidationErrors(errors);
         return null;
       }
+
+      return result;
     },
     [findJsonPathPosition],
   );

@@ -138,10 +138,10 @@
   },
   "homepage": "https://github.com/tokens-studio/tokenscript-interpreter#readme",
   "dependencies": {
+    "arktype": "^2.1.25",
     "commander": "^14.0.1",
     "readline-sync": "^1.4.10",
-    "yauzl": "^3.2.0",
-    "zod": "^4.1.9"
+    "yauzl": "^3.2.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.4",

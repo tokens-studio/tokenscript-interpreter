@@ -1,34 +1,49 @@
-import { z } from "zod";
+import { type } from "arktype";
 
 // Script Block Schema
-const ScriptBlockSchema = z.object({
-  type: z.string().optional(),
-  script: z.string(),
+const ScriptBlockSchema = type({
+  "type?": "string",
+  script: "string",
 });
 
-export type ScriptBlock = z.infer<typeof ScriptBlockSchema>;
+export interface ScriptBlock {
+  type?: string;
+  script: string;
+}
 
 // Conversion Schema
-const ConversionSchema = z.object({
-  source: z.string(),
-  target: z.string(),
+const ConversionSchema = type({
+  source: "string",
+  target: "string",
   script: ScriptBlockSchema,
-  description: z.string().optional(),
+  "description?": "string",
 });
 
-export type Conversion = z.infer<typeof ConversionSchema>;
+export interface Conversion {
+  source: string;
+  target: string;
+  script: ScriptBlock;
+  description?: string;
+}
 
 // Unit Specification Schema
-export const UnitSpecificationSchema = z.object({
-  name: z.string(),
-  type: z.enum(["absolute", "relative"]),
-  keyword: z.string(),
-  description: z.string().optional(),
-  conversions: z.array(ConversionSchema).optional().default([]),
-  to_absolute: ScriptBlockSchema.optional(),
+export const UnitSpecificationSchema = type({
+  name: "string",
+  type: "'absolute' | 'relative'",
+  keyword: "string",
+  "description?": "string",
+  "conversions?": ConversionSchema.array(),
+  "to_absolute?": ScriptBlockSchema,
 });
 
-export type UnitSpecification = z.infer<typeof UnitSpecificationSchema>;
+export interface UnitSpecification {
+  name: string;
+  type: "absolute" | "relative";
+  keyword: string;
+  description?: string;
+  conversions?: Conversion[];
+  to_absolute?: ScriptBlock;
+}
 
 export const specName = (spec: UnitSpecification): string => spec.name.toLowerCase();
 

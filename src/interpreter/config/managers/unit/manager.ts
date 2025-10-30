@@ -2,6 +2,7 @@ import { InterpreterError } from "@interpreter/errors";
 import { parseExpression } from "@interpreter/parser";
 import { NumberSymbol, NumberWithUnitSymbol } from "@interpreter/symbols";
 import { Interpreter } from "@src/lib";
+import { type } from "arktype";
 import { BaseManager } from "../base-manager";
 import { specName, type UnitSpecification, UnitSpecificationSchema } from "./schema";
 
@@ -140,19 +141,19 @@ export class UnitManager extends BaseManager<
     let parsedSpec: UnitSpecification;
 
     if (typeof spec === "string") {
-      const parseResult = UnitSpecificationSchema.safeParse(JSON.parse(spec));
-      if (!parseResult.success) {
+      const parseResult = UnitSpecificationSchema(JSON.parse(spec));
+      if (parseResult instanceof type.errors) {
         throw new Error(
-          `Invalid unit specification for URI ${uri}: ${parseResult.error.message}\n\nJson:\n${spec}`,
+          `Invalid unit specification for URI ${uri}: ${parseResult.summary}\n\nJson:\n${spec}`,
         );
       }
-      parsedSpec = parseResult.data;
+      parsedSpec = parseResult as UnitSpecification;
     } else {
-      const parseResult = UnitSpecificationSchema.safeParse(spec);
-      if (!parseResult.success) {
-        throw new Error(`Invalid unit specification for URI ${uri}: ${parseResult.error.message}`);
+      const parseResult = UnitSpecificationSchema(spec);
+      if (parseResult instanceof type.errors) {
+        throw new Error(`Invalid unit specification for URI ${uri}: ${parseResult.summary}`);
       }
-      parsedSpec = parseResult.data;
+      parsedSpec = parseResult as UnitSpecification;
     }
 
     this.specs.set(uri, parsedSpec);

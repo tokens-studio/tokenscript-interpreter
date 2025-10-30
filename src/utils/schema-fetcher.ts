@@ -1,25 +1,28 @@
 import { Config } from "@interpreter/config";
-import { ColorSpecificationSchema } from "@interpreter/config/managers/color/schema";
-import { FunctionSpecificationSchema } from "@interpreter/config/managers/functions/schema";
-import { z } from "zod";
-
-const SchemaContentSchema = z.discriminatedUnion("type", [
+import {
+  type ColorSpecification,
   ColorSpecificationSchema,
+} from "@interpreter/config/managers/color/schema";
+import {
+  type FunctionSpecification,
   FunctionSpecificationSchema,
-]);
+} from "@interpreter/config/managers/functions/schema";
+import { type } from "arktype";
 
-const TokenScriptSchemaResponseSchema = z.object({
-  id: z.string(),
-  type: z.string(),
-  schema: z.string().url(),
-  slug: z.string(),
-  version: z.string(),
+const SchemaContentSchema = ColorSpecificationSchema.or(FunctionSpecificationSchema);
+
+const TokenScriptSchemaResponseSchema = type({
+  id: "string",
+  type: "string",
+  schema: "string",
+  slug: "string",
+  version: "string",
   content: SchemaContentSchema,
-  license_name: z.string().nullish(),
+  "license_name?": "string | null",
 });
 
-export type TokenScriptSchemaResponse = z.infer<typeof TokenScriptSchemaResponseSchema>;
-export type TokenScriptSchemaContent = z.infer<typeof SchemaContentSchema>;
+export type TokenScriptSchemaResponse = typeof TokenScriptSchemaResponseSchema.infer;
+export type TokenScriptSchemaContent = ColorSpecification | FunctionSpecification;
 
 export interface SchemaFetcherOptions {
   timeout?: number;
@@ -58,14 +61,18 @@ export async function fetchTokenScriptSchema(
 
     const data = await response.json();
 
-    const validatedData = TokenScriptSchemaResponseSchema.parse(data);
+    const validatedData = TokenScriptSchemaResponseSchema(data);
+
+    if (validatedData instanceof type.errors) {
+      throw new Error(`Invalid schema structure: ${validatedData.summary}`);
+    }
 
     return validatedData;
   } catch (error) {
     clearTimeout(timeoutId);
 
-    if (error instanceof z.ZodError) {
-      throw new Error(`Invalid schema structure: ${error.message}`);
+    if (error instanceof type.errors) {
+      throw new Error(`Invalid schema structure: ${error.summary}`);
     }
 
     if (error instanceof Error) {
@@ -94,7 +101,7 @@ export async function fetchAndRegisterSchemas(
       const schemaResponse = await fetchTokenScriptSchema(uri);
       return {
         uri,
-        schema: schemaResponse.content,
+        schema: schemaResponse.content as ColorSpecification | FunctionSpecification,
       };
     }),
   );
