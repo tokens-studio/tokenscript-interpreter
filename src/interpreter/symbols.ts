@@ -243,10 +243,7 @@ export class NumberSymbol extends BaseSymbolType {
 
   public value: numberValue;
 
-  constructor(
-    value: number | NumberSymbol | NumberWithUnitSymbol | null,
-    config?: Config,
-  ) {
+  constructor(value: number | NumberSymbol | NumberWithUnitSymbol | null, config?: Config) {
     let safeValue: numberValue;
     if (typeof value === "number") {
       safeValue = value;

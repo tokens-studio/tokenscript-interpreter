@@ -21,13 +21,11 @@ import packageJson from "../package.json" with { type: "json" };
 
 const program = new Command();
 
-// CLI version and description
 program
   .name("tokenscript")
   .description("TokenScript Interpreter CLI - A command-line interface for TokenScript language")
   .version(packageJson.version);
 
-// Interactive mode command
 program
   .command("interactive")
   .description("Start interactive REPL mode for TokenScript")
@@ -36,7 +34,6 @@ program
     await interactiveMode(options.schema);
   });
 
-// Parse tokenset command
 program
   .command("parse_tokenset")
   .description("Parse and process a tokenset from a ZIP file")
@@ -47,7 +44,6 @@ program
     await parseTokenset(options.tokenset, options.output, options.schema);
   });
 
-// Permutate tokenset command
 program
   .command("permutate_tokenset")
   .description("Generate permutations of tokensets based on themes")
@@ -66,7 +62,6 @@ program
     );
   });
 
-// Parse JSON command - simple API for DTCG JSON blobs
 program
   .command("parse_json")
   .description("Parse and process a DTCG JSON file directly")
@@ -77,7 +72,6 @@ program
     await parseJsonFile(options.json, options.output, options.schema);
   });
 
-// Evaluate standard compliance command
 program
   .command("evaluate_standard_compliance")
   .description("Run the TokenScript compliance suite on a directory of tests")
