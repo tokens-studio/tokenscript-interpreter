@@ -7,13 +7,11 @@ describe("NumberSymbol", () => {
     it("should create number from numeric value", () => {
       const num = new NumberSymbol(42);
       expect(num.value).toBe(42);
-      expect(num.isFloat).toBe(false);
     });
 
-    it("should create float number", () => {
-      const num = new NumberSymbol(3.14, true);
+    it("should create number with decimal value", () => {
+      const num = new NumberSymbol(3.14);
       expect(num.value).toBe(3.14);
-      expect(num.isFloat).toBe(true);
     });
 
     it("should create from another NumberSymbol", () => {
@@ -39,16 +37,14 @@ describe("NumberSymbol", () => {
 
       expect(copy).not.toBe(original);
       expect(copy.value).toBe(42);
-      expect(copy.isFloat).toBe(false);
     });
 
-    it("should create a deep copy of float", () => {
-      const original = new NumberSymbol(3.14, true);
+    it("should create a deep copy of decimal number", () => {
+      const original = new NumberSymbol(3.14);
       const copy = original.deepCopy();
 
       expect(copy).not.toBe(original);
       expect(copy.value).toBe(3.14);
-      expect(copy.isFloat).toBe(true);
     });
 
     it("should create a deep copy of null number", () => {
@@ -66,13 +62,13 @@ describe("NumberSymbol", () => {
       expect(num.toString()).toBe("42");
     });
 
-    it("should convert float to string", () => {
-      const num = new NumberSymbol(3.14, true);
+    it("should convert decimal to string", () => {
+      const num = new NumberSymbol(3.14);
       expect(num.toString()).toBe("3.14");
     });
 
-    it("should handle integer stored as float", () => {
-      const num = new NumberSymbol(5.0, false);
+    it("should handle integer value with decimal notation", () => {
+      const num = new NumberSymbol(5.0);
       expect(num.toString()).toBe("5");
     });
   });

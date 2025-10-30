@@ -21,14 +21,11 @@ export class BinOpNode implements ASTNode {
 export class NumNode implements ASTNode {
   nodeType = "NumNode";
   public value: number;
-  public isFloat: boolean;
   constructor(public token: Token) {
     if (this.token.value.includes(".")) {
       this.value = Number.parseFloat(this.token.value);
-      this.isFloat = true;
     } else {
       this.value = Number.parseInt(this.token.value, 10);
-      this.isFloat = false;
     }
   }
 }

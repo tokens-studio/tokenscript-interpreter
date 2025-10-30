@@ -175,7 +175,7 @@ export class Interpreter {
   }
 
   private visitNumNode(node: NumNode): NumberSymbol {
-    return new NumberSymbol(node.value, false, this.config);
+    return new NumberSymbol(node.value, this.config);
   }
 
   private visitStringNode(node: StringNode): StringSymbol {
@@ -206,7 +206,7 @@ export class Interpreter {
             node.opToken,
           );
         }
-        return new NumberSymbol(-result.value, result.isFloat, this.config);
+        return new NumberSymbol(-result.value, this.config);
       }
 
       if (result instanceof NumberWithUnitSymbol) {

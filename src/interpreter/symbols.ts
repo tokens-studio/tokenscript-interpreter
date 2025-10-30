@@ -242,11 +242,9 @@ export class NumberSymbol extends BaseSymbolType {
   };
 
   public value: numberValue;
-  public isFloat: boolean;
 
   constructor(
     value: number | NumberSymbol | NumberWithUnitSymbol | null,
-    isFloat = false,
     config?: Config,
   ) {
     let safeValue: numberValue;
@@ -261,7 +259,6 @@ export class NumberSymbol extends BaseSymbolType {
     }
     super(safeValue, config);
     this.value = safeValue;
-    this.isFloat = isFloat;
   }
 
   validValue(val: any): boolean {
@@ -275,14 +272,11 @@ export class NumberSymbol extends BaseSymbolType {
   }
 
   toString(): string {
-    if (!this.isFloat) {
-      return String(this.value);
-    }
-    return String(Number(this.value));
+    return String(this.value);
   }
 
   deepCopy(): NumberSymbol {
-    return new NumberSymbol(this.value, this.isFloat, this.config);
+    return new NumberSymbol(this.value, this.config);
   }
 
   cloneIfMutable(): NumberSymbol {
@@ -299,7 +293,7 @@ export class NumberSymbol extends BaseSymbolType {
 
   getAttribute(attributeName: string): ISymbolType | null {
     if (attributeName === "value") {
-      return new NumberSymbol(this.value, this.isFloat, this.config);
+      return new NumberSymbol(this.value, this.config);
     }
     throw new InterpreterError(`Attribute '${attributeName}' not found on Number.`);
   }
@@ -440,7 +434,7 @@ export class StringSymbol extends BaseSymbolType {
 
   lengthImpl(): NumberSymbol {
     this.expectSafeValue(this.value);
-    return new NumberSymbol(this.value.length, false, this.config);
+    return new NumberSymbol(this.value.length, this.config);
   }
 
   concatImpl(other: StringSymbol): StringSymbol {
@@ -656,12 +650,12 @@ export class ListSymbol extends BaseSymbolType {
   }
 
   length(): NumberSymbol {
-    return new NumberSymbol(this.elements.length, false, this.config);
+    return new NumberSymbol(this.elements.length, this.config);
   }
 
   indexImpl(item: ISymbolType): NumberSymbol {
     const idx = this.elements.findIndex((el) => el.equals(item));
-    return new NumberSymbol(idx, false, this.config);
+    return new NumberSymbol(idx, this.config);
   }
 
   getImpl(indexSymbol: NumberSymbol): ISymbolType {
@@ -799,7 +793,7 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
 
   to_number(): NumberSymbol {
     this.expectSafeValue(this.value);
-    return new NumberSymbol(this.value, false, this.config);
+    return new NumberSymbol(this.value, this.config);
   }
 
   equals(other: ISymbolType): boolean {
@@ -828,7 +822,7 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
 
   getAttribute(attributeName: string): ISymbolType | null {
     if (attributeName === "value") {
-      return new NumberSymbol(this.value, false, this.config);
+      return new NumberSymbol(this.value, this.config);
     }
     throw new InterpreterError(`Attribute '${attributeName}' not found on NumberWithUnit.`);
   }
@@ -990,7 +984,7 @@ export class DictionarySymbol extends BaseSymbolType {
 
   lengthImpl(): NumberSymbol {
     this.expectSafeValue(this.value);
-    return new NumberSymbol(this.value.size, false, this.config);
+    return new NumberSymbol(this.value.size, this.config);
   }
 
   clearImpl(): DictionarySymbol {
@@ -1206,7 +1200,7 @@ export const jsValueToSymbolType = (value: any, config?: Config): ISymbolType =>
     return value;
   }
   if (isNone(value)) return new NullSymbol(config);
-  if (isNumber(value)) return new NumberSymbol(value, false, config);
+  if (isNumber(value)) return new NumberSymbol(value, config);
   if (isString(value)) {
     if (isValidHex(value)) return new ColorSymbol(value, "Hex", config);
     return new StringSymbol(value, config);
