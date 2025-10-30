@@ -1,57 +1,89 @@
-import { z } from "zod";
+import { type } from "arktype";
 
 // Utility Schemas -------------------------------------------------------------
 
-const ScriptBlockSchema = z.object({
-  type: z.string().url(),
-  script: z.string(),
+const ScriptBlockSchema = type({
+  type: "string",
+  script: "string",
 });
 
 // Schema ----------------------------------------------------------------------
 
-const InitializerSchema = z.object({
-  title: z.string().optional(),
-  keyword: z.string(),
-  description: z.string().optional(),
-  // schema: z.record(z.any()),
+const InitializerSchema = type({
+  "title?": "string",
+  keyword: "string",
+  "description?": "string",
+  // schema: type({ "...": "unknown" }),
   script: ScriptBlockSchema,
 });
 
-const ConversionSchema = z.object({
-  source: z.string(),
-  target: z.string(),
-  description: z.string().optional(),
-  lossless: z.boolean(),
+const ConversionSchema = type({
+  source: "string",
+  target: "string",
+  "description?": "string",
+  lossless: "boolean",
   script: ScriptBlockSchema,
 });
 
 export const validSchemaTypes = ["number", "string", "color"];
 
-const SpecSchemaSchema = z.object({
-  type: z.literal("object"),
-  properties: z.record(
-    z.string(),
-    z.object({
-      type: z.enum(validSchemaTypes),
-    }),
-  ),
-  required: z.array(z.string()).optional(),
-  order: z.array(z.string()).optional(),
-  additionalProperties: z.boolean().optional(),
-});
+// Property type for spec schema
+export interface SpecProperty {
+  type: "number" | "string" | "color";
+}
+
+interface SpecSchemaType {
+  type: "object";
+  properties: Record<string, SpecProperty>;
+  required?: string[];
+  order?: string[];
+  additionalProperties?: boolean;
+}
 
 // Main ------------------------------------------------------------------------
 
-export const ColorSpecificationSchema = z.object({
-  name: z.string(),
-  type: z.literal("color"),
-  description: z.string().optional(),
-  schema: SpecSchemaSchema.optional(),
-  initializers: z.array(InitializerSchema).default([]),
-  conversions: z.array(ConversionSchema).default([]),
+export interface ColorSpecification {
+  name: string;
+  type: "color";
+  description?: string;
+  schema?: SpecSchemaType;
+  initializers: Array<{
+    title?: string;
+    keyword: string;
+    description?: string;
+    script: {
+      type: string;
+      script: string;
+    };
+  }>;
+  conversions: Array<{
+    source: string;
+    target: string;
+    description?: string;
+    lossless: boolean;
+    script: {
+      type: string;
+      script: string;
+    };
+  }>;
+}
+
+const SpecSchemaSchema = type({
+  type: "'object'",
+  properties: "Record<string, unknown>",
+  "required?": "string[]",
+  "order?": "string[]",
+  "additionalProperties?": "boolean",
 });
 
-export type ColorSpecification = z.infer<typeof ColorSpecificationSchema>;
+export const ColorSpecificationSchema = type({
+  name: "string",
+  type: "'color'",
+  "description?": "string",
+  "schema?": SpecSchemaSchema,
+  initializers: InitializerSchema.array(),
+  conversions: ConversionSchema.array(),
+});
 
 export const specName = (spec: ColorSpecification): string => spec.name.toLowerCase();
 

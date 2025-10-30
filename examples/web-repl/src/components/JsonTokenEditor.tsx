@@ -15,12 +15,7 @@ interface JsonTokenEditorProps {
   error?: string;
 }
 
-function JsonTokenEditor({
-  value,
-  onChange,
-  onKeyDown,
-  className = "",
-}: JsonTokenEditorProps) {
+function JsonTokenEditor({ value, onChange, onKeyDown, className = "" }: JsonTokenEditorProps) {
   const { theme } = useTheme();
   const currentTheme = getTheme(theme);
   const monacoTheme = theme === "light" ? "tokenscript-theme-light" : "tokenscript-theme-dark";

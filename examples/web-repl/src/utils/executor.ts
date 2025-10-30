@@ -1,13 +1,13 @@
 import {
   ColorManager,
+  type ColorSpecification,
   Config,
+  type FunctionSpecification,
   FunctionsManager,
   Interpreter,
   interpretTokens,
   Lexer,
   Parser,
-  type ColorSpecification,
-  type FunctionSpecification,
 } from "@tokens-studio/tokenscript-interpreter";
 import { DEFAULT_COLOR_SCHEMAS } from "./default-schemas";
 
@@ -82,9 +82,7 @@ function preprocessInputs(
   return processedInputs;
 }
 
-export async function executeCode(
-  options: ExecuteCodeOptions,
-): Promise<ExecutionResult> {
+export async function executeCode(options: ExecuteCodeOptions): Promise<ExecutionResult> {
   const {
     code,
     mode,
@@ -139,11 +137,7 @@ export async function executeCode(
     // Preprocess inputs if needed
     let processedReferences = references;
     if (inputPreprocessor) {
-      processedReferences = preprocessInputs(
-        references,
-        inputPreprocessor,
-        config,
-      );
+      processedReferences = preprocessInputs(references, inputPreprocessor, config);
     }
 
     if (mode === "tokenscript") {
@@ -212,9 +206,7 @@ export async function executeCode(
 /**
  * Create an empty execution result
  */
-export function createEmptyResult(
-  mode: "tokenscript" | "json" = "tokenscript",
-): ExecutionResult {
+export function createEmptyResult(mode: "tokenscript" | "json" = "tokenscript"): ExecutionResult {
   return {
     type: mode,
     colorManager: new ColorManager(),
@@ -241,14 +233,7 @@ export interface ExecuteSchemaScriptOptions {
 export async function executeSchemaScript(
   options: ExecuteSchemaScriptOptions,
 ): Promise<ExecutionResult> {
-  const {
-    script,
-    inputs,
-    schemaProperties,
-    colorFormats,
-    requirements,
-    editorMode,
-  } = options;
+  const { script, inputs, schemaProperties, colorFormats, requirements, editorMode } = options;
 
   if (!script.trim()) {
     return createEmptyResult("tokenscript");

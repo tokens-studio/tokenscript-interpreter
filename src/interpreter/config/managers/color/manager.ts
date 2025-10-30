@@ -4,6 +4,7 @@ import { parseExpression } from "@interpreter/parser";
 import { ColorSymbol, type dynamicColorValue, typeEquals } from "@interpreter/symbols";
 import { Interpreter } from "@src/lib";
 import type { ISymbolType } from "@src/types";
+import { type } from "arktype";
 import { BaseManager } from "../base-manager";
 import { ColorManagerError } from "./errors";
 import {
@@ -147,23 +148,23 @@ export class ColorManager extends BaseManager<ColorSpecification, ColorSymbol, C
     let parsedSpec: ColorSpecification;
 
     if (typeof spec === "string") {
-      const parseResult = ColorSpecificationSchema.safeParse(JSON.parse(spec));
-      if (!parseResult.success) {
+      const parseResult = ColorSpecificationSchema(JSON.parse(spec));
+      if (parseResult instanceof type.errors) {
         throw new Error(
-          `Invalid color specification for URI ${uri}: ${parseResult.error.message}
+          `Invalid color specification for URI ${uri}: ${parseResult.summary}
 
 Json:
 ${spec}`,
         );
       }
-      parsedSpec = parseResult.data;
+      parsedSpec = parseResult as ColorSpecification;
     } else {
       // Validate the object using the schema
-      const parseResult = ColorSpecificationSchema.safeParse(spec);
-      if (!parseResult.success) {
-        throw new Error(`Invalid color specification for URI ${uri}: ${parseResult.error.message}`);
+      const parseResult = ColorSpecificationSchema(spec);
+      if (parseResult instanceof type.errors) {
+        throw new Error(`Invalid color specification for URI ${uri}: ${parseResult.summary}`);
       }
-      parsedSpec = parseResult.data;
+      parsedSpec = parseResult as ColorSpecification;
     }
 
     this.specs.set(uri, parsedSpec);

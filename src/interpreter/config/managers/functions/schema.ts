@@ -1,21 +1,33 @@
-import { z } from "zod";
+import { type } from "arktype";
 
-export const FunctionSpecificationSchema = z.object({
-  name: z.string(),
-  type: z.literal("function"),
-  input: z
-    .object({
-      type: z.literal("object"),
-      properties: z.record(z.string(), z.any()).optional(),
-    })
-    .optional(),
-  script: z.object({
-    type: z.string(),
-    script: z.string(),
-  }),
-  keyword: z.string(),
-  description: z.string().optional(),
-  requirements: z.array(z.string()).optional(),
+export const FunctionSpecificationSchema = type({
+  name: "string",
+  type: "'function'",
+  "input?": {
+    type: "'object'",
+    "properties?": "Record<string, unknown>",
+  },
+  script: {
+    type: "string",
+    script: "string",
+  },
+  keyword: "string",
+  "description?": "string",
+  "requirements?": "string[]",
 });
 
-export type FunctionSpecification = z.infer<typeof FunctionSpecificationSchema>;
+export interface FunctionSpecification {
+  name: string;
+  type: "function";
+  input?: {
+    type: "object";
+    properties?: Record<string, unknown>;
+  };
+  script: {
+    type: string;
+    script: string;
+  };
+  keyword: string;
+  description?: string;
+  requirements?: string[];
+}

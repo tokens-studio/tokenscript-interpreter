@@ -4,6 +4,7 @@ import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
 import { NumberSymbol, NumberWithUnitSymbol, StringSymbol } from "@interpreter/symbols";
 import type { ISymbolType } from "@src/types";
+import { type } from "arktype";
 import { BaseManager } from "../base-manager";
 
 import { type FunctionSpecification, FunctionSpecificationSchema } from "./schema";
@@ -40,17 +41,17 @@ export class FunctionsManager extends BaseManager<
     let parsedSpec: FunctionSpecification;
 
     if (typeof spec === "string") {
-      const parseResult = FunctionSpecificationSchema.safeParse(JSON.parse(spec));
-      if (!parseResult.success) {
-        throw new Error(`Invalid function specification for ${name}: ${parseResult.error.message}`);
+      const parseResult = FunctionSpecificationSchema(JSON.parse(spec));
+      if (parseResult instanceof type.errors) {
+        throw new Error(`Invalid function specification for ${name}: ${parseResult.summary}`);
       }
-      parsedSpec = parseResult.data;
+      parsedSpec = parseResult as FunctionSpecification;
     } else {
-      const parseResult = FunctionSpecificationSchema.safeParse(spec);
-      if (!parseResult.success) {
-        throw new Error(`Invalid function specification for ${name}: ${parseResult.error.message}`);
+      const parseResult = FunctionSpecificationSchema(spec);
+      if (parseResult instanceof type.errors) {
+        throw new Error(`Invalid function specification for ${name}: ${parseResult.summary}`);
       }
-      parsedSpec = parseResult.data;
+      parsedSpec = parseResult as FunctionSpecification;
     }
 
     const functionName = parsedSpec.keyword.toLowerCase();
