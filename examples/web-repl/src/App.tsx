@@ -70,13 +70,63 @@ function getPersistedAppState(): PersistentAppState | null {
   }
 }
 
+async function loadDependenciesForPreset(
+  dependencies: string[],
+  existingColorSchemas: Map<string, any> = new Map(),
+  existingFunctionSchemas: Map<string, any> = new Map(),
+): Promise<{
+  colorSchemas: Map<string, any>;
+  functionSchemas: Map<string, any>;
+}> {
+  const visited = new Set<string>();
+  const colorSchemasToAdd = new Map<string, any>();
+  const functionSchemasToAdd = new Map<string, any>();
+
+  const fetchDependency = async (url: string): Promise<void> => {
+    if (
+      visited.has(url) ||
+      existingColorSchemas.has(url) ||
+      existingFunctionSchemas.has(url)
+    ) {
+      return;
+    }
+
+    visited.add(url);
+
+    try {
+      const response = await fetchTokenScriptSchema(url);
+      const spec = response.content;
+
+      if (spec.type === "function") {
+        functionSchemasToAdd.set(url, spec);
+      } else {
+        colorSchemasToAdd.set(url, spec);
+      }
+
+      if (spec.requirements && Array.isArray(spec.requirements) && spec.requirements.length > 0) {
+        const requirementPromises = spec.requirements.map((reqUrl) => fetchDependency(reqUrl));
+        await Promise.all(requirementPromises);
+      }
+    } catch (error) {
+      console.error(`Failed to load dependency ${url}:`, error);
+      throw error;
+    }
+  };
+
+  const fetchPromises = dependencies.map((url) => fetchDependency(url));
+  await Promise.all(fetchPromises);
+
+  return {
+    colorSchemas: new Map([...existingColorSchemas, ...colorSchemasToAdd]),
+    functionSchemas: new Map([...existingFunctionSchemas, ...functionSchemasToAdd]),
+  };
+}
+
 function getDesignSystemPreset(): Preset {
   return JSON_PRESETS.find((p) => p.name === "Design system") || JSON_PRESETS[1];
 }
 
-function getInitialAppState(): InitialAppState {
-  const designSystemPreset = getDesignSystemPreset();
-
+async function getInitialAppStateWithDependencies(): Promise<InitialAppState> {
   const sharedState = decodeShareStateUrl();
   if (sharedState) {
     const colorSchemasMap = new Map(sharedState.colorSchemas);
@@ -102,12 +152,20 @@ function getInitialAppState(): InitialAppState {
       schemaPanelCollapsed: persisted.schemaPanelCollapsed ?? false,
     };
   }
+
+  const designSystemPreset = getDesignSystemPreset();
+  const {colorSchemas, functionSchemas} = await loadDependenciesForPreset(
+    designSystemPreset.dependencies,
+  );
+
+  console.log(colorSchemas, functionSchemas);
+
   return {
     code: designSystemPreset.code,
     inputMode: "json",
     presetName: designSystemPreset.name,
-    colorSchemas: new Map(DEFAULT_COLOR_SCHEMAS),
-    functionSchemas: new Map(),
+    colorSchemas,
+    functionSchemas,
     autoRun: true,
     schemaPanelCollapsed: false,
   };
@@ -117,24 +175,7 @@ function App() {
   const { theme } = useTheme();
   const currentTheme = getTheme(theme);
 
-  // Initialize app state from persisted or shared state
-  const initialAppState = useMemo(() => {
-    const initialState = getInitialAppState();
-    return {
-      code: initialState.code,
-      inputMode: initialState.inputMode,
-      jsonMode: "text" as JsonMode,
-      currentPresetName: initialState.presetName,
-      input: {},
-      autoRun: initialState.autoRun,
-      schemaPanelCollapsed: initialState.schemaPanelCollapsed,
-      colorSchemas: initialState.colorSchemas,
-      functionSchemas: initialState.functionSchemas,
-    };
-  }, []);
-
-  useHydrateAtoms([[appStateAtom, initialAppState]]);
-
+  // Initialize app state with default values first
   const [appState, setAppState] = useAtom(appStateAtom);
   const [result, setResult] = useState<ExecutionResult>(createEmptyResult("tokenscript"));
   const [jsonError, setJsonError] = useState<string>();
@@ -142,6 +183,28 @@ function App() {
   const _functionsManager = useAtomValue(functionsManagerAtom);
   const [openDialog, setOpenDialog] = useAtom(openDialogAtom);
   const shareButtonRef = useRef<HTMLButtonElement>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Initialize app state from persisted or shared state (async)
+  useEffect(() => {
+    const initializeAppState = async () => {
+      const initialState = await getInitialAppStateWithDependencies();
+      setAppState({
+        code: initialState.code,
+        inputMode: initialState.inputMode,
+        jsonMode: "text" as JsonMode,
+        currentPresetName: initialState.presetName,
+        input: {},
+        autoRun: initialState.autoRun ?? true,
+        schemaPanelCollapsed: initialState.schemaPanelCollapsed ?? false,
+        colorSchemas: initialState.colorSchemas,
+        functionSchemas: initialState.functionSchemas,
+      });
+      setIsInitialized(true);
+    };
+
+    initializeAppState();
+  }, [setAppState]);
 
   // Initialize schema server (run once on mount)
   useEffect(() => {
@@ -220,53 +283,20 @@ function App() {
 
   const loadDependencies = useCallback(
     async (dependencies: string[]) => {
-      const visited = new Set<string>();
-      const colorSchemasToAdd = new Map<string, ColorSpecification>();
-      const functionSchemasToAdd = new Map<string, FunctionSpecification>();
+      const loaded = await loadDependenciesForPreset(
+        dependencies,
+        appState.colorSchemas,
+        appState.functionSchemas,
+      );
 
-      const fetchDependency = async (url: string): Promise<void> => {
-        if (
-          visited.has(url) ||
-          appState.colorSchemas.has(url) ||
-          appState.functionSchemas.has(url)
-        ) {
-          return;
-        }
-
-        visited.add(url);
-
-        try {
-          const response = await fetchTokenScriptSchema(url);
-          const spec = response.content;
-
-          if (spec.type === "function") {
-            functionSchemasToAdd.set(url, spec as FunctionSpecification);
-          } else {
-            colorSchemasToAdd.set(url, spec as ColorSpecification);
-          }
-
-          if (
-            spec.requirements &&
-            Array.isArray(spec.requirements) &&
-            spec.requirements.length > 0
-          ) {
-            const requirementPromises = spec.requirements.map((reqUrl) => fetchDependency(reqUrl));
-            await Promise.all(requirementPromises);
-          }
-        } catch (error) {
-          console.error(`Failed to load dependency ${url}:`, error);
-          throw error;
-        }
-      };
-
-      const fetchPromises = dependencies.map((url) => fetchDependency(url));
-      await Promise.all(fetchPromises);
-
-      if (colorSchemasToAdd.size > 0 || functionSchemasToAdd.size > 0) {
+      if (
+        loaded.colorSchemas.size > appState.colorSchemas.size ||
+        loaded.functionSchemas.size > appState.functionSchemas.size
+      ) {
         setAppState((prev) => ({
           ...prev,
-          colorSchemas: new Map([...prev.colorSchemas, ...colorSchemasToAdd]),
-          functionSchemas: new Map([...prev.functionSchemas, ...functionSchemasToAdd]),
+          colorSchemas: loaded.colorSchemas,
+          functionSchemas: loaded.functionSchemas,
         }));
       }
     },
@@ -311,13 +341,14 @@ function App() {
   }, [openDialog, setOpenDialog]);
 
   useEffect(() => {
-    if (!appState.autoRun) return;
+    if (!isInitialized || !appState.autoRun) return;
     executeCode();
-  }, [appState.autoRun, executeCode]);
+  }, [isInitialized, appState.autoRun, executeCode]);
 
   useEffect(() => {
+    if (!isInitialized) return;
     executeCode();
-  }, [executeCode]);
+  }, [isInitialized, executeCode]);
 
   const handleKeyDown = (event: KeyboardEvent) => {
     if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
