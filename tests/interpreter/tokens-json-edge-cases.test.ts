@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { interpretTokens } from "@src/tokenset-processor";
 
-describe("DTCG Edge Cases", () => {
+describe("Tokens JSON Edge Cases", () => {
   describe("Priority and Conflict Resolution", () => {
     it("should prioritize $value over value when both exist in same token", () => {
       const conflictTokens = {
@@ -238,7 +238,7 @@ describe("DTCG Edge Cases", () => {
       // Should process valid tokens, malformed tokens are filtered out by the adapter
       expect(result["valid-token"]).toBe("valid");
       
-      // Malformed tokens (non-object values) are filtered out by hasNestedDTCGStructure
+      // Malformed tokens (non-object values) are filtered out by hasNestedStructure
       expect(result).not.toHaveProperty("malformed-string");
       expect(result).not.toHaveProperty("malformed-number");
       expect(result).not.toHaveProperty("malformed-array");

@@ -5,9 +5,9 @@ import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
 import { UNINTERPRETED_KEYWORDS } from "@src/types";
 import {
-  flattenTokens as flattenDTCGTokens,
-  hasNestedDTCGStructure,
-} from "@src/utils/dtcg-adapter";
+  flattenTokens,
+  hasNestedStructure,
+} from "@src/utils/tokens-json-adapter";
 import { PerformanceTracker } from "@src/utils/performance-tracker";
 
 export interface TokenSetResolverOptions {
@@ -259,7 +259,7 @@ export function buildThemeTree(
             console.warn(`Token set '${setId}' referenced in '${themeName}' not found.`);
             continue;
           }
-          Object.assign(tokens, flattenDTCGTokens(tokensets[setId]));
+          Object.assign(tokens, flattenTokens(tokensets[setId]));
         }
       }
     } else {
@@ -269,7 +269,7 @@ export function buildThemeTree(
           if (!(setName in tokensets)) {
             throw new Error(`Token set '${setName}' referenced in '${themeName}' not found.`);
           }
-          Object.assign(tokens, flattenDTCGTokens(tokensets[setName]));
+          Object.assign(tokens, flattenTokens(tokensets[setName]));
         }
       }
     }
@@ -348,7 +348,7 @@ export function interpretTokensets(
   return output;
 }
 
-// Simple function to process any DTCG JSON blob - the main API users want
+// Simple function to process any tokens JSON blob - the main API users want
 // Pure in-memory processing - no file system operations
 export function interpretTokens(
   tokenInput: Record<string, any>,
@@ -358,18 +358,18 @@ export function interpretTokens(
     throw new Error("Invalid JSON input: Expected an object");
   }
 
-  // Check if this is a complete DTCG file with themes
+  // Check if this is a complete tokens JSON file with themes
   if (tokenInput.$themes && Array.isArray(tokenInput.$themes)) {
-    // This is a complete DTCG file with themes - process like a ZIP file
+    // This is a complete tokens JSON file with themes - process like a ZIP file
     const themes = loadThemesFromJson(tokenInput);
     return processThemesSync(themes, config);
   } else {
     // 1. ADAPT: Normalize input to flat format
     let flatTokens: Record<string, string>;
 
-    if (hasNestedDTCGStructure(tokenInput)) {
-      // This is a DTCG structure without themes - flatten it
-      flatTokens = flattenDTCGTokens(tokenInput);
+    if (hasNestedStructure(tokenInput)) {
+      // This is a tokens JSON structure without themes - flatten it
+      flatTokens = flattenTokens(tokenInput);
     } else {
       // This is already a flat token set - ensure all values are strings
       flatTokens = {};
@@ -394,10 +394,10 @@ export function interpretTokens(
 
 // Keep the original functions for backward compatibility
 export function processTokensFromJson(
-  dtcgJson: Record<string, any>,
+  tokensJson: Record<string, any>,
   config?: Config,
 ): Record<string, any> {
-  return interpretTokens(dtcgJson, config);
+  return interpretTokens(tokensJson, config);
 }
 
 export function processSingleTokenSet(
@@ -408,14 +408,14 @@ export function processSingleTokenSet(
   return interpretTokens(tokens, config);
 }
 
-// Load themes from DTCG JSON object (similar to loadThemes but for JSON input)
-function loadThemesFromJson(dtcgJson: Record<string, any>): Record<string, Record<string, any>> {
-  if (!dtcgJson.$themes) {
-    throw new Error("No themes found in the DTCG JSON.");
+// Load themes from tokens JSON object (similar to loadThemes but for JSON input)
+function loadThemesFromJson(tokensJson: Record<string, any>): Record<string, Record<string, any>> {
+  if (!tokensJson.$themes) {
+    throw new Error("No themes found in the tokens JSON.");
   }
 
   const themeTokens: Record<string, Record<string, any>> = {};
-  const themesData = dtcgJson.$themes;
+  const themesData = tokensJson.$themes;
 
   for (const theme of themesData) {
     const themeName = theme.name;
@@ -429,21 +429,21 @@ function loadThemesFromJson(dtcgJson: Record<string, any>): Record<string, Recor
       for (const tokenSetRef of selectedTokenSets) {
         if (tokenSetRef.status === "enabled" || tokenSetRef.status === "source") {
           const setId = tokenSetRef.id;
-          if (!(setId in dtcgJson)) {
+          if (!(setId in tokensJson)) {
             console.warn(`⚠️  Token set '${setId}' referenced in '${themeName}' not found.`);
             continue;
           }
-          Object.assign(themeTokens[themeName], flattenDTCGTokens(dtcgJson[setId]));
+          Object.assign(themeTokens[themeName], flattenTokens(tokensJson[setId]));
         }
       }
     } else {
       // Old format: object with key-value pairs
       for (const [setName, status] of Object.entries(selectedTokenSets)) {
         if (status === "enabled" || status === "source") {
-          if (!(setName in dtcgJson)) {
+          if (!(setName in tokensJson)) {
             throw new Error(`Token set '${setName}' referenced in '${themeName}' not found.`);
           }
-          Object.assign(themeTokens[themeName], flattenDTCGTokens(dtcgJson[setName]));
+          Object.assign(themeTokens[themeName], flattenTokens(tokensJson[setName]));
         }
       }
     }

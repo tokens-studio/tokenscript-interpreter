@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { interpretTokens } from "@src/tokenset-processor";
-import { flattenTokens as flattenDTCGTokens, hasNestedDTCGStructure } from "@src/utils/dtcg-adapter";
+import { flattenTokens, hasNestedStructure } from "@src/utils/tokens-json-adapter";
 
-describe("DTCG Format Compatibility", () => {
+describe("Tokens JSON Format Compatibility", () => {
   describe("interpretTokens", () => {
-    it("should handle standard DTCG format ($value/$type)", () => {
+    it("should handle standard tokens JSON format ($value/$type)", () => {
       const tokens = {
         "primary-color": {
           "$value": "#ff6b35",
@@ -121,7 +121,7 @@ describe("DTCG Format Compatibility", () => {
       });
     });
 
-    it("should handle nested DTCG structure with standard format", () => {
+    it("should handle nested tokens JSON structure with standard format", () => {
       const nestedTokens = {
         "color": {
           "primary": {
@@ -155,7 +155,7 @@ describe("DTCG Format Compatibility", () => {
       });
     });
 
-    it("should handle nested DTCG structure with non-standard format", () => {
+    it("should handle nested tokens JSON structure with non-standard format", () => {
       const nestedTokens = {
         "color": {
           "primary": {
@@ -297,8 +297,8 @@ describe("DTCG Format Compatibility", () => {
     });
   });
 
-  describe("flattenDTCGTokens", () => {
-    it("should flatten standard DTCG format", () => {
+  describe("flattenTokens", () => {
+    it("should flatten standard tokens JSON format", () => {
       const nestedTokens = {
         "color": {
           "primary": {
@@ -308,7 +308,7 @@ describe("DTCG Format Compatibility", () => {
         }
       };
 
-      const flattened = flattenDTCGTokens(nestedTokens);
+      const flattened = flattenTokens(nestedTokens);
 
       expect(flattened).toEqual({
         "color.primary": "#3b82f6"
@@ -325,14 +325,14 @@ describe("DTCG Format Compatibility", () => {
         }
       };
 
-      const flattened = flattenDTCGTokens(nestedTokens);
+      const flattened = flattenTokens(nestedTokens);
 
       expect(flattened).toEqual({
         "color.primary": "#3b82f6"
       });
     });
 
-    it("should skip DTCG metadata keys", () => {
+    it("should skip tokens JSON metadata keys", () => {
       const tokensWithMetadata = {
         "$themes": ["light", "dark"],
         "$metadata": {
@@ -348,7 +348,7 @@ describe("DTCG Format Compatibility", () => {
         }
       };
 
-      const flattened = flattenDTCGTokens(tokensWithMetadata);
+      const flattened = flattenTokens(tokensWithMetadata);
 
       expect(flattened).toEqual({
         "color.primary": "#3b82f6"
@@ -374,7 +374,7 @@ describe("DTCG Format Compatibility", () => {
         }
       };
 
-      const flattened = flattenDTCGTokens(deeplyNested);
+      const flattened = flattenTokens(deeplyNested);
 
       expect(flattened).toEqual({
         "design.system.tokens.spacing.base": "8px"
@@ -382,8 +382,8 @@ describe("DTCG Format Compatibility", () => {
     });
   });
 
-  describe("hasNestedDTCGStructure", () => {
-    it("should detect nested DTCG structure", () => {
+  describe("hasNestedStructure", () => {
+    it("should detect nested tokens JSON structure", () => {
       const nested = {
         "color": {
           "primary": {
@@ -392,7 +392,7 @@ describe("DTCG Format Compatibility", () => {
         }
       };
 
-      expect(hasNestedDTCGStructure(nested)).toBe(true);
+      expect(hasNestedStructure(nested)).toBe(true);
     });
 
     it("should not detect nested structure in flat tokens", () => {
@@ -401,10 +401,10 @@ describe("DTCG Format Compatibility", () => {
         "spacing-base": "16px"
       };
 
-      expect(hasNestedDTCGStructure(flat)).toBe(false);
+      expect(hasNestedStructure(flat)).toBe(false);
     });
 
-    it("should not detect nested structure when only DTCG metadata exists", () => {
+    it("should not detect nested structure when only tokens JSON metadata exists", () => {
       const metadataOnly = {
         "$themes": ["light", "dark"],
         "$metadata": {
@@ -412,7 +412,7 @@ describe("DTCG Format Compatibility", () => {
         }
       };
 
-      expect(hasNestedDTCGStructure(metadataOnly)).toBe(false);
+      expect(hasNestedStructure(metadataOnly)).toBe(false);
     });
 
     it("should detect mixed structure", () => {
@@ -425,7 +425,7 @@ describe("DTCG Format Compatibility", () => {
         }
       };
 
-      expect(hasNestedDTCGStructure(mixed)).toBe(true);
+      expect(hasNestedStructure(mixed)).toBe(true);
     });
   });
 });

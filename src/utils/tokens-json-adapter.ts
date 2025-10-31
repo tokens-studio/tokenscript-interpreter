@@ -1,17 +1,17 @@
 /**
- * DTCG Adapter Module
+ * Tokens JSON Adapter Module
  *
- * This module provides utilities for converting between DTCG format and the flat
+ * This module provides utilities for converting between tokens JSON format and the flat
  * key-value format expected by the core TokenSetResolver. This separation allows
- * the core resolution engine to remain format-agnostic while supporting DTCG
+ * the core resolution engine to remain format-agnostic while supporting tokens JSON
  * as a "layer on top".
  */
 
 /**
- * Flattens a DTCG-structured tokens object into a simple key-value map.
+ * Flattens a tokens JSON-structured tokens object into a simple key-value map.
  * This is the primary input adapter for the core resolver.
  *
- * @param tokenset - The DTCG tokens object to flatten
+ * @param tokenset - The tokens JSON object to flatten
  * @param prefix - Internal parameter for recursion (dot-separated path)
  * @returns A flat Record<string, string> suitable for TokenSetResolver
  *
@@ -26,12 +26,11 @@ export function flattenTokens(
   const flattenedTokens: Record<string, string> = {};
 
   for (const [key, node] of Object.entries(tokenset)) {
-    // Skip DTCG metadata keys
+    // Skip tokens JSON metadata keys
     if (key.startsWith("$")) continue;
 
     if (typeof node === "object" && node !== null && !Array.isArray(node)) {
       if ("$value" in node) {
-        // Standard DTCG format with $value
         const name = prefix ? `${prefix}.${key}` : key;
         // Ensure the value is always a string for the resolver
         flattenedTokens[name] = String((node as any).$value);
@@ -66,15 +65,15 @@ export function clearFlatteningCaches(): void {
 }
 
 /**
- * Handles theme-based DTCG processing by extracting tokens from selected token sets.
+ * Handles theme-based tokens JSON processing by extracting tokens from selected token sets.
  * Uses caching to avoid redundant processing when multiple themes share token sets.
  *
- * @param dtcgJson - Complete DTCG JSON with themes
+ * @param tokensJson - Complete tokens JSON with themes
  * @param theme - Theme object with selectedTokenSets
  * @returns Object with flat tokens only (metadata removed to align with Python implementation)
  */
 export function extractThemeTokens(
-  dtcgJson: Record<string, any>,
+  tokensJson: Record<string, any>,
   theme: any,
 ): { flatTokens: Record<string, string> } {
   const flatTokens: Record<string, string> = {};
@@ -85,8 +84,8 @@ export function extractThemeTokens(
     for (const tokenSetRef of selectedTokenSets) {
       if (tokenSetRef.status === "enabled" || tokenSetRef.status === "source") {
         const setId = tokenSetRef.id;
-        if (setId in dtcgJson) {
-          const setData = dtcgJson[setId];
+        if (setId in tokensJson) {
+          const setData = tokensJson[setId];
 
           // Check cache first, flatten only if not cached
           let cachedFlatTokens = flattenedTokensCache.get(setId);
@@ -106,8 +105,8 @@ export function extractThemeTokens(
     // Old format: object with key-value pairs
     for (const [setName, status] of Object.entries(selectedTokenSets)) {
       if (status === "enabled" || status === "source") {
-        if (setName in dtcgJson) {
-          const setData = dtcgJson[setName];
+        if (setName in tokensJson) {
+          const setData = tokensJson[setName];
 
           // Check cache first, flatten only if not cached
           let cachedFlatTokens = flattenedTokensCache.get(setName);
@@ -129,12 +128,12 @@ export function extractThemeTokens(
 }
 
 /**
- * Detects if a JSON object has DTCG nested structure (vs flat tokens).
+ * Detects if a JSON object has nested tokens JSON structure (vs flat tokens).
  *
  * @param json - JSON object to analyze
- * @returns true if the object has nested DTCG structure
+ * @returns true if the object has nested tokens JSON structure
  */
-export function hasNestedDTCGStructure(json: Record<string, any>): boolean {
+export function hasNestedStructure(json: Record<string, any>): boolean {
   return Object.keys(json).some(
     (key) =>
       typeof json[key] === "object" &&

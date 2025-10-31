@@ -232,7 +232,7 @@ describe("CLI Functionality", () => {
   });
 
   describe("Format Compatibility Integration", () => {
-    it("should work with the original README example using standard DTCG format", () => {
+    it("should work with the original README example using standard tokens JSON format", () => {
       const tokens = {
         "primary-color": {
           "$value": "#ff6b35",

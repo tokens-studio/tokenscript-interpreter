@@ -64,8 +64,8 @@ program
 
 program
   .command("parse_json")
-  .description("Parse and process a DTCG JSON file directly")
-  .requiredOption("--json <path>", "Path to the DTCG JSON file")
+  .description("Parse and process a JSON file directly")
+  .requiredOption("--json <path>", "Path to the JSON file")
   .option("--output <path>", "Output file path (if not provided, prints to console)")
   .option("--schema <uris...>", "Schema URIs to fetch and register")
   .action(async (options) => {
@@ -133,7 +133,6 @@ async function interactiveMode(schemas?: string[]): Promise<void> {
         continue;
       }
 
-      // Parse and interpret the input
       const result = await interpretExpression(input, references, config);
       console.log(`✅ Result: ${result}`);
     } catch (error: any) {
@@ -142,7 +141,6 @@ async function interactiveMode(schemas?: string[]): Promise<void> {
   }
 }
 
-// Set variables interactively
 async function setVariablesInteractively(
   currentReferences: ReferenceRecord,
 ): Promise<ReferenceRecord> {
@@ -181,7 +179,6 @@ async function setVariablesInteractively(
   return references;
 }
 
-// Interpret a single expression
 async function interpretExpression(
   code: string,
   references: ReferenceRecord,
@@ -190,7 +187,7 @@ async function interpretExpression(
   try {
     const lexer = new Lexer(code);
     const parser = new Parser(lexer);
-    const ast = parser.parse(true); // Use inline mode for single expressions
+    const ast = parser.parse(true);
 
     if (!ast) {
       return "No result (empty input)";
@@ -301,7 +298,6 @@ async function permutateTokenset(
   }
 }
 
-// Parse DTCG JSON file - simple unified API
 async function parseJsonFile(
   jsonPath: string,
   outputPath?: string,
@@ -310,14 +306,11 @@ async function parseJsonFile(
   try {
     const config = await fetchAndRegisterSchemas(schemas ?? []);
 
-    // Read JSON file
     const jsonContent = await fs.promises.readFile(jsonPath, "utf8");
-    const dtcgJson = JSON.parse(jsonContent);
+    const json = JSON.parse(jsonContent);
 
-    // Process the JSON blob - returns flat tokens (aligned with Python implementation)
-    const output = interpretTokens(dtcgJson, config);
+    const output = interpretTokens(json, config);
 
-    // Write output or print to console
     if (outputPath) {
       await fs.promises.writeFile(outputPath, JSON.stringify(output, null, 2), "utf8");
       console.log(`💾 Output written to: ${outputPath}`);
@@ -330,9 +323,6 @@ async function parseJsonFile(
   }
 }
 
-// Utility functions for tokenset processing
-
-// Load ZIP file contents into memory
 async function loadZipToMemory(zipPath: string): Promise<Record<string, any>> {
   return new Promise((resolve, reject) => {
     const filesContent: Record<string, any> = {};
@@ -411,7 +401,6 @@ async function loadZipToMemory(zipPath: string): Promise<Record<string, any>> {
   });
 }
 
-// Flatten tokenset recursively
 function flattenTokenset(tokenset: any, prefix = "", resolveAll = false): Record<string, any> {
   const flattenedTokens: Record<string, any> = {};
 
@@ -425,8 +414,8 @@ function flattenTokenset(tokenset: any, prefix = "", resolveAll = false): Record
         continue;
       }
 
+      // Skip special keys
       if (setName.startsWith("$")) {
-        // Skip special keys
         continue;
       }
 
@@ -435,13 +424,11 @@ function flattenTokenset(tokenset: any, prefix = "", resolveAll = false): Record
       const nestedTokens = flattenTokenset(setData, fullSetName);
       Object.assign(flattenedTokens, nestedTokens);
     } else if (Array.isArray(setData)) {
-      // Flatten the list of tokens
       setData.forEach((value, index) => {
         const name = prefix ? `${prefix}.${index}` : String(index);
         Object.assign(flattenedTokens, flattenTokenset(value, name, true));
       });
     } else {
-      // Flatten the token set
       if (setName === "value" || setName === "$value") {
         flattenedTokens[prefix] = setData;
       }
@@ -513,5 +500,4 @@ function loadThemes(tokensets: Record<string, any>): Record<string, Record<strin
   return themeTokens;
 }
 
-// Parse command line arguments
 program.parse();
