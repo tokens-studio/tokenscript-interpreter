@@ -89,7 +89,7 @@ export async function executeCode(options: ExecuteCodeOptions): Promise<Executio
     references = {},
     colorSchemas = new Map(),
     functionSchemas = new Map(),
-    includeCssColorSchema = false,
+    includeCssColorSchema = true,
     inputPreprocessor,
   } = options;
 

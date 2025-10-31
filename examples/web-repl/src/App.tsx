@@ -1,6 +1,6 @@
+import { isEmpty } from "@interpreter/utils/type";
 import { useAtom, useAtomValue } from "jotai";
-import { useHydrateAtoms } from "jotai/utils";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import DialogManager from "./components/dialogs/DialogManager";
 import EditorTitleBar from "./components/EditorTitleBar";
 import { ArrowDown, Docs, Github, Share } from "./components/icons";
@@ -20,7 +20,6 @@ import {
   openDialogAtom,
 } from "./store/atoms";
 import { getTheme } from "./theme/colors";
-import { DEFAULT_COLOR_SCHEMAS } from "./utils/default-schemas";
 import { createEmptyResult, type ExecutionResult, executeCode as runCode } from "./utils/executor";
 import type { Preset } from "./utils/presets";
 import { JSON_PRESETS, TOKENSCRIPT_PRESETS } from "./utils/presets";
@@ -70,11 +69,7 @@ async function loadDependenciesForPreset(
   const functionSchemasToAdd = new Map<string, any>();
 
   const fetchDependency = async (url: string): Promise<void> => {
-    if (
-      visited.has(url) ||
-      existingColorSchemas.has(url) ||
-      existingFunctionSchemas.has(url)
-    ) {
+    if (visited.has(url) || existingColorSchemas.has(url) || existingFunctionSchemas.has(url)) {
       return;
     }
 
@@ -128,7 +123,7 @@ async function getInitialAppStateWithDependencies(): Promise<InitialAppState> {
   }
 
   const designSystemPreset = getDesignSystemPreset();
-  const {colorSchemas, functionSchemas} = await loadDependenciesForPreset(
+  const { colorSchemas, functionSchemas } = await loadDependenciesForPreset(
     designSystemPreset.dependencies,
   );
 
@@ -285,25 +280,22 @@ function App() {
         }));
       }
 
-      if (preset.dependencies && preset.dependencies.length > 0) {
-        await loadDependencies(preset.dependencies);
-      }
+      if (isEmpty(preset.dependencies)) return;
 
-      if (preset.type === "code") {
-        setAppState((prev) => ({
-          ...prev,
-          inputMode: "tokenscript",
-          code: preset.code,
-          currentPresetName: preset.name,
-        }));
-      } else if (preset.type === "json") {
-        setAppState((prev) => ({
-          ...prev,
-          inputMode: "json",
-          code: preset.code,
-          currentPresetName: preset.name,
-        }));
-      }
+      const { colorSchemas, functionSchemas } = await loadDependenciesForPreset(
+        preset.dependencies,
+        appState.colorSchemas,
+        appState.functionSchemas,
+      );
+
+      setAppState((prev) => ({
+        ...prev,
+        inputMode: preset.type === "code" ? "tokenscript" : "json",
+        code: preset.code,
+        currentPresetName: preset.name,
+        colorSchemas: new Map([...appState.colorSchemas, ...colorSchemas]),
+        functionSchemas: new Map([...appState.functionSchemas, ...functionSchemas]),
+      }));
     },
     [loadDependencies, setAppState],
   );
