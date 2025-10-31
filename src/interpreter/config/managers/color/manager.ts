@@ -4,6 +4,7 @@ import { parseExpression } from "@interpreter/parser";
 import { ColorSymbol, type dynamicColorValue, typeEquals } from "@interpreter/symbols";
 import { Interpreter } from "@src/lib";
 import type { ISymbolType } from "@src/types";
+import { buildSchemaUri, parseVersionString } from "@src/utils/schema-uri";
 import { type } from "arktype";
 import { BaseManager } from "../base-manager";
 import { ColorManagerError } from "./errors";
@@ -31,7 +32,7 @@ interface FormatColorOptions {
 
 export const defaultTypeSpecs: Specs = new Map([
   [
-    "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/hex-color/0/",
+    buildSchemaUri({ category: "core", name: "hex-color", version: parseVersionString("0") }),
     {
       name: "Hex",
       type: "color",

@@ -1,6 +1,12 @@
 import type { ColorSpecification } from "@interpreter/config/managers/color/schema";
 import type { FunctionSpecification } from "@interpreter/config/managers/functions/schema";
 import { fetchTokenScriptSchema } from "./schema-fetcher";
+import {
+  buildFetchUrl,
+  buildSchemaUri,
+  DEFAULT_REGISTRY_URL,
+  parseVersionString,
+} from "./schema-uri";
 
 type SchemaContent = ColorSpecification | FunctionSpecification;
 
@@ -34,16 +40,24 @@ async function fetchRemoteSchema(
   name: string,
   version: string,
   baseUrl: string,
-  timeout = 10000
+  timeout = 10000,
 ): Promise<[string, SchemaContent] | null> {
   try {
-    const url = `${baseUrl}/${name}`;
-    const schemaUri = `${url}/${version}?format=json`;
-    
+    const schemaUri = buildFetchUrl(name, version, { baseUrl, category: "schema" });
     const result = await fetchTokenScriptSchema(schemaUri, { timeout });
-    return [url, result.content];
+
+    const uri = buildSchemaUri({
+      baseUrl,
+      category: "schema",
+      name,
+      version: parseVersionString(version),
+    });
+    return [uri, result.content];
   } catch (error) {
-    console.warn(`  ⚠ Could not fetch schema ${name}:`, error instanceof Error ? error.message : error);
+    console.warn(
+      `  ⚠ Could not fetch schema ${name}:`,
+      error instanceof Error ? error.message : error,
+    );
     return null;
   }
 }
@@ -51,7 +65,7 @@ async function fetchRemoteSchema(
 async function processSchemas(
   schemas: SchemaMapConfig["schemas"],
   baseUrl: string,
-  timeout: number
+  timeout: number,
 ): Promise<Map<string, SchemaContent>> {
   const schemaMap = new Map<string, SchemaContent>();
 
@@ -75,7 +89,9 @@ async function processSchemas(
   return schemaMap;
 }
 
-function generateFileContent(maps: Array<{ name: string; map: Map<string, SchemaContent> }>): string {
+function generateFileContent(
+  maps: Array<{ name: string; map: Map<string, SchemaContent> }>,
+): string {
   const mapExports = maps
     .map(({ name, map }) => {
       const entries = Array.from(map.entries())
@@ -99,11 +115,7 @@ ${mapExports}
  * @returns Generated TypeScript file content as a string
  */
 export async function generateSchemaFileContent(config: GenerateConfig): Promise<string> {
-  const {
-    maps,
-    baseUrl = "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema",
-    timeout = 10000,
-  } = config;
+  const { maps, baseUrl = DEFAULT_REGISTRY_URL, timeout = 10000 } = config;
 
   console.log("Packaging schemas...\n");
 

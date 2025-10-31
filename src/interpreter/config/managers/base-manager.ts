@@ -1,3 +1,12 @@
+import {
+  compareVersions as compareSchemaVersions,
+  generateVersionCandidates as generateSchemaVersionCandidates,
+  getBaseUri as getSchemaBaseUri,
+  isSameSchema,
+  parseSchemaUri,
+  parseSemverFromUri as parseSchemaVersion,
+  type SemanticVersion,
+} from "@src/utils/schema-uri";
 import type { Config } from "../config";
 
 type uri = string;
@@ -14,34 +23,22 @@ export abstract class BaseManager<TSpec, TInput, TOutput> {
   protected parentConfig?: Config;
 
   protected removeVersionFromUri(uri: uri): uri {
-    return uri.replace(/\/\d+\/$/, "/");
+    return getSchemaBaseUri(uri);
+  }
+
+  /**
+   * Check if two URIs point to the same schema (ignoring version)
+   */
+  protected isSameSchemaUri(uri1: uri, uri2: uri): boolean {
+    return isSameSchema(uri1, uri2);
   }
 
   /**
    * Parse semantic version from URI
    * Example: "/api/v1/schema/srgb-color/0.0.1/" -> { major: 0, minor: 0, patch: 1 }
    */
-  protected parseSemverFromUri(uri: uri): { major: number; minor: number; patch: number } | null {
-    const semverMatch = uri.match(/\/(\d+)\.(\d+)\.(\d+)\//);
-    if (semverMatch) {
-      return {
-        major: parseInt(semverMatch[1], 10),
-        minor: parseInt(semverMatch[2], 10),
-        patch: parseInt(semverMatch[3], 10),
-      };
-    }
-
-    // Also handle single number versions like "/0/" or "/1/"
-    const singleVersionMatch = uri.match(/\/(\d+)\//);
-    if (singleVersionMatch) {
-      return {
-        major: parseInt(singleVersionMatch[1], 10),
-        minor: 0,
-        patch: 0,
-      };
-    }
-
-    return null;
+  protected parseSemverFromUri(uri: uri): SemanticVersion | null {
+    return parseSchemaVersion(uri);
   }
 
   /**
@@ -49,7 +46,7 @@ export abstract class BaseManager<TSpec, TInput, TOutput> {
    * Example: "/api/v1/schema/srgb-color/0.0.1/" -> "/api/v1/schema/srgb-color/"
    */
   protected getBaseUri(uri: uri): uri {
-    return uri.replace(/\/(?:\d+(?:\.\d+)?(?:\.\d+)?|latest)\/$/, "/");
+    return getSchemaBaseUri(uri);
   }
 
   /**
@@ -57,47 +54,32 @@ export abstract class BaseManager<TSpec, TInput, TOutput> {
    * Example: "0.0.1" -> ["0.0.1", "0.0", "0", "latest"]
    */
   protected generateVersionCandidates(uri: uri): uri[] {
-    const baseUri = this.getBaseUri(uri);
-    const candidates: uri[] = [];
-
-    // First try the original URI as-is
-    candidates.push(uri);
-
-    // If it's already a /latest/ URI, only try that
-    if (uri.includes("/latest/")) {
-      return candidates;
-    }
-
-    const version = this.parseSemverFromUri(uri);
-    if (version) {
-      // Try progressively less specific versions
-      if (version.patch > 0) {
-        candidates.push(`${baseUri}${version.major}.${version.minor}/`);
-      }
-      if (version.minor > 0 || version.patch > 0) {
-        candidates.push(`${baseUri}${version.major}/`);
-      }
-    }
-
-    // Finally try /latest/
-    candidates.push(`${baseUri}latest/`);
-
-    return candidates;
+    return generateSchemaVersionCandidates(uri);
   }
 
   /**
-   * Find the latest (highest) semantic version for a base URI
+   * Find the latest (highest) semantic version for a URI
    */
-  protected findLatestVersion(baseUri: uri): uri | null {
-    const basePattern = baseUri.replace(/\/$/, "");
-    let latestVersion: { major: number; minor: number; patch: number } | null = null;
+  protected findLatestVersion(uri: uri): uri | null {
+    const source = parseSchemaUri(uri);
+    if (!source) {
+      return null;
+    }
+
+    let latestVersion: SemanticVersion | null = null;
     let latestUri: uri | null = null;
 
     for (const [specUri] of this.specs) {
-      if (specUri.startsWith(basePattern)) {
+      const target = parseSchemaUri(specUri);
+      if (
+        target &&
+        target.baseUrl === source.baseUrl &&
+        target.category === source.category &&
+        target.name === source.name
+      ) {
         const version = this.parseSemverFromUri(specUri);
-        if (version) {
-          if (!latestVersion || this.compareVersions(version, latestVersion) > 0) {
+        if (target.version && version) {
+          if (!latestVersion || compareSchemaVersions(version, latestVersion) > 0) {
             latestVersion = version;
             latestUri = specUri;
           }
@@ -109,26 +91,12 @@ export abstract class BaseManager<TSpec, TInput, TOutput> {
   }
 
   /**
-   * Compare two semantic versions
-   * Returns: 1 if a > b, -1 if a < b, 0 if equal
-   */
-  protected compareVersions(
-    a: { major: number; minor: number; patch: number },
-    b: { major: number; minor: number; patch: number },
-  ): number {
-    if (a.major !== b.major) return a.major - b.major;
-    if (a.minor !== b.minor) return a.minor - b.minor;
-    return a.patch - b.patch;
-  }
-
-  /**
    * Resolve URI by trying version candidates from most specific to least specific
    */
   protected resolveVersionUri(uri: uri): uri | null {
     // Handle /latest/ URIs specifically
     if (uri.includes("/latest/")) {
-      const baseUri = this.getBaseUri(uri);
-      return this.findLatestVersion(baseUri);
+      return this.findLatestVersion(uri);
     }
 
     const candidates = this.generateVersionCandidates(uri);
@@ -140,8 +108,7 @@ export abstract class BaseManager<TSpec, TInput, TOutput> {
 
       // If we hit a /latest/ candidate, resolve it
       if (candidate.includes("/latest/")) {
-        const baseUri = this.getBaseUri(candidate);
-        const latestUri = this.findLatestVersion(baseUri);
+        const latestUri = this.findLatestVersion(candidate);
         if (latestUri) {
           return latestUri;
         }
@@ -155,25 +122,23 @@ export abstract class BaseManager<TSpec, TInput, TOutput> {
    * Find a conversion path from source to target format using BFS with version resolution
    */
   protected findConversionPath(sourceUri: uri, targetUri: uri): uri[] {
-    const normalizedSource = this.removeVersionFromUri(sourceUri);
-    const normalizedTarget = this.removeVersionFromUri(targetUri);
-
-    if (normalizedSource === normalizedTarget) {
+    if (this.isSameSchemaUri(sourceUri, targetUri)) {
       return [sourceUri];
     }
 
-    const visited = new Set<uri>([normalizedSource]);
+    const visited = new Set<uri>();
+    const normalizedSource = this.getBaseUri(sourceUri);
+    visited.add(normalizedSource);
+
     const queue: Array<[uri, uri[]]> = [[sourceUri, [sourceUri]]];
 
     while (queue.length > 0) {
-      const shifted = queue.shift();
-      if (!shifted) break;
-      const [current, path] = shifted;
+      const first = queue.shift();
+      if (!first) break;
+      const [current, path] = first;
 
-      // Find all possible conversion sources that could work for the current URI
       const possibleSources: uri[] = [current];
 
-      // Add the resolved version of current URI
       const resolvedCurrent = this.resolveVersionUri(current);
       if (resolvedCurrent && resolvedCurrent !== current) {
         possibleSources.push(resolvedCurrent);
@@ -187,32 +152,20 @@ export abstract class BaseManager<TSpec, TInput, TOutput> {
         }
       }
 
-      // Remove duplicates
-      const uniqueSources = Array.from(new Set(possibleSources));
-
-      for (const sourceToCheck of uniqueSources) {
+      for (const sourceToCheck of new Set(possibleSources)) {
         const availableConversions = this.conversions.get(sourceToCheck);
         if (!availableConversions) continue;
 
-        for (const nextFormat of availableConversions.keys()) {
-          // Try to resolve the conversion target to see if it matches our target
-          const resolvedNext = this.resolveVersionUri(nextFormat);
-          const resolvedTargetUri = this.resolveVersionUri(targetUri);
-
-          // Check if resolved next matches resolved target
-          if (resolvedNext && resolvedTargetUri && resolvedNext === resolvedTargetUri) {
-            return [...path, nextFormat];
+        for (const uri of availableConversions.keys()) {
+          if (this.isSameSchemaUri(uri, targetUri)) {
+            return [...path, uri];
           }
 
-          // Also check normalized versions for BFS continuation
-          const normalizedNext = this.removeVersionFromUri(nextFormat);
-          if (normalizedNext === normalizedTarget) {
-            return [...path, nextFormat];
-          }
-
+          // Continue BFS
+          const normalizedNext = this.getBaseUri(uri);
           if (!visited.has(normalizedNext)) {
             visited.add(normalizedNext);
-            queue.push([nextFormat, [...path, nextFormat]]);
+            queue.push([uri, [...path, uri]]);
           }
         }
       }
@@ -230,7 +183,6 @@ export abstract class BaseManager<TSpec, TInput, TOutput> {
       return true;
     }
 
-    // Resolve source and target URIs
     const resolvedSourceUri = this.resolveVersionUri(sourceUri) || sourceUri;
     const resolvedTargetUri = this.resolveVersionUri(targetUri) || targetUri;
 
