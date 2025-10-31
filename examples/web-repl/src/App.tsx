@@ -57,19 +57,6 @@ type InitialAppState = {
   schemaPanelCollapsed: boolean;
 };
 
-function getPersistedAppState(): PersistentAppState | null {
-  const stored = sessionStorage.getItem("repl:appState") || localStorage.getItem("repl:appState");
-  if (!stored) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(stored) as PersistentAppState;
-  } catch {
-    return null;
-  }
-}
-
 async function loadDependenciesForPreset(
   dependencies: string[],
   existingColorSchemas: Map<string, any> = new Map(),
@@ -140,25 +127,10 @@ async function getInitialAppStateWithDependencies(): Promise<InitialAppState> {
     };
   }
 
-  const persisted = getPersistedAppState();
-  if (persisted) {
-    return {
-      code: persisted.code,
-      inputMode: persisted.inputMode,
-      presetName: persisted.currentPresetName,
-      colorSchemas: new Map(persisted.colorSchemas || []),
-      functionSchemas: new Map(persisted.functionSchemas || []),
-      autoRun: persisted.autoRun ?? true,
-      schemaPanelCollapsed: persisted.schemaPanelCollapsed ?? false,
-    };
-  }
-
   const designSystemPreset = getDesignSystemPreset();
   const {colorSchemas, functionSchemas} = await loadDependenciesForPreset(
     designSystemPreset.dependencies,
   );
-
-  console.log(colorSchemas, functionSchemas);
 
   return {
     code: designSystemPreset.code,
