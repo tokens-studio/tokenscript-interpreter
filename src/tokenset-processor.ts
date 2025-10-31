@@ -4,11 +4,8 @@ import { Interpreter } from "@interpreter/interpreter";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
 import { UNINTERPRETED_KEYWORDS } from "@src/types";
-import {
-  flattenTokens,
-  hasNestedStructure,
-} from "@src/utils/tokens-json-adapter";
 import { PerformanceTracker } from "@src/utils/performance-tracker";
+import { flattenTokens, hasNestedStructure } from "@src/utils/tokens-json-adapter";
 
 export interface TokenSetResolverOptions {
   maxIterations?: number;
