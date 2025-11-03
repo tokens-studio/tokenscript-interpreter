@@ -40,10 +40,6 @@ class TestManager extends BaseManager<string, string, string> {
   public testFindLatestVersion(baseUri: string) {
     return this.findLatestVersion(baseUri);
   }
-
-  public testCompareVersions(a: { major: number; minor: number; patch: number }, b: { major: number; minor: number; patch: number }) {
-    return this.compareVersions(a, b);
-  }
 }
 
 describe("BaseManager Version Resolution", () => {
@@ -69,14 +65,10 @@ describe("BaseManager Version Resolution", () => {
       
       expect(manager.testParseSemverFromUri("/api/v1/schema/srgb-color/1/")).toEqual({
         major: 1,
-        minor: 0,
-        patch: 0,
       });
       
       expect(manager.testParseSemverFromUri("/api/v1/schema/srgb-color/0/")).toEqual({
         major: 0,
-        minor: 0,
-        patch: 0,
       });
     });
 
@@ -129,17 +121,6 @@ describe("BaseManager Version Resolution", () => {
       expect(candidates).toEqual([
         "/api/v1/schema/srgb-color/latest/",
       ]);
-    });
-  });
-
-  describe("compareVersions", () => {
-    it("should compare versions correctly", () => {
-      const manager = new TestManager();
-      
-      expect(manager.testCompareVersions({ major: 1, minor: 2, patch: 3 }, { major: 1, minor: 2, patch: 3 })).toBe(0);
-      expect(manager.testCompareVersions({ major: 1, minor: 2, patch: 4 }, { major: 1, minor: 2, patch: 3 })).toBe(1);
-      expect(manager.testCompareVersions({ major: 1, minor: 2, patch: 2 }, { major: 1, minor: 2, patch: 3 })).toBe(-1);
-      expect(manager.testCompareVersions({ major: 2, minor: 0, patch: 0 }, { major: 1, minor: 9, patch: 9 })).toBe(1);
     });
   });
 

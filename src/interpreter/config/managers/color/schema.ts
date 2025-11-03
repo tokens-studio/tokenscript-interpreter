@@ -1,4 +1,5 @@
 import { type } from "arktype";
+import { isObject } from "@/src/interpreter/utils/type";
 
 // Utility Schemas -------------------------------------------------------------
 
@@ -68,9 +69,18 @@ export interface ColorSpecification {
   }>;
 }
 
+const _SpecPropertySchema = type({
+  type: "'number' | 'string' | 'color'",
+});
+
 const SpecSchemaSchema = type({
   type: "'object'",
-  properties: "Record<string, unknown>",
+  properties: type("Record<string, unknown>").narrow((v): v is Record<string, SpecProperty> => {
+    if (!isObject(v)) return false;
+    return Object.values(v).every((prop) =>
+      ["number", "string", "color"].includes((prop as any)?.type),
+    );
+  }),
   "required?": "string[]",
   "order?": "string[]",
   "additionalProperties?": "boolean",

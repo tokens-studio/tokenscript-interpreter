@@ -2,6 +2,7 @@ import { InterpreterError } from "@interpreter/errors";
 import { parseExpression } from "@interpreter/parser";
 import { NumberSymbol, NumberWithUnitSymbol } from "@interpreter/symbols";
 import { Interpreter } from "@src/lib";
+import { buildSchemaUri, parseVersionString } from "@src/utils/schema-uri";
 import { type } from "arktype";
 import { BaseManager } from "../base-manager";
 import { specName, type UnitSpecification, UnitSpecificationSchema } from "./schema";
@@ -14,11 +15,15 @@ type Specs = Map<uriType, UnitSpecification>;
 
 // Default Units ---------------------------------------------------------------
 
-const PIXEL_UNIT = "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/px-unit/0/";
+const PIXEL_UNIT = buildSchemaUri({
+  category: "core",
+  name: "px-unit",
+  version: parseVersionString("0"),
+});
 
 const defaultUnitSpecs: Specs = new Map([
   [
-    "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/seconds-unit/0/",
+    buildSchemaUri({ category: "core", name: "seconds-unit", version: parseVersionString("0") }),
     {
       name: "seconds",
       type: "absolute",
@@ -38,7 +43,7 @@ const defaultUnitSpecs: Specs = new Map([
     },
   ],
   [
-    "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/rem-unit/0/",
+    buildSchemaUri({ category: "core", name: "rem-unit", version: parseVersionString("0") }),
     {
       name: "root em",
       type: "absolute",
