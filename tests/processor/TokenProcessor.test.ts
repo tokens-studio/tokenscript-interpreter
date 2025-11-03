@@ -12,8 +12,8 @@ describe("TokenProcessor", () => {
 
       const result = processor.processTokens(tokens);
 
-      expect(result.get("colors.primary")?.value).toBe("#FF0000");
-      expect(result.get("colors.secondary")?.value).toBe("#00FF00");
+      expect(result.resolved.get("colors.primary")?.value).toBe("#FF0000");
+      expect(result.resolved.get("colors.secondary")?.value).toBe("#00FF00");
     });
 
     it("should resolve tokens with simple references", () => {
@@ -25,8 +25,8 @@ describe("TokenProcessor", () => {
 
       const result = processor.processTokens(tokens);
 
-      expect(result.get("colors.primary")?.value).toBe("#FF0000");
-      expect(result.get("colors.secondary")?.value).toBe("#FF0000");
+      expect(result.resolved.get("colors.primary")?.value).toBe("#FF0000");
+      expect(result.resolved.get("colors.secondary")?.value).toBe("#FF0000");
     });
 
     it("should resolve tokens with multiple dependencies", () => {
@@ -39,9 +39,9 @@ describe("TokenProcessor", () => {
 
       const result = processor.processTokens(tokens);
 
-      expect(result.get("spacing.base")?.value).toBe(8);
-      expect(result.get("spacing.small")?.value).toBe(4);
-      expect(result.get("spacing.large")?.value).toBe(16);
+      expect(result.resolved.get("spacing.base")?.value).toBe(8);
+      expect(result.resolved.get("spacing.small")?.value).toBe(4);
+      expect(result.resolved.get("spacing.large")?.value).toBe(16);
     });
 
     it("should resolve tokens with chained dependencies", () => {
@@ -54,9 +54,9 @@ describe("TokenProcessor", () => {
 
       const result = processor.processTokens(tokens);
 
-      expect(result.get("a")?.value).toBe(10);
-      expect(result.get("b")?.value).toBe(15);
-      expect(result.get("c")?.value).toBe(30);
+      expect(result.resolved.get("a")?.value).toBe(10);
+      expect(result.resolved.get("b")?.value).toBe(15);
+      expect(result.resolved.get("c")?.value).toBe(30);
     });
 
     it("should throw error on circular dependencies", () => {
@@ -80,10 +80,10 @@ describe("TokenProcessor", () => {
 
       const result = processor.processTokens(tokens);
 
-      expect(result.get("colors.primary")?.value).toBe("#FF0000");
-      expect(result.get("colors.secondary")?.value).toBe("#FF0000");
-      expect(result.get("spacing.base")?.value).toBe(8);
-      expect(result.get("spacing.double")?.value).toBe(16);
+      expect(result.resolved.get("colors.primary")?.value).toBe("#FF0000");
+      expect(result.resolved.get("colors.secondary")?.value).toBe("#FF0000");
+      expect(result.resolved.get("spacing.base")?.value).toBe(8);
+      expect(result.resolved.get("spacing.double")?.value).toBe(16);
     });
 
     it("should handle tokens with multiple references in one expression", () => {
@@ -96,9 +96,9 @@ describe("TokenProcessor", () => {
 
       const result = processor.processTokens(tokens);
 
-      expect(result.get("a")?.value).toBe(10);
-      expect(result.get("b")?.value).toBe(20);
-      expect(result.get("c")?.value).toBe(30);
+      expect(result.resolved.get("a")?.value).toBe(10);
+      expect(result.resolved.get("b")?.value).toBe(20);
+      expect(result.resolved.get("c")?.value).toBe(30);
     });
 
     it("should handle parsing errors", () => {
@@ -110,8 +110,8 @@ describe("TokenProcessor", () => {
 
       const result = processor.processTokens(tokens);
 
-      expect(result.get("a")?.value).toBe(10);
-      expect(result.get("b")).toBeInstanceOf(Error);
+      expect(result.resolved.get("a")?.value).toBe(10);
+      expect(result.resolved.get("b")).toBeInstanceOf(Error);
     });
 
     it("should handle runtime errors", () => {
@@ -123,8 +123,8 @@ describe("TokenProcessor", () => {
 
       const result = processor.processTokens(tokens);
 
-      expect(result.get("a")?.value).toBe(10);
-      expect(result.get("b")).toBeInstanceOf(Error);
+      expect(result.resolved.get("a")?.value).toBe(10);
+      expect(result.resolved.get("b")).toBeInstanceOf(Error);
     });
 
     it("should create DependencyError for tokens depending on failed tokens", () => {
@@ -136,10 +136,10 @@ describe("TokenProcessor", () => {
 
       const result = processor.processTokens(tokens);
 
-      expect(result.get("a")).toBeInstanceOf(Error);
-      expect(result.get("b")).toBeInstanceOf(DependencyError);
+      expect(result.resolved.get("a")).toBeInstanceOf(Error);
+      expect(result.resolved.get("b")).toBeInstanceOf(DependencyError);
 
-      const bError = result.get("b") as DependencyError;
+      const bError = result.resolved.get("b") as DependencyError;
       expect(bError.dependencyChain).toEqual(["b", "a", "nonexistent"]);
       expect(bError.rootError.message).toContain("nonexistent");
     });
@@ -154,11 +154,11 @@ describe("TokenProcessor", () => {
 
       const result = processor.processTokens(tokens);
 
-      expect(result.get("a")).toBeInstanceOf(Error);
-      expect(result.get("b")).toBeInstanceOf(DependencyError);
-      expect(result.get("c")).toBeInstanceOf(DependencyError);
+      expect(result.resolved.get("a")).toBeInstanceOf(Error);
+      expect(result.resolved.get("b")).toBeInstanceOf(DependencyError);
+      expect(result.resolved.get("c")).toBeInstanceOf(DependencyError);
 
-      const cError = result.get("c") as DependencyError;
+      const cError = result.resolved.get("c") as DependencyError;
       expect(cError.dependencyChain).toEqual(["c", "b", "a", "nonexistent"]);
       expect(cError.rootError.message).toContain("nonexistent");
     });
@@ -174,10 +174,10 @@ describe("TokenProcessor", () => {
 
       const result = processor.processTokens(tokens);
 
-      expect(result.get("a")?.value).toBe(10);
-      expect(result.get("b")).toBeInstanceOf(Error);
-      expect(result.get("c")?.value).toBe(20);
-      expect(result.get("d")).toBeInstanceOf(DependencyError);
+      expect(result.resolved.get("a")?.value).toBe(10);
+      expect(result.resolved.get("b")).toBeInstanceOf(Error);
+      expect(result.resolved.get("c")?.value).toBe(20);
+      expect(result.resolved.get("d")).toBeInstanceOf(DependencyError);
     });
   });
 });

@@ -13,11 +13,31 @@ type ResolvedTokens = Map<refPath, TokenResult>;
 type UnresolvedToken = { ast: ASTNode; dependencies: Set<string> };
 type UnresolvedTokens = Map<refPath, UnresolvedToken>;
 
+export type ProcessorResult = {
+  graph: DependencyGraph<refPath>;
+  resolved: ResolvedTokens;
+  unresolved: UnresolvedTokens;
+};
+
+export type ProcessorCallbacks = {
+  onResolve?: (tokenName: refPath, value: interpreterResult) => void;
+  onError?: (tokenName: refPath, error: Error, originalValue: string) => void;
+};
+
+export type ProcessorOutput = ProcessorResult & {
+  tokens: Map<refPath, string | interpreterResult>;
+  errors: Map<refPath, Error>;
+};
+
 export class TokenProcessor {
-  public processTokens(tokens: Map<refPath, string>): ResolvedTokens {
+  public processTokens(
+    tokens: Map<refPath, string>,
+    callbacks?: ProcessorCallbacks,
+  ): ProcessorResult {
     const graph = new DependencyGraph<refPath>();
     const resolved: ResolvedTokens = new Map();
     const unresolved: UnresolvedTokens = new Map();
+    const { onResolve, onError } = callbacks ?? {};
 
     const parseToken = (tokenName: string, tokenValue: string): ParseExpressionResult | Error => {
       try {
@@ -25,20 +45,24 @@ export class TokenProcessor {
       } catch (e) {
         const error = e instanceof Error ? e : new Error(String(e));
         resolved.set(tokenName, error);
+        onError?.(tokenName, error, tokenValue);
         graph.addNode(tokenName, []);
         return error;
       }
     };
 
     const interpretToken = (ast: ASTNode, tokenName: refPath): interpreterResult | Error => {
+      const originalValue = tokens.get(tokenName) ?? "";
       try {
         const interpreter = new Interpreter(ast, { references: resolved });
         const result = interpreter.interpret();
         resolved.set(tokenName, result);
+        onResolve?.(tokenName, result);
         return result;
       } catch (error) {
         const result = error instanceof Error ? error : new Error(String(error));
         resolved.set(tokenName, result);
+        onError?.(tokenName, result, originalValue);
         return result;
       }
     };
@@ -52,6 +76,7 @@ export class TokenProcessor {
       // Empty node
       if (!ast) {
         resolved.set(tokenName, "");
+        onResolve?.(tokenName, "");
         graph.addNode(tokenName, []);
         continue;
       }
@@ -72,7 +97,9 @@ export class TokenProcessor {
       // Mark nodes with missing dependencies
       for (const depName of dependencies) {
         if (!tokens.has(depName) && !resolved.has(depName)) {
-          resolved.set(depName, new Error(`Token '${depName}' not found`));
+          const error = new Error(`Token '${depName}' not found`);
+          resolved.set(depName, error);
+          onError?.(depName, error, "");
           graph.addNode(depName, []);
         }
       }
@@ -93,19 +120,42 @@ export class TokenProcessor {
       const result = interpretToken(tokenData.ast, tokenName);
       if (!(result instanceof Error)) continue;
 
-      // Check if any dependencies had errors
-      const resolvedValue = resolved.get(tokenName);
-      if (resolvedValue instanceof Error) {
-        for (const depName of tokenData.dependencies) {
-          const depValue = resolved.get(depName);
-          if (depValue instanceof Error) {
-            resolved.set(tokenName, new DependencyError(tokenName, depName, depValue));
-            break;
-          }
+      // If interpretation failed, check if any dependencies had errors
+      for (const depName of tokenData.dependencies) {
+        const depValue = resolved.get(depName);
+        if (depValue instanceof Error) {
+          const depError = new DependencyError(tokenName, depName, depValue);
+          resolved.set(tokenName, depError);
+          const originalValue = tokens.get(tokenName) ?? "";
+          onError?.(tokenName, depError, originalValue);
+          break;
         }
       }
     }
 
-    return resolved;
+    return { graph, resolved, unresolved };
+  }
+
+  public build(tokens: Map<refPath, string>): ProcessorOutput {
+    const output: Map<refPath, string | interpreterResult> = new Map();
+    const errors: Map<refPath, Error> = new Map();
+
+    const callbacks: ProcessorCallbacks = {
+      onResolve: (tokenName, value) => {
+        output.set(tokenName, value);
+      },
+      onError: (tokenName, error, originalValue) => {
+        output.set(tokenName, originalValue);
+        errors.set(tokenName, error);
+      },
+    };
+
+    const result = this.processTokens(tokens, callbacks);
+
+    return {
+      ...result,
+      tokens: output,
+      errors,
+    };
   }
 }
