@@ -6,7 +6,6 @@ import { Parser } from "@interpreter/parser";
 import { UNINTERPRETED_KEYWORDS } from "@src/types";
 import { PerformanceTracker } from "@src/utils/performance-tracker";
 import { flattenTokens, hasNestedStructure } from "@src/utils/tokens-json-adapter";
-import { TokenResolver } from './processor/index.ts';
 
 export interface TokenSetResolverOptions {
   maxIterations?: number;

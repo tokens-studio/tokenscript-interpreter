@@ -1,7 +1,7 @@
 export class DependencyGraph<N = string> {
   private nodes = new Map<N, Set<N>>();
 
-  addNode(node: N, dependencies: N[] = []): void {
+  addNode(node: N, dependencies: N[] | Set<N> = []): void {
     if (!this.nodes.has(node)) {
       this.nodes.set(node, new Set(dependencies));
     }
@@ -37,7 +37,7 @@ export class DependencyGraph<N = string> {
               return true;
             }
           } else if (recursionStack.has(dep)) {
-            const cycleStart = path.indexOf(dep);
+            const _cycleStart = path.indexOf(dep);
             return true;
           }
         }
@@ -83,7 +83,8 @@ export class DependencyGraph<N = string> {
     }
 
     while (queue.length > 0) {
-      const node = queue.shift()!;
+      const node = queue.shift();
+      if (node === undefined) break;
       result.push(node);
 
       // Reduce in-degree for dependents
