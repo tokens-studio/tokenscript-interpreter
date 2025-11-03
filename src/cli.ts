@@ -4,6 +4,7 @@ import { Interpreter } from "@interpreter/interpreter";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
 import { evaluateStandardCompliance } from "@src/compliance-suite";
+import { JsonTokensAdapter, ThemeTokensAdapter, TokenProcessor } from "@src/processor";
 import {
   buildThemeTree,
   interpretTokens,
@@ -36,12 +37,22 @@ program
 
 program
   .command("parse_tokenset")
-  .description("Parse and process a tokenset from a ZIP file")
+  .description("Parse and process a tokenset from a ZIP file (using new TokenProcessor)")
   .requiredOption("--tokenset <path>", "Path to the tokenset ZIP file")
   .option("--output <path>", "Output file path (if not provided, prints to console)")
   .option("--schema <uris...>", "Schema URIs to fetch and register")
   .action(async (options) => {
     await parseTokenset(options.tokenset, options.output, options.schema);
+  });
+
+program
+  .command("legacy-parse_tokenset")
+  .description("[LEGACY] Parse and process a tokenset from a ZIP file (old implementation)")
+  .requiredOption("--tokenset <path>", "Path to the tokenset ZIP file")
+  .option("--output <path>", "Output file path (if not provided, prints to console)")
+  .option("--schema <uris...>", "Schema URIs to fetch and register")
+  .action(async (options) => {
+    await legacyParseTokenset(options.tokenset, options.output, options.schema);
   });
 
 program
@@ -64,12 +75,23 @@ program
 
 program
   .command("parse_json")
-  .description("Parse and process a JSON file directly")
+  .description("Parse and process a JSON file directly (using new TokenProcessor)")
+  .requiredOption("--json <path>", "Path to the JSON file")
+  .option("--output <path>", "Output file path (if not provided, prints to console)")
+  .option("--schema <uris...>", "Schema URIs to fetch and register")
+  .option("--theme <name>", "Theme name to process (if JSON has themes)")
+  .action(async (options) => {
+    await parseJsonFile(options.json, options.output, options.schema, options.theme);
+  });
+
+program
+  .command("legacy-parse_json")
+  .description("[LEGACY] Parse and process a JSON file directly (old implementation)")
   .requiredOption("--json <path>", "Path to the JSON file")
   .option("--output <path>", "Output file path (if not provided, prints to console)")
   .option("--schema <uris...>", "Schema URIs to fetch and register")
   .action(async (options) => {
-    await parseJsonFile(options.json, options.output, options.schema);
+    await legacyParseJsonFile(options.json, options.output, options.schema);
   });
 
 program
@@ -218,6 +240,61 @@ async function parseTokenset(
   try {
     const config = await fetchAndRegisterSchemas(schemas ?? []);
     const filesContent = await loadZipToMemory(tokensetPath);
+    
+    if (!filesContent.$themes || !Array.isArray(filesContent.$themes)) {
+      throw new Error("No $themes found in tokenset. Use parse_json for single token sets.");
+    }
+
+    const processor = new TokenProcessor();
+    const output: Record<string, any> = {};
+
+    // Process each theme
+    for (const theme of filesContent.$themes) {
+      const themeName = theme.name;
+      console.log(`🔄 Processing theme: ${themeName}`);
+      
+      try {
+        const adapter = ThemeTokensAdapter({ themeName });
+        const result = processor.build(filesContent, adapter);
+        
+        // Convert result to plain object with extracted values
+        const themeOutput: Record<string, any> = {};
+        for (const [key, value] of result.tokens) {
+          themeOutput[key] = extractValue(value);
+        }
+        
+        output[themeName] = themeOutput;
+        
+        if (result.errors.size > 0) {
+          console.warn(`⚠️  ${result.errors.size} errors in theme '${themeName}'`);
+        }
+      } catch (error: any) {
+        console.error(`❌ Error processing theme '${themeName}': ${error.message}`);
+      }
+    }
+
+    if (outputPath) {
+      await fs.promises.writeFile(outputPath, JSON.stringify(output, null, 2), "utf8");
+      console.log(`💾 Output written to: ${outputPath}`);
+    } else {
+      console.log(JSON.stringify(output, null, 2));
+    }
+  } catch (error: any) {
+    console.error(`❌ Error parsing tokenset: ${error.message}`);
+    process.exit(1);
+  }
+}
+
+async function legacyParseTokenset(
+  tokensetPath: string,
+  outputPath?: string,
+  schemas?: string[],
+): Promise<void> {
+  console.log(`📦 [LEGACY] Parsing tokenset from: ${tokensetPath}`);
+
+  try {
+    const config = await fetchAndRegisterSchemas(schemas ?? []);
+    const filesContent = await loadZipToMemory(tokensetPath);
     const themes = loadThemes(filesContent);
     const output = await processThemes(themes, {
       enablePerformanceTracking: true,
@@ -226,7 +303,7 @@ async function parseTokenset(
 
     if (outputPath) {
       await fs.promises.writeFile(outputPath, JSON.stringify(output, null, 2), "utf8");
-      console.log(`Output written to: ${outputPath}`);
+      console.log(`💾 Output written to: ${outputPath}`);
     } else {
       console.log(JSON.stringify(output, null, 2));
     }
@@ -302,7 +379,102 @@ async function parseJsonFile(
   jsonPath: string,
   outputPath?: string,
   schemas?: string[],
+  themeName?: string,
 ): Promise<void> {
+  console.log(`📄 Parsing JSON from: ${jsonPath}`);
+  
+  try {
+    const config = await fetchAndRegisterSchemas(schemas ?? []);
+    const jsonContent = await fs.promises.readFile(jsonPath, "utf8");
+    const json = JSON.parse(jsonContent);
+
+    const processor = new TokenProcessor();
+    let result;
+    let adapter;
+
+    // Check if JSON has themes
+    if (json.$themes && Array.isArray(json.$themes)) {
+      if (themeName) {
+        // Process specific theme
+        console.log(`🎨 Processing theme: ${themeName}`);
+        adapter = ThemeTokensAdapter({ themeName });
+        result = processor.build(json, adapter);
+      } else {
+        // Process all themes
+        const output: Record<string, any> = {};
+        for (const theme of json.$themes) {
+          const name = theme.name;
+          console.log(`🔄 Processing theme: ${name}`);
+          
+          try {
+            adapter = ThemeTokensAdapter({ themeName: name });
+            result = processor.build(json, adapter);
+            
+            const themeOutput: Record<string, any> = {};
+            for (const [key, value] of result.tokens) {
+              themeOutput[key] = extractValue(value);
+            }
+            
+            output[name] = themeOutput;
+            
+            if (result.errors.size > 0) {
+              console.warn(`⚠️  ${result.errors.size} errors in theme '${name}'`);
+            }
+          } catch (error: any) {
+            console.error(`❌ Error processing theme '${name}': ${error.message}`);
+          }
+        }
+        
+        if (outputPath) {
+          await fs.promises.writeFile(outputPath, JSON.stringify(output, null, 2), "utf8");
+          console.log(`💾 Output written to: ${outputPath}`);
+        } else {
+          console.log(JSON.stringify(output, null, 2));
+        }
+        return;
+      }
+    } else {
+      // Process as nested JSON tokens
+      console.log(`🔄 Processing nested JSON tokens`);
+      adapter = JsonTokensAdapter();
+      result = processor.build(json, adapter);
+    }
+
+    // Convert result to plain object with extracted values
+    const output: Record<string, any> = {};
+    for (const [key, value] of result.tokens) {
+      output[key] = extractValue(value);
+    }
+
+    // Report errors
+    if (result.errors.size > 0) {
+      console.warn(`⚠️  ${result.errors.size} token errors:`);
+      for (const [name, error] of result.errors) {
+        console.warn(`   - ${name}: ${error.message}`);
+      }
+    }
+
+    console.log(`✅ Processed ${result.tokens.size} tokens`);
+
+    if (outputPath) {
+      await fs.promises.writeFile(outputPath, JSON.stringify(output, null, 2), "utf8");
+      console.log(`💾 Output written to: ${outputPath}`);
+    } else {
+      console.log(JSON.stringify(output, null, 2));
+    }
+  } catch (error: any) {
+    console.error(`❌ Error parsing JSON: ${error.message}`);
+    process.exit(1);
+  }
+}
+
+async function legacyParseJsonFile(
+  jsonPath: string,
+  outputPath?: string,
+  schemas?: string[],
+): Promise<void> {
+  console.log(`📄 [LEGACY] Parsing JSON from: ${jsonPath}`);
+  
   try {
     const config = await fetchAndRegisterSchemas(schemas ?? []);
 
@@ -321,6 +493,35 @@ async function parseJsonFile(
     console.error(`❌ Error parsing JSON: ${error.message}`);
     process.exit(1);
   }
+}
+
+// Helper to extract value from Symbol objects or return as-is
+function extractValue(value: any): any {
+  if (value && typeof value === "object") {
+    // Handle Symbol objects (NumberSymbol, ColorSymbol, etc.)
+    if ("type" in value && "value" in value) {
+      // For primitive-like symbols, return the inner value
+      const innerValue = value.value;
+      if (typeof innerValue === "string" || typeof innerValue === "number" || typeof innerValue === "boolean") {
+        return innerValue;
+      }
+      // For complex symbols, use toString() if available
+      if (typeof value.toString === "function") {
+        const str = value.toString();
+        // Don't return [object Object]
+        if (str !== "[object Object]") {
+          return str;
+        }
+      }
+      // Fall back to inner value
+      return innerValue;
+    }
+    // Handle Error objects
+    if (value instanceof Error) {
+      return value.message;
+    }
+  }
+  return value;
 }
 
 async function loadZipToMemory(zipPath: string): Promise<Record<string, any>> {
