@@ -1,10 +1,12 @@
 import type { ASTNode } from "@interpreter/ast";
 import { Interpreter, type interpreterResult } from "@interpreter/interpreter";
 import { type ParseExpressionResult, parseExpression } from "@interpreter/parser";
+import type { TokenAdapter } from "./adapters";
 import { DependencyGraph } from "./DependencyGraph";
 import { DependencyError } from "./errors";
 
 export { DependencyError };
+export * from "./adapters";
 
 type refPath = string;
 
@@ -136,7 +138,33 @@ export class TokenProcessor {
     return { graph, resolved, unresolved };
   }
 
-  public build(tokens: Map<refPath, string>): ProcessorOutput {
+  /**
+   * Build tokens from a flat token map
+   */
+  public build(tokens: Map<refPath, string>): ProcessorOutput;
+
+  /**
+   * Build tokens from any input using an adapter
+   */
+  public build<TInput>(input: TInput, adapter: TokenAdapter<TInput>): ProcessorOutput;
+
+  public build<TInput>(
+    input: Map<refPath, string> | TInput,
+    adapter?: TokenAdapter<TInput>,
+  ): ProcessorOutput {
+    // Convert input to flat token map
+    let tokens: Map<refPath, string>;
+
+    if (adapter) {
+      // Use adapter to convert input
+      tokens = adapter(input as TInput);
+    } else if (input instanceof Map) {
+      // Already a Map, use directly
+      tokens = input;
+    } else {
+      throw new Error("TokenProcessor.build: Either provide a Map or an adapter");
+    }
+
     const output: Map<refPath, string | interpreterResult> = new Map();
     const errors: Map<refPath, Error> = new Map();
 
