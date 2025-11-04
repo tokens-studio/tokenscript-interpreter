@@ -4,12 +4,12 @@
  * Provides a plugin-based token processing system with dependency resolution.
  */
 
-export { DependencyError } from "./errors";
-export { DependencyGraph } from "./DependencyGraph";
 export * from "./adapters";
+export { DependencyGraph } from "./DependencyGraph";
+export { DependencyError } from "./errors";
 export {
-  TokenProcessor,
   type ProcessorCallbacks,
   type ProcessorOutput,
   type ProcessorResult,
+  TokenProcessor,
 } from "./TokenProcessor";

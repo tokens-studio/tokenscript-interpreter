@@ -3,7 +3,6 @@ import type { Config } from "@interpreter/config";
 import { Interpreter } from "@interpreter/interpreter";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
-import { evaluateStandardCompliance } from "@src/compliance-suite";
 import { JsonTokensAdapter, ThemeTokensAdapter, TokenProcessor } from "@src/processor";
 import {
   buildThemeTree,
@@ -28,7 +27,7 @@ program
   .version(packageJson.version);
 
 program
-  .command("interactive")
+  .command("repl")
   .description("Start interactive REPL mode for TokenScript")
   .option("--schema <uris...>", "Schema URIs to fetch and register")
   .action(async (options) => {
@@ -36,98 +35,105 @@ program
   });
 
 program
-  .command("parse_tokenset")
-  .description("Parse and process a tokenset from a ZIP file (using new TokenProcessor)")
-  .requiredOption("--tokenset <path>", "Path to the tokenset ZIP file")
-  .option("--output <path>", "Output file path (if not provided, prints to console)")
-  .option("--schema <uris...>", "Schema URIs to fetch and register")
-  .action(async (options) => {
-    await parseTokenset(options.tokenset, options.output, options.schema);
-  });
-
-program
-  .command("legacy-parse_tokenset")
-  .description("[LEGACY] Parse and process a tokenset from a ZIP file (old implementation)")
-  .requiredOption("--tokenset <path>", "Path to the tokenset ZIP file")
-  .option("--output <path>", "Output file path (if not provided, prints to console)")
-  .option("--schema <uris...>", "Schema URIs to fetch and register")
-  .action(async (options) => {
-    await legacyParseTokenset(options.tokenset, options.output, options.schema);
-  });
-
-program
-  .command("permutate_tokenset")
-  .description("Generate permutations of tokensets based on themes")
-  .requiredOption("--tokenset <path>", "Path to the tokenset ZIP file")
-  .requiredOption("--permutate-on <themes...>", "List of theme groups to permutate on")
-  .requiredOption("--permutate-to <theme>", "Target theme group for permutation")
-  .option("--output <path>", "Output file path (if not provided, prints to console)")
-  .option("--schema <uris...>", "Schema URIs to fetch and register")
-  .action(async (options) => {
-    await permutateTokenset(
-      options.tokenset,
-      options.permutateOn,
-      options.permutateTo,
-      options.output,
-      options.schema,
-    );
-  });
-
-program
-  .command("parse_json")
-  .description("Parse and process a JSON file directly (using new TokenProcessor)")
-  .requiredOption("--json <path>", "Path to the JSON file")
-  .option("--output <path>", "Output file path (if not provided, prints to console)")
-  .option("--schema <uris...>", "Schema URIs to fetch and register")
-  .option("--theme <name>", "Theme name to process (if JSON has themes)")
-  .action(async (options) => {
-    await parseJsonFile(options.json, options.output, options.schema, options.theme);
-  });
-
-program
-  .command("legacy-parse_json")
-  .description("[LEGACY] Parse and process a JSON file directly (old implementation)")
-  .requiredOption("--json <path>", "Path to the JSON file")
-  .option("--output <path>", "Output file path (if not provided, prints to console)")
-  .option("--schema <uris...>", "Schema URIs to fetch and register")
-  .action(async (options) => {
-    await legacyParseJsonFile(options.json, options.output, options.schema);
-  });
-
-program
-  .command("evaluate_standard_compliance")
-  .description("Run the TokenScript compliance suite on a directory of tests")
-  .option("--test-dir <path>", "Path to the directory containing compliance tests")
-  .option("--test-file <path>", "Path to a specific test file to run")
-  .option(
-    "--output <path>",
-    "Output file path (if not provided, results will be printed to console)",
+  .command("process")
+  .description("Process tokens from a file")
+  .requiredOption(
+    "--input <path>",
+    "Path to a json file, archive or directory containing design tokens.",
   )
+  .option("--output <path>", "Output file path (if not provided, prints to console)")
+  .option("--schema <uris...>", "Schema URIs to fetch and register")
   .action(async (options) => {
-    const config = {
-      dir: options.testDir,
-      file: options.testFile,
-      output: options.output,
-    };
-    const report = await evaluateStandardCompliance(config);
-    console.log(`Compliance suite finished. Passed: ${report.passed}, Failed: ${report.failed}`);
-
-    if (options.output) {
-      console.log(`Full report written to ${options.output}`);
-    } else {
-      console.log("\nDetailed Results:");
-      report.results.forEach((result, index) => {
-        const status = result.status === "passed" ? "✅ PASSED" : "❌ FAILED";
-        console.log(`\n${index + 1}. ${status} - ${result.name}`);
-        console.log(`   Path: ${result.path}`);
-        console.log(`   Expected: ${result.expectedOutput} (${result.expectedOutputType})`);
-        console.log(`   Actual: ${result.actualOutput} (${result.actualOutputType})`);
-        if (result.error) {
-          console.log(`   Error: ${result.error}`);
-        }
-      });
-    }
+    await processTokens({
+      path: options.input,
+      outputPath: options.output,
+      schemas: options.schema,
+    });
   });
+
+// program
+//   .command("legacy-parse_tokenset")
+//   .description("[LEGACY] Parse and process a tokenset from a ZIP file (old implementation)")
+//   .requiredOption("--tokenset <path>", "Path to the tokenset ZIP file")
+//   .option("--output <path>", "Output file path (if not provided, prints to console)")
+//   .option("--schema <uris...>", "Schema URIs to fetch and register")
+//   .action(async (options) => {
+//     await legacyParseTokenset(options.tokenset, options.output, options.schema);
+//   });
+
+// program
+//   .command("permutate_tokenset")
+//   .description("Generate permutations of tokensets based on themes")
+//   .requiredOption("--tokenset <path>", "Path to the tokenset ZIP file")
+//   .requiredOption("--permutate-on <themes...>", "List of theme groups to permutate on")
+//   .requiredOption("--permutate-to <theme>", "Target theme group for permutation")
+//   .option("--output <path>", "Output file path (if not provided, prints to console)")
+//   .option("--schema <uris...>", "Schema URIs to fetch and register")
+//   .action(async (options) => {
+//     await permutateTokenset(
+//       options.tokenset,
+//       options.permutateOn,
+//       options.permutateTo,
+//       options.output,
+//       options.schema,
+//     );
+//   });
+
+// program
+//   .command("parse_json")
+//   .description("Parse and process a JSON file directly (using new TokenProcessor)")
+//   .requiredOption("--json <path>", "Path to the JSON file")
+//   .option("--output <path>", "Output file path (if not provided, prints to console)")
+//   .option("--schema <uris...>", "Schema URIs to fetch and register")
+//   .option("--theme <name>", "Theme name to process (if JSON has themes)")
+//   .action(async (options) => {
+//     await parseJsonFile(options.json, options.output, options.schema, options.theme);
+//   });
+
+// program
+//   .command("legacy-parse_json")
+//   .description("[LEGACY] Parse and process a JSON file directly (old implementation)")
+//   .requiredOption("--json <path>", "Path to the JSON file")
+//   .option("--output <path>", "Output file path (if not provided, prints to console)")
+//   .option("--schema <uris...>", "Schema URIs to fetch and register")
+//   .action(async (options) => {
+//     await legacyParseJsonFile(options.json, options.output, options.schema);
+//   });
+
+// program
+//   .command("evaluate_standard_compliance")
+//   .description("Run the TokenScript compliance suite on a directory of tests")
+//   .option("--test-dir <path>", "Path to the directory containing compliance tests")
+//   .option("--test-file <path>", "Path to a specific test file to run")
+//   .option(
+//     "--output <path>",
+//     "Output file path (if not provided, results will be printed to console)",
+//   )
+//   .action(async (options) => {
+//     const config = {
+//       dir: options.testDir,
+//       file: options.testFile,
+//       output: options.output,
+//     };
+//     const report = await evaluateStandardCompliance(config);
+//     console.log(`Compliance suite finished. Passed: ${report.passed}, Failed: ${report.failed}`);
+
+//     if (options.output) {
+//       console.log(`Full report written to ${options.output}`);
+//     } else {
+//       console.log("\nDetailed Results:");
+//       report.results.forEach((result, index) => {
+//         const status = result.status === "passed" ? "✅ PASSED" : "❌ FAILED";
+//         console.log(`\n${index + 1}. ${status} - ${result.name}`);
+//         console.log(`   Path: ${result.path}`);
+//         console.log(`   Expected: ${result.expectedOutput} (${result.expectedOutputType})`);
+//         console.log(`   Actual: ${result.actualOutput} (${result.actualOutputType})`);
+//         if (result.error) {
+//           console.log(`   Error: ${result.error}`);
+//         }
+//       });
+//     }
+//   });
 
 async function interactiveMode(schemas?: string[]): Promise<void> {
   console.log("🚀 TokenScript Interactive Mode");
@@ -230,17 +236,15 @@ async function interpretExpression(
   }
 }
 
-async function parseTokenset(
+async function _parseTokenset(
   tokensetPath: string,
   outputPath?: string,
   schemas?: string[],
 ): Promise<void> {
-  console.log(`📦 Parsing tokenset from: ${tokensetPath}`);
-
   try {
-    const config = await fetchAndRegisterSchemas(schemas ?? []);
+    const _config = await fetchAndRegisterSchemas(schemas ?? []);
     const filesContent = await loadZipToMemory(tokensetPath);
-    
+
     if (!filesContent.$themes || !Array.isArray(filesContent.$themes)) {
       throw new Error("No $themes found in tokenset. Use parse_json for single token sets.");
     }
@@ -252,19 +256,19 @@ async function parseTokenset(
     for (const theme of filesContent.$themes) {
       const themeName = theme.name;
       console.log(`🔄 Processing theme: ${themeName}`);
-      
+
       try {
         const adapter = ThemeTokensAdapter({ themeName });
         const result = processor.build(filesContent, adapter);
-        
+
         // Convert result to plain object with extracted values
         const themeOutput: Record<string, any> = {};
         for (const [key, value] of result.tokens) {
           themeOutput[key] = extractValue(value);
         }
-        
+
         output[themeName] = themeOutput;
-        
+
         if (result.errors.size > 0) {
           console.warn(`⚠️  ${result.errors.size} errors in theme '${themeName}'`);
         }
@@ -285,7 +289,7 @@ async function parseTokenset(
   }
 }
 
-async function legacyParseTokenset(
+async function _legacyParseTokenset(
   tokensetPath: string,
   outputPath?: string,
   schemas?: string[],
@@ -313,7 +317,7 @@ async function legacyParseTokenset(
   }
 }
 
-async function permutateTokenset(
+async function _permutateTokenset(
   tokensetPath: string,
   permutateOn: string[],
   permutateTo: string,
@@ -375,16 +379,16 @@ async function permutateTokenset(
   }
 }
 
-async function parseJsonFile(
+async function _parseJsonFile(
   jsonPath: string,
   outputPath?: string,
   schemas?: string[],
   themeName?: string,
 ): Promise<void> {
   console.log(`📄 Parsing JSON from: ${jsonPath}`);
-  
+
   try {
-    const config = await fetchAndRegisterSchemas(schemas ?? []);
+    const _config = await fetchAndRegisterSchemas(schemas ?? []);
     const jsonContent = await fs.promises.readFile(jsonPath, "utf8");
     const json = JSON.parse(jsonContent);
 
@@ -405,18 +409,18 @@ async function parseJsonFile(
         for (const theme of json.$themes) {
           const name = theme.name;
           console.log(`🔄 Processing theme: ${name}`);
-          
+
           try {
             adapter = ThemeTokensAdapter({ themeName: name });
             result = processor.build(json, adapter);
-            
+
             const themeOutput: Record<string, any> = {};
             for (const [key, value] of result.tokens) {
               themeOutput[key] = extractValue(value);
             }
-            
+
             output[name] = themeOutput;
-            
+
             if (result.errors.size > 0) {
               console.warn(`⚠️  ${result.errors.size} errors in theme '${name}'`);
             }
@@ -424,7 +428,7 @@ async function parseJsonFile(
             console.error(`❌ Error processing theme '${name}': ${error.message}`);
           }
         }
-        
+
         if (outputPath) {
           await fs.promises.writeFile(outputPath, JSON.stringify(output, null, 2), "utf8");
           console.log(`💾 Output written to: ${outputPath}`);
@@ -468,13 +472,13 @@ async function parseJsonFile(
   }
 }
 
-async function legacyParseJsonFile(
+async function _legacyParseJsonFile(
   jsonPath: string,
   outputPath?: string,
   schemas?: string[],
 ): Promise<void> {
   console.log(`📄 [LEGACY] Parsing JSON from: ${jsonPath}`);
-  
+
   try {
     const config = await fetchAndRegisterSchemas(schemas ?? []);
 
@@ -502,7 +506,11 @@ function extractValue(value: any): any {
     if ("type" in value && "value" in value) {
       // For primitive-like symbols, return the inner value
       const innerValue = value.value;
-      if (typeof innerValue === "string" || typeof innerValue === "number" || typeof innerValue === "boolean") {
+      if (
+        typeof innerValue === "string" ||
+        typeof innerValue === "number" ||
+        typeof innerValue === "boolean"
+      ) {
         return innerValue;
       }
       // For complex symbols, use toString() if available
