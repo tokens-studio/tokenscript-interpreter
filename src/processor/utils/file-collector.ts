@@ -1,4 +1,5 @@
 import fs from "node:fs/promises";
+import type { Stats } from "node:fs";
 import path from "node:path";
 import * as yauzl from "yauzl";
 
@@ -8,9 +9,17 @@ enum FileType {
   DIRECTORY = "DIRECTORY",
 }
 
-async function loadZipToMemory(zipPath: string): Promise<string[]> {
+function parseJson(content: string, fileName: string): unknown {
+  try {
+    return JSON.parse(content);
+  } catch (error) {
+    throw new Error(`Failed to parse JSON in file '${fileName}': ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+async function loadZipToMemory(zipPath: string): Promise<Record<string, unknown>> {
   return new Promise((resolve, reject) => {
-    const filesContent: string[] = [];
+    const filesContent: Record<string, unknown> = {};
 
     yauzl.open(zipPath, { lazyEntries: true }, (err, zipfile) => {
       if (err) {
@@ -49,8 +58,12 @@ async function loadZipToMemory(zipPath: string): Promise<string[]> {
             });
 
             readStream.on("end", () => {
-              filesContent.push(data);
-              zipfile.readEntry();
+              try {
+                filesContent[entry.fileName] = parseJson(data, entry.fileName);
+                zipfile.readEntry();
+              } catch (error) {
+                reject(error);
+              }
             });
 
             readStream.on("error", (streamErr) => {
@@ -86,7 +99,7 @@ function detectFileType(filePath: string, stats: Stats): FileType {
   throw new Error(`Unsupported file type: ${ext}`);
 }
 
-export async function collectJsonFiles(filePath: string): Promise<string[]> {
+export async function collectJsonFiles(filePath: string): Promise<Record<string, unknown>> {
   const fileStats = await fs.stat(filePath);
   const fileType = detectFileType(filePath, fileStats);
 
@@ -99,18 +112,21 @@ export async function collectJsonFiles(filePath: string): Promise<string[]> {
 
     case FileType.JSON: {
       const content = await fs.readFile(filePath, "utf-8");
-      return [content];
+      const fileName = path.basename(filePath);
+      const parsed = parseJson(content, fileName);
+      return { [fileName]: parsed };
     }
 
     case FileType.DIRECTORY: {
       const files = await fs.readdir(filePath);
-      const jsonFiles: string[] = [];
+      const jsonFiles: Record<string, unknown> = {};
 
       for (const file of files) {
         if (path.extname(file).toLowerCase() === ".json") {
           const fullPath = path.join(filePath, file);
           const content = await fs.readFile(fullPath, "utf-8");
-          jsonFiles.push(content);
+          const parsed = parseJson(content, file);
+          jsonFiles[file] = parsed;
         }
       }
 

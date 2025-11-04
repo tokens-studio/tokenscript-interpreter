@@ -16,7 +16,8 @@ export async function processTokens({
 
   const jsonFiles = await collectJsonFiles(inputPath);
 
-  console.log(jsonFiles);
 
   // TODO: Process jsonFiles further
 }
+
+processTokens({ path: "data/examples/tokens.json" })
