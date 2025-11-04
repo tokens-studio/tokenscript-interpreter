@@ -26,14 +26,14 @@
         "default": "./dist/lib/interpreter.cjs"
       }
     },
-    "./processors": {
+    "./processor": {
       "import": {
-        "types": "./dist/lib/processors.d.ts",
-        "default": "./dist/lib/processors.js"
+        "types": "./dist/lib/processor.d.ts",
+        "default": "./dist/lib/processor.js"
       },
       "require": {
-        "types": "./dist/lib/processors.d.cts",
-        "default": "./dist/lib/processors.cjs"
+        "types": "./dist/lib/processor.d.cts",
+        "default": "./dist/lib/processor.cjs"
       }
     },
     "./schema": {

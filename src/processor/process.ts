@@ -12,9 +12,11 @@ export async function processTokens({
   outputPath,
   schemas,
 }: ProcessTokensOptions) {
-  const _config = await fetchAndRegisterSchemas(schemas ?? []);
+  const config = await fetchAndRegisterSchemas(schemas ?? []);
 
-  const _jsonFiles = await collectJsonFiles(inputPath);
+  const jsonFiles = await collectJsonFiles(inputPath);
+
+  console.log(jsonFiles);
 
   // TODO: Process jsonFiles further
 }

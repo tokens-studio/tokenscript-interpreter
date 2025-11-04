@@ -73,7 +73,7 @@ async function loadZipToMemory(zipPath: string): Promise<string[]> {
   });
 }
 
-function detectFileType(_fileStats: Stats): FileType {
+function detectFileType(filePath: string, stats: Stats): FileType {
   if (stats.isDirectory()) {
     return FileType.DIRECTORY;
   }
@@ -88,7 +88,8 @@ function detectFileType(_fileStats: Stats): FileType {
 
 export async function collectJsonFiles(filePath: string): Promise<string[]> {
   const fileStats = await fs.stat(filePath);
-  const fileType = detectFileType(fileStats);
+  const fileType = detectFileType(filePath, fileStats);
+
 
   switch (fileType) {
     case FileType.ZIP: {

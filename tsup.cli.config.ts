@@ -18,7 +18,7 @@ export default defineConfig([
   },
   // Supporting files needed by CLI
   {
-    entry: ["src/compliance-suite.ts", "src/tokenset-processor.ts", "src/types.ts"],
+    entry: ["src/compliance-suite.ts", "src/processor/index.ts", "src/types.ts"],
     format: ["esm"],
     outDir: "dist",
     external: ["node:fs", "node:path", "chalk"],
