@@ -17,6 +17,10 @@ function parseJson(content: string, fileName: string): unknown {
   }
 }
 
+function removeJsonExtension(fileName: string): string {
+  return fileName.replace(/\.json$/i, "");
+}
+
 async function loadZipToMemory(zipPath: string): Promise<Record<string, unknown>> {
   return new Promise((resolve, reject) => {
     const filesContent: Record<string, unknown> = {};
@@ -59,7 +63,8 @@ async function loadZipToMemory(zipPath: string): Promise<Record<string, unknown>
 
             readStream.on("end", () => {
               try {
-                filesContent[entry.fileName] = parseJson(data, entry.fileName);
+                const fileNameWithoutExt = removeJsonExtension(entry.fileName);
+                filesContent[fileNameWithoutExt] = parseJson(data, entry.fileName);
                 zipfile.readEntry();
               } catch (error) {
                 reject(error);
@@ -99,6 +104,14 @@ function detectFileType(filePath: string, stats: Stats): FileType {
   throw new Error(`Unsupported file type: ${ext}`);
 }
 
+/**
+ * Collects JSON files from a given path (file, directory, or ZIP archive).
+ * Returns a record where keys are file names without the .json extension.
+ * 
+ * @param filePath - Path to a JSON file, directory containing JSON files, or ZIP archive
+ * @returns Record mapping file names (without extension) to their parsed JSON content
+ * @throws Error if the file type is unsupported or if JSON parsing fails
+ */
 export async function collectJsonFiles(filePath: string): Promise<Record<string, unknown>> {
   const fileStats = await fs.stat(filePath);
   const fileType = detectFileType(filePath, fileStats);
@@ -113,8 +126,9 @@ export async function collectJsonFiles(filePath: string): Promise<Record<string,
     case FileType.JSON: {
       const content = await fs.readFile(filePath, "utf-8");
       const fileName = path.basename(filePath);
+      const fileNameWithoutExt = removeJsonExtension(fileName);
       const parsed = parseJson(content, fileName);
-      return { [fileName]: parsed };
+      return { [fileNameWithoutExt]: parsed };
     }
 
     case FileType.DIRECTORY: {
@@ -126,7 +140,8 @@ export async function collectJsonFiles(filePath: string): Promise<Record<string,
           const fullPath = path.join(filePath, file);
           const content = await fs.readFile(fullPath, "utf-8");
           const parsed = parseJson(content, file);
-          jsonFiles[file] = parsed;
+          const fileNameWithoutExt = removeJsonExtension(file);
+          jsonFiles[fileNameWithoutExt] = parsed;
         }
       }
 
