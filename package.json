@@ -107,6 +107,8 @@
     "cli:built": "node dist/cli.js",
     "cli:repl": "tsx src/cli.ts repl",
     "cli:repl:built": "node dist/cli.js repl",
+    "compliance": "tsx scripts/compliance-test.ts --test-dir ./data/compliance-suite/tests/ --output compliance-report.json",
+    "compliance:failed": "npm run compliance && jq '.results | map(select(.status == \"failed\"))' compliance-report.json",
     "dev:repl": "cd examples/web-repl && npm run dev:watch",
     "prepublishOnly": "npm run test && npm run build:lib",
     "version": "npm run build:lib",
