@@ -43,10 +43,24 @@ program
   )
   .option("--output <path>", "Output file path (if not provided, prints to console)")
   .option("--schema <uris...>", "Schema URIs to fetch and register")
+  .option("--sets <sets>", "Comma-separated list of token sets to process")
+  .option("--theme <theme>", "Theme name to use for token set selection")
   .action(async (options) => {
-    await processTokens({
+    const result = await processTokens({
       path: options.input,
       outputPath: options.output,
       schemas: options.schema,
+      activeSets: options.sets ? options.sets.split(",").map((s: string) => s.trim()) : undefined,
+      activeTheme: options.theme,
     });
+
+    const output = Object.fromEntries(result.tokens);
+
+    if (options.output) {
+      fs.writeFileSync(options.output, JSON.stringify(output, null, 2));
+    } else {
+      console.log(JSON.stringify(output, null, 2));
+    }
   });
+
+program.parse();

@@ -124,9 +124,34 @@ function flattenToTokens(
 
 // Step 5: Interpret tokens ---------------------------------------------------
 
-function interpretTokens(tokens: Map<string, string>): ProcessorOutput {
+function buildTokens(tokens: Map<string, string>): ProcessorOutput {
   const processor = new TokenProcessor();
-  return processor.build(tokens);
+  const output: Map<string, string> = new Map();
+  const errors: Map<string, Error> = new Map();
+
+  const callbacks = {
+    onResolve: (tokenName: string, value: unknown) => {
+      if (typeof value === "string") {
+        output.set(tokenName, value);
+      } else if (value && typeof value === "object" && "toString" in value) {
+        output.set(tokenName, (value as { toString: () => string }).toString());
+      } else {
+        output.set(tokenName, String(value));
+      }
+    },
+    onError: (tokenName: string, error: Error, originalValue: string) => {
+      output.set(tokenName, originalValue);
+      errors.set(tokenName, error);
+    },
+  };
+
+  const result = processor.processTokens(tokens, callbacks);
+
+  return {
+    ...result,
+    tokens: output,
+    errors,
+  };
 }
 
 // Main ------------------------------------------------------------------------
@@ -153,5 +178,5 @@ export async function processTokens({
   const tokens = flattenToTokens(normalizedFiles, setNames);
 
   // Step 5: Interpret tokens
-  return interpretTokens(tokens);
+  return buildTokens(tokens);
 }
