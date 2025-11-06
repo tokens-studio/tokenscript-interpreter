@@ -2,7 +2,9 @@ import * as fs from "node:fs";
 
 import { Command } from "commander";
 import packageJson from "../package.json" with { type: "json" };
-import { collectErrors, processTokens } from "./processor/process";
+import { collectErrors, normalizeJsonFiles, processTokens } from "./processor/process";
+import { collectJsonFiles } from "./processor/utils/file-collector";
+import { resolveThemes } from "./processor/utils/theme-resolver";
 import { startRepl } from "./repl";
 
 const program = new Command();
@@ -68,6 +70,29 @@ program
     } else {
       console.log(output);
     }
+  });
+
+program
+  .command("inspect")
+  .description("Inspect themes and sets from a token file")
+  .requiredOption(
+    "--input <path>",
+    "Path to a json file, archive or directory containing design tokens.",
+  )
+  .action(async (options) => {
+    const jsonFiles = await collectJsonFiles(options.input);
+    const normalized = normalizeJsonFiles(jsonFiles);
+
+    const themesResult = resolveThemes(normalized);
+    const themes = themesResult ? themesResult[1] : [];
+    const sets = Object.keys(normalized).filter((key) => !key.startsWith("$"));
+
+    const output = {
+      themes: themes.map((theme) => theme.name),
+      sets,
+    };
+
+    console.log(JSON.stringify(output, null, 2));
   });
 
 program.parse();
