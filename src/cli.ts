@@ -3,6 +3,7 @@ import * as fs from "node:fs";
 import { Command } from "commander";
 import packageJson from "../package.json" with { type: "json" };
 import { collectErrors, processTokens } from "./processor/process";
+import { startRepl } from "./repl";
 
 const program = new Command();
 
@@ -11,13 +12,13 @@ program
   .description("TokenScript Interpreter CLI - A command-line interface for TokenScript language")
   .version(packageJson.version);
 
-// program
-//   .command("repl")
-//   .description("Start interactive REPL mode for TokenScript")
-//   .option("--schema <uris...>", "Schema URIs to fetch and register")
-//   .action(async (options) => {
-//     await interactiveMode(options.schema);
-//   });
+program
+  .command("repl")
+  .description("Start interactive REPL mode for TokenScript")
+  .option("--schema <uris...>", "Schema URIs to fetch and register")
+  .action(async (options) => {
+    await startRepl(options.schema);
+  });
 
 program
   .command("process")
