@@ -4,6 +4,8 @@ import { type ProcessorOutput, TokenProcessor } from "./TokenProcessor";
 import { collectJsonFiles } from "./utils/file-collector";
 import { extractSetNames, resolveThemes, selectTheme } from "./utils/theme-resolver";
 import { flattenObject, isNested, recordToMap } from "./utils/tokens";
+import { interpreterResult } from "../interpreter/interpreter";
+import { isTokenscriptSymbol } from "../interpreter/symbols";
 
 export function collectErrors(
   result: ProcessorOutput,
@@ -127,11 +129,11 @@ function buildTokens(tokens: Map<string, string>): ProcessorOutput {
   const errors: Map<string, Error> = new Map();
 
   const callbacks = {
-    onResolve: (tokenName: string, value: unknown) => {
+    onResolve: (tokenName: string, value: interpreterResult) => {
       if (typeof value === "string") {
         output.set(tokenName, value);
-      } else if (value && typeof value === "object" && "toString" in value) {
-        output.set(tokenName, (value as { toString: () => string }).toString());
+      } else if (isTokenscriptSymbol(value)) {
+        output.set(tokenName, value.toString());
       } else {
         output.set(tokenName, String(value));
       }
