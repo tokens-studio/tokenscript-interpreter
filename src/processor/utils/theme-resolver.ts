@@ -1,8 +1,21 @@
 import { type } from "arktype";
 import { isObject } from "@/src/interpreter/utils/type";
 
-// Note: disabled sets are not included
-const SelectedTokenSetsSchema = type("Record<string, 'enabled' | 'source'>");
+// Old format
+const SelectedTokenSetsObjectSchema = type("Record<string, 'enabled' | 'source'>");
+
+// New format
+const SelectedTokenSetsArraySchema = type({
+  id: "string",
+  status: "'enabled' | 'source'",
+}).array();
+
+// For validation, we accept either format
+const SelectedTokenSetsSchema = type([
+  SelectedTokenSetsObjectSchema,
+  "|",
+  SelectedTokenSetsArraySchema,
+]);
 
 const ThemeSchema = type({
   name: "string",

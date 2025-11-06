@@ -10,6 +10,18 @@ export interface ThemeAdapterOptions extends AdapterOptions {
   themeName?: string;
 }
 
+interface TokenSetRefObject {
+  id: string;
+  status: "enabled" | "source";
+}
+
+type SelectedTokenSets = Record<string, "enabled" | "source"> | TokenSetRefObject[];
+
+interface ThemeDefinition {
+  name: string;
+  selectedTokenSets: SelectedTokenSets;
+}
+
 /**
  * Adapter for processing tokens with theme definitions (Design Tokens format with $themes)
  *
@@ -30,20 +42,22 @@ export function ThemeTokensAdapter(
       throw new Error("ThemeTokensAdapter: Expected an object");
     }
 
-    if (!isArray(input.$themes)) {
+    if (!("$themes" in input) || !isArray(input.$themes)) {
       throw new Error("ThemeTokensAdapter: Expected $themes array in input");
     }
 
+    const themes = input.$themes as ThemeDefinition[];
+
     // Find the theme
-    let theme: any;
+    let theme: ThemeDefinition | undefined;
     if (themeName) {
-      theme = input.$themes.find((t: any) => t.name === themeName);
+      theme = themes.find((t) => t.name === themeName);
       if (!theme) {
         throw new Error(`ThemeTokensAdapter: Theme '${themeName}' not found`);
       }
     } else {
       // Use first theme if no name specified
-      theme = input.$themes[0];
+      theme = themes[0];
       if (!theme) {
         throw new Error("ThemeTokensAdapter: No themes found");
       }
@@ -58,8 +72,8 @@ export function ThemeTokensAdapter(
       for (const tokenSetRef of selectedTokenSets) {
         if (tokenSetRef.status === "enabled" || tokenSetRef.status === "source") {
           const setId = tokenSetRef.id;
-          if (setId in input) {
-            const flatTokens = flattenObject(input[setId], "", skipMetadata);
+          if (setId in input && isObject(input[setId])) {
+            const flatTokens = flattenObject(input[setId] as Record<string, any>, "", skipMetadata);
             for (const [key, value] of flatTokens) {
               tokens.set(key, value);
             }
@@ -70,8 +84,12 @@ export function ThemeTokensAdapter(
       // Old format: object with key-value pairs
       for (const [setName, status] of Object.entries(selectedTokenSets)) {
         if (status === "enabled" || status === "source") {
-          if (setName in input) {
-            const flatTokens = flattenObject(input[setName], "", skipMetadata);
+          if (setName in input && isObject(input[setName])) {
+            const flatTokens = flattenObject(
+              input[setName] as Record<string, any>,
+              "",
+              skipMetadata,
+            );
             for (const [key, value] of flatTokens) {
               tokens.set(key, value);
             }

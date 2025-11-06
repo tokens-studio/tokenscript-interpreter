@@ -133,6 +133,7 @@ export class TokenProcessor {
     // Get execution order (throws on circular dependencies)
     const executionOrder = graph.topologicalSort();
 
+    // Resolve references and interpret
     // Topological sort returns dependencies-last, so iterate in reverse
     for (let i = executionOrder.length - 1; i >= 0; i--) {
       const tokenName = executionOrder[i];

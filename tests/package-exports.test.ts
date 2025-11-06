@@ -76,9 +76,10 @@ describe("Package Exports", () => {
 
     it("should successfully import from /processors", async () => {
       const module = await import("../src/lib/processors");
-      expect(module.interpretTokens).toBeDefined();
-      expect(module.processTokensFromJson).toBeDefined();
-      expect(module.buildThemeTree).toBeDefined();
+      expect(module.TokenProcessor).toBeDefined();
+      expect(module.processTokens).toBeDefined();
+      expect(module.JsonTokensAdapter).toBeDefined();
+      expect(module.ThemeTokensAdapter).toBeDefined();
     });
 
     it("should successfully import from /schema", async () => {
@@ -95,7 +96,6 @@ describe("Package Exports", () => {
     it("should successfully import from main index", async () => {
       const module = await import("../src/lib/index");
       expect(module.Interpreter).toBeDefined();
-      expect(module.interpretTokens).toBeDefined();
       expect(module.fetchTokenScriptSchema).toBeDefined();
       expect(module.TokenType).toBeDefined();
     });

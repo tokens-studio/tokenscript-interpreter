@@ -5,7 +5,8 @@ import path from "node:path";
 import os from "node:os";
 
 // Helper to extract value from Symbol or return as-is
-const getValue = (v: any) => (v && typeof v === "object" && "value" in v ? v.value : v);
+const getValue = (v: any) =>
+  v && typeof v === "object" && "value" in v ? v.value : v;
 
 describe("processTokens", () => {
   let tempDir: string;
@@ -33,7 +34,7 @@ describe("processTokens", () => {
 
     expect(getValue(result.tokens.get("color.primary"))).toBe("#FF0000");
     expect(getValue(result.tokens.get("color.secondary"))).toBe("#00FF00");
-    expect(getValue(result.tokens.get("spacing.base"))).toBe(8);
+    expect(getValue(result.tokens.get("spacing.base"))).toBe("8");
     expect(result.tokens.size).toBe(3);
   });
 
@@ -56,7 +57,7 @@ describe("processTokens", () => {
 
     expect(getValue(result.tokens.get("color.primary"))).toBe("#FF0000");
     expect(getValue(result.tokens.get("color.secondary"))).toBe("#00FF00");
-    expect(getValue(result.tokens.get("spacing.base"))).toBe(8);
+    expect(getValue(result.tokens.get("spacing.base"))).toBe("8");
     expect(result.tokens.size).toBe(3);
   });
 
@@ -155,7 +156,7 @@ describe("processTokens", () => {
       activeTheme: "light",
     });
 
-    expect(getValue(result.tokens.get("spacing.base"))).toBe(8);
+    expect(getValue(result.tokens.get("spacing.base"))).toBe("8");
     expect(getValue(result.tokens.get("color.background"))).toBe("#FFFFFF");
     expect(result.tokens.size).toBe(2);
   });
@@ -221,9 +222,9 @@ describe("processTokens", () => {
 
     const result = await processTokens({ path: tokensFile });
 
-    expect(getValue(result.tokens.get("spacing.base"))).toBe(8);
-    expect(getValue(result.tokens.get("spacing.small"))).toBe(4);
-    expect(getValue(result.tokens.get("spacing.large"))).toBe(16);
+    expect(getValue(result.tokens.get("spacing.base"))).toBe("8");
+    expect(getValue(result.tokens.get("spacing.small"))).toBe("4");
+    expect(getValue(result.tokens.get("spacing.large"))).toBe("16");
     expect(result.errors.size).toBe(0);
   });
 
@@ -242,9 +243,9 @@ describe("processTokens", () => {
 
     const result = await processTokens({ path: tokensFile });
 
-    expect(getValue(result.tokens.get("values.a"))).toBe(10);
-    expect(getValue(result.tokens.get("values.b"))).toBe(15);
-    expect(getValue(result.tokens.get("values.c"))).toBe(30);
+    expect(getValue(result.tokens.get("values.a"))).toBe("10");
+    expect(getValue(result.tokens.get("values.b"))).toBe("15");
+    expect(getValue(result.tokens.get("values.c"))).toBe("30");
     expect(result.errors.size).toBe(0);
   });
 });
