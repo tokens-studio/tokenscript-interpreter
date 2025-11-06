@@ -81,39 +81,20 @@ export const selectThemeOrFirst = (themes: ThemesArray, themeName?: string): The
 };
 
 /**
- * Resolves themes from collected json using arktype validation.
- *
- * Handles two formats:
- * 1. Single JSON with embedded $themes property (e.g., tokens.json with $themes: [...])
- * 2. Separate $themes jsons containing a direct array of themes
+ * Resolves themes from collected json.
  *
  * Uses arktype to validate the structure:
  * - Each theme must have a 'name' string property
  * - Each theme must have a 'selectedTokenSets' property (any type)
  * - Optional properties: figmaCollectionId, figmaModeId, group
  *
- * @param json - Record of collected jsons from file-collector
+ * @param jsonFiles - Record of collected jsons from file-collector
  * @returns Tuple of [path, themes array] or undefined if no valid themes found
  */
-export const resolveThemes = (json: Record<string, unknown>): [string, ThemesArray] | undefined => {
-  const jsonFileKeys = Object.keys(json);
-
-  // When there's a single JSON file, check if it has a $themes key
-  if (jsonFileKeys.length === 1) {
-    const firstFileContent = json[jsonFileKeys[0]];
-
-    if (isObject(firstFileContent) && "$themes" in firstFileContent) {
-      const themesValue = firstFileContent.$themes;
-      const validatedThemes = ThemesArraySchema(themesValue);
-
-      if (!(validatedThemes instanceof type.errors)) {
-        return [jsonFileKeys[0], validatedThemes];
-      }
-    }
-  }
-
-  // Check if there's a dedicated $themes file (could be array or object with $themes)
-  const themesFile = json.$themes;
+export const resolveThemes = (
+  jsonFiles: Record<string, unknown>,
+): [string, ThemesArray] | undefined => {
+  const themesFile = jsonFiles.$themes;
   if (themesFile) {
     // First try as an object with $themes property
     if (isObject(themesFile) && "$themes" in themesFile) {

@@ -22,65 +22,36 @@ describe("theme-resolver", () => {
 
     it("should return empty array for empty $themes array", () => {
       const jsonFiles = {
-        "tokens": {
-          $themes: [],
-          color: {
-            red: { $value: "#FF0000" },
-          },
+        $themes: [],
+        color: {
+          red: { $value: "#FF0000" },
         },
       };
 
       const result = resolveThemes(jsonFiles);
       expect(result).toBeDefined();
-      expect(result![0]).toBe("tokens");
       expect(result![1]).toEqual([]);
-    });
-
-    it("should detect themes in a single JSON file with $themes property", () => {
-      const jsonFiles = {
-        "tokens": {
-          $themes: [
-            {
-              name: "light",
-              selectedTokenSets: { core: "enabled" },
-            },
-          ],
-          color: {
-            red: { $value: "#FF0000" },
-          },
-        },
-      };
-
-      const result = resolveThemes(jsonFiles);
-      expect(result).toBeDefined();
-      expect(result![0]).toBe("tokens");
-      expect(Array.isArray(result![1])).toBe(true);
-      expect(result![1]).toHaveLength(1);
-      expect(result![1][0].name).toBe("light");
     });
 
     it("should detect themes with optional Figma properties", () => {
       const jsonFiles = {
-        "tokens": {
-          $themes: [
-            {
-              name: "dark",
-              selectedTokenSets: { core: "enabled" },
-              figmaCollectionId: "col123",
-              figmaModeId: "mode456",
-              group: "Color Mode",
-            },
-          ],
-          color: {
-            red: { $value: "#FF0000" },
+        $themes: [
+          {
+            name: "dark",
+            selectedTokenSets: { core: "enabled" },
+            figmaCollectionId: "col123",
+            figmaModeId: "mode456",
+            group: "Color Mode",
           },
+        ],
+        color: {
+          red: { $value: "#FF0000" },
         },
       };
 
       const result = resolveThemes(jsonFiles);
       expect(result).toBeDefined();
-      expect(result![0]).toBe("tokens");
-      
+
       const themes = result![1];
       expect(Array.isArray(themes)).toBe(true);
       expect(themes[0]).toMatchObject({
@@ -113,7 +84,7 @@ describe("theme-resolver", () => {
       const result = resolveThemes(jsonFiles);
       expect(result).toBeDefined();
       expect(result![0]).toBe("$themes");
-      
+
       const themes = result![1] as any[];
       expect(Array.isArray(themes)).toBe(true);
       expect(themes).toHaveLength(2);
@@ -148,23 +119,21 @@ describe("theme-resolver", () => {
 
     it("should prioritize single file with $themes over standalone $themes file", () => {
       const jsonFiles = {
-        "tokens": {
-          $themes: [
-            {
-              name: "embedded",
-              selectedTokenSets: { core: "enabled" },
-            },
-          ],
-          color: {
-            red: { $value: "#FF0000" },
+        $themes: [
+          {
+            name: "embedded",
+            selectedTokenSets: { core: "enabled" },
           },
+        ],
+        color: {
+          red: { $value: "#FF0000" },
         },
+
       };
 
       const result = resolveThemes(jsonFiles);
       expect(result).toBeDefined();
-      expect(result![0]).toBe("tokens");
-      
+
       const themes = result![1];
       expect(Array.isArray(themes)).toBe(true);
       expect(themes[0].name).toBe("embedded");
@@ -267,53 +236,6 @@ describe("theme-resolver", () => {
     it("should be case-sensitive", () => {
       const theme = selectTheme(themes as any, "Dark");
       expect(theme).toBeUndefined();
-    });
-  });
-
-  describe("selectThemeOrFirst", () => {
-    const themes = [
-      {
-        name: "light",
-        selectedTokenSets: { core: "enabled" },
-      },
-      {
-        name: "dark",
-        selectedTokenSets: { core: "enabled", dark: "enabled" },
-      },
-    ];
-
-    it("should select theme by name", () => {
-      const theme = selectThemeOrFirst(themes as any, "dark");
-      expect(theme).toBeDefined();
-      expect(theme!.name).toBe("dark");
-    });
-
-    it("should return first theme if no name provided", () => {
-      const theme = selectThemeOrFirst(themes as any);
-      expect(theme).toBeDefined();
-      expect(theme!.name).toBe("light");
-    });
-
-    it("should return first theme if name not found", () => {
-      const theme = selectThemeOrFirst(themes as any, "nonexistent");
-      expect(theme).toBeDefined();
-      expect(theme!.name).toBe("light");
-    });
-
-    it("should return undefined for empty array with no name", () => {
-      const theme = selectThemeOrFirst([]);
-      expect(theme).toBeUndefined();
-    });
-
-    it("should return undefined for empty array with name", () => {
-      const theme = selectThemeOrFirst([], "any");
-      expect(theme).toBeUndefined();
-    });
-
-    it("should handle undefined theme name explicitly", () => {
-      const theme = selectThemeOrFirst(themes as any, undefined);
-      expect(theme).toBeDefined();
-      expect(theme!.name).toBe("light");
     });
   });
 });

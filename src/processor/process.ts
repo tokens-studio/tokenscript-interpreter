@@ -33,7 +33,7 @@ export type ProcessTokensOptions = {
  * If single file has $-prefixed keys (themes/metadata), expand top-level keys to separate sets.
  * Otherwise return as-is.
  */
-function normalizeJsonFiles(jsonFiles: Record<string, unknown>): Record<string, unknown> {
+export function normalizeJsonFiles(jsonFiles: Record<string, unknown>): Record<string, unknown> {
   if (!isSingleEntryObject(jsonFiles)) {
     return jsonFiles; // Already multi-file
   }
@@ -46,19 +46,10 @@ function normalizeJsonFiles(jsonFiles: Record<string, unknown>): Record<string, 
 
   // Check if single file has metadata keys (like $themes, $metadata)
   const hasMetadata = Object.keys(content).some((key) => key.startsWith("$"));
-
   if (hasMetadata) {
-    // Flatten: top-level keys (except $-prefixed) become separate sets
-    const expanded: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(content)) {
-      if (!key.startsWith("$")) {
-        expanded[key] = value;
-      }
-    }
-    return expanded;
+    return content;
   }
 
-  // Single file without metadata - return as is
   return jsonFiles;
 }
 
@@ -66,7 +57,6 @@ function normalizeJsonFiles(jsonFiles: Record<string, unknown>): Record<string, 
 
 function determineSets(
   jsonFiles: Record<string, unknown>,
-  normalizedFiles: Record<string, unknown>,
   activeSets?: string[],
   activeTheme?: string,
 ): string[] {
@@ -90,7 +80,7 @@ function determineSets(
   }
 
   // Default: if normalized to single entry, use it
-  const keys = Object.keys(normalizedFiles);
+  const keys = Object.keys(jsonFiles);
   if (keys.length === 1) {
     return keys;
   }
@@ -179,7 +169,7 @@ export async function processTokens({
   const normalizedFiles = normalizeJsonFiles(jsonFiles);
 
   // Step 3: Determine sets to pick
-  const setNames = determineSets(jsonFiles, normalizedFiles, activeSets, activeTheme);
+  const setNames = determineSets(normalizedFiles, activeSets, activeTheme);
 
   // Step 4: Flatten to tokens
   const tokens = flattenToTokens(normalizedFiles, setNames);
