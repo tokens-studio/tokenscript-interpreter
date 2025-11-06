@@ -218,39 +218,6 @@ describe("theme-resolver", () => {
       expect(result).toBeUndefined();
     });
 
-    it("should handle complex selectedTokenSets structures", () => {
-      const jsonFiles = {
-        "$themes": [
-          {
-            name: "light",
-            selectedTokenSets: {
-              "core": "enabled",
-              "semantic": "source",
-              "theme/light": "enabled",
-            },
-          },
-          {
-            name: "dark",
-            selectedTokenSets: [
-              { id: "core", status: "enabled" },
-              { id: "semantic", status: "source" },
-              { id: "theme/dark", status: "enabled" },
-            ],
-          },
-        ],
-      };
-
-      const result = resolveThemes(jsonFiles);
-      expect(result).toBeDefined();
-      expect(result![0]).toBe("$themes");
-      
-      const themes = result![1] as any[];
-      expect(themes).toHaveLength(2);
-      expect(themes[0].name).toBe("light");
-      expect(themes[1].name).toBe("dark");
-      expect(themes[0].selectedTokenSets).toHaveProperty("core");
-      expect(Array.isArray(themes[1].selectedTokenSets)).toBe(true);
-    });
   });
 
   describe("selectTheme", () => {

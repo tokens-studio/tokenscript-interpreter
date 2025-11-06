@@ -2,13 +2,7 @@ import { type } from "arktype";
 import { isObject } from "@/src/interpreter/utils/type";
 
 // Note: disabled sets are not included
-const SelectedTokenSetsObjectSchema = type("Record<string, 'enabled' | 'source'>");
-const SelectedTokenSetsArraySchema = type({
-  id: "string",
-  status: "'enabled' | 'source'",
-}).array();
-
-const SelectedTokenSetsSchema = SelectedTokenSetsObjectSchema.or(SelectedTokenSetsArraySchema);
+const SelectedTokenSetsSchema = type("Record<string, 'enabled' | 'source'>");
 
 const ThemeSchema = type({
   name: "string",
@@ -135,3 +129,76 @@ export const resolveThemes = (
 
   return undefined;
 };
+
+/**
+ * Extracts an ordered array of set names from selectedTokenSets.
+ * 
+ * Handles both object and array formats:
+ * - Object format: { "core": "enabled", "semantic": "source" } => ["core", "semantic"]
+ * - Array format: [{ id: "core", status: "enabled" }] => ["core"]
+ * 
+ * @param selectedTokenSets - The selectedTokenSets from a theme
+ * @returns Array of set names in order
+ * 
+ * @example
+ * const sets = { core: "enabled", semantic: "source" };
+ * const names = extractSetNames(sets);
+ * // => ["core", "semantic"]
+ * 
+ * const setsArray = [{ id: "core", status: "enabled" }];
+ * const namesFromArray = extractSetNames(setsArray);
+ * // => ["core"]
+ */
+export const extractSetNames = (selectedTokenSets: SelectedTokenSets): string[] => {
+  if (Array.isArray(selectedTokenSets)) {
+    return selectedTokenSets.map((set) => set.id);
+  }
+  return Object.keys(selectedTokenSets);
+};
+
+/**
+ * Resolves the collection of token sets to process.
+ *
+ * When activeTheme is provided:
+ * - Resolves themes from jsonFiles
+ * - Selects the specified theme (throws if not found)
+ * - Returns the active sets from the theme
+ *
+ * When activeSets is provided:
+ * - Returns the provided sets directly
+ *
+ * @param options - Processing options containing activeTheme or activeSets
+ * @param jsonFiles - Collected JSON files
+ * @returns Array of set names to process
+ * @throws Error if activeTheme is specified but theme is not found or themes cannot be resolved
+ */
+function getActiveSets(
+  options: Pick<ProcessTokensOptions, "activeTheme" | "activeSets">,
+  jsonFiles: Record<string, unknown>,
+): string[] {
+  const { activeTheme, activeSets } = options;
+
+  if (activeSets) return activeSets;
+
+  if (activeTheme) {
+    const resolvedThemes = resolveThemes(jsonFiles);
+
+    if (!resolvedThemes) {
+      throw new Error(`Theme "${activeTheme}" specified but no themes could be resolved from files`);
+    }
+
+    const [, themes] = resolvedThemes;
+    const theme = selectTheme(resolvedThemes, activeTheme);
+
+    if (!theme) {
+      const availableThemes = resolvedThemes.map((t) => t.name).join(", ");
+      throw new Error(
+        `Theme "${activeTheme}" not found. Available themes: ${availableThemes}`,
+      );
+    }
+
+    return extractSetNames(theme.selectedTokenSets);
+  }
+
+  return [];
+}

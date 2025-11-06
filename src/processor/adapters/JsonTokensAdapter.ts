@@ -11,13 +11,14 @@ import { flattenObject, isNested, recordToMap } from "./utils";
  *
  * @example
  * const adapter = JsonTokensAdapter();
- * const tokens = adapter({ color: { red: { $value: "#FF0000" } } });
- * // => Map { "color.red" => "#FF0000" }
+ * const tokens = new Map();
+ * adapter({ color: { red: { $value: "#FF0000" } } }, tokens);
+ * // tokens => Map { "color.red" => "#FF0000" }
  */
 export function JsonTokensAdapter(options: AdapterOptions = {}): TokenAdapter<Record<string, any>> {
   const { prefix = "", skipMetadata = true } = options;
 
-  return (input: Record<string, any>): Map<string, string> => {
+  return (input: Record<string, any>, accumulator: Map<string, string>): void => {
     if (!isObject(input)) {
       throw new Error("JsonTokensAdapter: Expected an object");
     }
@@ -26,15 +27,10 @@ export function JsonTokensAdapter(options: AdapterOptions = {}): TokenAdapter<Re
       ? flattenObject(input, "", skipMetadata)
       : recordToMap(input);
 
-    // Apply prefix if specified
-    if (prefix) {
-      const prefixed = new Map<string, string>();
-      for (const [key, value] of tokens) {
-        prefixed.set(`${prefix}.${key}`, value);
-      }
-      return prefixed;
+    // Set tokens on accumulator with optional prefix
+    for (const [key, value] of tokens) {
+      const finalKey = prefix ? `${prefix}.${key}` : key;
+      accumulator.set(finalKey, value);
     }
-
-    return tokens;
   };
 }
