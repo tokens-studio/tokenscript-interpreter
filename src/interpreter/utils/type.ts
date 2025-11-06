@@ -22,10 +22,6 @@ export const isObject = (v: unknown): v is Record<string, unknown> => {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 };
 
-export const isNonEmptyObject = (v: unknown): v is Record<string, unknown> => {
-  return isObject(v) && Object.keys(v).length > 0;
-};
-
 export const isString = (v: unknown): v is string => {
   return typeof v === "string";
 };
@@ -54,7 +50,7 @@ export const isDate = (v: unknown): v is Date => {
 
 export const isMap = (v: unknown): v is Map<unknown, unknown> => v instanceof Map;
 
-export const isPlainObject = (v: unknown): v is Record<string, unknown> => {
+export const isPlainObject = (v: unknown): boolean => {
   if (!isObject(v)) return false;
 
   // Objects created by the Object constructor or with null prototype
@@ -64,6 +60,14 @@ export const isPlainObject = (v: unknown): v is Record<string, unknown> => {
 
 export const hasProperty = <K extends string>(obj: unknown, key: K): obj is Record<K, unknown> => {
   return isObject(obj) && key in obj;
+};
+
+export const isNonEmptyObject = (v: unknown): boolean => {
+  return isObject(v) && Object.keys(v).length > 0;
+};
+
+export const isSingleEntryObject = (v: unknown): boolean => {
+  return isObject(v) && Object.keys(v).length === 1;
 };
 
 // Array -----------------------------------------------------------------------

@@ -10,6 +10,7 @@ import {
   isFunction,
   isDate,
   isPlainObject,
+  isSingleEntryObject,
   hasProperty,
   isNonEmptyArray,
   isEmpty,
@@ -221,6 +222,32 @@ describe('Type Guard Utilities', () => {
       expect(hasProperty(obj, 'age')).toBe(false);
       expect(hasProperty(null, 'name')).toBe(false);
       expect(hasProperty('string', 'length')).toBe(false);
+    });
+  });
+
+  describe('isSingleEntryObject', () => {
+    test('returns true for objects with exactly one property', () => {
+      expect(isSingleEntryObject({ a: 1 })).toBe(true);
+      expect(isSingleEntryObject({ name: 'test' })).toBe(true);
+      expect(isSingleEntryObject({ nested: { value: 123 } })).toBe(true);
+    });
+
+    test('returns false for empty objects', () => {
+      expect(isSingleEntryObject({})).toBe(false);
+    });
+
+    test('returns false for objects with multiple properties', () => {
+      expect(isSingleEntryObject({ a: 1, b: 2 })).toBe(false);
+      expect(isSingleEntryObject({ name: 'test', age: 25 })).toBe(false);
+    });
+
+    test('returns false for non-objects', () => {
+      expect(isSingleEntryObject(null)).toBe(false);
+      expect(isSingleEntryObject(undefined)).toBe(false);
+      expect(isSingleEntryObject([])).toBe(false);
+      expect(isSingleEntryObject([1])).toBe(false);
+      expect(isSingleEntryObject('string')).toBe(false);
+      expect(isSingleEntryObject(123)).toBe(false);
     });
   });
 
