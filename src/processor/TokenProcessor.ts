@@ -165,7 +165,6 @@ export class TokenProcessor {
    * Build tokens from a flat token map
    */
   public build(tokens: Map<refPath, string>): ProcessorOutput {
-
     const output: Map<refPath, string | interpreterResult> = new Map();
     const errors: Map<refPath, Error> = new Map();
 

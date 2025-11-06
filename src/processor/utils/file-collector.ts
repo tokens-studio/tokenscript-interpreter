@@ -1,5 +1,5 @@
-import fs from "node:fs/promises";
 import type { Stats } from "node:fs";
+import fs from "node:fs/promises";
 import path from "node:path";
 import * as yauzl from "yauzl";
 
@@ -13,7 +13,9 @@ function parseJson(content: string, fileName: string): unknown {
   try {
     return JSON.parse(content);
   } catch (error) {
-    throw new Error(`Failed to parse JSON in file '${fileName}': ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `Failed to parse JSON in file '${fileName}': ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 }
 
@@ -107,7 +109,7 @@ function detectFileType(filePath: string, stats: Stats): FileType {
 /**
  * Collects JSON files from a given path (file, directory, or ZIP archive).
  * Returns a record where keys are file names without the .json extension.
- * 
+ *
  * @param filePath - Path to a JSON file, directory containing JSON files, or ZIP archive
  * @returns Record mapping file names (without extension) to their parsed JSON content
  * @throws Error if the file type is unsupported or if JSON parsing fails
@@ -115,7 +117,6 @@ function detectFileType(filePath: string, stats: Stats): FileType {
 export async function collectJsonFiles(filePath: string): Promise<Record<string, unknown>> {
   const fileStats = await fs.stat(filePath);
   const fileType = detectFileType(filePath, fileStats);
-
 
   switch (fileType) {
     case FileType.ZIP: {

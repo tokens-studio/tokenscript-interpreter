@@ -1,11 +1,13 @@
 import { fetchAndRegisterSchemas } from "@src/utils/schema-fetcher";
-import { collectJsonFiles } from "./utils/file-collector";
-import { resolveThemes, selectTheme, extractSetNames } from "./utils/theme-resolver";
-import { isSingleEntryObject, isObject } from "../interpreter/utils/type";
+import { isObject, isSingleEntryObject } from "../interpreter/utils/type";
 import { flattenObject, isNested, recordToMap } from "./adapters/utils";
-import { TokenProcessor, type ProcessorOutput } from "./TokenProcessor";
+import { type ProcessorOutput, TokenProcessor } from "./TokenProcessor";
+import { collectJsonFiles } from "./utils/file-collector";
+import { extractSetNames, resolveThemes, selectTheme } from "./utils/theme-resolver";
 
-export function collectErrors(result: ProcessorOutput): Record<string, { message: string; originalValue: string }> {
+export function collectErrors(
+  result: ProcessorOutput,
+): Record<string, { message: string; originalValue: string }> {
   const errors: Record<string, { message: string; originalValue: string }> = {};
   for (const [tokenName, error] of result.errors) {
     const originalValue = result.tokens.get(tokenName);
@@ -95,9 +97,7 @@ function determineSets(
 
   // If normalized to multiple entries but no selection made, we can't proceed
   if (keys.length > 1) {
-    throw new Error(
-      `Multiple sets found (${keys.join(", ")}) - specify activeSets or activeTheme`,
-    );
+    throw new Error(`Multiple sets found (${keys.join(", ")}) - specify activeSets or activeTheme`);
   }
 
   throw new Error("No sets to process");
@@ -105,10 +105,7 @@ function determineSets(
 
 // Step 4: Flatten sets to tokens ----------------------------------------------
 
-function flattenToTokens(
-  sets: Record<string, unknown>,
-  setNames: string[],
-): Map<string, string> {
+function flattenToTokens(sets: Record<string, unknown>, setNames: string[]): Map<string, string> {
   const tokens = new Map<string, string>();
 
   for (const setName of setNames) {
@@ -122,9 +119,7 @@ function flattenToTokens(
       throw new Error(`Token set "${setName}" is not an object`);
     }
 
-    const setTokens = isNested(setData)
-      ? flattenObject(setData, "", true)
-      : recordToMap(setData);
+    const setTokens = isNested(setData) ? flattenObject(setData, "", true) : recordToMap(setData);
 
     for (const [key, value] of setTokens) {
       tokens.set(key, value);
