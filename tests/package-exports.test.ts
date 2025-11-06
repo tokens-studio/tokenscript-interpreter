@@ -78,8 +78,9 @@ describe("Package Exports", () => {
       const module = await import("../src/lib/processors");
       expect(module.TokenProcessor).toBeDefined();
       expect(module.processTokens).toBeDefined();
-      expect(module.JsonTokensAdapter).toBeDefined();
-      expect(module.ThemeTokensAdapter).toBeDefined();
+      expect(module.flattenObject).toBeDefined();
+      expect(module.hasNestedStructure).toBeDefined();
+      expect(module.recordToMap).toBeDefined();
     });
 
     it("should successfully import from /schema", async () => {

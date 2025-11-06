@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DependencyGraph } from "@src/processor/DependencyGraph";
+import { DependencyGraph } from "@src/processor/utils/DependencyGraph";
 
 describe("DependencyGraph", () => {
   describe("addNode", () => {

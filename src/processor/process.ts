@@ -1,9 +1,9 @@
 import { fetchAndRegisterSchemas } from "@src/utils/schema-fetcher";
 import { isObject, isSingleEntryObject } from "../interpreter/utils/type";
-import { flattenObject, isNested, recordToMap } from "./adapters/utils";
 import { type ProcessorOutput, TokenProcessor } from "./TokenProcessor";
 import { collectJsonFiles } from "./utils/file-collector";
 import { extractSetNames, resolveThemes, selectTheme } from "./utils/theme-resolver";
+import { flattenObject, isNested, recordToMap } from "./utils/tokens";
 
 export function collectErrors(
   result: ProcessorOutput,

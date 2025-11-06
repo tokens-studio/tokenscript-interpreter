@@ -1,5 +1,5 @@
 /**
- * Utility functions for token adapters
+ * Utility functions for token processing
  */
 
 /**

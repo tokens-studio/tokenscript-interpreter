@@ -1,7 +1,7 @@
 import type { ASTNode } from "@interpreter/ast";
 import { Interpreter, type interpreterResult } from "@interpreter/interpreter";
 import { type ParseExpressionResult, parseExpression } from "@interpreter/parser";
-import { DependencyGraph } from "./DependencyGraph";
+import { DependencyGraph } from "./utils/DependencyGraph";
 import { DependencyError } from "./errors";
 
 type refPath = string;
