@@ -5,6 +5,18 @@ import { isSingleEntryObject, isObject } from "../interpreter/utils/type";
 import { flattenObject, isNested, recordToMap } from "./adapters/utils";
 import { TokenProcessor, type ProcessorOutput } from "./TokenProcessor";
 
+export function collectErrors(result: ProcessorOutput): Record<string, { message: string; originalValue: string }> {
+  const errors: Record<string, { message: string; originalValue: string }> = {};
+  for (const [tokenName, error] of result.errors) {
+    const originalValue = result.tokens.get(tokenName);
+    errors[tokenName] = {
+      message: error.message,
+      originalValue: String(originalValue),
+    };
+  }
+  return errors;
+}
+
 export type ProcessTokensOptions = {
   path: string;
   outputPath?: string;

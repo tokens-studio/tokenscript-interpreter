@@ -17,7 +17,7 @@ import { Command } from "commander";
 import * as readlineSync from "readline-sync";
 import * as yauzl from "yauzl";
 import packageJson from "../package.json" with { type: "json" };
-import { processTokens } from "./processor/process";
+import { collectErrors, processTokens } from "./processor/process";
 
 const program = new Command();
 
@@ -45,6 +45,8 @@ program
   .option("--schema <uris...>", "Schema URIs to fetch and register")
   .option("--sets <sets>", "Comma-separated list of token sets to process")
   .option("--theme <theme>", "Theme name to use for token set selection")
+  .option("--log-level <level>", "Log level (warn, error, none)", "none")
+  .option("--strict", "Output errors if any exist, otherwise output tokens", false)
   .action(async (options) => {
     const result = await processTokens({
       path: options.input,
@@ -54,12 +56,22 @@ program
       activeTheme: options.theme,
     });
 
-    const output = Object.fromEntries(result.tokens);
+    const hasErrors = result.errors.size > 0;
+    if ((options.logLevel === "warn" || options.strict) && hasErrors) {
+      const errors = collectErrors(result);
+      console.error(JSON.stringify({ errors }, null, 2));
+    }
+
+    if (options.strict && hasErrors) {
+      process.exit(1);
+    }
+
+    const output = JSON.stringify(Object.fromEntries(result.tokens), null, 2);
 
     if (options.output) {
-      fs.writeFileSync(options.output, JSON.stringify(output, null, 2));
+      fs.writeFileSync(options.output, output);
     } else {
-      console.log(JSON.stringify(output, null, 2));
+      console.log(output);
     }
   });
 
