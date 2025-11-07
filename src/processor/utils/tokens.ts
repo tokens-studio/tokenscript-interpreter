@@ -15,7 +15,7 @@
  * Output: Map { "color.red" => "#FF0000" }
  */
 export function flattenObject(
-  obj: Record<string, any>,
+  obj: Record<string, unknown>,
   prefix = "",
   skipMetadata = true,
 ): Map<string, string> {
@@ -58,7 +58,7 @@ export function flattenObject(
 /**
  * Converts a Record to a Map with string values
  */
-export function recordToMap(record: Record<string, any>): Map<string, string> {
+export function recordToMap(record: Record<string, unknown>): Map<string, string> {
   const map = new Map<string, string>();
   for (const [key, value] of Object.entries(record)) {
     map.set(key, String(value));
@@ -69,7 +69,7 @@ export function recordToMap(record: Record<string, any>): Map<string, string> {
 /**
  * Detects if an object has nested structure (vs flat tokens).
  */
-export function isNested(obj: Record<string, any>): boolean {
+export function isNested(obj: Record<string, unknown>): boolean {
   return Object.keys(obj).some(
     (key) =>
       typeof obj[key] === "object" &&
