@@ -326,7 +326,7 @@ export type ASTNodeMatcher<T> = {
   BlockNode?: (node: BlockNode) => T;
   StatementListNode?: (node: StatementListNode) => T;
   AttributeAccessNode?: (node: AttributeAccessNode) => T;
-  NoOpNode?: (node: ASTNode) => T;
+  NoOpNode?: (node: NoOpNode) => T;
   default?: (node: ASTNode) => T;
 };
 
@@ -347,9 +347,12 @@ export type ASTNodeMatcher<T> = {
  * });
  */
 export function matchASTNode<T>(node: ASTNode, matcher: ASTNodeMatcher<T>): T | undefined {
-  const handler = matcher[node.nodeType as keyof ASTNodeMatcher<T>];
+  const nodeType = node.nodeType as keyof Omit<ASTNodeMatcher<T>, 'default'>;
+  const handler = matcher[nodeType];
   if (handler) {
-    return (handler as (node: ASTNode) => T)(node);
+    // The handler is typed to accept the specific node type corresponding to nodeType,
+    // so this call is type-safe even though we use a type assertion
+    return (handler as (n: ASTNode) => T)(node);
   }
   return matcher.default?.(node);
 }
