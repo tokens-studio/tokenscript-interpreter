@@ -11,12 +11,17 @@ import {
   isNull,
   isNumber,
   isObject,
+  isObjectWithKey,
   isString,
   isUndefined,
   nullToUndefined,
 } from "./utils/type";
 
 // Utilities -------------------------------------------------------------------
+
+export function isTokenscriptSymbol(value: unknown): value is ISymbolType {
+  return isObjectWithKey(value, "getTypeName");
+}
 
 export const typeEquals = (typeA: string | null, typeB: string | null) =>
   typeA?.toLowerCase() === typeB?.toLowerCase();

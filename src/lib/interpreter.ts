@@ -24,7 +24,7 @@ export * from "@interpreter/errors";
 // Core interpreter
 export { Interpreter } from "@interpreter/interpreter";
 export { Lexer } from "@interpreter/lexer";
-export { Parser } from "@interpreter/parser";
+export { Parser, parseExpression } from "@interpreter/parser";
 // Symbols
 export {
   BaseSymbolType,

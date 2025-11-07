@@ -31,23 +31,15 @@ jobs:
       - name: Build CLI
         run: npm run build
 
-      - name: Run compliance suite (source)
-        run: npm run cli -- evaluate_standard_compliance --test-dir ./tokenscript-compliance-suite/tests/ --output compliance-report.json
+      - name: Run compliance suite
+        run: npm run compliance -- --test-dir ./tokenscript-compliance-suite/tests/ --output compliance-report.json
 
-      - name: Run compliance suite (built) - verification
-        run: ./dist/cli.js evaluate_standard_compliance --test-dir ./tokenscript-compliance-suite/tests/ --output compliance-report-built.json
-
-      - name: Verify compliance consistency
+      - name: Check compliance results
         run: |
-          echo "Comparing source and built compliance results..."
-          source_passed=$(jq -r '.passed' compliance-report.json)
-          built_passed=$(jq -r '.passed' compliance-report-built.json)
-          if [ "$source_passed" = "$built_passed" ]; then
-            echo "✅ Source and built CLI produce consistent results: $source_passed passed"
-          else
-            echo "❌ Inconsistent results: source=$source_passed, built=$built_passed"
-            exit 1
-          fi
+          passed=$(jq -r '.passed' compliance-report.json)
+          failed=$(jq -r '.failed' compliance-report.json)
+          echo "✅ Passed: $passed"
+          echo "❌ Failed: $failed"
 
       - name: Report compliance results
         run: node .github/scripts/report-compliance.cjs

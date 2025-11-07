@@ -567,11 +567,13 @@ export class Parser {
   }
 }
 
-export function parseExpression(text: string): {
+export interface ParseExpressionResult {
   lexer: Lexer;
   parser: Parser;
   ast: ASTNode | null;
-} {
+}
+
+export function parseExpression(text: string): ParseExpressionResult {
   const lexer = new Lexer(text);
   const parser = new Parser(lexer);
   const ast = parser.parse();

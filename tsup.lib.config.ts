@@ -4,7 +4,7 @@ export default defineConfig({
   entry: {
     index: "src/lib/index.ts",
     interpreter: "src/lib/interpreter.ts",
-    processors: "src/lib/processors.ts",
+    processor: "src/lib/processor.ts",
     schema: "src/lib/schema.ts",
     types: "src/lib/types.ts",
     "syntax-highlighting": "src/syntax-highlighter/index.ts",
