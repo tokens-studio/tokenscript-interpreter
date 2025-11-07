@@ -37,7 +37,6 @@ export class DependencyGraph<N = string> {
               return true;
             }
           } else if (recursionStack.has(dep)) {
-            const _cycleStart = path.indexOf(dep);
             return true;
           }
         }
