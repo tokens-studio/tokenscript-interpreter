@@ -87,6 +87,33 @@ const result = interpretTokens(tokens);
 
 Your desired token features are not tied to any specification or library — enable features by loading the schemas you need.
 
+### Type-Safe AST Parsing
+
+Tokenscript provides comprehensive type guards for working with Abstract Syntax Tree (AST) nodes. This enables you to perform custom functionality on specific parser result types with full TypeScript type safety.
+
+```typescript
+import { 
+  parseExpression, 
+  isNumNode, 
+  isBinOpNode,
+  type ASTNode 
+} from "@tokens-studio/tokenscript-interpreter";
+
+// Parse an expression
+const { ast } = parseExpression("42 + 10");
+
+// Use type guards for type-safe node handling
+if (ast && isBinOpNode(ast)) {
+  console.log(`Operation: ${ast.op}`);
+  
+  if (isNumNode(ast.left) && isNumNode(ast.right)) {
+    console.log(`${ast.left.value} ${ast.op} ${ast.right.value}`);
+  }
+}
+```
+
+For more information, see the [Type Guards documentation](./docs/type-guards.md).
+
 [docs]: https://docs.tokenscript.dev.gcp.tokens.studio/
 [playground]: https://repl.tokenscript.dev.gcp.tokens.studio/
 [slack]: https://tokens-studio.slack.com/archives/C09KPC4MFUL
