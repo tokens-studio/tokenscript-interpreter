@@ -63,17 +63,19 @@ export class DependencyGraph<N = string> {
     const inDegree = new Map<N, number>();
     const result: N[] = [];
 
-    // Calculate in-degrees
-    for (const node of this.nodes.keys()) {
-      inDegree.set(node, 0);
-    }
-    for (const deps of this.nodes.values()) {
+    // Combined: Initialize in-degrees and calculate them in a single iteration
+    for (const [node, deps] of this.nodes) {
+      // Initialize this node if not already done
+      if (!inDegree.has(node)) {
+        inDegree.set(node, 0);
+      }
+      // Calculate in-degrees for dependencies
       for (const dep of deps) {
         inDegree.set(dep, (inDegree.get(dep) || 0) + 1);
       }
     }
 
-    // Queue nodes with no dependencies
+    // Queue nodes with no dependencies (zero in-degree)
     const queue: N[] = [];
     for (const [node, degree] of inDegree) {
       if (degree === 0) {
@@ -99,10 +101,10 @@ export class DependencyGraph<N = string> {
 
     // If result doesn't contain all nodes, there's a cycle
     if (result.length !== this.nodes.size) {
-      const resultSet = new Set(result);
+      // Optimized: use inDegree map directly instead of creating a Set
       const remainingNodes: N[] = [];
-      for (const node of this.nodes.keys()) {
-        if (!resultSet.has(node)) {
+      for (const [node, degree] of inDegree) {
+        if (degree > 0) {
           remainingNodes.push(node);
         }
       }
