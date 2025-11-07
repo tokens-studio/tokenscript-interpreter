@@ -38,5 +38,7 @@ export {
   NumberWithUnitSymbol,
   StringSymbol,
 } from "@interpreter/symbols";
+// AST Type Guards
+export * from "@interpreter/type-guards";
 // Type definitions
 export * from "@src/types";
