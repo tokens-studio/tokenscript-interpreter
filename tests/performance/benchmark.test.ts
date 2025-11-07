@@ -1,4 +1,4 @@
-import { interpretTokens } from "@src/processor/interpret";
+import { processTokens } from "@src/processor/process";
 import { describe, expect, it } from "vitest";
 
 describe("Performance Benchmark", () => {
@@ -25,7 +25,7 @@ describe("Performance Benchmark", () => {
     }
 
     const startTime = performance.now();
-    const output = interpretTokens(tokens);
+    const output = processTokens(tokens, { output: "symbols" });
     const endTime = performance.now();
 
     const duration = endTime - startTime;
@@ -74,7 +74,7 @@ describe("Performance Benchmark", () => {
     };
 
     const startTime = performance.now();
-    const output = interpretTokens(tokens);
+    const output = processTokens(tokens, { output: "symbols" });
     const endTime = performance.now();
 
     const duration = endTime - startTime;
@@ -101,7 +101,7 @@ describe("Performance Benchmark", () => {
     }
 
     const startTime = performance.now();
-    const output = interpretTokens(tokens);
+    const output = processTokens(tokens, { output: "symbols" });
     const endTime = performance.now();
 
     const duration = endTime - startTime;

@@ -1,4 +1,5 @@
-import { processTokens } from "./process";
+import { fetchAndRegisterSchemas } from "@src/utils/schema-fetcher";
+import { processTokenSets } from "./process";
 import type { ProcessorOutput } from "./TokenProcessor";
 import { collectJsonFiles as collectJsonFilesUtil } from "./utils/file-collector";
 
@@ -41,6 +42,7 @@ export type ProcessFilesOptions = {
 /**
  * Process tokens from files on disk.
  * Node.js only - requires file system access.
+ * Handles async schema registration before processing.
  *
  * @param options - Configuration for file reading and processing
  * @returns ProcessorOutput with resolved tokens
@@ -51,15 +53,17 @@ export async function processTokensFromFiles({
   activeSets,
   activeTheme,
 }: ProcessFilesOptions): Promise<ProcessorOutput> {
-  // Step 1: Collect JsonFiles from disk
+  // Step 1: Register schemas (async)
+  await fetchAndRegisterSchemas(schemas ?? []);
+
+  // Step 2: Collect JsonFiles from disk
   const jsonFiles = await collectJsonFilesUtil(inputPath);
 
-  // Step 2: Normalize to flat structure
+  // Step 3: Normalize to flat structure
   const normalizedFiles = normalizeJsonFiles(jsonFiles);
 
-  // Step 3+: Core processing with schema registration
-  return processTokens(normalizedFiles, {
-    schemas,
+  // Step 4: Core synchronous processing
+  return processTokenSets(normalizedFiles, {
     activeSets,
     activeTheme,
   });

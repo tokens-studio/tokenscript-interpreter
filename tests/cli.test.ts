@@ -1,7 +1,7 @@
 import { Interpreter } from "@interpreter/interpreter";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
-import { interpretTokens } from "@src/processor/interpret";
+import { processTokens } from "@src/processor/process";
 import { describe, expect, it } from "vitest";
 
 describe("CLI Functionality", () => {
@@ -71,7 +71,7 @@ describe("CLI Functionality", () => {
         "another.token": "24px",
       };
 
-      const output = interpretTokens(tokens);
+      const output = processTokens(tokens, { output: "symbols" });
 
       expect(output.tokens.get("simple.token")?.toString()).toBe("16px");
       expect(output.tokens.get("another.token")?.toString()).toBe("24px");
@@ -83,7 +83,7 @@ describe("CLI Functionality", () => {
         derived: "{base} * 2px",
       };
 
-      const output = interpretTokens(tokens);
+      const output = processTokens(tokens, { output: "symbols" });
 
       expect(output.tokens.get("base")?.toString()).toBe("16");
       expect(output.tokens.get("derived")?.toString()).toBe("32px");
@@ -98,7 +98,7 @@ describe("CLI Functionality", () => {
         large: "{medium} + {small}",
       };
 
-      const output = interpretTokens(tokens);
+      const output = processTokens(tokens, { output: "symbols" });
 
       expect(output.tokens.get("base.spacing")?.toString()).toBe("8");
       expect(output.tokens.get("scale")?.toString()).toBe("2");
@@ -123,7 +123,7 @@ describe("CLI Functionality", () => {
         },
       };
 
-      const output = interpretTokens(tokens);
+      const output = processTokens(tokens, { output: "symbols" });
 
       expect(output.tokens.get("primary-color")?.toString()).toBe("#ff6b35");
       expect(output.tokens.get("base-spacing")?.toString()).toBe("16px");
@@ -146,7 +146,7 @@ describe("CLI Functionality", () => {
         },
       };
 
-      const output = interpretTokens(tokens);
+      const output = processTokens(tokens, { output: "symbols" });
 
       expect(output.tokens.get("primary-color")?.toString()).toBe("#ff6b35");
       expect(output.tokens.get("base-spacing")?.toString()).toBe("16px");
@@ -173,7 +173,7 @@ describe("CLI Functionality", () => {
         },
       };
 
-      const output = interpretTokens(tokens);
+      const output = processTokens(tokens, { output: "symbols" });
 
       expect(output.tokens.get("base")?.toString()).toBe("4px");
       expect(output.tokens.get("small")?.toString()).toBe("8px");
@@ -182,7 +182,7 @@ describe("CLI Functionality", () => {
     });
 
     it("should handle empty token sets", () => {
-      const output = interpretTokens({});
+      const output = processTokens({}, { output: "symbols" });
       expect(output.tokens.size).toBe(0);
     });
   });
@@ -193,7 +193,7 @@ describe("CLI Functionality", () => {
         circular: "{circular}",
       };
 
-      expect(() => interpretTokens(tokens)).toThrow(/circular dependency/i);
+      expect(() => processTokens(tokens, { output: "symbols" })).toThrow(/circular dependency/i);
     });
 
     it("should detect two-token circular dependency", () => {
@@ -202,7 +202,7 @@ describe("CLI Functionality", () => {
         b: "{a}",
       };
 
-      expect(() => interpretTokens(tokens)).toThrow(/circular dependency/i);
+      expect(() => processTokens(tokens, { output: "symbols" })).toThrow(/circular dependency/i);
     });
 
     it("should detect multi-token circular dependency chain", () => {
@@ -213,7 +213,7 @@ describe("CLI Functionality", () => {
         d: "{a}",
       };
 
-      expect(() => interpretTokens(tokens)).toThrow(/circular dependency/i);
+      expect(() => processTokens(tokens, { output: "symbols" })).toThrow(/circular dependency/i);
     });
 
     it("should not throw for valid dependency chains", () => {
@@ -224,7 +224,7 @@ describe("CLI Functionality", () => {
         d: "{c}",
       };
 
-      const output = interpretTokens(tokens);
+      const output = processTokens(tokens, { output: "symbols" });
       expect(output.tokens.get("a")?.toString()).toBe("10");
       expect(output.tokens.get("b")?.toString()).toBe("10");
       expect(output.tokens.get("c")?.toString()).toBe("10");
@@ -238,7 +238,7 @@ describe("CLI Functionality", () => {
         circular2: "{circular1}",
       };
 
-      expect(() => interpretTokens(tokens)).toThrow(/circular dependency/i);
+      expect(() => processTokens(tokens, { output: "symbols" })).toThrow(/circular dependency/i);
     });
   });
 
@@ -248,7 +248,7 @@ describe("CLI Functionality", () => {
         derived: "{missing}",
       };
 
-      const output = interpretTokens(tokens);
+      const output = processTokens(tokens, { output: "symbols" });
       expect(output.errors.size).toBeGreaterThan(0);
       expect(output.errors.has("derived")).toBe(true);
     });
@@ -260,7 +260,7 @@ describe("CLI Functionality", () => {
         c: "{b}",
       };
 
-      const output = interpretTokens(tokens);
+      const output = processTokens(tokens, { output: "symbols" });
       expect(output.errors.has("a")).toBe(true);
       expect(output.errors.has("b")).toBe(true);
       expect(output.errors.has("c")).toBe(true);
@@ -272,7 +272,7 @@ describe("CLI Functionality", () => {
         invalid: "{missing}",
       };
 
-      const output = interpretTokens(tokens);
+      const output = processTokens(tokens, { output: "symbols" });
       expect(output.errors.has("invalid")).toBe(true);
       expect(output.errors.has("valid")).toBe(false);
       expect(output.tokens.get("valid")?.toString()).toBe("10px");
@@ -283,7 +283,7 @@ describe("CLI Functionality", () => {
         invalid: "{missing}",
       };
 
-      const output = interpretTokens(tokens);
+      const output = processTokens(tokens, { output: "symbols" });
       expect(output.tokens.get("invalid")).toBe("{missing}");
     });
   });
@@ -305,7 +305,7 @@ describe("CLI Functionality", () => {
         },
       };
 
-      const output = interpretTokens(tokens);
+      const output = processTokens(tokens, { output: "symbols" });
       expect(output.tokens.get("color.primary")?.toString()).toBe("#3B82F6");
       expect(output.tokens.get("spacing.base")?.toString()).toBe("8px");
     });
@@ -330,7 +330,7 @@ describe("CLI Functionality", () => {
         },
       };
 
-      const output = interpretTokens(tokens);
+      const output = processTokens(tokens, { output: "symbols" });
       expect(output.tokens.get("base.size")?.toString()).toBe("16");
       expect(output.tokens.get("derived.small")?.toString()).toBe("12");
       expect(output.tokens.get("derived.large")?.toString()).toBe("24");
@@ -350,7 +350,7 @@ describe("CLI Functionality", () => {
         },
       };
 
-      const output = interpretTokens(tokens);
+      const output = processTokens(tokens, { output: "symbols" });
       expect(output.tokens.get("design.color.brand.primary")?.toString()).toBe("#FF0000");
     });
 
@@ -378,7 +378,7 @@ describe("CLI Functionality", () => {
         },
       };
 
-      const output = interpretTokens(tokens);
+      const output = processTokens(tokens, { output: "symbols" });
       expect(output.tokens.get("colors.primary")?.toString()).toBe("#FF0000");
       expect(output.tokens.get("colors.secondary")?.toString()).toBe("#00FF00");
       expect(output.tokens.get("spacing.small")?.toString()).toBe("8px");
@@ -405,7 +405,7 @@ describe("CLI Functionality", () => {
         },
       };
 
-      const output = interpretTokens(tokens);
+      const output = processTokens(tokens, { output: "symbols" });
       expect(output.tokens.get("base.unit")?.toString()).toBe("8");
       expect(output.tokens.get("spacing.small")?.toString()).toBe("8px");
       expect(output.tokens.get("spacing.large")?.toString()).toBe("16px");
