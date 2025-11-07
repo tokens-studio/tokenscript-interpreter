@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- **Test Structure**: Reorganized test suite with improved directory structure and naming conventions for better maintainability
+- **Test Configuration**: Added linter overrides and formatting rules for test files
+- **Code Quality**: Removed debug logs and standardized imports across test suite
+
 ## [0.7.0] - 2025-11-07
 
 ### Added
