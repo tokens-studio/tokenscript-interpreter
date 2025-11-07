@@ -36,6 +36,16 @@
         "default": "./dist/lib/processor.cjs"
       }
     },
+    "./processor-node": {
+      "import": {
+        "types": "./dist/lib/processor-node.d.ts",
+        "default": "./dist/lib/processor-node.js"
+      },
+      "require": {
+        "types": "./dist/lib/processor-node.d.cts",
+        "default": "./dist/lib/processor-node.cjs"
+      }
+    },
     "./schema": {
       "import": {
         "types": "./dist/lib/schema.d.ts",

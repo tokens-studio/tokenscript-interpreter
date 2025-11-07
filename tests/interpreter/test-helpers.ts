@@ -2,7 +2,7 @@ import type { Config } from "@interpreter/config";
 import { Interpreter } from "@interpreter/interpreter";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
-import { interpretTokens } from "@src/tokenset-processor";
+import { interpretTokens } from "@src/processor/interpret";
 
 /**
  * Interpret a simple tokenscript expression using interpretTokens
@@ -10,14 +10,15 @@ import { interpretTokens } from "@src/tokenset-processor";
  */
 export function interpret(expression: string, references: Record<string, any> = {}, config?: Config): string {
   const tokens: Record<string, any> = { __test: expression, ...references };
-  const result = interpretTokens(tokens, config);
-  return result.__test ?? "";
+  const output = interpretTokens(tokens, config);
+  const value = output.tokens.get("__test");
+  return value?.toString() ?? "";
 }
 
 /**
- * Interpret multiple tokens at once
+ * Interpret multiple tokens at once, returns processor output
  */
-export function interpretMultiple(tokens: Record<string, string>, config?: Config): Record<string, string> {
+export function interpretMultiple(tokens: Record<string, string>, config?: Config): any {
   return interpretTokens(tokens, config);
 }
 

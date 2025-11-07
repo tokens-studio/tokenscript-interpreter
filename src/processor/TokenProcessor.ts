@@ -1,4 +1,5 @@
 import type { ASTNode } from "@interpreter/ast";
+import type { Config } from "@interpreter/config";
 import { Interpreter, type interpreterResult } from "@interpreter/interpreter";
 import { type ParseExpressionResult, parseExpression } from "@interpreter/parser";
 import { DependencyError } from "./errors";
@@ -51,6 +52,7 @@ export class TokenProcessor {
   public processTokens(
     tokens: Map<RefPath, string>,
     callbacks?: ProcessorCallbacks,
+    config?: Config,
   ): ProcessorResult {
     const graph = new DependencyGraph<RefPath>();
     const resolved: ResolvedTokens = new Map();
@@ -60,7 +62,7 @@ export class TokenProcessor {
     // OPTIMIZATION: Create single interpreter instance with shared references
     // The interpreter holds a LIVE REFERENCE to the resolved map, so as we
     // add new tokens, they're automatically available for reference resolution
-    const sharedInterpreter = new Interpreter(null, { references: resolved });
+    const sharedInterpreter = new Interpreter(null, { references: resolved, config });
 
     const parseToken = (tokenName: string, tokenValue: string): ParseExpressionResult | Error => {
       try {
@@ -165,7 +167,7 @@ export class TokenProcessor {
   /**
    * Build tokens from a flat token map
    */
-  public build(tokens: Map<RefPath, string>): ProcessorOutput {
+  public build(tokens: Map<RefPath, string>, config?: Config): ProcessorOutput {
     const output: Map<RefPath, string | interpreterResult> = new Map();
     const errors: Map<RefPath, Error> = new Map();
 
@@ -179,7 +181,7 @@ export class TokenProcessor {
       },
     };
 
-    const result = this.processTokens(tokens, callbacks);
+    const result = this.processTokens(tokens, callbacks, config);
 
     return {
       ...result,

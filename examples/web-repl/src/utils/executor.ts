@@ -161,8 +161,14 @@ export async function executeCode(options: ExecuteCodeOptions): Promise<Executio
 
     // JSON token processing
     const jsonTokens = JSON.parse(code);
-    const output = interpretTokens(jsonTokens, config);
+    const processorOutput = interpretTokens(jsonTokens, config);
     const executionTime = performance.now() - startTime;
+
+    // Convert tokens Map to object with stringified values
+    const output: Record<string, string> = {};
+    for (const [key, value] of processorOutput.tokens) {
+      output[key] = value.toString();
+    }
 
     return {
       type: "json",

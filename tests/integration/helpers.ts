@@ -1,6 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { processTokens } from "@src/processor/process";
+import { processTokensFromFiles } from "@src/processor/processFiles";
 import type { ProcessorOutput } from "@src/processor/TokenProcessor";
 
 export interface TokenFile {
@@ -80,7 +80,7 @@ export async function processTokenFile(
   }>,
 ): Promise<ProcessorOutput> {
   const filePath = await writeTokenFile(tempDir, fileName, tokens);
-  return processTokens({
+  return processTokensFromFiles({
     path: filePath,
     ...options,
   });

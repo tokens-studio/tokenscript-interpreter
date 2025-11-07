@@ -1,13 +1,13 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { processTokens } from "@src/processor/process";
+import { processTokensFromFiles } from "@src/processor/processFiles";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 // Helper to extract value from Symbol or return as-is
 const getValue = (v: any) => (v && typeof v === "object" && "value" in v ? v.value : v);
 
-describe("processTokens", () => {
+describe("processTokensFromFiles", () => {
   let tempDir: string;
 
   beforeEach(async () => {
@@ -29,7 +29,7 @@ describe("processTokens", () => {
       }),
     );
 
-    const result = await processTokens({ path: tokensFile });
+    const result = await processTokensFromFiles({ path: tokensFile });
 
     expect(getValue(result.tokens.get("color.primary"))).toBe("#FF0000");
     expect(getValue(result.tokens.get("color.secondary"))).toBe("#00FF00");
@@ -52,7 +52,7 @@ describe("processTokens", () => {
       }),
     );
 
-    const result = await processTokens({ path: tokensFile });
+    const result = await processTokensFromFiles({ path: tokensFile });
 
     expect(getValue(result.tokens.get("color.primary"))).toBe("#FF0000");
     expect(getValue(result.tokens.get("color.secondary"))).toBe("#00FF00");
@@ -79,7 +79,7 @@ describe("processTokens", () => {
       }),
     );
 
-    const result = await processTokens({
+    const result = await processTokensFromFiles({
       path: tempDir,
       activeSets: ["global", "theme"],
     });
@@ -108,7 +108,7 @@ describe("processTokens", () => {
       }),
     );
 
-    const result = await processTokens({
+    const result = await processTokensFromFiles({
       path: tempDir,
       activeSets: ["base", "override"],
     });
@@ -150,7 +150,7 @@ describe("processTokens", () => {
       }),
     );
 
-    const result = await processTokens({
+    const result = await processTokensFromFiles({
       path: tokensFile,
       activeTheme: "light",
     });
@@ -180,7 +180,7 @@ describe("processTokens", () => {
     );
 
     await expect(
-      processTokens({
+      processTokensFromFiles({
         path: tokensFile,
         activeTheme: "nonexistent",
       }),
@@ -199,7 +199,7 @@ describe("processTokens", () => {
     );
 
     await expect(
-      processTokens({
+      processTokensFromFiles({
         path: tokensFile,
         activeSets: ["nonexistent"],
       }),
@@ -219,7 +219,7 @@ describe("processTokens", () => {
       }),
     );
 
-    const result = await processTokens({ path: tokensFile });
+    const result = await processTokensFromFiles({ path: tokensFile });
 
     expect(getValue(result.tokens.get("spacing.base"))).toBe("8");
     expect(getValue(result.tokens.get("spacing.small"))).toBe("4");
@@ -240,7 +240,7 @@ describe("processTokens", () => {
       }),
     );
 
-    const result = await processTokens({ path: tokensFile });
+    const result = await processTokensFromFiles({ path: tokensFile });
 
     expect(getValue(result.tokens.get("values.a"))).toBe("10");
     expect(getValue(result.tokens.get("values.b"))).toBe("15");

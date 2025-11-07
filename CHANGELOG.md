@@ -7,10 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **In-Memory Token Processing**: New `interpretTokens()` function for processing tokens without file system operations
+  - Accepts Map (preferred, skips flattening), flat records, or nested JSON tokens
+  - Returns full ProcessorOutput with symbols preserved for downstream use
+  - Integrated into unified processor module for consistent token handling
+- **Browser-Compatible Processor**: Split processor into browser and Node.js variants
+  - `interpretTokens()` available in main processor export (browser-safe)
+  - File-based processing via separate `processor-node` export (Node.js only)
+  - Web REPL now works without Node.js dependencies
+- **Config Propagation**: Enhanced token processing to pass config through full pipeline
+  - `TokenProcessor.processTokens()` now accepts optional `Config` parameter
+  - `TokenProcessor.build()` accepts optional `Config` parameter
+  - `interpretTokens()` passes config to token processor for symbol creation
+
 ### Changed
-- **Test Structure**: Reorganized test suite with improved directory structure and naming conventions for better maintainability
-- **Test Configuration**: Added linter overrides and formatting rules for test files
-- **Code Quality**: Removed debug logs and standardized imports across test suite
+- **Processor Architecture**: Consolidated token processing into modular, unified interface
+  - Split `process.ts` into three focused modules: `process.ts` (core), `processFiles.ts` (Node-only), `interpret.ts` (browser)
+  - Both file-based (`processTokens`, `processTokensFromFiles`) and in-memory (`interpretTokens`) use same `flattenToTokens()` pattern
+  - Separated symbol handling: `buildTokensWithSymbols()` preserves symbols, `buildTokens()` stringifies for JSON
+- **API Design**: Breaking changes for beta library stability
+  - Removed legacy `src/tokenset-processor.ts` entirely
+  - `interpretTokens()` returns `ProcessorOutput` (includes graph, errors, unresolved) instead of plain record
+  - Symbols are preserved as-is; users call `.toString()` for JSON conversion
+  - Config parameter now threaded through entire processor stack
+- **Package Exports**: Added new `./processor-node` export for Node.js file-based processing
+  - Main processor export (`./processor`) is browser-compatible
+  - File I/O operations isolated in `processor-node` entry point
+
+### Removed
+- **Legacy Architecture**: Deleted `src/tokenset-processor.ts` (469 lines)
+  - Removed `TokenSetResolver` class (replaced by `TokenProcessor`)
+  - Removed theme processing functions (`processThemes`, `buildThemeTree`, `permutateTokensets`, `interpretTokensets`)
+  - Removed all old wrapper functions and compatibility layers
+  - Removed 424 lines of duplicate/legacy code
+
+### Fixed
+- Web REPL no longer loads Node.js modules, resolving util.inherits errors in browser environment
+- Token processing now properly preserves and applies custom Config (colorManager, functionsManager, etc.)
+- Web REPL JSON output now correctly converts Symbol objects to stringified values
+
+### Tests
+- **Updated all processor tests** to use new split architecture
+- **Refactored test helpers** to import from correct modules
+- **Simplified assertions** in token tests for Map-based return types
+- **Removed tests** for deprecated TokenSetResolver class
+- All 1000 tests passing with new architecture
 
 ## [0.7.0] - 2025-11-07
 

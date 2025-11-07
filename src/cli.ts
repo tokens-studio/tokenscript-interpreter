@@ -2,8 +2,12 @@ import * as fs from "node:fs";
 
 import { Command } from "commander";
 import packageJson from "../package.json" with { type: "json" };
-import { collectErrors, normalizeJsonFiles, processTokens } from "./processor/process";
-import { collectJsonFiles } from "./processor/utils/file-collector";
+import { collectErrors } from "./processor/process";
+import {
+  collectJsonFiles,
+  normalizeJsonFiles,
+  processTokensFromFiles,
+} from "./processor/processFiles";
 import type { Theme } from "./processor/utils/theme-resolver";
 import { extractSetNames, resolveThemes } from "./processor/utils/theme-resolver";
 import { startRepl } from "./repl";
@@ -46,7 +50,7 @@ program
   .option("--strict", "Output errors if any exist, otherwise output tokens", false)
 
   .action(async (options) => {
-    const result = await processTokens({
+    const result = await processTokensFromFiles({
       path: options.input,
       outputPath: options.output,
       schemas: options.schema,

@@ -1,9 +1,9 @@
+import type { Config } from "@interpreter/config";
 import { fetchAndRegisterSchemas } from "@src/utils/schema-fetcher";
 import type { interpreterResult } from "../interpreter/interpreter";
 import { isTokenscriptSymbol } from "../interpreter/symbols";
 import { isObject, isSingleEntryObject } from "../interpreter/utils/type";
 import { type ProcessorOutput, TokenProcessor } from "./TokenProcessor";
-import { collectJsonFiles } from "./utils/file-collector";
 import { extractSetNames, resolveThemes, selectTheme } from "./utils/theme-resolver";
 import { flattenObject, isNested, recordToMap } from "./utils/tokens";
 
@@ -20,14 +20,6 @@ export function collectErrors(
   }
   return errors;
 }
-
-export type ProcessTokensOptions = {
-  path: string;
-  outputPath?: string;
-  schemas?: string[];
-  activeSets?: string[];
-  activeTheme?: string;
-};
 
 // Json Normalization ----------------------------------------------------------
 
@@ -123,7 +115,10 @@ function flattenToTokens(sets: Record<string, unknown>, setNames: string[]): Map
 
 // Step 5: Interpret tokens ---------------------------------------------------
 
-function buildTokens(tokens: Map<string, string>): ProcessorOutput {
+/**
+ * Builds tokens and stringifies symbols for JSON output.
+ */
+function buildTokens(tokens: Map<string, string>, config?: Config): ProcessorOutput {
   const processor = new TokenProcessor();
   const output: Map<string, string> = new Map();
   const errors: Map<string, Error> = new Map();
@@ -144,7 +139,7 @@ function buildTokens(tokens: Map<string, string>): ProcessorOutput {
     },
   };
 
-  const result = processor.processTokens(tokens, callbacks);
+  const result = processor.processTokens(tokens, callbacks, config);
 
   return {
     ...result,
@@ -153,29 +148,33 @@ function buildTokens(tokens: Map<string, string>): ProcessorOutput {
   };
 }
 
-// Main ------------------------------------------------------------------------
+// Core Processing (Node + Browser) ------------------------------------------
 
-export async function processTokens({
-  path: inputPath,
-  schemas,
-  activeSets,
-  activeTheme,
-}: ProcessTokensOptions): Promise<ProcessorOutput> {
+/**
+ * Core processing function that works with normalized token sets.
+ * Can be used by both Node.js (after file reading) and browser contexts.
+ * Handles schema registration.
+ */
+export async function processTokens(
+  normalizedFiles: Record<string, unknown>,
+  options: {
+    schemas?: string[];
+    activeSets?: string[];
+    activeTheme?: string;
+    config?: Config;
+  } = {},
+): Promise<ProcessorOutput> {
+  const { schemas, activeSets, activeTheme, config } = options;
+
   // Step 0: Register schemas
   await fetchAndRegisterSchemas(schemas ?? []);
 
-  // Step 1: Collect JsonFiles
-  const jsonFiles = await collectJsonFiles(inputPath);
-
-  // Step 2: Normalize to flat structure
-  const normalizedFiles = normalizeJsonFiles(jsonFiles);
-
-  // Step 3: Determine sets to pick
+  // Step 1: Determine sets to pick
   const setNames = determineSets(normalizedFiles, activeSets, activeTheme);
 
-  // Step 4: Flatten to tokens
+  // Step 2: Flatten to tokens
   const tokens = flattenToTokens(normalizedFiles, setNames);
 
-  // Step 5: Interpret tokens
-  return buildTokens(tokens);
+  // Step 3: Interpret tokens
+  return buildTokens(tokens, config);
 }
