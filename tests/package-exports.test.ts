@@ -33,9 +33,9 @@ describe("Package Exports", () => {
 
     it("should have all processor exports in main index", async () => {
       const mainModule = await import("../src/lib/index");
-      const processorsModule = await import("../src/lib/processors");
+      const processorModule = await import("../src/lib/processor");
 
-      const processorExports = Object.keys(processorsModule);
+      const processorExports = Object.keys(processorModule);
 
       for (const exportName of processorExports) {
         expect(mainModule).toHaveProperty(exportName);
@@ -74,13 +74,9 @@ describe("Package Exports", () => {
       expect(module.Config).toBeDefined();
     });
 
-    it("should successfully import from /processors", async () => {
-      const module = await import("../src/lib/processors");
-      expect(module.TokenProcessor).toBeDefined();
+    it("should successfully import from /processor", async () => {
+      const module = await import("../src/lib/processor");
       expect(module.processTokens).toBeDefined();
-      expect(module.flattenObject).toBeDefined();
-      expect(module.hasNestedStructure).toBeDefined();
-      expect(module.recordToMap).toBeDefined();
     });
 
     it("should successfully import from /schema", async () => {
@@ -105,11 +101,11 @@ describe("Package Exports", () => {
   describe("Export uniqueness across modules", () => {
     it("should detect overlapping exports between modules", async () => {
       const interpreterModule = await import("../src/lib/interpreter");
-      const processorsModule = await import("../src/lib/processors");
+      const processorModule = await import("../src/lib/processor");
       const schemaModule = await import("../src/lib/schema");
 
       const interpreterExports = new Set(Object.keys(interpreterModule));
-      const processorExports = new Set(Object.keys(processorsModule));
+      const processorExports = new Set(Object.keys(processorModule));
       const schemaExports = new Set(Object.keys(schemaModule));
 
       // Find overlaps
@@ -152,9 +148,9 @@ describe("Package Exports", () => {
         "interpreter.js",
         "interpreter.cjs",
         "interpreter.d.ts",
-        "processors.js",
-        "processors.cjs",
-        "processors.d.ts",
+        "processor.js",
+        "processor.cjs",
+        "processor.d.ts",
         "schema.js",
         "schema.cjs",
         "schema.d.ts",

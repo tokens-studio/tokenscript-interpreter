@@ -30,17 +30,18 @@ export function flattenObject(
     const path = prefix ? `${prefix}.${key}` : key;
 
     if (value && typeof value === "object" && !Array.isArray(value)) {
+      const objValue = value as Record<string, unknown>;
       // Check for token with $value property (Design Tokens format)
-      if ("$value" in value) {
-        result.set(path, String(value.$value));
+      if ("$value" in objValue) {
+        result.set(path, String(objValue.$value));
       }
       // Check for token with value property (legacy format)
-      else if ("value" in value) {
-        result.set(path, String(value.value));
+      else if ("value" in objValue) {
+        result.set(path, String(objValue.value));
       }
       // Otherwise, recurse into nested object
       else {
-        const nested = flattenObject(value, path, skipMetadata);
+        const nested = flattenObject(objValue, path, skipMetadata);
         for (const [nestedKey, nestedValue] of nested) {
           result.set(nestedKey, nestedValue);
         }
@@ -70,11 +71,10 @@ export function recordToMap(record: Record<string, unknown>): Map<string, string
  * Detects if an object has nested structure (vs flat tokens).
  */
 export function isNested(obj: Record<string, unknown>): boolean {
-  return Object.keys(obj).some(
-    (key) =>
-      typeof obj[key] === "object" &&
-      obj[key] !== null &&
-      !Array.isArray(obj[key]) &&
-      !key.startsWith("$"),
-  );
+  return Object.keys(obj).some((key) => {
+    const value = obj[key];
+    return (
+      typeof value === "object" && value !== null && !Array.isArray(value) && !key.startsWith("$")
+    );
+  });
 }
