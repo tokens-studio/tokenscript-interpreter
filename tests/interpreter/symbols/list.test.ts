@@ -1,12 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { BooleanSymbol, DictionarySymbol, ListSymbol, NumberSymbol, StringSymbol } from "@interpreter/symbols";
 import { interpretAndGetVariable, interpretExpectError } from "@tests/interpreter/test-helpers";
-import {
-  ListSymbol,
-  NumberSymbol,
-  StringSymbol,
-  DictionarySymbol,
-  BooleanSymbol,
-} from "@interpreter/symbols";
+import { describe, expect, it } from "vitest";
 
 describe("ListSymbol - Unit Tests", () => {
   describe("constructor", () => {
@@ -30,11 +24,7 @@ describe("ListSymbol - Unit Tests", () => {
 
   describe("deepCopy", () => {
     it("should create a deep copy with primitive elements", () => {
-      const original = new ListSymbol([
-        new NumberSymbol(42),
-        new StringSymbol("hello"),
-        new BooleanSymbol(true),
-      ]);
+      const original = new ListSymbol([new NumberSymbol(42), new StringSymbol("hello"), new BooleanSymbol(true)]);
 
       const copy = original.deepCopy();
 
@@ -52,9 +42,7 @@ describe("ListSymbol - Unit Tests", () => {
       const copy = original.deepCopy();
 
       expect(copy.elements[0]).not.toBe(original.elements[0]);
-      expect((copy.elements[0] as DictionarySymbol).value).not.toBe(
-        (original.elements[0] as DictionarySymbol).value
-      );
+      expect((copy.elements[0] as DictionarySymbol).value).not.toBe((original.elements[0] as DictionarySymbol).value);
     });
   });
 
@@ -184,7 +172,6 @@ describe("ListSymbol - Unit Tests", () => {
     });
   });
 });
-
 
 describe("Lists - Creation and Basic Operations", () => {
   it("should create a list", () => {

@@ -109,20 +109,12 @@ describe("Package Exports", () => {
       const schemaExports = new Set(Object.keys(schemaModule));
 
       // Find overlaps
-      const interpreterProcessorOverlap = [...interpreterExports].filter((x) =>
-        processorExports.has(x),
-      );
-      const interpreterSchemaOverlap = [...interpreterExports].filter((x) =>
-        schemaExports.has(x),
-      );
-      const processorSchemaOverlap = [...processorExports].filter((x) =>
-        schemaExports.has(x),
-      );
+      const interpreterProcessorOverlap = [...interpreterExports].filter((x) => processorExports.has(x));
+      const interpreterSchemaOverlap = [...interpreterExports].filter((x) => schemaExports.has(x));
+      const processorSchemaOverlap = [...processorExports].filter((x) => schemaExports.has(x));
 
       // These are expected to be empty - if not, we have naming conflicts
-      expect(interpreterProcessorOverlap, "Overlap between interpreter and processors").toEqual(
-        [],
-      );
+      expect(interpreterProcessorOverlap, "Overlap between interpreter and processors").toEqual([]);
       expect(interpreterSchemaOverlap, "Overlap between interpreter and schema").toEqual([]);
       expect(processorSchemaOverlap, "Overlap between processors and schema").toEqual([]);
     });

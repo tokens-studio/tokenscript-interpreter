@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
 import { TokenSetResolver } from "@src/tokenset-processor";
+import { describe, expect, it } from "vitest";
 
 describe("Performance Benchmark", () => {
   it("should efficiently resolve large token sets", () => {
@@ -21,8 +21,7 @@ describe("Performance Benchmark", () => {
 
     // Complex expressions
     for (let i = 0; i < 25; i++) {
-      tokens[`complex.calc.${i}`] =
-        `({base.size.${i}} + {base.size.${i + 1}}) * {base.size.${i + 2}}`;
+      tokens[`complex.calc.${i}`] = `({base.size.${i}} + {base.size.${i + 1}}) * {base.size.${i + 2}}`;
     }
 
     const startTime = performance.now();
@@ -104,7 +103,7 @@ describe("Performance Benchmark", () => {
     const tokens: Record<string, string> = {};
 
     // Create a chain of dependencies where each token depends on the previous one
-    tokens["base"] = "10";
+    tokens.base = "10";
     for (let i = 1; i <= 100; i++) {
       tokens[`chain.${i}`] = `{${i === 1 ? "base" : `chain.${i - 1}`}} + 1`;
     }
@@ -118,7 +117,7 @@ describe("Performance Benchmark", () => {
     const tokensPerSecond = Math.round(Object.keys(tokens).length / (duration / 1000));
 
     // Verify the chain resolved correctly
-    expect(result.resolvedTokens["base"]?.toString()).toBe("10");
+    expect(result.resolvedTokens.base?.toString()).toBe("10");
     expect(result.resolvedTokens["chain.1"]?.toString()).toBe("11");
     expect(result.resolvedTokens["chain.50"]?.toString()).toBe("60");
     expect(result.resolvedTokens["chain.100"]?.toString()).toBe("110");

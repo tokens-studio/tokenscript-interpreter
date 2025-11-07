@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
-import { NumberSymbol, StringSymbol } from "@src/interpreter/symbols";
 import { InterpreterError } from "@src/interpreter/errors";
+import { NumberSymbol, StringSymbol } from "@src/interpreter/symbols";
+import { describe, expect, it } from "vitest";
 
 describe("NumberSymbol", () => {
   describe("constructor", () => {

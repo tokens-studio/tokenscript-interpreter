@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
-import { BooleanSymbol } from "@src/interpreter/symbols";
 import { InterpreterError } from "@src/interpreter/errors";
+import { BooleanSymbol } from "@src/interpreter/symbols";
+import { describe, expect, it } from "vitest";
 
 describe("BooleanSymbol", () => {
   describe("constructor", () => {

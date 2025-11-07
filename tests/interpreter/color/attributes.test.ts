@@ -1,8 +1,8 @@
-import { describe, expect, it, beforeEach } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { createInterpreter } from "@tests/interpreter/test-helpers";
 import { Config } from "@interpreter/config/config";
+import { createInterpreter } from "@tests/interpreter/test-helpers";
+import { beforeEach, describe, expect, it } from "vitest";
 
 describe("Color Attributes - RGB Color Type", () => {
   let config: Config;

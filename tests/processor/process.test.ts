@@ -1,12 +1,11 @@
-import { describe, expect, it, beforeEach, afterEach } from "vitest";
-import { processTokens } from "@src/processor/process";
 import fs from "node:fs/promises";
-import path from "node:path";
 import os from "node:os";
+import path from "node:path";
+import { processTokens } from "@src/processor/process";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 // Helper to extract value from Symbol or return as-is
-const getValue = (v: any) =>
-  v && typeof v === "object" && "value" in v ? v.value : v;
+const getValue = (v: any) => (v && typeof v === "object" && "value" in v ? v.value : v);
 
 describe("processTokens", () => {
   let tempDir: string;

@@ -1,8 +1,6 @@
-import { describe, expect, it, vi } from "vitest";
 import type { SchemaFetcherOptions } from "@src/utils/schema-fetcher";
-import {
-  fetchTokenScriptSchema,
-} from "@src/utils/schema-fetcher";
+import { fetchTokenScriptSchema } from "@src/utils/schema-fetcher";
+import { describe, expect, it, vi } from "vitest";
 
 // Mock fetch for testing
 const mockFetch = vi.fn();
@@ -58,7 +56,6 @@ const mockSchemaResponse = {
 };
 
 describe("Schema Fetcher", () => {
-
   describe("fetchTokenScriptSchema", () => {
     beforeEach(() => {
       vi.clearAllMocks();
@@ -71,15 +68,15 @@ describe("Schema Fetcher", () => {
       });
 
       const result = await fetchTokenScriptSchema("https://example.com/schema");
-      
+
       expect(mockFetch).toHaveBeenCalledWith("https://example.com/schema", {
         signal: expect.any(AbortSignal),
         headers: {
-          "Accept": "application/json",
+          Accept: "application/json",
           "User-Agent": "TokenScript-Interpreter/1.0",
         },
       });
-      
+
       expect(result).toEqual(mockSchemaResponse);
     });
 
@@ -90,22 +87,20 @@ describe("Schema Fetcher", () => {
         statusText: "Not Found",
       });
 
-      await expect(fetchTokenScriptSchema("https://example.com/schema"))
-        .rejects.toThrow("HTTP error! status: 404 - Not Found");
+      await expect(fetchTokenScriptSchema("https://example.com/schema")).rejects.toThrow("HTTP error! status: 404 - Not Found");
     });
 
     it("should handle network errors", async () => {
       mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
-      await expect(fetchTokenScriptSchema("https://example.com/schema"))
-        .rejects.toThrow("Failed to fetch schema: Network error");
+      await expect(fetchTokenScriptSchema("https://example.com/schema")).rejects.toThrow("Failed to fetch schema: Network error");
     });
 
     it("should handle timeout", async () => {
       const options: SchemaFetcherOptions = { timeout: 100 };
-      
+
       // Mock a slow response that gets aborted
-      mockFetch.mockImplementationOnce((url, opts) => {
+      mockFetch.mockImplementationOnce((_url, opts) => {
         return new Promise((resolve, reject) => {
           const timeout = setTimeout(() => {
             resolve({
@@ -113,53 +108,50 @@ describe("Schema Fetcher", () => {
               json: () => Promise.resolve(mockSchemaResponse),
             });
           }, 200);
-          
+
           if (opts?.signal) {
-            opts.signal.addEventListener('abort', () => {
+            opts.signal.addEventListener("abort", () => {
               clearTimeout(timeout);
-              const error = new Error('Aborted');
-              error.name = 'AbortError';
+              const error = new Error("Aborted");
+              error.name = "AbortError";
               reject(error);
             });
           }
         });
       });
 
-      await expect(fetchTokenScriptSchema("https://example.com/schema", options))
-        .rejects.toThrow("Schema fetch timeout after 100ms");
+      await expect(fetchTokenScriptSchema("https://example.com/schema", options)).rejects.toThrow("Schema fetch timeout after 100ms");
     });
 
     it("should handle invalid schema structure", async () => {
       const invalidResponse = { invalid: "structure" };
-      
+
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve(invalidResponse),
       });
 
-      await expect(fetchTokenScriptSchema("https://example.com/schema"))
-        .rejects.toThrow("Invalid schema structure:");
+      await expect(fetchTokenScriptSchema("https://example.com/schema")).rejects.toThrow("Invalid schema structure:");
     });
 
     it("should pass custom headers", async () => {
-      const customHeaders = { "Authorization": "Bearer token123" };
-      
+      const customHeaders = { Authorization: "Bearer token123" };
+
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve(mockSchemaResponse),
       });
 
       await fetchTokenScriptSchema("https://example.com/schema", { headers: customHeaders });
-      
+
       expect(mockFetch).toHaveBeenCalledWith("https://example.com/schema", {
         signal: expect.any(AbortSignal),
         headers: {
-          "Accept": "application/json",
+          Accept: "application/json",
           "User-Agent": "TokenScript-Interpreter/1.0",
-          "Authorization": "Bearer token123",
+          Authorization: "Bearer token123",
         },
       });
     });
   });
-
 });

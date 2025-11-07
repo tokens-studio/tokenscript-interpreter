@@ -1,8 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { generateSchemaFileContent } from "@src/utils/schema-packager";
 import type { ColorSpecification } from "@interpreter/config/managers/color/schema";
 import type { FunctionSpecification } from "@interpreter/config/managers/functions/schema";
 import { fetchTokenScriptSchema } from "@src/utils/schema-fetcher";
+import { generateSchemaFileContent } from "@src/utils/schema-packager";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@src/utils/schema-fetcher");
 
@@ -75,10 +75,7 @@ describe("Schema Packager", () => {
       ],
     });
 
-    expect(fetchTokenScriptSchema).toHaveBeenCalledWith(
-      expect.stringContaining("rgb-color/latest"),
-      expect.objectContaining({ timeout: 10000 })
-    );
+    expect(fetchTokenScriptSchema).toHaveBeenCalledWith(expect.stringContaining("rgb-color/latest"), expect.objectContaining({ timeout: 10000 }));
 
     expect(result).toContain("export const COLOR_SCHEMAS");
     expect(result).toContain("// Auto-generated file - DO NOT EDIT");
@@ -101,10 +98,7 @@ describe("Schema Packager", () => {
       ],
     });
 
-    expect(fetchTokenScriptSchema).toHaveBeenCalledWith(
-      expect.stringContaining("rgb-color/1.0.0"),
-      expect.any(Object)
-    );
+    expect(fetchTokenScriptSchema).toHaveBeenCalledWith(expect.stringContaining("rgb-color/1.0.0"), expect.any(Object));
   });
 
   it("should generate content with hardcoded schemas", async () => {
@@ -177,10 +171,7 @@ describe("Schema Packager", () => {
       ],
     });
 
-    expect(fetchTokenScriptSchema).toHaveBeenCalledWith(
-      expect.stringContaining("custom.example.com"),
-      expect.any(Object)
-    );
+    expect(fetchTokenScriptSchema).toHaveBeenCalledWith(expect.stringContaining("custom.example.com"), expect.any(Object));
   });
 
   it("should use per-schema base URL when specified", async () => {
@@ -201,10 +192,7 @@ describe("Schema Packager", () => {
       ],
     });
 
-    expect(fetchTokenScriptSchema).toHaveBeenCalledWith(
-      expect.stringContaining("schema-specific.example.com"),
-      expect.any(Object)
-    );
+    expect(fetchTokenScriptSchema).toHaveBeenCalledWith(expect.stringContaining("schema-specific.example.com"), expect.any(Object));
   });
 
   it("should use custom timeout when specified", async () => {
@@ -224,10 +212,7 @@ describe("Schema Packager", () => {
       ],
     });
 
-    expect(fetchTokenScriptSchema).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({ timeout: 5000 })
-    );
+    expect(fetchTokenScriptSchema).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ timeout: 5000 }));
   });
 
   it("should handle fetch errors gracefully", async () => {

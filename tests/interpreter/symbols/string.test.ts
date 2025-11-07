@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
-import { interpretAndGetVariable, interpretAndGetVariables } from "@tests/interpreter/test-helpers";
-import { StringSymbol, NumberSymbol, ListSymbol } from "@interpreter/symbols";
 import { InterpreterError } from "@interpreter/errors";
+import { ListSymbol, NumberSymbol, StringSymbol } from "@interpreter/symbols";
+import { interpretAndGetVariable, interpretAndGetVariables } from "@tests/interpreter/test-helpers";
+import { describe, expect, it } from "vitest";
 
 describe("StringSymbol - Unit Tests", () => {
   describe("constructor", () => {
@@ -118,28 +118,28 @@ describe("StringSymbol - Unit Tests", () => {
       const result = str.splitImpl(new StringSymbol(","));
       expect(result).toBeInstanceOf(ListSymbol);
       expect(result.elements.length).toBe(3);
-      expect(result.elements.map(e => e.value)).toEqual(["a", "b", "c"]);
+      expect(result.elements.map((e) => e.value)).toEqual(["a", "b", "c"]);
     });
 
     it("should split by string delimiter", () => {
       const str = new StringSymbol("a,b,c");
       const result = str.splitImpl(",");
       expect(result.elements.length).toBe(3);
-      expect(result.elements.map(e => e.value)).toEqual(["a", "b", "c"]);
+      expect(result.elements.map((e) => e.value)).toEqual(["a", "b", "c"]);
     });
 
     it("should split into characters when no delimiter", () => {
       const str = new StringSymbol("abc");
       const result = str.splitImpl();
       expect(result.elements.length).toBe(3);
-      expect(result.elements.map(e => e.value)).toEqual(["a", "b", "c"]);
+      expect(result.elements.map((e) => e.value)).toEqual(["a", "b", "c"]);
     });
 
     it("should split into characters when delimiter is null", () => {
       const str = new StringSymbol("abc");
       const result = str.splitImpl(null);
       expect(result.elements.length).toBe(3);
-      expect(result.elements.map(e => e.value)).toEqual(["a", "b", "c"]);
+      expect(result.elements.map((e) => e.value)).toEqual(["a", "b", "c"]);
     });
 
     it("should throw error for invalid delimiter type", () => {
@@ -192,7 +192,6 @@ describe("StringSymbol - Unit Tests", () => {
     });
   });
 });
-
 
 describe("String Methods - Split Operations", () => {
   it("should handle string split method", () => {

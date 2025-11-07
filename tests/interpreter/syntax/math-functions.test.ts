@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
 import { Interpreter } from "@interpreter/interpreter";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
+import { describe, expect, it } from "vitest";
 
 describe("Math Functions - Parse Int", () => {
   it("should handle parse_int with base 16", () => {

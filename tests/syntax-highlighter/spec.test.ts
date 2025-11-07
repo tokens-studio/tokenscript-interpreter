@@ -1,15 +1,15 @@
-import { describe, expect, it } from "vitest";
 import {
   BUILTIN_FUNCTIONS,
+  createKeywordPattern,
+  createUnitPattern,
   KEYWORDS,
   MONACO_PATTERNS,
   OPERATORS,
   PATTERNS,
   TYPES,
   UNITS,
-  createKeywordPattern,
-  createUnitPattern,
 } from "@src/syntax-highlighter/spec";
+import { describe, expect, it } from "vitest";
 
 describe("Syntax Highlighter Spec", () => {
   describe("PATTERNS", () => {

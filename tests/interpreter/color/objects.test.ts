@@ -1,5 +1,5 @@
+import { createInterpreter, interpretAndGetVariable, interpretAndGetVariables } from "@tests/interpreter/test-helpers";
 import { describe, expect, it } from "vitest";
-import { createInterpreter, interpret, interpretAndGetVariable, interpretAndGetVariables } from "@tests/interpreter/test-helpers";
 
 describe("Color Objects - Hex Color Literals", () => {
   it("should handle hex color literals", () => {

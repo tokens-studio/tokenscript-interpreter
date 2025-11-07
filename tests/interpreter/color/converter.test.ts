@@ -1,10 +1,10 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
 import { Config } from "@interpreter/config/config";
 import { ColorManager } from "@interpreter/config/managers/color/manager";
 import { InterpreterError } from "@interpreter/errors";
-import { createInterpreter } from "@tests/interpreter/test-helpers";
 import { ColorSymbol, ListSymbol as List, NumberSymbol, StringSymbol } from "@interpreter/symbols";
+import { createInterpreter } from "@tests/interpreter/test-helpers";
+import { describe, expect, it } from "vitest";
 
 function setupColorManagerWithRgb(): ColorManager {
   const colorManager = new ColorManager();
@@ -18,15 +18,15 @@ describe("Color Conversion - Happy Path", () => {
   it("should convert RGB to HEX", () => {
     const colorManager = setupColorManagerWithRgb();
     const config = new Config({ colorManager });
-    
+
     const code = `variable c: Dictionary;
     c.set("a", #333);
     c.get("a").to.hex().to.hex();
     `;
-    
+
     const interpreter = createInterpreter(code, {}, config);
     const result = interpreter.interpret();
-    
+
     expect(result).toBeInstanceOf(ColorSymbol);
     expect((result as ColorSymbol).subType).toBe("Hex");
     expect(result?.toString()).toBe("#333");
@@ -227,7 +227,7 @@ describe("Color Conversion - Manager Methods", () => {
 
   it("should perform direct color conversion by type", () => {
     const colorManager = setupColorManagerWithRgb();
-    const config = new Config({ colorManager });
+    const _config = new Config({ colorManager });
 
     const hexColor = new ColorSymbol("#ff0000", "Hex");
     const rgbColor = colorManager.convertToByType(hexColor, "rgb");
@@ -413,11 +413,7 @@ describe("Legacy Color Converter Tests", () => {
     return rgb_linear;
     `;
 
-    const rgbList = new List([
-      new NumberSymbol(255),
-      new NumberSymbol(0),
-      new NumberSymbol(0),
-    ]);
+    const rgbList = new List([new NumberSymbol(255), new NumberSymbol(0), new NumberSymbol(0)]);
     const interpreter = createInterpreter(text, { rgb: rgbList });
     const result = interpreter.interpret();
 
@@ -456,11 +452,7 @@ describe("Legacy Color Converter Tests", () => {
     return rgb_linear;
     `;
 
-    const rgbList = new List([
-      new NumberSymbol(5),
-      new NumberSymbol(5),
-      new NumberSymbol(5),
-    ]);
+    const rgbList = new List([new NumberSymbol(5), new NumberSymbol(5), new NumberSymbol(5)]);
     const interpreter = createInterpreter(text, { rgb: rgbList });
     const result = interpreter.interpret();
 

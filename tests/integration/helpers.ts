@@ -38,11 +38,7 @@ export async function cleanupTempDir(tempDir: string): Promise<void> {
 /**
  * Write a token file to the temporary directory
  */
-export async function writeTokenFile(
-  tempDir: string,
-  fileName: string,
-  tokens: TokenFile,
-): Promise<string> {
+export async function writeTokenFile(tempDir: string, fileName: string, tokens: TokenFile): Promise<string> {
   const filePath = path.join(tempDir, fileName);
   await fs.promises.writeFile(filePath, JSON.stringify(tokens, null, 2));
   return filePath;
@@ -51,10 +47,7 @@ export async function writeTokenFile(
 /**
  * Write multiple token files to the temporary directory
  */
-export async function writeTokenFiles(
-  tempDir: string,
-  files: Record<string, TokenFile>,
-): Promise<Record<string, string>> {
+export async function writeTokenFiles(tempDir: string, files: Record<string, TokenFile>): Promise<Record<string, string>> {
   const filePaths: Record<string, string> = {};
 
   for (const [fileName, tokens] of Object.entries(files)) {
@@ -227,9 +220,7 @@ export async function runProcessCommand(options: ProcessCommandOptions): Promise
 /**
  * Run CLI inspect command
  */
-export async function runInspectCommand(
-  input: string,
-): Promise<{ sets: string[]; themes?: Record<string, string[]> }> {
+export async function runInspectCommand(input: string): Promise<{ sets: string[]; themes?: Record<string, string[]> }> {
   const result = await runCliCommand("inspect", ["--input", input]);
 
   if (result.exitCode !== 0) {
@@ -260,9 +251,7 @@ export function createToken(value: string, type: string, description?: string): 
  */
 export interface ThemeDefinition {
   name: string;
-  selectedTokenSets:
-    | Record<string, "enabled" | "source">
-    | Array<{ id: string; status: "enabled" | "source" }>;
+  selectedTokenSets: Record<string, "enabled" | "source"> | Array<{ id: string; status: "enabled" | "source" }>;
   figmaCollectionId?: string;
   figmaModeId?: string;
   group?: string;
@@ -275,9 +264,7 @@ export function createTheme(
 ): ThemeDefinition {
   const theme: ThemeDefinition = {
     name,
-    selectedTokenSets: Array.isArray(selectedTokenSets)
-      ? selectedTokenSets.map((id) => ({ id, status: "enabled" as const }))
-      : selectedTokenSets,
+    selectedTokenSets: Array.isArray(selectedTokenSets) ? selectedTokenSets.map((id) => ({ id, status: "enabled" as const })) : selectedTokenSets,
     ...options,
   };
 

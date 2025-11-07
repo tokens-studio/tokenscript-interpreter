@@ -1,7 +1,6 @@
-import { describe, expect, it } from "vitest";
-import { createInterpreter, interpret } from "@tests/interpreter/test-helpers";
-import { Config } from "@interpreter/config/config";
 import { UnitManager } from "@interpreter/config/managers/unit/manager";
+import { createInterpreter, interpret } from "@tests/interpreter/test-helpers";
+import { describe, expect, it } from "vitest";
 
 describe("Unit Manager", () => {
   describe("Basic Unit Operations", () => {

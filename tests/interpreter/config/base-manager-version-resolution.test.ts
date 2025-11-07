@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { BaseManager } from "@interpreter/config/managers/base-manager";
+import { describe, expect, it } from "vitest";
 
 // Create a test implementation of BaseManager
 class TestManager extends BaseManager<string, string, string> {
@@ -46,13 +46,13 @@ describe("BaseManager Version Resolution", () => {
   describe("parseSemverFromUri", () => {
     it("should parse full semantic versions", () => {
       const manager = new TestManager();
-      
+
       expect(manager.testParseSemverFromUri("/api/v1/schema/srgb-color/1.2.3/")).toEqual({
         major: 1,
         minor: 2,
         patch: 3,
       });
-      
+
       expect(manager.testParseSemverFromUri("/api/v1/schema/srgb-color/0.0.1/")).toEqual({
         major: 0,
         minor: 0,
@@ -62,11 +62,11 @@ describe("BaseManager Version Resolution", () => {
 
     it("should parse single version numbers", () => {
       const manager = new TestManager();
-      
+
       expect(manager.testParseSemverFromUri("/api/v1/schema/srgb-color/1/")).toEqual({
         major: 1,
       });
-      
+
       expect(manager.testParseSemverFromUri("/api/v1/schema/srgb-color/0/")).toEqual({
         major: 0,
       });
@@ -74,7 +74,7 @@ describe("BaseManager Version Resolution", () => {
 
     it("should return null for invalid versions", () => {
       const manager = new TestManager();
-      
+
       expect(manager.testParseSemverFromUri("/api/v1/schema/srgb-color/latest/")).toBeNull();
       expect(manager.testParseSemverFromUri("/api/v1/schema/srgb-color/")).toBeNull();
       expect(manager.testParseSemverFromUri("/api/v1/schema/srgb-color/invalid/")).toBeNull();
@@ -84,7 +84,7 @@ describe("BaseManager Version Resolution", () => {
   describe("getBaseUri", () => {
     it("should remove version from URI", () => {
       const manager = new TestManager();
-      
+
       expect(manager.testGetBaseUri("/api/v1/schema/srgb-color/1.2.3/")).toBe("/api/v1/schema/srgb-color/");
       expect(manager.testGetBaseUri("/api/v1/schema/srgb-color/0/")).toBe("/api/v1/schema/srgb-color/");
       expect(manager.testGetBaseUri("/api/v1/schema/srgb-color/latest/")).toBe("/api/v1/schema/srgb-color/");
@@ -94,7 +94,7 @@ describe("BaseManager Version Resolution", () => {
   describe("generateVersionCandidates", () => {
     it("should generate candidates from most to least specific", () => {
       const manager = new TestManager();
-      
+
       const candidates = manager.testGenerateVersionCandidates("/api/v1/schema/srgb-color/1.2.3/");
       expect(candidates).toEqual([
         "/api/v1/schema/srgb-color/1.2.3/",
@@ -106,21 +106,16 @@ describe("BaseManager Version Resolution", () => {
 
     it("should handle single version numbers", () => {
       const manager = new TestManager();
-      
+
       const candidates = manager.testGenerateVersionCandidates("/api/v1/schema/srgb-color/1/");
-      expect(candidates).toEqual([
-        "/api/v1/schema/srgb-color/1/",
-        "/api/v1/schema/srgb-color/latest/",
-      ]);
+      expect(candidates).toEqual(["/api/v1/schema/srgb-color/1/", "/api/v1/schema/srgb-color/latest/"]);
     });
 
     it("should handle latest URIs", () => {
       const manager = new TestManager();
-      
+
       const candidates = manager.testGenerateVersionCandidates("/api/v1/schema/srgb-color/latest/");
-      expect(candidates).toEqual([
-        "/api/v1/schema/srgb-color/latest/",
-      ]);
+      expect(candidates).toEqual(["/api/v1/schema/srgb-color/latest/"]);
     });
   });
 
@@ -129,7 +124,7 @@ describe("BaseManager Version Resolution", () => {
       const manager = new TestManager();
       manager.register("/api/v1/schema/srgb-color/1.2.3/", "exact-spec");
       manager.register("/api/v1/schema/srgb-color/1.2/", "minor-spec");
-      
+
       expect(manager.getSpec("/api/v1/schema/srgb-color/1.2.3/")).toBe("exact-spec");
     });
 
@@ -137,7 +132,7 @@ describe("BaseManager Version Resolution", () => {
       const manager = new TestManager();
       manager.register("/api/v1/schema/srgb-color/1.2/", "minor-spec");
       manager.register("/api/v1/schema/srgb-color/1/", "major-spec");
-      
+
       expect(manager.getSpec("/api/v1/schema/srgb-color/1.2.5/")).toBe("minor-spec");
       expect(manager.getSpec("/api/v1/schema/srgb-color/1.3.0/")).toBe("major-spec");
     });
@@ -147,7 +142,7 @@ describe("BaseManager Version Resolution", () => {
       manager.register("/api/v1/schema/srgb-color/1.0.0/", "v1.0.0");
       manager.register("/api/v1/schema/srgb-color/1.2.3/", "v1.2.3");
       manager.register("/api/v1/schema/srgb-color/0.9.0/", "v0.9.0");
-      
+
       expect(manager.getSpec("/api/v1/schema/srgb-color/latest/")).toBe("v1.2.3");
       expect(manager.getSpec("/api/v1/schema/srgb-color/2.0.0/")).toBe("v1.2.3"); // fallback to latest
     });
@@ -155,7 +150,7 @@ describe("BaseManager Version Resolution", () => {
     it("should return undefined when no matches found", () => {
       const manager = new TestManager();
       manager.register("/api/v1/schema/other-color/1.0.0/", "other-spec");
-      
+
       expect(manager.getSpec("/api/v1/schema/srgb-color/1.0.0/")).toBeUndefined();
     });
   });

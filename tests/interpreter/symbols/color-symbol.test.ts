@@ -1,9 +1,9 @@
-import { describe, expect, it } from "vitest";
-import { ColorSymbol, StringSymbol, NumberSymbol } from "@src/interpreter/symbols";
-import { InterpreterError } from "@src/interpreter/errors";
 import { Config } from "@src/interpreter/config/config";
 import { ColorManager } from "@src/interpreter/config/managers/color/manager";
 import type { ColorSpecification } from "@src/interpreter/config/managers/color/schema";
+import { InterpreterError } from "@src/interpreter/errors";
+import { ColorSymbol, NumberSymbol, StringSymbol } from "@src/interpreter/symbols";
+import { describe, expect, it } from "vitest";
 
 describe("ColorSymbol", () => {
   describe("constructor", () => {
@@ -110,7 +110,7 @@ describe("ColorSymbol", () => {
         const colorManager = new ColorManager();
         const config = new Config({ colorManager });
         const color = new ColorSymbol("#ff0000", "Hex", config);
-        
+
         const result = color.toStringImpl();
         expect(result.value).toBe("#ff0000");
       });
@@ -118,7 +118,7 @@ describe("ColorSymbol", () => {
       it("should use formatColorMethod for dynamic colors with schema", () => {
         const colorManager = new ColorManager();
         const config = new Config({ colorManager });
-        
+
         // Register RGB schema
         const rgbSpec: ColorSpecification = {
           name: "RGB",
@@ -129,21 +129,25 @@ describe("ColorSymbol", () => {
             properties: {
               r: { type: "number" },
               g: { type: "number" },
-              b: { type: "number" }
-            }
+              b: { type: "number" },
+            },
           },
           initializers: [],
-          conversions: []
+          conversions: [],
         };
-        
+
         colorManager.register("https://test.example/rgb/", rgbSpec);
-        
-        const rgbColor = new ColorSymbol({
-          r: new NumberSymbol(255),
-          g: new NumberSymbol(128),
-          b: new NumberSymbol(64)
-        }, "RGB", config);
-        
+
+        const rgbColor = new ColorSymbol(
+          {
+            r: new NumberSymbol(255),
+            g: new NumberSymbol(128),
+            b: new NumberSymbol(64),
+          },
+          "RGB",
+          config,
+        );
+
         const result = rgbColor.toStringImpl();
         expect(result.value).toBe("rgb(255, 128, 64)");
       });
@@ -151,13 +155,13 @@ describe("ColorSymbol", () => {
       it("should fallback to JSON.stringify when no schema is found", () => {
         const colorManager = new ColorManager();
         const config = new Config({ colorManager });
-        
+
         const colorValue = {
           red: new NumberSymbol(255),
           green: new NumberSymbol(128),
         };
         const color = new ColorSymbol(colorValue, "UnknownType", config);
-        
+
         const result = color.toStringImpl();
         expect(result.value).toBe(""); // formatColorMethod returns empty string for unknown types
       });

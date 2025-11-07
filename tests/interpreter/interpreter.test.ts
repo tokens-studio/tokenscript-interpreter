@@ -1,13 +1,7 @@
-import { describe, expect, it } from "vitest";
 import { InterpreterError } from "@interpreter/errors";
 import { Interpreter } from "@interpreter/interpreter";
-import {
-  interpret,
-  interpretAndGetVariable,
-  interpretAndGetVariables,
-  createInterpreter,
-  interpretExpectError,
-} from "@tests/interpreter/test-helpers";
+import { createInterpreter, interpret, interpretAndGetVariables, interpretExpectError } from "@tests/interpreter/test-helpers";
+import { describe, expect, it } from "vitest";
 
 describe("Interpreter - Basic Expressions", () => {
   it("should interpret simple expression", () => {
@@ -116,15 +110,17 @@ describe("Interpreter - Return Statements", () => {
   });
 });
 
-
-
 describe("Interpreter - References", () => {
   it("should handle float reference", () => {
-    const vars = interpretAndGetVariables(`
+    const vars = interpretAndGetVariables(
+      `
     variable i: Number = {float_ref};
     variable j: Number = 0.5;
     variable k: Number = i + j;
-    `, ["i", "j", "k"], { float_ref: 0.5 });
+    `,
+      ["i", "j", "k"],
+      { float_ref: 0.5 },
+    );
     expect(vars.i?.value).toBe(0.5);
     expect(vars.j?.value).toBe(0.5);
     expect(vars.k?.value).toBe(1.0);
@@ -132,11 +128,14 @@ describe("Interpreter - References", () => {
 
   it("should throw error for unsupported reference", () => {
     expect(() => {
-      const interpreter = createInterpreter(`
+      const interpreter = createInterpreter(
+        `
       variable i: Number = {unsupported_ref};
       variable j: Number = 0.5;
       variable k: Number = i + j;
-      `, { unsupported_ref: new Set([1, 2, 3]) });
+      `,
+        { unsupported_ref: new Set([1, 2, 3]) },
+      );
       interpreter.interpret();
     }).toThrow(InterpreterError);
   });
@@ -162,9 +161,7 @@ describe("Interpreter - Variable Name Validation", () => {
     };
     const interpreter = new Interpreter(mockAssignNode as any, { references: {} });
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
-    expect(() => interpreter.interpret()).toThrow(
-      "Invalid variable name 'my.var'. Use a simple name (and underscores) without '.', '-', '['.",
-    );
+    expect(() => interpreter.interpret()).toThrow("Invalid variable name 'my.var'. Use a simple name (and underscores) without '.', '-', '['.");
   });
 
   it("should throw error for variable name containing bracket", () => {
@@ -186,9 +183,7 @@ describe("Interpreter - Variable Name Validation", () => {
     };
     const interpreter = new Interpreter(mockAssignNode as any, { references: {} });
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
-    expect(() => interpreter.interpret()).toThrow(
-      "Invalid variable name 'my[var'. Use a simple name (and underscores) without '.', '-', '['.",
-    );
+    expect(() => interpreter.interpret()).toThrow("Invalid variable name 'my[var'. Use a simple name (and underscores) without '.', '-', '['.");
   });
 
   it("should throw error for variable name containing dash", () => {
@@ -210,9 +205,7 @@ describe("Interpreter - Variable Name Validation", () => {
     };
     const interpreter = new Interpreter(mockAssignNode as any, { references: {} });
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
-    expect(() => interpreter.interpret()).toThrow(
-      "Invalid variable name 'my-var'. Use a simple name (and underscores) without '.', '-', '['.",
-    );
+    expect(() => interpreter.interpret()).toThrow("Invalid variable name 'my-var'. Use a simple name (and underscores) without '.', '-', '['.");
   });
 
   it("should allow valid variable names with underscores", () => {
@@ -242,9 +235,7 @@ describe("Interpreter - Variable Name Validation", () => {
     };
     const interpreter = new Interpreter(mockAssignNode as any, { references: {} });
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
-    expect(() => interpreter.interpret()).toThrow(
-      "Invalid variable name 'my-var.test[0'. Use a simple name (and underscores) without '.', '-', '['.",
-    );
+    expect(() => interpreter.interpret()).toThrow("Invalid variable name 'my-var.test[0'. Use a simple name (and underscores) without '.', '-', '['.");
   });
 });
 

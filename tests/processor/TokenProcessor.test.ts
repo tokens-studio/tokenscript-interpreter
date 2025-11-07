@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { DependencyError, TokenProcessor } from "@src/processor";
+import { describe, expect, it } from "vitest";
 
 describe("TokenProcessor", () => {
   describe("processTokens", () => {

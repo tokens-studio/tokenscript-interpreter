@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
-import { NumberWithUnitSymbol, NumberSymbol, StringSymbol } from "@src/interpreter/symbols";
 import { InterpreterError } from "@src/interpreter/errors";
+import { NumberSymbol, NumberWithUnitSymbol, StringSymbol } from "@src/interpreter/symbols";
 import { SupportedFormats } from "@src/types";
+import { describe, expect, it } from "vitest";
 
 describe("NumberWithUnitSymbol", () => {
   describe("constructor", () => {
@@ -44,7 +44,7 @@ describe("NumberWithUnitSymbol", () => {
       const record = {
         value: 42,
         unit: "px",
-        type: "NumberWithUnit"
+        type: "NumberWithUnit",
       };
       const numUnit = NumberWithUnitSymbol.fromRecord(record);
       expect(numUnit?.value).toBe(42);

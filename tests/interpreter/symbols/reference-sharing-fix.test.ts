@@ -1,10 +1,5 @@
+import { DictionarySymbol, ListSymbol, NumberSymbol, StringSymbol } from "@src/interpreter/symbols";
 import { describe, expect, it } from "vitest";
-import {
-  ListSymbol,
-  DictionarySymbol,
-  StringSymbol,
-  NumberSymbol,
-} from "@src/interpreter/symbols";
 
 describe("Reference Sharing Fix", () => {
   describe("tokenscript scenario reproduction", () => {
@@ -33,7 +28,7 @@ describe("Reference Sharing Fix", () => {
         // Set values on the same dictionary instance
         step_dict.setImpl(new StringSymbol("name"), new StringSymbol(iteration.name));
         step_dict.setImpl(new StringSymbol("value"), new StringSymbol(iteration.value));
-        
+
         // Append the dictionary to the list
         scale.appendImpl(step_dict);
       }
@@ -101,10 +96,10 @@ describe("Reference Sharing Fix", () => {
       const dict = new DictionarySymbol(new Map([["key", new StringSymbol("value")]]));
 
       list.appendImpl(dict);
-      
+
       // Modify original
       dict.setImpl(new StringSymbol("key"), new StringSymbol("modified"));
-      
+
       // List should be unaffected
       expect((list.elements[0] as DictionarySymbol).getImpl(new StringSymbol("key")).value).toBe("value");
     });
@@ -114,10 +109,10 @@ describe("Reference Sharing Fix", () => {
       const dict = new DictionarySymbol(new Map([["key", new StringSymbol("inserted")]]));
 
       list.insertImpl(new NumberSymbol(0), dict);
-      
+
       // Modify original
       dict.setImpl(new StringSymbol("key"), new StringSymbol("modified"));
-      
+
       // List should be unaffected
       expect((list.elements[0] as DictionarySymbol).getImpl(new StringSymbol("key")).value).toBe("inserted");
     });
@@ -127,10 +122,10 @@ describe("Reference Sharing Fix", () => {
       const dict = new DictionarySymbol(new Map([["key", new StringSymbol("updated")]]));
 
       list.updateImpl(new NumberSymbol(0), dict);
-      
+
       // Modify original
       dict.setImpl(new StringSymbol("key"), new StringSymbol("modified"));
-      
+
       // List should be unaffected
       expect((list.elements[0] as DictionarySymbol).getImpl(new StringSymbol("key")).value).toBe("updated");
     });
@@ -140,10 +135,10 @@ describe("Reference Sharing Fix", () => {
       const dict = new DictionarySymbol(new Map([["key", new StringSymbol("extended")]]));
 
       list.extendImpl(dict);
-      
+
       // Modify original
       dict.setImpl(new StringSymbol("key"), new StringSymbol("modified"));
-      
+
       // List should be unaffected
       expect((list.elements[0] as DictionarySymbol).getImpl(new StringSymbol("key")).value).toBe("extended");
     });
@@ -154,10 +149,10 @@ describe("Reference Sharing Fix", () => {
       const list2 = new ListSymbol([dict]);
 
       list1.extendImpl(list2);
-      
+
       // Modify original
       dict.setImpl(new StringSymbol("key"), new StringSymbol("modified"));
-      
+
       // Extended list should be unaffected
       expect((list1.elements[0] as DictionarySymbol).getImpl(new StringSymbol("key")).value).toBe("from_list");
     });
@@ -169,10 +164,10 @@ describe("Reference Sharing Fix", () => {
       const nestedDict = new DictionarySymbol(new Map([["inner", new StringSymbol("value")]]));
 
       dict.setImpl(new StringSymbol("nested"), nestedDict);
-      
+
       // Modify original
       nestedDict.setImpl(new StringSymbol("inner"), new StringSymbol("modified"));
-      
+
       // Dictionary should be unaffected
       const stored = dict.getImpl(new StringSymbol("nested")) as DictionarySymbol;
       expect(stored).not.toBe(nestedDict);

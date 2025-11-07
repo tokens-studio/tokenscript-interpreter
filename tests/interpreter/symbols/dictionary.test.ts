@@ -1,6 +1,6 @@
+import { BooleanSymbol, DictionarySymbol, ListSymbol, NullSymbol, NumberSymbol, StringSymbol } from "@interpreter/symbols";
+import { createInterpreter, interpretAndGetVariable, interpretAndGetVariables } from "@tests/interpreter/test-helpers";
 import { describe, expect, it } from "vitest";
-import { createInterpreter, interpretAndGetVariable, interpretAndGetVariables, interpretExpectError } from "@tests/interpreter/test-helpers";
-import { DictionarySymbol, StringSymbol, ListSymbol, BooleanSymbol, NumberSymbol, NullSymbol, ColorSymbol } from "@interpreter/symbols";
 
 describe("DictionarySymbol - Unit Tests", () => {
   describe("constructor", () => {
@@ -29,7 +29,7 @@ describe("DictionarySymbol - Unit Tests", () => {
           ["string", new StringSymbol("test")],
           ["number", new NumberSymbol(42)],
           ["boolean", new BooleanSymbol(true)],
-        ])
+        ]),
       );
 
       const copy = original.deepCopy();
@@ -117,11 +117,11 @@ describe("DictionarySymbol - Unit Tests", () => {
         new Map([
           ["key1", new StringSymbol("value1")],
           ["key2", new StringSymbol("value2")],
-        ])
+        ]),
       );
       const keys = dict.keysImpl();
       expect(keys.elements.length).toBe(2);
-      expect(keys.elements.map(k => k.value)).toEqual(["key1", "key2"]);
+      expect(keys.elements.map((k) => k.value)).toEqual(["key1", "key2"]);
     });
   });
 
@@ -131,11 +131,11 @@ describe("DictionarySymbol - Unit Tests", () => {
         new Map([
           ["key1", new StringSymbol("value1")],
           ["key2", new NumberSymbol(42)],
-        ])
+        ]),
       );
       const values = dict.valuesImpl();
       expect(values.elements.length).toBe(2);
-      expect(values.elements.map(v => v.value)).toEqual(["value1", 42]);
+      expect(values.elements.map((v) => v.value)).toEqual(["value1", 42]);
     });
   });
 
@@ -153,7 +153,7 @@ describe("DictionarySymbol - Unit Tests", () => {
         new Map([
           ["key1", new StringSymbol("value1")],
           ["key2", new StringSymbol("value2")],
-        ])
+        ]),
       );
       expect(dict.lengthImpl().value).toBe(2);
     });
@@ -173,7 +173,7 @@ describe("DictionarySymbol - Unit Tests", () => {
         new Map([
           ["key1", new StringSymbol("value1")],
           ["key2", new NumberSymbol(42)],
-        ])
+        ]),
       );
       const str = dict.toString();
       expect(str).toContain("key1: value1");
@@ -192,7 +192,6 @@ describe("DictionarySymbol - Unit Tests", () => {
   });
 });
 
-
 describe("Dictionary Operations", () => {
   describe("Basic Dictionary Operations", () => {
     it("should create an empty dictionary", () => {
@@ -202,7 +201,7 @@ describe("Dictionary Operations", () => {
       `;
       const interpreter = createInterpreter(text);
       const result = interpreter.interpret();
-      
+
       expect(result).toBeInstanceOf(DictionarySymbol);
       expect(result?.toString()).toBe("{}");
     });
@@ -217,7 +216,7 @@ describe("Dictionary Operations", () => {
       `;
       const interpreter = createInterpreter(text);
       const result = interpreter.interpret();
-      
+
       expect(result).toBeInstanceOf(StringSymbol);
       expect(result?.toString()).toBe("value1");
     });
@@ -233,7 +232,7 @@ describe("Dictionary Operations", () => {
       `;
       const interpreter = createInterpreter(text);
       const result = interpreter.interpret();
-      
+
       expect(result).toBeInstanceOf(ListSymbol);
       expect(result?.toString()).toBe("key1, key2, key3");
     });
@@ -249,7 +248,7 @@ describe("Dictionary Operations", () => {
       `;
       const interpreter = createInterpreter(text);
       const result = interpreter.interpret();
-      
+
       expect(result).toBeInstanceOf(DictionarySymbol);
       expect(result?.toString()).toBe("{key1: value1, key3: value3}");
     });
@@ -264,7 +263,7 @@ describe("Dictionary Operations", () => {
       `;
       const interpreter = createInterpreter(text);
       const result = interpreter.interpret();
-      
+
       expect(result).toBeInstanceOf(BooleanSymbol);
       expect(result?.toString()).toBe("true");
     });
@@ -279,7 +278,7 @@ describe("Dictionary Operations", () => {
       `;
       const interpreter = createInterpreter(text);
       const result = interpreter.interpret();
-      
+
       expect(result).toBeInstanceOf(NumberSymbol);
       expect(result?.toString()).toBe("2");
     });
@@ -294,7 +293,7 @@ describe("Dictionary Operations", () => {
       `;
       const interpreter = createInterpreter(text);
       const result = interpreter.interpret();
-      
+
       expect(result).toBeInstanceOf(DictionarySymbol);
       expect(result?.toString()).toBe("{}");
     });
@@ -310,7 +309,7 @@ describe("Dictionary Operations", () => {
       `;
       const interpreter = createInterpreter(text);
       const result = interpreter.interpret();
-      
+
       expect(result).toBeInstanceOf(NumberSymbol);
       expect(result?.toString()).toBe("42");
     });
@@ -324,7 +323,7 @@ describe("Dictionary Operations", () => {
       `;
       const interpreter = createInterpreter(text);
       const result = interpreter.interpret();
-      
+
       expect(result).toBeInstanceOf(BooleanSymbol);
       expect(result?.toString()).toBe("true");
     });
@@ -337,10 +336,10 @@ describe("Dictionary Operations", () => {
         return value1;
       `;
       const interpreter = createInterpreter(text, {
-        my_ref_dict: { key1: "reference_value1", key2: "reference_value2" }
+        my_ref_dict: { key1: "reference_value1", key2: "reference_value2" },
       });
       const result = interpreter.interpret();
-      
+
       expect(result).toBeInstanceOf(StringSymbol);
       expect(result?.toString()).toBe("reference_value1");
     });
@@ -354,7 +353,7 @@ describe("Dictionary Operations", () => {
       `;
       const interpreter = createInterpreter(text);
       const result = interpreter.interpret();
-      
+
       expect(result).toBeInstanceOf(NullSymbol);
       expect((result as NullSymbol).value).toBe(null);
     });
@@ -367,7 +366,7 @@ describe("Dictionary Operations", () => {
       `;
       const interpreter = createInterpreter(text);
       const result = interpreter.interpret();
-      
+
       expect(result).toBeInstanceOf(BooleanSymbol);
       expect(result?.toString()).toBe("false");
     });
@@ -388,10 +387,10 @@ describe("Dictionary Operations", () => {
       `;
       const interpreter = createInterpreter(text);
       const result = interpreter.interpret();
-      
+
       expect(result).toBeInstanceOf(DictionarySymbol);
       expect(result?.toString()).toBe("{key1: value1, key2: value2}");
-      
+
       const vars = interpretAndGetVariables(text, ["value1", "value2", "keys"]);
       expect(vars.value1?.toString()).toBe("value1");
       expect(vars.value2?.toString()).toBe("value2");
@@ -407,10 +406,10 @@ describe("Dictionary Operations", () => {
       `;
       const interpreter = createInterpreter(text);
       const result = interpreter.interpret();
-      
+
       expect(result).toBeInstanceOf(NumberSymbol);
       expect(result?.toString()).toBe("1");
-      
+
       const myList = interpretAndGetVariable(text, "my_list");
       expect(myList?.toString()).toBe("1, 2");
     });
@@ -428,7 +427,7 @@ describe("Dictionary Operations", () => {
       `;
       const interpreter = createInterpreter(text);
       const result = interpreter.interpret();
-      
+
       expect(result).toBeInstanceOf(ListSymbol);
       expect(result?.toString()).toBe("third, first, second");
     });
@@ -443,7 +442,7 @@ describe("Dictionary Operations", () => {
       `;
       const interpreter = createInterpreter(text);
       const result = interpreter.interpret();
-      
+
       expect(result).toBeInstanceOf(DictionarySymbol);
       expect(result?.toString()).toBe("{z: last, a: first, m: middle}");
     });
@@ -462,7 +461,7 @@ describe("Dictionary Operations", () => {
       `;
       const interpreter = createInterpreter(text);
       const result = interpreter.interpret();
-      
+
       expect(result).toBeInstanceOf(ListSymbol);
       expect(result?.toString()).toBe("first, third, fourth, second");
     });

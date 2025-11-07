@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { DependencyGraph } from "@src/processor/utils/DependencyGraph";
+import { describe, expect, it } from "vitest";
 
 describe("DependencyGraph", () => {
   describe("addNode", () => {
@@ -103,12 +103,12 @@ describe("DependencyGraph", () => {
       graph.addNode("c", ["a"]);
       graph.addNode("d", ["b", "c"]);
       const sorted = graph.topologicalSort();
-      
+
       const aIndex = sorted.indexOf("a");
       const bIndex = sorted.indexOf("b");
       const cIndex = sorted.indexOf("c");
       const dIndex = sorted.indexOf("d");
-      
+
       expect(dIndex).toBeLessThan(bIndex);
       expect(dIndex).toBeLessThan(cIndex);
       expect(bIndex).toBeLessThan(aIndex);
@@ -122,14 +122,14 @@ describe("DependencyGraph", () => {
       graph.addNode("test", ["build"]);
       graph.addNode("lint", ["install"]);
       graph.addNode("deploy", ["test", "lint"]);
-      
+
       const sorted = graph.topologicalSort();
       const installIndex = sorted.indexOf("install");
       const buildIndex = sorted.indexOf("build");
       const testIndex = sorted.indexOf("test");
       const lintIndex = sorted.indexOf("lint");
       const deployIndex = sorted.indexOf("deploy");
-      
+
       expect(buildIndex).toBeLessThan(installIndex);
       expect(testIndex).toBeLessThan(buildIndex);
       expect(lintIndex).toBeLessThan(installIndex);
@@ -155,13 +155,13 @@ describe("DependencyGraph", () => {
       graph.addNode("b");
       graph.addNode("c");
       graph.addNode("d", ["a", "b", "c"]);
-      
+
       const sorted = graph.topologicalSort();
       const aIndex = sorted.indexOf("a");
       const bIndex = sorted.indexOf("b");
       const cIndex = sorted.indexOf("c");
       const dIndex = sorted.indexOf("d");
-      
+
       expect(dIndex).toBeLessThan(aIndex);
       expect(dIndex).toBeLessThan(bIndex);
       expect(dIndex).toBeLessThan(cIndex);
@@ -173,7 +173,7 @@ describe("DependencyGraph", () => {
       const graph = new DependencyGraph();
       graph.addNode("a", ["b"]);
       graph.addNode("b", ["a"]);
-      
+
       expect(() => graph.topologicalSort()).toThrow("Circular dependency detected");
     });
 
@@ -181,21 +181,21 @@ describe("DependencyGraph", () => {
       const graph = new DependencyGraph();
       graph.addNode("a", ["b"]);
       graph.addNode("b", ["a"]);
-      
+
       expect(() => graph.topologicalSort()).toThrow(/a → b → a|b → a → b/);
     });
 
     it("should detect self-referencing cycle", () => {
       const graph = new DependencyGraph();
       graph.addNode("a", ["a"]);
-      
+
       expect(() => graph.topologicalSort()).toThrow("Circular dependency detected");
     });
 
     it("should detect self-referencing cycle and show chain", () => {
       const graph = new DependencyGraph();
       graph.addNode("a", ["a"]);
-      
+
       expect(() => graph.topologicalSort()).toThrow("a → a");
     });
 
@@ -204,7 +204,7 @@ describe("DependencyGraph", () => {
       graph.addNode("a", ["b"]);
       graph.addNode("b", ["c"]);
       graph.addNode("c", ["a"]);
-      
+
       expect(() => graph.topologicalSort()).toThrow("Circular dependency detected");
     });
 
@@ -213,7 +213,7 @@ describe("DependencyGraph", () => {
       graph.addNode("a", ["b"]);
       graph.addNode("b", ["c"]);
       graph.addNode("c", ["a"]);
-      
+
       expect(() => graph.topologicalSort()).toThrow(/a → b → c → a|b → c → a → b|c → a → b → c/);
     });
 
@@ -224,7 +224,7 @@ describe("DependencyGraph", () => {
       graph.addNode("c", ["e"]);
       graph.addNode("d", ["e"]);
       graph.addNode("e", ["a"]);
-      
+
       expect(() => graph.topologicalSort()).toThrow("Circular dependency detected");
     });
 
@@ -235,7 +235,7 @@ describe("DependencyGraph", () => {
       graph.addNode("c", ["e"]);
       graph.addNode("d", ["e"]);
       graph.addNode("e", ["a"]);
-      
+
       const error = (() => {
         try {
           graph.topologicalSort();
@@ -243,7 +243,7 @@ describe("DependencyGraph", () => {
           return e as Error;
         }
       })();
-      
+
       expect(error).toBeDefined();
       expect(error?.message).toContain("Circular dependency detected");
       expect(error?.message).toMatch(/a.*b.*e.*a|a.*b.*c.*e.*a|a.*b.*d.*e.*a/);
@@ -255,7 +255,7 @@ describe("DependencyGraph", () => {
       graph.addNode("b", ["a"]);
       graph.addNode("c", ["a"]);
       graph.addNode("d", ["b", "c"]);
-      
+
       expect(() => graph.topologicalSort()).not.toThrow();
     });
   });
@@ -265,7 +265,7 @@ describe("DependencyGraph", () => {
       const graph = new DependencyGraph();
       graph.addNode("a");
       graph.addNode("b", ["a"]);
-      
+
       const sorted = graph.topologicalSort();
       expect(sorted).toHaveLength(2);
       const aIndex = sorted.indexOf("a");
@@ -284,7 +284,7 @@ describe("DependencyGraph", () => {
       const graph = new DependencyGraph();
       graph.addNode("a");
       graph.addNode("b", ["a", "a", "a"]);
-      
+
       const sorted = graph.topologicalSort();
       expect(sorted).toEqual(["b", "a"]);
     });
@@ -294,7 +294,7 @@ describe("DependencyGraph", () => {
       graph.addNode("z");
       graph.addNode("y");
       graph.addNode("x");
-      
+
       const sorted = graph.topologicalSort();
       expect(sorted).toHaveLength(3);
     });
@@ -307,13 +307,13 @@ describe("DependencyGraph", () => {
       graph.addNode("utils.ts", ["constants.ts"]);
       graph.addNode("config.ts", ["constants.ts"]);
       graph.addNode("constants.ts");
-      
+
       const sorted = graph.topologicalSort();
       const appIndex = sorted.indexOf("app.ts");
       const utilsIndex = sorted.indexOf("utils.ts");
       const configIndex = sorted.indexOf("config.ts");
       const constantsIndex = sorted.indexOf("constants.ts");
-      
+
       expect(appIndex).toBeLessThan(utilsIndex);
       expect(appIndex).toBeLessThan(configIndex);
       expect(utilsIndex).toBeLessThan(constantsIndex);
@@ -326,7 +326,7 @@ describe("DependencyGraph", () => {
       graph.addNode("test", ["build"]);
       graph.addNode("build", ["install"]);
       graph.addNode("install");
-      
+
       const sorted = graph.topologicalSort();
       expect(sorted).toEqual(["deploy", "test", "build", "install"]);
     });
@@ -337,17 +337,17 @@ describe("DependencyGraph", () => {
       graph.addNode("typecheck");
       graph.addNode("test");
       graph.addNode("build", ["lint", "typecheck", "test"]);
-      
+
       const sorted = graph.topologicalSort();
       const buildIndex = sorted.indexOf("build");
       const lintIndex = sorted.indexOf("lint");
       const typecheckIndex = sorted.indexOf("typecheck");
       const testIndex = sorted.indexOf("test");
-      
+
       expect(buildIndex).toBeLessThan(lintIndex);
       expect(buildIndex).toBeLessThan(typecheckIndex);
       expect(buildIndex).toBeLessThan(testIndex);
-      
+
       const leaves = graph.entryNodes();
       expect(leaves).toHaveLength(3);
       expect(leaves).toContain("lint");

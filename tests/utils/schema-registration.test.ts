@@ -1,6 +1,6 @@
 import { Config } from "@interpreter/config";
-import { fetchAndRegisterSchemas } from "@src/utils/schema-fetcher";
 import type { TokenScriptSchemaResponse } from "@src/utils/schema-fetcher";
+import { fetchAndRegisterSchemas } from "@src/utils/schema-fetcher";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock the fetch function
@@ -41,9 +41,7 @@ describe("fetchAndRegisterSchemas", () => {
       json: async () => mockColorSchemaResponse,
     });
 
-    const config = await fetchAndRegisterSchemas([
-      "https://schema.example.com/colors/test/1/",
-    ]);
+    const config = await fetchAndRegisterSchemas(["https://schema.example.com/colors/test/1/"]);
 
     expect(config).toBeInstanceOf(Config);
     expect(config.colorManager.getSpecByType("testcolor")).toBeDefined();
@@ -74,9 +72,7 @@ describe("fetchAndRegisterSchemas", () => {
       json: async () => mockFunctionSchemaResponse,
     });
 
-    const config = await fetchAndRegisterSchemas([
-      "https://schema.example.com/functions/test/1/",
-    ]);
+    const config = await fetchAndRegisterSchemas(["https://schema.example.com/functions/test/1/"]);
 
     expect(config).toBeInstanceOf(Config);
     expect(config.functionsManager.hasFunction("test_func")).toBe(true);
@@ -134,10 +130,7 @@ describe("fetchAndRegisterSchemas", () => {
         json: async () => mockFunctionSchemaResponse,
       });
 
-    const config = await fetchAndRegisterSchemas([
-      "https://schema.example.com/colors/test/1/",
-      "https://schema.example.com/functions/test/1/",
-    ]);
+    const config = await fetchAndRegisterSchemas(["https://schema.example.com/colors/test/1/", "https://schema.example.com/functions/test/1/"]);
 
     expect(config).toBeInstanceOf(Config);
     expect(config.colorManager.getSpecByType("testcolor")).toBeDefined();
@@ -179,10 +172,7 @@ describe("fetchAndRegisterSchemas", () => {
       json: async () => mockColorSchemaResponse,
     });
 
-    const config = await fetchAndRegisterSchemas(
-      ["https://schema.example.com/colors/test/1/"],
-      existingConfig,
-    );
+    const config = await fetchAndRegisterSchemas(["https://schema.example.com/colors/test/1/"], existingConfig);
 
     expect(config).toBe(existingConfig);
     expect(config.colorManager.getSpecByType("testcolor")).toBeDefined();

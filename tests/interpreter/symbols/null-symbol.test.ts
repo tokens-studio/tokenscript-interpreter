@@ -1,16 +1,16 @@
-import { describe, expect, it } from "vitest";
-import { 
-  NullSymbol, 
-  jsValueToSymbolType, 
-  NumberSymbol,
-  StringSymbol,
+import {
   BooleanSymbol,
-  NumberWithUnitSymbol,
   ColorSymbol,
+  DictionarySymbol,
+  jsValueToSymbolType,
   ListSymbol,
-  DictionarySymbol
+  NullSymbol,
+  NumberSymbol,
+  NumberWithUnitSymbol,
+  StringSymbol,
 } from "@interpreter/symbols";
 import { createInterpreter } from "@tests/interpreter/test-helpers";
+import { describe, expect, it } from "vitest";
 
 describe("NullSymbol", () => {
   describe("constructor", () => {
@@ -132,7 +132,7 @@ describe("NullSymbol - jsValueToSymbolType", () => {
   it("should be created from jsValueToSymbolType for null/undefined", () => {
     const nullSym = jsValueToSymbolType(null);
     const undefinedSym = jsValueToSymbolType(undefined);
-    
+
     expect(nullSym).toBeInstanceOf(NullSymbol);
     expect(undefinedSym).toBeInstanceOf(NullSymbol);
     expect(nullSym.type).toBe("Null");
@@ -147,13 +147,13 @@ describe("Null Coercion", () => {
       variable foo: ${typeName} = c.get("foo");
       return foo;
     `;
-    
+
     const interpreter = createInterpreter(text);
     const result = interpreter.interpret();
-    
+
     expect(result?.type).toBe(expectedType);
     expect(result?.value).toBe(expectedValue);
-    
+
     const foo = interpreter.symbolTable.get("foo");
     expect(foo?.type).toBe(expectedType);
     expect(foo?.value).toBe(expectedValue);
@@ -185,11 +185,11 @@ describe("Null Coercion", () => {
       variable foo: List = c.get("foo");
       return foo;
     `;
-    
+
     const interpreter = createInterpreter(text);
-    
+
     const result = interpreter.interpret();
-    
+
     expect(result).toBeInstanceOf(ListSymbol);
     expect((result as ListSymbol).elements).toEqual([]);
     expect(result?.type).toBe("List");
@@ -201,11 +201,11 @@ describe("Null Coercion", () => {
       variable foo: Dictionary = c.get("foo");
       return foo;
     `;
-    
+
     const interpreter = createInterpreter(text);
-    
+
     const result = interpreter.interpret();
-    
+
     expect(result).toBeInstanceOf(DictionarySymbol);
     expect((result as DictionarySymbol).value).toEqual(new Map());
   });
@@ -215,11 +215,11 @@ describe("Null Coercion", () => {
       variable foo: String;
       return foo;
     `;
-    
+
     const interpreter = createInterpreter(text);
-    
+
     const result = interpreter.interpret();
-    
+
     expect(result?.type).toBe("String");
     expect(result?.value).toBe(null);
   });
@@ -233,14 +233,14 @@ describe("Null Coercion", () => {
       
       return str, num, bool;
     `;
-    
+
     const interpreter = createInterpreter(text);
-    
+
     const result = interpreter.interpret();
-    
+
     expect(result).toBeInstanceOf(ListSymbol);
     const list = result as ListSymbol;
-    
+
     expect(list.elements).toHaveLength(3);
     expect(list.elements[0]).toBeInstanceOf(StringSymbol);
     expect(list.elements[0].value).toBe(null);
@@ -256,11 +256,11 @@ describe("Null Coercion", () => {
       variable number: NumberWithUnit = dict.get("foo");
       return number;
     `;
-    
+
     const interpreter = createInterpreter(text);
-    
+
     const result = interpreter.interpret();
-    
+
     expect(result).toBeInstanceOf(NumberWithUnitSymbol);
     const nwu = result as NumberWithUnitSymbol;
     expect(nwu.value).toBe(null);
@@ -273,11 +273,11 @@ describe("Null Coercion", () => {
       variable hexColor: Color.Hex = dict.get("foo");
       return hexColor;
     `;
-    
+
     const interpreter = createInterpreter(text);
-    
+
     const result = interpreter.interpret();
-    
+
     expect(result).toBeInstanceOf(ColorSymbol);
     const color = result as ColorSymbol;
     expect(color.value).toBe(null);
@@ -290,10 +290,9 @@ describe("Null Coercion", () => {
       variable str: String = dict.get("nonexistent");
       variable num: Number = str;
     `;
-    
+
     const interpreter = createInterpreter(text);
-    
-    
+
     expect(() => interpreter.interpret()).toThrow(/Invalid value.*for variable 'num'/);
   });
 
@@ -305,7 +304,7 @@ describe("Null Coercion", () => {
         variable num: Number = str;
       `;
       const interpreter = createInterpreter(text);
-      
+
       interpreter.interpret();
     }).toThrow(/Invalid value.*for variable 'num'/);
 
@@ -316,7 +315,7 @@ describe("Null Coercion", () => {
         variable bool: Boolean = num;
       `;
       const interpreter = createInterpreter(text);
-      
+
       interpreter.interpret();
     }).toThrow(/Invalid value.*for variable 'bool'/);
 
@@ -327,7 +326,7 @@ describe("Null Coercion", () => {
         variable str: String = bool;
       `;
       const interpreter = createInterpreter(text);
-      
+
       interpreter.interpret();
     }).toThrow(/Invalid value.*for variable 'str'/);
   });
@@ -339,11 +338,11 @@ describe("Null Coercion", () => {
       variable str2: String = str1;
       return str2;
     `;
-    
+
     const interpreter = createInterpreter(text);
-    
+
     const result = interpreter.interpret();
-    
+
     expect(result).toBeInstanceOf(StringSymbol);
     expect(result?.type).toBe("String");
     expect(result?.value).toBe(null);
@@ -357,7 +356,7 @@ describe("Null Comparison Tests", () => {
         variable a: String;
         return a == null;
       `);
-      
+
       expect(result).toBeInstanceOf(BooleanSymbol);
       expect(result?.value).toBe(true);
     });
@@ -367,7 +366,7 @@ describe("Null Comparison Tests", () => {
         variable a: Number;
         return a == null;
       `);
-      
+
       expect(result).toBeInstanceOf(BooleanSymbol);
       expect(result?.value).toBe(true);
     });
@@ -377,7 +376,7 @@ describe("Null Comparison Tests", () => {
         variable a: Boolean;
         return a == null;
       `);
-      
+
       expect(result).toBeInstanceOf(BooleanSymbol);
       expect(result?.value).toBe(true);
     });
@@ -387,7 +386,7 @@ describe("Null Comparison Tests", () => {
         variable a: NumberWithUnit;
         return a == null;
       `);
-      
+
       expect(result).toBeInstanceOf(BooleanSymbol);
       expect(result?.value).toBe(true);
     });
@@ -397,7 +396,7 @@ describe("Null Comparison Tests", () => {
         variable a: Color;
         return a == null;
       `);
-      
+
       expect(result).toBeInstanceOf(BooleanSymbol);
       expect(result?.value).toBe(true);
     });
@@ -407,7 +406,7 @@ describe("Null Comparison Tests", () => {
         variable a: Color.Hex;
         return a == null;
       `);
-      
+
       expect(result).toBeInstanceOf(BooleanSymbol);
       expect(result?.value).toBe(true);
     });
@@ -419,7 +418,7 @@ describe("Null Comparison Tests", () => {
         variable a: String = "hello";
         return a == null;
       `);
-      
+
       expect(result).toBeInstanceOf(BooleanSymbol);
       expect(result?.value).toBe(false);
     });
@@ -429,7 +428,7 @@ describe("Null Comparison Tests", () => {
         variable a: Number = 42;
         return a == null;
       `);
-      
+
       expect(result).toBeInstanceOf(BooleanSymbol);
       expect(result?.value).toBe(false);
     });
@@ -439,7 +438,7 @@ describe("Null Comparison Tests", () => {
         variable a: Boolean = true;
         return a == null;
       `);
-      
+
       expect(result).toBeInstanceOf(BooleanSymbol);
       expect(result?.value).toBe(false);
     });
@@ -449,7 +448,7 @@ describe("Null Comparison Tests", () => {
         variable a: NumberWithUnit = 10px;
         return a == null;
       `);
-      
+
       expect(result).toBeInstanceOf(BooleanSymbol);
       expect(result?.value).toBe(false);
     });
@@ -459,7 +458,7 @@ describe("Null Comparison Tests", () => {
         variable a: Color = #ff0000;
         return a == null;
       `);
-      
+
       expect(result).toBeInstanceOf(BooleanSymbol);
       expect(result?.value).toBe(false);
     });
@@ -471,7 +470,7 @@ describe("Null Comparison Tests", () => {
         variable a: List;
         return a == null;
       `);
-      
+
       expect(result).toBeInstanceOf(BooleanSymbol);
       expect(result?.value).toBe(false);
     });
@@ -481,7 +480,7 @@ describe("Null Comparison Tests", () => {
         variable a: List = 1, 2, 3;
         return a == null;
       `);
-      
+
       expect(result).toBeInstanceOf(BooleanSymbol);
       expect(result?.value).toBe(false);
     });
@@ -491,7 +490,7 @@ describe("Null Comparison Tests", () => {
         variable a: Dictionary;
         return a == null;
       `);
-      
+
       expect(result).toBeInstanceOf(BooleanSymbol);
       expect(result?.value).toBe(false);
     });
@@ -502,7 +501,7 @@ describe("Null Comparison Tests", () => {
         a.set("key", "value");
         return a == null;
       `);
-      
+
       expect(result).toBeInstanceOf(BooleanSymbol);
       expect(result?.value).toBe(false);
     });
@@ -514,7 +513,7 @@ describe("Null Comparison Tests", () => {
         variable a: String;
         return a != null;
       `);
-      
+
       expect(resultNull).toBeInstanceOf(BooleanSymbol);
       expect(resultNull?.value).toBe(false);
 
@@ -522,7 +521,7 @@ describe("Null Comparison Tests", () => {
         variable a: String = "hello";
         return a != null;
       `);
-      
+
       expect(resultValue).toBeInstanceOf(BooleanSymbol);
       expect(resultValue?.value).toBe(true);
     });
@@ -532,7 +531,7 @@ describe("Null Comparison Tests", () => {
         variable a: List;
         return a != null;
       `);
-      
+
       expect(result).toBeInstanceOf(BooleanSymbol);
       expect(result?.value).toBe(true);
     });
@@ -546,7 +545,7 @@ describe("Null Comparison Tests", () => {
         variable c: List;
         return (a == null) && (b == null) && (c != null);
       `);
-      
+
       expect(result).toBeInstanceOf(BooleanSymbol);
       expect(result?.value).toBe(true);
     });
@@ -560,7 +559,7 @@ describe("Null Comparison Tests", () => {
           return "not null";
         ];
       `);
-      
+
       expect(result).toBeInstanceOf(StringSymbol);
       expect(result?.value).toBe("is null");
     });
@@ -571,7 +570,7 @@ describe("Null Comparison Tests", () => {
         variable retrieved: String = dict.get("nonexistent");
         return retrieved == null;
       `);
-      
+
       expect(result).toBeInstanceOf(BooleanSymbol);
       expect(result?.value).toBe(true);
     });
@@ -672,66 +671,82 @@ describe("Null Comparison Tests", () => {
 
     describe("Should return false when comparing null-typed variables (not literal null)", () => {
       it("should throw for > comparison with null-typed variable", () => {
-        expect(() => run(`
+        expect(() =>
+          run(`
           variable a: String;
           return a > "test";
-        `)).toThrow(/Cannot perform ordering comparison with null values/);
+        `),
+        ).toThrow(/Cannot perform ordering comparison with null values/);
       });
 
       it("should throw for < comparison with null-typed variable", () => {
-        expect(() => run(`
+        expect(() =>
+          run(`
           variable a: Number;
           return a < 42;
-        `)).toThrow(/Cannot perform ordering comparison with null values/);
+        `),
+        ).toThrow(/Cannot perform ordering comparison with null values/);
       });
 
       it("should throw for >= comparison with null-typed variable", () => {
-        expect(() => run(`
+        expect(() =>
+          run(`
           variable a: Boolean;
           return a >= true;
-        `)).toThrow(/Cannot perform ordering comparison with null values/);
+        `),
+        ).toThrow(/Cannot perform ordering comparison with null values/);
       });
 
       it("should throw for <= comparison with null-typed variable", () => {
-        expect(() => run(`
+        expect(() =>
+          run(`
           variable a: NumberWithUnit;
           return a <= 10px;
-        `)).toThrow(/Cannot perform ordering comparison with null values/);
+        `),
+        ).toThrow(/Cannot perform ordering comparison with null values/);
       });
 
       it("should throw for ordering comparison between same-type null variables", () => {
-        expect(() => run(`
+        expect(() =>
+          run(`
           variable a: String;
           variable b: String;
           return a > b;
-        `)).toThrow(/Cannot perform ordering comparison with null values/);
+        `),
+        ).toThrow(/Cannot perform ordering comparison with null values/);
       });
 
       it("should throw for ordering comparison with null from dictionary", () => {
-        expect(() => run(`
+        expect(() =>
+          run(`
           variable dict: Dictionary;
           variable nullValue: String = dict.get("nonexistent");
           return nullValue > "test";
-        `)).toThrow(/Cannot perform ordering comparison with null values/);
+        `),
+        ).toThrow(/Cannot perform ordering comparison with null values/);
       });
 
       it("should throw for complex expressions with null-typed variable ordering", () => {
-        expect(() => run(`
+        expect(() =>
+          run(`
           variable a: String;
           variable b: String = "test";
           return (a > b) && (b != null);
-        `)).toThrow(/Cannot perform ordering comparison with null values/);
+        `),
+        ).toThrow(/Cannot perform ordering comparison with null values/);
       });
 
       it("should throw for if statement conditions with null-typed variable ordering", () => {
-        expect(() => run(`
+        expect(() =>
+          run(`
           variable a: Number;
           if (a > 0) [
             return "positive";
           ] else [
             return "not positive";
           ];
-        `)).toThrow(/Cannot perform ordering comparison with null values/);
+        `),
+        ).toThrow(/Cannot perform ordering comparison with null values/);
       });
     });
 
@@ -742,7 +757,7 @@ describe("Null Comparison Tests", () => {
           variable b: Number = 3;
           return a > b;
         `);
-        
+
         expect(result).toBeInstanceOf(BooleanSymbol);
         expect(result?.value).toBe(true);
       });
@@ -753,7 +768,7 @@ describe("Null Comparison Tests", () => {
           variable b: String = "banana";
           return a < b;
         `);
-        
+
         expect(result).toBeInstanceOf(BooleanSymbol);
         expect(result?.value).toBe(true);
       });
@@ -764,7 +779,7 @@ describe("Null Comparison Tests", () => {
           variable b: Number = 5;
           return a >= b;
         `);
-        
+
         expect(result).toBeInstanceOf(BooleanSymbol);
         expect(result?.value).toBe(true);
       });
@@ -775,7 +790,7 @@ describe("Null Comparison Tests", () => {
           variable b: NumberWithUnit = 15px;
           return a <= b;
         `);
-        
+
         expect(result).toBeInstanceOf(BooleanSymbol);
         expect(result?.value).toBe(true);
       });

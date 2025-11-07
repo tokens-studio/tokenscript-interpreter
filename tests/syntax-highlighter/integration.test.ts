@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
 import { tokenscriptLanguage } from "@src/syntax-highlighter/prism";
 import { PATTERNS } from "@src/syntax-highlighter/spec";
+import { describe, expect, it } from "vitest";
 
 /**
  * Tokenize code with Prism
@@ -11,10 +11,9 @@ function tokenizeWithPrism(code: string): Record<string, string[]> {
   const grammar = mockPrism.languages.tokenscript;
 
   const tokens: Record<string, string[]> = {};
-  
+
   for (const [tokenName, tokenDef] of Object.entries(grammar)) {
-    const pattern =
-      typeof tokenDef === "object" && "pattern" in tokenDef ? tokenDef.pattern : tokenDef;
+    const pattern = typeof tokenDef === "object" && "pattern" in tokenDef ? tokenDef.pattern : tokenDef;
 
     if (!(pattern instanceof RegExp)) continue;
 
@@ -429,7 +428,7 @@ describe("Syntax Highlighter Integration Tests", () => {
     });
 
     it("should correctly tokenize a gradient", () => {
-      const code = 'linear-gradient(#ff0000, #00ff00)';
+      const code = "linear-gradient(#ff0000, #00ff00)";
       const tokens = tokenizeWithPrism(code);
 
       expect(tokens.function).toContain("linear-gradient");
@@ -471,9 +470,7 @@ describe("Syntax Highlighter Integration Tests", () => {
       const mockPrism = { languages: {} };
       tokenscriptLanguage(mockPrism);
 
-      expect(mockPrism.languages.tokenscript["number-with-unit"].pattern).toBe(
-        PATTERNS.numberWithUnit,
-      );
+      expect(mockPrism.languages.tokenscript["number-with-unit"].pattern).toBe(PATTERNS.numberWithUnit);
     });
 
     it("should use the same number pattern as spec", () => {

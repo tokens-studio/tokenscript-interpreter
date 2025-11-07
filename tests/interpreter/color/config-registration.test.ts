@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Config } from "@interpreter/config/config";
 import { ColorManager } from "@interpreter/config/managers/color/manager";
-import { createInterpreter } from "@tests/interpreter/test-helpers";
 import { InterpreterError } from "@interpreter/errors";
 import { ColorSymbol } from "@interpreter/symbols";
+import { createInterpreter } from "@tests/interpreter/test-helpers";
+import { beforeEach, describe, expect, it } from "vitest";
 
 describe("Config and ColorManager - Color Registration", () => {
   let colorManager: ColorManager;
@@ -42,14 +42,14 @@ describe("Config and ColorManager - Color Registration", () => {
           properties: {
             r: { type: "number" },
             g: { type: "number" },
-            b: { type: "number" }
+            b: { type: "number" },
           },
           required: ["r", "g", "b"],
           order: ["r", "g", "b"],
-          additionalProperties: false
+          additionalProperties: false,
         },
         initializers: [],
-        conversions: []
+        conversions: [],
       };
 
       const registeredSpec = colorManager.register("test://rgb-object", rgbSpec);
@@ -66,7 +66,7 @@ describe("Config and ColorManager - Color Registration", () => {
         description: "Test RGB color",
         schema: { type: "object", properties: {} },
         initializers: [],
-        conversions: []
+        conversions: [],
       };
 
       colorManager.register("test://test-rgb", rgbSpec);
@@ -83,7 +83,7 @@ describe("Config and ColorManager - Color Registration", () => {
         description: "Test RGB color",
         schema: { type: "object", properties: {} },
         initializers: [],
-        conversions: []
+        conversions: [],
       };
 
       colorManager.register("test://test-rgb", rgbSpec);
@@ -100,11 +100,11 @@ describe("Config and ColorManager - Color Registration", () => {
         description: "Test RGB color",
         schema: { type: "object", properties: {} },
         initializers: [],
-        conversions: []
+        conversions: [],
       };
 
       colorManager.register("test://test-rgb", rgbSpec);
-      
+
       const retrieved1 = colorManager.getSpecByType("testrgb");
       const retrieved2 = colorManager.getSpecByType("TESTRGB");
       const retrieved3 = colorManager.getSpecByType("TestRgb");
@@ -123,7 +123,7 @@ describe("Config and ColorManager - Color Registration", () => {
         description: "Invalid color",
         schema: { type: "object", properties: {} },
         initializers: [],
-        conversions: []
+        conversions: [],
       };
 
       expect(() => {
@@ -143,13 +143,13 @@ describe("Config and ColorManager - Color Registration", () => {
           properties: {
             r: { type: "number" },
             g: { type: "number" },
-            b: { type: "number" }
+            b: { type: "number" },
           },
           required: ["r", "g", "b"],
-          additionalProperties: false
+          additionalProperties: false,
         },
         initializers: [],
-        conversions: []
+        conversions: [],
       };
       colorManager.register("test://rgb", rgbSpec);
     });
@@ -166,7 +166,7 @@ describe("Config and ColorManager - Color Registration", () => {
 
     it("should create empty color symbol for registered type", () => {
       const colorSymbol = config.getType("Color", "RGB");
-      
+
       expect(colorSymbol).toBeInstanceOf(ColorSymbol);
       expect((colorSymbol as ColorSymbol).subType).toBe("RGB");
     });
@@ -184,7 +184,7 @@ describe("Config and ColorManager - Color Registration", () => {
       } catch (e) {
         error = e as Error;
       }
-      
+
       expect(error).toBeInstanceOf(Error);
       expect(error?.message).toBe("No spec found for MissingSpec");
     });
@@ -201,13 +201,13 @@ describe("Config and ColorManager - Color Registration", () => {
           properties: {
             r: { type: "number" },
             g: { type: "number" },
-            b: { type: "number" }
+            b: { type: "number" },
           },
           required: ["r", "g", "b"],
-          additionalProperties: false
+          additionalProperties: false,
         },
         initializers: [],
-        conversions: []
+        conversions: [],
       };
       colorManager.register("test://rgb", rgbSpec);
     });
@@ -217,10 +217,10 @@ describe("Config and ColorManager - Color Registration", () => {
         variable color: Color.RGB;
         color
       `;
-      
+
       const interpreter = createInterpreter(code, {}, config);
       const result = interpreter.interpret();
-      
+
       expect(result).toBeInstanceOf(ColorSymbol);
       const colorResult = result as ColorSymbol;
       expect(colorResult.subType).toBe("RGB");
@@ -232,10 +232,10 @@ describe("Config and ColorManager - Color Registration", () => {
         variable color: Color.RGB;
         color
       `;
-      
+
       const interpreter = createInterpreter(code, {}, config);
       const result = interpreter.interpret();
-      
+
       expect(result).toBeInstanceOf(ColorSymbol);
       const colorResult = result as ColorSymbol;
       expect(colorResult.subType).toBe("RGB");
@@ -247,16 +247,16 @@ describe("Config and ColorManager - Color Registration", () => {
         variable color: Color.Missing;
         color
       `;
-      
+
       const interpreter = createInterpreter(code, {}, config);
-      
+
       let error: InterpreterError | null = null;
       try {
         interpreter.interpret();
       } catch (e) {
         error = e as InterpreterError;
       }
-      
+
       expect(error).toBeInstanceOf(InterpreterError);
       expect(error?.message).toContain("Invalid variable type 'Color.Missing'");
       expect(error?.meta).toBeDefined();
@@ -275,13 +275,13 @@ describe("Config and ColorManager - Color Registration", () => {
           properties: {
             h: { type: "number" },
             s: { type: "number" },
-            l: { type: "number" }
+            l: { type: "number" },
           },
           required: ["h", "s", "l"],
-          additionalProperties: false
+          additionalProperties: false,
         },
         initializers: [],
-        conversions: []
+        conversions: [],
       };
       colorManager.register("test://hsl", hslSpec);
 
@@ -290,10 +290,10 @@ describe("Config and ColorManager - Color Registration", () => {
         variable hslColor: Color.HSL;
         rgbColor
       `;
-      
+
       const interpreter = createInterpreter(code, {}, config);
       const result = interpreter.interpret();
-      
+
       expect(result).toBeInstanceOf(ColorSymbol);
       const colorResult = result as ColorSymbol;
       expect(colorResult.subType).toBe("RGB");
@@ -306,16 +306,16 @@ describe("Config and ColorManager - Color Registration", () => {
       const code = `
         variable color: Color.NonExistent;
       `;
-      
+
       const interpreter = createInterpreter(code, {}, config);
-      
+
       let error: InterpreterError | null = null;
       try {
         interpreter.interpret();
       } catch (e) {
         error = e as InterpreterError;
       }
-      
+
       expect(error).toBeInstanceOf(InterpreterError);
       expect(error?.message).toContain("Invalid variable type 'Color.Nonexistent'");
       expect(error?.meta).toBeDefined();
@@ -329,7 +329,7 @@ describe("Config and ColorManager - Color Registration", () => {
     it("should have default Hex color type available", () => {
       const defaultColorManager = new ColorManager();
       const hexSpec = defaultColorManager.getSpecByType("Hex");
-      
+
       expect(hexSpec).toBeDefined();
       expect(hexSpec?.name).toBe("Hex");
       expect(hexSpec?.type).toBe("color");
@@ -337,15 +337,15 @@ describe("Config and ColorManager - Color Registration", () => {
 
     it("should work with default Hex color in interpreter", () => {
       const defaultConfig = new Config();
-      
+
       const code = `
         variable color: Color.Hex;
         color
       `;
-      
+
       const interpreter = createInterpreter(code, {}, defaultConfig);
       const result = interpreter.interpret();
-      
+
       expect(result).toBeInstanceOf(ColorSymbol);
       const colorResult = result as ColorSymbol;
       expect(colorResult.subType).toBe("Hex");
