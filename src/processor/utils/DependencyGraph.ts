@@ -65,10 +65,8 @@ export class DependencyGraph<N = string> {
 
     // Combined: Initialize in-degrees and calculate them in a single iteration
     for (const [node, deps] of this.nodes) {
-      // Initialize this node if not already done
-      if (!inDegree.has(node)) {
-        inDegree.set(node, 0);
-      }
+      // Initialize this node's in-degree (if already exists, this maintains the existing value)
+      inDegree.set(node, inDegree.get(node) || 0);
       // Calculate in-degrees for dependencies
       for (const dep of deps) {
         inDegree.set(dep, (inDegree.get(dep) || 0) + 1);
