@@ -50,7 +50,7 @@ export const isDate = (v: unknown): v is Date => {
 
 export const isMap = (v: unknown): v is Map<unknown, unknown> => v instanceof Map;
 
-export const isPlainObject = (v: unknown): boolean => {
+export const isPlainObject = (v: unknown): v is Record<string, unknown> => {
   if (!isObject(v)) return false;
 
   // Objects created by the Object constructor or with null prototype
