@@ -1,11 +1,11 @@
 import { fetchAndRegisterSchemas } from "@src/utils/schema-fetcher";
+import type { interpreterResult } from "../interpreter/interpreter";
+import { isTokenscriptSymbol } from "../interpreter/symbols";
 import { isObject, isSingleEntryObject } from "../interpreter/utils/type";
 import { type ProcessorOutput, TokenProcessor } from "./TokenProcessor";
 import { collectJsonFiles } from "./utils/file-collector";
 import { extractSetNames, resolveThemes, selectTheme } from "./utils/theme-resolver";
 import { flattenObject, isNested, recordToMap } from "./utils/tokens";
-import { interpreterResult } from "../interpreter/interpreter";
-import { isTokenscriptSymbol } from "../interpreter/symbols";
 
 export function collectErrors(
   result: ProcessorOutput,

@@ -6,7 +6,6 @@ import { collectErrors, normalizeJsonFiles, processTokens } from "./processor/pr
 import { collectJsonFiles } from "./processor/utils/file-collector";
 import { extractSetNames, resolveThemes } from "./processor/utils/theme-resolver";
 import { startRepl } from "./repl";
-import { mapObj } from "./interpreter/utils/type";
 
 const program = new Command();
 
@@ -87,12 +86,12 @@ program
     const [_, themes] = resolveThemes(normalized);
     const sets = Object.keys(normalized).filter((key) => !key.startsWith("$"));
 
-    let output = {sets};
+    const output = { sets };
 
     if (themes) {
       output.themes = Object.fromEntries(
         themes.map((theme) => [theme.name, extractSetNames(theme.selectedTokenSets)]),
-      )
+      );
     }
 
     console.log(JSON.stringify(output, null, 2));
