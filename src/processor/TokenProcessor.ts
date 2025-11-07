@@ -4,27 +4,27 @@ import { type ParseExpressionResult, parseExpression } from "@interpreter/parser
 import { DependencyError } from "./errors";
 import { DependencyGraph } from "./utils/DependencyGraph";
 
-type refPath = string;
+type RefPath = string;
 
 type TokenResult = interpreterResult | Error;
-type ResolvedTokens = Map<refPath, TokenResult>;
+type ResolvedTokens = Map<RefPath, TokenResult>;
 type UnresolvedToken = { ast: ASTNode; dependencies: Set<string> };
-type UnresolvedTokens = Map<refPath, UnresolvedToken>;
+type UnresolvedTokens = Map<RefPath, UnresolvedToken>;
 
 export type ProcessorResult = {
-  graph: DependencyGraph<refPath>;
+  graph: DependencyGraph<RefPath>;
   resolved: ResolvedTokens;
   unresolved: UnresolvedTokens;
 };
 
 export type ProcessorCallbacks = {
-  onResolve?: (tokenName: refPath, value: interpreterResult) => void;
-  onError?: (tokenName: refPath, error: Error, originalValue: string) => void;
+  onResolve?: (tokenName: RefPath, value: interpreterResult) => void;
+  onError?: (tokenName: RefPath, error: Error, originalValue: string) => void;
 };
 
 export type ProcessorOutput = ProcessorResult & {
-  tokens: Map<refPath, string | interpreterResult>;
-  errors: Map<refPath, Error>;
+  tokens: Map<RefPath, string | interpreterResult>;
+  errors: Map<RefPath, Error>;
 };
 
 /**
@@ -49,10 +49,10 @@ export type ProcessorOutput = ProcessorResult & {
  */
 export class TokenProcessor {
   public processTokens(
-    tokens: Map<refPath, string>,
+    tokens: Map<RefPath, string>,
     callbacks?: ProcessorCallbacks,
   ): ProcessorResult {
-    const graph = new DependencyGraph<refPath>();
+    const graph = new DependencyGraph<RefPath>();
     const resolved: ResolvedTokens = new Map();
     const unresolved: UnresolvedTokens = new Map();
     const { onResolve, onError } = callbacks ?? {};
@@ -74,7 +74,7 @@ export class TokenProcessor {
       }
     };
 
-    const interpretToken = (ast: ASTNode, tokenName: refPath): interpreterResult | Error => {
+    const interpretToken = (ast: ASTNode, tokenName: RefPath): interpreterResult | Error => {
       const originalValue = tokens.get(tokenName) ?? "";
       try {
         // OPTIMIZATION: Reuse interpreter, just swap AST
@@ -165,9 +165,9 @@ export class TokenProcessor {
   /**
    * Build tokens from a flat token map
    */
-  public build(tokens: Map<refPath, string>): ProcessorOutput {
-    const output: Map<refPath, string | interpreterResult> = new Map();
-    const errors: Map<refPath, Error> = new Map();
+  public build(tokens: Map<RefPath, string>): ProcessorOutput {
+    const output: Map<RefPath, string | interpreterResult> = new Map();
+    const errors: Map<RefPath, Error> = new Map();
 
     const callbacks: ProcessorCallbacks = {
       onResolve: (tokenName, value) => {
