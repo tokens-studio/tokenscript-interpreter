@@ -25,8 +25,6 @@ describe("Performance Benchmark", () => {
         `({base.size.${i}} + {base.size.${i + 1}}) * {base.size.${i + 2}}`;
     }
 
-    console.log(`\n🔄 Benchmarking resolution of ${Object.keys(tokens).length} tokens...`);
-
     const startTime = performance.now();
     const resolver = new TokenSetResolver(tokens);
     const result = resolver.resolve();
@@ -34,11 +32,6 @@ describe("Performance Benchmark", () => {
 
     const duration = endTime - startTime;
     const tokensPerSecond = Math.round(Object.keys(tokens).length / (duration / 1000));
-
-    console.log(
-      `⚡ Resolved ${Object.keys(result.resolvedTokens).length} tokens in ${duration.toFixed(2)}ms`,
-    );
-    console.log(`📊 Performance: ${tokensPerSecond.toLocaleString()} tokens/second`);
 
     // Verify some results
     expect(result.resolvedTokens["base.size.0"]?.toString()).toBe("8");
@@ -99,10 +92,6 @@ describe("Performance Benchmark", () => {
     expect(result.resolvedTokens["component.padding.xs"]?.toString()).toBe("8"); // 6 + 2 = 8
     expect(result.resolvedTokens["layout.gap.xs"]?.toString()).toBe("7"); // (8 + 6) / 2 = 7
 
-    console.log(
-      `\n🎯 AST Caching Demo: Resolved ${Object.keys(tokens).length} interdependent tokens in ${duration.toFixed(2)}ms`,
-    );
-
     // Should be very fast due to AST caching
     expect(duration).toBeLessThan(100); // Should complete in under 100ms
     expect(result.errors).toEqual([]);
@@ -120,10 +109,6 @@ describe("Performance Benchmark", () => {
       tokens[`chain.${i}`] = `{${i === 1 ? "base" : `chain.${i - 1}`}} + 1`;
     }
 
-    console.log(
-      `\n⚡ Interpreter Reuse Demo: Resolving ${Object.keys(tokens).length} chained dependencies...`,
-    );
-
     const startTime = performance.now();
     const resolver = new TokenSetResolver(tokens);
     const result = resolver.resolve();
@@ -131,11 +116,6 @@ describe("Performance Benchmark", () => {
 
     const duration = endTime - startTime;
     const tokensPerSecond = Math.round(Object.keys(tokens).length / (duration / 1000));
-
-    console.log(
-      `🚀 Resolved ${Object.keys(result.resolvedTokens).length} chained tokens in ${duration.toFixed(2)}ms`,
-    );
-    console.log(`📈 Performance: ${tokensPerSecond.toLocaleString()} tokens/second`);
 
     // Verify the chain resolved correctly
     expect(result.resolvedTokens["base"]?.toString()).toBe("10");
