@@ -13,6 +13,7 @@ import type {
   IfNode,
   ImplicitListNode,
   ListNode,
+  NoOpNode,
   NullNode,
   NumNode,
   ReassignNode,
@@ -155,6 +156,17 @@ export function isBooleanNode(node: ASTNode): node is BooleanNode {
  */
 export function isNullNode(node: ASTNode): node is NullNode {
   return node.nodeType === "NullNode";
+}
+
+/**
+ * Type guard to check if an AST node is a NoOpNode
+ * @example
+ * if (isNoOpNode(node)) {
+ *   // Handle no-operation node
+ * }
+ */
+export function isNoOpNode(node: ASTNode): node is NoOpNode {
+  return node.nodeType === "NoOpNode";
 }
 
 /**

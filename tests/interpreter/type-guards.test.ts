@@ -3,7 +3,6 @@ import {
   isAssignNode,
   isAttributeAccessNode,
   isBinOpNode,
-  isBlockNode,
   isBooleanNode,
   isElementWithUnitNode,
   isFunctionCallNode,
@@ -13,6 +12,7 @@ import {
   isIfNode,
   isImplicitListNode,
   isListNode,
+  isNoOpNode,
   isNullNode,
   isNumNode,
   isReassignNode,
@@ -26,6 +26,7 @@ import {
   matchASTNode,
 } from "@interpreter/type-guards";
 import { Lexer } from "@interpreter/lexer";
+import { NoOpNode } from "@interpreter/ast";
 import { describe, expect, it } from "vitest";
 
 describe("AST Type Guards", () => {
@@ -301,6 +302,20 @@ describe("AST Type Guards", () => {
       const ast = parseExpression("42");
       expect(ast).not.toBeNull();
       expect(isNullNode(ast!)).toBe(false);
+    });
+  });
+
+  describe("isNoOpNode", () => {
+    it("should identify no-op nodes", () => {
+      // NoOpNode is typically used internally, create one manually
+      const node = new NoOpNode();
+      expect(isNoOpNode(node)).toBe(true);
+    });
+
+    it("should return false for non-no-op nodes", () => {
+      const ast = parseExpression("42");
+      expect(ast).not.toBeNull();
+      expect(isNoOpNode(ast!)).toBe(false);
     });
   });
 
