@@ -4,6 +4,7 @@ import { Command } from "commander";
 import packageJson from "../package.json" with { type: "json" };
 import { collectErrors, normalizeJsonFiles, processTokens } from "./processor/process";
 import { collectJsonFiles } from "./processor/utils/file-collector";
+import type { Theme } from "./processor/utils/theme-resolver";
 import { extractSetNames, resolveThemes } from "./processor/utils/theme-resolver";
 import { startRepl } from "./repl";
 
@@ -83,14 +84,15 @@ program
     const jsonFiles = await collectJsonFiles(options.input);
     const normalized = normalizeJsonFiles(jsonFiles);
 
-    const [_, themes] = resolveThemes(normalized);
+    const themesResult = resolveThemes(normalized);
     const sets = Object.keys(normalized).filter((key) => !key.startsWith("$"));
 
-    const output = { sets };
+    const output: { sets: string[]; themes?: Record<string, string[]> } = { sets };
 
-    if (themes) {
+    if (themesResult) {
+      const [_, themes] = themesResult;
       output.themes = Object.fromEntries(
-        themes.map((theme) => [theme.name, extractSetNames(theme.selectedTokenSets)]),
+        themes.map((theme: Theme) => [theme.name, extractSetNames(theme.selectedTokenSets)]),
       );
     }
 
