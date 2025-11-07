@@ -99,4 +99,9 @@ program
     console.log(JSON.stringify(output, null, 2));
   });
 
-program.parse();
+export { program };
+
+// Auto-run only if not in test environment
+if (process.env.NODE_ENV !== "test" && import.meta.url === `file://${process.argv[1]}`) {
+  program.parse();
+}
