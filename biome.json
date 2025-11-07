@@ -15,8 +15,6 @@
       "!coverage",
       "!examples",
       "!tsconfig*.json",
-      "!**/*.test.ts",
-      "!**/*.test.tsx",
       "!data",
       "!specifications"
     ]
@@ -106,5 +104,24 @@
       "indentStyle": "space",
       "indentWidth": 2
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["tests/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noNonNullAssertion": "off"
+          },
+          "suspicious": {
+            "noApproximativeNumericConstant": "off"
+          }
+        }
+      },
+      "formatter": {
+        "lineWidth": 160,
+        "indentStyle": "space"
+      }
+    }
+  ]
 }
