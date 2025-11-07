@@ -1,5 +1,4 @@
 import * as path from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   cleanupTempDir,
   createTestContext,
@@ -11,7 +10,8 @@ import {
   setupTempDir,
   writeTokenFile,
   writeTokenFiles,
-} from "./helpers";
+} from "@tests/integration/helpers";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 describe("CLI Commands Integration Tests", () => {
   const ctx = createTestContext("cli-commands");
@@ -102,10 +102,7 @@ describe("CLI Commands Integration Tests", () => {
         dark: {
           bg: createToken("#000000", "color"),
         },
-        $themes: [
-          createTheme("Light", { core: "enabled", light: "enabled" }),
-          createTheme("Dark", { core: "enabled", dark: "enabled" }),
-        ],
+        $themes: [createTheme("Light", { core: "enabled", light: "enabled" }), createTheme("Dark", { core: "enabled", dark: "enabled" })],
       };
 
       const tokensFile = await writeTokenFile(ctx.tempDir, "tokens.json", tokens);
@@ -208,10 +205,7 @@ describe("CLI Commands Integration Tests", () => {
         dark: {
           bg: createToken("#000000", "color"),
         },
-        $themes: [
-          createTheme("Light", { core: "enabled", light: "enabled" }),
-          createTheme("Dark", { core: "enabled", dark: "enabled" }),
-        ],
+        $themes: [createTheme("Light", { core: "enabled", light: "enabled" }), createTheme("Dark", { core: "enabled", dark: "enabled" })],
       };
 
       const tokensFile = await writeTokenFile(ctx.tempDir, "tokens.json", tokens);

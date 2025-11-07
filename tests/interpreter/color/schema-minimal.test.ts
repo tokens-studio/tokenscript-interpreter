@@ -1,9 +1,6 @@
+import { ColorSpecificationSchema, MINIMAL_COLOR_SPECIFICATION } from "@interpreter/config/managers/color/schema";
 import { type } from "arktype";
 import { describe, expect, it } from "vitest";
-import {
-  ColorSpecificationSchema,
-  MINIMAL_COLOR_SPECIFICATION,
-} from "../../src/interpreter/config/managers/color/schema";
 
 describe("Minimal Color Specification", () => {
   it("should always be valid according to ColorSpecificationSchema", () => {

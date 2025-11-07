@@ -189,8 +189,6 @@ export async function processThemes(
   performanceTracker?.startTracking();
 
   for (const [themeName, themeTokens] of Object.entries(themes)) {
-    console.log(`🔄 Processing theme: ${themeName} (${Object.keys(themeTokens).length} tokens)`);
-
     const startTime = Date.now();
 
     // Ensure all values are strings for the new TokenSetResolver
@@ -202,14 +200,6 @@ export async function processThemes(
     const tokenSet = new TokenSetResolver(stringTokens, {}, options?.config);
     const result = tokenSet.resolve();
     const endTime = Date.now();
-
-    // Handle warnings and errors from the resolver
-    for (const warning of result.warnings) {
-      console.warn(`⚠️  ${warning}`);
-    }
-    for (const error of result.errors) {
-      console.error(`❌ ${error}`);
-    }
 
     const resolvedTokens = result.resolvedTokens;
 
@@ -253,7 +243,6 @@ export function buildThemeTree(
         if (tokenSetRef.status === "enabled" || tokenSetRef.status === "source") {
           const setId = tokenSetRef.id;
           if (!(setId in tokensets)) {
-            console.warn(`Token set '${setId}' referenced in '${themeName}' not found.`);
             continue;
           }
           Object.assign(tokens, flattenTokens(tokensets[setId]));
@@ -292,8 +281,6 @@ export function permutateTokensets(
   if (!currentPermutation) {
     throw new Error("No permutation available to process");
   }
-
-  console.log(`🔄 Permutating on: ${currentPermutation}`);
 
   for (const [themeName, themeTokens] of Object.entries(themeTree[currentPermutation])) {
     if (!themeTokens) {
@@ -427,7 +414,6 @@ function loadThemesFromJson(tokensJson: Record<string, any>): Record<string, Rec
         if (tokenSetRef.status === "enabled" || tokenSetRef.status === "source") {
           const setId = tokenSetRef.id;
           if (!(setId in tokensJson)) {
-            console.warn(`⚠️  Token set '${setId}' referenced in '${themeName}' not found.`);
             continue;
           }
           Object.assign(themeTokens[themeName], flattenTokens(tokensJson[setId]));

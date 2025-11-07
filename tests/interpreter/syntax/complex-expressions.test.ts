@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
 import { Interpreter } from "@interpreter/interpreter";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
+import { describe, expect, it } from "vitest";
 import { NumberWithUnitSymbol } from "@/src/lib";
 
 describe("Complex Expressions - Nested Operations", () => {
@@ -107,7 +107,7 @@ describe("Complex Expressions - Variable References", () => {
     const ast = parser.parse(true);
     const interpreter = new Interpreter(ast, {
       references: {
-        // @ts-ignore
+        // @ts-expect-error
         x: new NumberWithUnitSymbol(2, "rem"),
       },
     });

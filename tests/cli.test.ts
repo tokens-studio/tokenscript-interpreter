@@ -1,8 +1,8 @@
-import { describe, expect, it } from "vitest";
 import { Interpreter } from "@interpreter/interpreter";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
-import { TokenSetResolver, buildThemeTree, processThemes, interpretTokens } from "@src/tokenset-processor";
+import { buildThemeTree, interpretTokens, processThemes, TokenSetResolver } from "@src/tokenset-processor";
+import { describe, expect, it } from "vitest";
 
 describe("CLI Functionality", () => {
   describe("Expression Interpretation", () => {
@@ -141,7 +141,7 @@ describe("CLI Functionality", () => {
       const result = resolver.resolve();
 
       expect(result.warnings.length).toBeGreaterThan(0);
-      expect(result.warnings.some(w => w.includes("Not all tokens could be resolved"))).toBe(true);
+      expect(result.warnings.some((w) => w.includes("Not all tokens could be resolved"))).toBe(true);
       expect(result.errors).toEqual([]);
       expect(result.resolvedTokens.valid?.toString()).toBe("16px");
     });
@@ -235,17 +235,17 @@ describe("CLI Functionality", () => {
     it("should work with the original README example using standard tokens JSON format", () => {
       const tokens = {
         "primary-color": {
-          "$value": "#ff6b35",
-          "$type": "color"
+          $value: "#ff6b35",
+          $type: "color",
         },
         "base-spacing": {
-          "$value": "16px",
-          "$type": "dimension"
+          $value: "16px",
+          $type: "dimension",
         },
         "large-spacing": {
-          "$value": "{base-spacing} * 2",
-          "$type": "dimension"
-        }
+          $value: "{base-spacing} * 2",
+          $type: "dimension",
+        },
       };
 
       const result = interpretTokens(tokens);
@@ -253,24 +253,24 @@ describe("CLI Functionality", () => {
       expect(result).toEqual({
         "primary-color": "#ff6b35",
         "base-spacing": "16px",
-        "large-spacing": "32px"
+        "large-spacing": "32px",
       });
     });
 
     it("should work with the original README example using non-standard format", () => {
       const tokens = {
         "primary-color": {
-          "value": "#ff6b35",
-          "type": "color"
+          value: "#ff6b35",
+          type: "color",
         },
         "base-spacing": {
-          "value": "16px",
-          "type": "dimension"
+          value: "16px",
+          type: "dimension",
         },
         "large-spacing": {
-          "value": "{base-spacing} * 2",
-          "type": "dimension"
-        }
+          value: "{base-spacing} * 2",
+          type: "dimension",
+        },
       };
 
       const result = interpretTokens(tokens);
@@ -278,57 +278,57 @@ describe("CLI Functionality", () => {
       expect(result).toEqual({
         "primary-color": "#ff6b35",
         "base-spacing": "16px",
-        "large-spacing": "32px"
+        "large-spacing": "32px",
       });
     });
 
     it("should resolve complex token chains in both formats", () => {
       const standardTokens = {
-        "base": {
-          "$value": "4px",
-          "$type": "dimension"
+        base: {
+          $value: "4px",
+          $type: "dimension",
         },
-        "small": {
-          "$value": "{base} * 2",
-          "$type": "dimension"
+        small: {
+          $value: "{base} * 2",
+          $type: "dimension",
         },
-        "medium": {
-          "$value": "{small} * 2",
-          "$type": "dimension"
+        medium: {
+          $value: "{small} * 2",
+          $type: "dimension",
         },
-        "large": {
-          "$value": "{medium} * 2",
-          "$type": "dimension"
-        }
+        large: {
+          $value: "{medium} * 2",
+          $type: "dimension",
+        },
       };
 
       const nonStandardTokens = {
-        "base": {
-          "value": "4px",
-          "type": "dimension"
+        base: {
+          value: "4px",
+          type: "dimension",
         },
-        "small": {
-          "value": "{base} * 2",
-          "type": "dimension"
+        small: {
+          value: "{base} * 2",
+          type: "dimension",
         },
-        "medium": {
-          "value": "{small} * 2",
-          "type": "dimension"
+        medium: {
+          value: "{small} * 2",
+          type: "dimension",
         },
-        "large": {
-          "value": "{medium} * 2",
-          "type": "dimension"
-        }
+        large: {
+          value: "{medium} * 2",
+          type: "dimension",
+        },
       };
 
       const standardResult = interpretTokens(standardTokens);
       const nonStandardResult = interpretTokens(nonStandardTokens);
 
       const expectedResult = {
-        "base": "4px",
-        "small": "8px", 
-        "medium": "16px",
-        "large": "32px"
+        base: "4px",
+        small: "8px",
+        medium: "16px",
+        large: "32px",
       };
 
       expect(standardResult).toEqual(expectedResult);

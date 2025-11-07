@@ -1,8 +1,8 @@
-import { describe, expect, it } from "vitest";
 import { Interpreter } from "@src/interpreter/interpreter";
 import { Lexer } from "@src/interpreter/lexer";
 import { Parser } from "@src/interpreter/parser";
 import { StringSymbol } from "@src/interpreter/symbols";
+import { describe, expect, it } from "vitest";
 
 describe("Number Hexadecimal Rounding", () => {
   describe("Hexadecimal conversion with rounding", () => {
@@ -15,7 +15,7 @@ describe("Number Hexadecimal Rounding", () => {
       const parser = new Parser(lexer);
       const interpreter = new Interpreter(parser);
       const result = interpreter.interpret();
-      
+
       expect(result).toBeInstanceOf(StringSymbol);
       expect((result as StringSymbol).value).toBe("a"); // 10.5 rounds down to 10, which is 'a' in hex
     });
@@ -29,7 +29,7 @@ describe("Number Hexadecimal Rounding", () => {
       const parser = new Parser(lexer);
       const interpreter = new Interpreter(parser);
       const result = interpreter.interpret();
-      
+
       expect(result).toBeInstanceOf(StringSymbol);
       expect((result as StringSymbol).value).toBe("-b"); // -10.5 rounds down to -11, which is '-b' in hex
     });
@@ -43,7 +43,7 @@ describe("Number Hexadecimal Rounding", () => {
       const parser = new Parser(lexer);
       const interpreter = new Interpreter(parser);
       const result = interpreter.interpret();
-      
+
       expect(result).toBeInstanceOf(StringSymbol);
       expect((result as StringSymbol).value).toBe("f"); // 15.3 rounds down to 15, which is 'f' in hex
     });
@@ -57,7 +57,7 @@ describe("Number Hexadecimal Rounding", () => {
       const parser = new Parser(lexer);
       const interpreter = new Interpreter(parser);
       const result = interpreter.interpret();
-      
+
       expect(result).toBeInstanceOf(StringSymbol);
       expect((result as StringSymbol).value).toBe("10"); // 15.7 rounds up to 16, which is '10' in hex
     });
@@ -71,7 +71,7 @@ describe("Number Hexadecimal Rounding", () => {
       const parser = new Parser(lexer);
       const interpreter = new Interpreter(parser);
       const result = interpreter.interpret();
-      
+
       expect(result).toBeInstanceOf(StringSymbol);
       expect((result as StringSymbol).value).toBe("10.5"); // Should return string representation, not rounded
     });
@@ -85,7 +85,7 @@ describe("Number Hexadecimal Rounding", () => {
       const parser = new Parser(lexer);
       const interpreter = new Interpreter(parser);
       const result = interpreter.interpret();
-      
+
       expect(result).toBeInstanceOf(StringSymbol);
       expect((result as StringSymbol).value).toBe("5.5"); // Should return string representation, not rounded
     });
@@ -99,7 +99,7 @@ describe("Number Hexadecimal Rounding", () => {
       const parser = new Parser(lexer);
       const interpreter = new Interpreter(parser);
       const result = interpreter.interpret();
-      
+
       expect(result).toBeInstanceOf(StringSymbol);
       expect((result as StringSymbol).value).toBe("ff"); // 255 in hex
     });
@@ -113,7 +113,7 @@ describe("Number Hexadecimal Rounding", () => {
       const parser = new Parser(lexer);
       const interpreter = new Interpreter(parser);
       const result = interpreter.interpret();
-      
+
       expect(result).toBeInstanceOf(StringSymbol);
       expect((result as StringSymbol).value).toBe("0"); // 0.5 rounds down to 0
     });

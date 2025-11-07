@@ -1,15 +1,15 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { ColorManager } from "@interpreter/config/managers/color/manager";
-import { ColorSymbol, NumberSymbol, StringSymbol, ListSymbol } from "@interpreter/symbols";
-import { ReassignNode, IdentifierNode } from "@interpreter/ast";
-import { InterpreterError } from "@interpreter/errors";
-import { ColorManagerError } from "@interpreter/config/managers/color/errors";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { IdentifierNode, ReassignNode } from "@interpreter/ast";
+import { ColorManagerError } from "@interpreter/config/managers/color/errors";
+import { ColorManager } from "@interpreter/config/managers/color/manager";
+import { InterpreterError } from "@interpreter/errors";
+import { ColorSymbol, NumberSymbol, StringSymbol } from "@interpreter/symbols";
+import { beforeEach, describe, expect, it } from "vitest";
 
 describe("ColorManager", () => {
   it("registers and retrieves the RGB color specification", () => {
-    const rgbSpecPath = path.join(__dirname, "../../data/specifications/colors/rgb.json");
+    const rgbSpecPath = path.join(__dirname, "../../../data/specifications/colors/rgb.json");
     const rgbSpecString = fs.readFileSync(rgbSpecPath, "utf-8");
     const manager = new ColorManager();
 
@@ -28,7 +28,7 @@ describe("ColorManager", () => {
 
     beforeEach(() => {
       manager = new ColorManager();
-      rgbSpecPath = path.join(__dirname, "../../data/specifications/colors/rgb.json");
+      rgbSpecPath = path.join(__dirname, "../../../data/specifications/colors/rgb.json");
       const rgbSpecString = fs.readFileSync(rgbSpecPath, "utf-8");
       manager.register(rgbSpecPath, JSON.parse(rgbSpecString));
     });
@@ -42,21 +42,13 @@ describe("ColorManager", () => {
     const createReassignNode = (identifierName: string, attributeName?: string) => {
       const identifierToken = createMockToken(identifierName);
       const baseIdentifier = new IdentifierNode(identifierToken);
-      
+
       if (attributeName) {
         const attributeToken = createMockToken(attributeName);
         const attributeIdentifier = new IdentifierNode(attributeToken);
-        return new ReassignNode(
-          [baseIdentifier, attributeIdentifier],
-          new IdentifierNode(createMockToken("value")),
-          identifierToken
-        );
+        return new ReassignNode([baseIdentifier, attributeIdentifier], new IdentifierNode(createMockToken("value")), identifierToken);
       } else {
-        return new ReassignNode(
-          baseIdentifier,
-          new IdentifierNode(createMockToken("value")),
-          identifierToken
-        );
+        return new ReassignNode(baseIdentifier, new IdentifierNode(createMockToken("value")), identifierToken);
       }
     };
 
@@ -94,12 +86,8 @@ describe("ColorManager", () => {
       const baseIdentifier = new IdentifierNode(identifierToken);
       const attr1 = new IdentifierNode(createMockToken("r"));
       const attr2 = new IdentifierNode(createMockToken("value"));
-      
-      const node = new ReassignNode(
-        [baseIdentifier, attr1, attr2],
-        new IdentifierNode(createMockToken("test")),
-        identifierToken
-      );
+
+      const node = new ReassignNode([baseIdentifier, attr1, attr2], new IdentifierNode(createMockToken("test")), identifierToken);
       const attributeValue = new NumberSymbol(255);
 
       let error: InterpreterError | undefined;
@@ -168,23 +156,23 @@ describe("ColorManager", () => {
     it("preserves existing attributes when setting a new one", () => {
       const color = new ColorSymbol(null, "RGB");
       color.value = { g: new NumberSymbol(128) };
-      
+
       const node = createReassignNode("myColor", "r");
       const attributeValue = new NumberSymbol(255);
 
       const result = manager.setAttribute(color, node, attributeValue);
 
       expect(result).toBe(color);
-      expect(color.value).toEqual({ 
+      expect(color.value).toEqual({
         g: new NumberSymbol(128),
-        r: attributeValue 
+        r: attributeValue,
       });
     });
 
     it("overwrites existing attribute with same key", () => {
       const color = new ColorSymbol(null, "RGB");
       color.value = { r: new NumberSymbol(100) };
-      
+
       const node = createReassignNode("myColor", "r");
       const attributeValue = new NumberSymbol(255);
 
@@ -198,7 +186,7 @@ describe("ColorManager", () => {
       const color = new ColorSymbol(null, "RGB");
       // Explicitly ensure value is null
       color.value = null;
-      
+
       const node = createReassignNode("myColor", "g");
       const attributeValue = new NumberSymbol(128);
 
@@ -226,7 +214,7 @@ describe("ColorManager", () => {
     });
 
     it("should register RGB initializer from RGB specification", () => {
-      const rgbSpecPath = path.join(__dirname, "../../data/specifications/colors/rgb.json");
+      const rgbSpecPath = path.join(__dirname, "../../../data/specifications/colors/rgb.json");
       const rgbSpecString = fs.readFileSync(rgbSpecPath, "utf-8");
       const rgbSpec = JSON.parse(rgbSpecString);
 
@@ -249,10 +237,10 @@ describe("ColorManager", () => {
           properties: {
             r: { type: "number" },
             g: { type: "number" },
-            b: { type: "number" }
+            b: { type: "number" },
           },
           required: ["r", "g", "b"],
-          additionalProperties: false
+          additionalProperties: false,
         },
         initializers: [
           {
@@ -261,20 +249,20 @@ describe("ColorManager", () => {
             description: "Creates RGB from values",
             script: {
               type: "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/initializer",
-              script: "variable output: Color.TestColor; output.r = 255; output.g = 0; output.b = 0; return output;"
-            }
+              script: "variable output: Color.TestColor; output.r = 255; output.g = 0; output.b = 0; return output;",
+            },
           },
           {
-            title: "HSL Function", 
+            title: "HSL Function",
             keyword: "hsl",
             description: "Creates RGB from HSL",
             script: {
               type: "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/initializer",
-              script: "variable output: Color.TestColor; output.r = 128; output.g = 128; output.b = 128; return output;"
-            }
-          }
+              script: "variable output: Color.TestColor; output.r = 128; output.g = 128; output.b = 128; return output;",
+            },
+          },
         ],
-        conversions: []
+        conversions: [],
       };
 
       manager.register("test://multi-init", multiInitSpec);
@@ -289,15 +277,15 @@ describe("ColorManager", () => {
     it("should handle specifications with no initializers", () => {
       const noInitSpec = {
         name: "NoInit",
-        type: "color", 
+        type: "color",
         description: "Color with no initializers",
         schema: {
           type: "object",
           properties: { value: { type: "string" } },
-          additionalProperties: false
+          additionalProperties: false,
         },
         initializers: [],
-        conversions: []
+        conversions: [],
       };
 
       expect(() => {
@@ -313,11 +301,11 @@ describe("ColorManager", () => {
       const caseSpec = {
         name: "CaseTest",
         type: "color",
-        description: "Test case sensitivity", 
+        description: "Test case sensitivity",
         schema: {
           type: "object",
           properties: { value: { type: "string" } },
-          additionalProperties: false
+          additionalProperties: false,
         },
         initializers: [
           {
@@ -325,15 +313,15 @@ describe("ColorManager", () => {
             keyword: "UPPERCASE",
             script: {
               type: "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/initializer",
-              script: "variable output: Color.CaseTest; return output;"
-            }
-          }
+              script: "variable output: Color.CaseTest; return output;",
+            },
+          },
         ],
-        conversions: []
+        conversions: [],
       };
 
       manager.register("test://case", caseSpec);
-      
+
       const registeredSpec = manager.getSpecByType("CaseTest");
       expect(registeredSpec).toBeDefined();
       expect(registeredSpec?.initializers[0].keyword).toBe("UPPERCASE");
@@ -356,7 +344,7 @@ describe("ColorManager", () => {
     });
 
     it("should execute RGB initializer from specification", () => {
-      const rgbSpecPath = path.join(__dirname, "../../data/specifications/colors/rgb.json");
+      const rgbSpecPath = path.join(__dirname, "../../../data/specifications/colors/rgb.json");
       const rgbSpecString = fs.readFileSync(rgbSpecPath, "utf-8");
       const rgbSpec = JSON.parse(rgbSpecString);
 
@@ -374,9 +362,9 @@ describe("ColorManager", () => {
         type: "color",
         description: "Color with invalid initializer script",
         schema: {
-          type: "object", 
+          type: "object",
           properties: { value: { type: "string" } },
-          additionalProperties: false
+          additionalProperties: false,
         },
         initializers: [
           {
@@ -384,11 +372,11 @@ describe("ColorManager", () => {
             keyword: "invalid",
             script: {
               type: "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/initializer",
-              script: "invalid syntax here $$$ ???"
-            }
-          }
+              script: "invalid syntax here $$$ ???",
+            },
+          },
         ],
-        conversions: []
+        conversions: [],
       };
 
       // The registration should fail due to invalid script syntax
@@ -407,25 +395,25 @@ describe("ColorManager", () => {
           properties: {
             r: { type: "number" },
             g: { type: "number" },
-            b: { type: "number" }
+            b: { type: "number" },
           },
-          additionalProperties: false
+          additionalProperties: false,
         },
         initializers: [
           {
             title: "Test Initializer",
             keyword: "test",
             script: {
-              type: "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/initializer", 
-              script: "variable output: Color.TestReturn; output.r = 100; output.g = 150; output.b = 200; return output;"
-            }
-          }
+              type: "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/initializer",
+              script: "variable output: Color.TestReturn; output.r = 100; output.g = 150; output.b = 200; return output;",
+            },
+          },
         ],
-        conversions: []
+        conversions: [],
       };
 
       manager.register("test://test-return", testSpec);
-      
+
       const registeredSpec = manager.getSpecByType("TestReturn");
       expect(registeredSpec).toBeDefined();
       expect(registeredSpec?.initializers.length).toBe(1);
@@ -433,13 +421,13 @@ describe("ColorManager", () => {
 
     it("should handle initializers with different script types", () => {
       const differentTypeSpec = {
-        name: "DifferentType", 
+        name: "DifferentType",
         type: "color",
         description: "Test different script type",
         schema: {
           type: "object",
           properties: { value: { type: "string" } },
-          additionalProperties: false
+          additionalProperties: false,
         },
         initializers: [
           {
@@ -447,11 +435,11 @@ describe("ColorManager", () => {
             keyword: "different",
             script: {
               type: "https://example.com/different-type",
-              script: "variable output: Color.DifferentType; return output;"
-            }
-          }
+              script: "variable output: Color.DifferentType; return output;",
+            },
+          },
         ],
-        conversions: []
+        conversions: [],
       };
 
       expect(() => {
@@ -480,9 +468,9 @@ describe("ColorManager", () => {
         schema: {
           type: "object",
           properties: {
-            value: { type: "string" }
+            value: { type: "string" },
           },
-          additionalProperties: false
+          additionalProperties: false,
         },
         initializers: [
           {
@@ -490,16 +478,16 @@ describe("ColorManager", () => {
             keyword: "simple",
             script: {
               type: "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/initializer",
-              script: "variable output: Color.Simple; output.value = \"test\"; return output;"
-            }
-          }
+              script: 'variable output: Color.Simple; output.value = "test"; return output;',
+            },
+          },
         ],
-        conversions: []
+        conversions: [],
       };
 
       manager.register("test://simple", simpleSpec);
 
-      // Verify registration succeeded 
+      // Verify registration succeeded
       const registeredSpec = manager.getSpecByType("Simple");
       expect(registeredSpec).toBeDefined();
       expect(registeredSpec?.initializers.length).toBe(1);
@@ -516,9 +504,9 @@ describe("ColorManager", () => {
           properties: {
             r: { type: "number" },
             g: { type: "number" },
-            b: { type: "number" }
+            b: { type: "number" },
           },
-          additionalProperties: false
+          additionalProperties: false,
         },
         initializers: [
           {
@@ -526,11 +514,11 @@ describe("ColorManager", () => {
             keyword: "rgbinput",
             script: {
               type: "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/initializer",
-              script: "variable output: Color.InputTest; output.r = 255; output.g = 128; output.b = 0; return output;"
-            }
-          }
+              script: "variable output: Color.InputTest; output.r = 255; output.g = 128; output.b = 0; return output;",
+            },
+          },
         ],
-        conversions: []
+        conversions: [],
       };
 
       manager.register("test://input", inputSpec);
@@ -543,16 +531,16 @@ describe("ColorManager", () => {
     it("should handle multiple initializers for same color type", () => {
       const multiSpec = {
         name: "MultiInit",
-        type: "color", 
+        type: "color",
         description: "Color with multiple initializers",
         schema: {
           type: "object",
           properties: {
             r: { type: "number" },
             g: { type: "number" },
-            b: { type: "number" }
+            b: { type: "number" },
           },
-          additionalProperties: false
+          additionalProperties: false,
         },
         initializers: [
           {
@@ -560,27 +548,27 @@ describe("ColorManager", () => {
             keyword: "red",
             script: {
               type: "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/initializer",
-              script: "variable output: Color.MultiInit; output.r = 255; output.g = 0; output.b = 0; return output;"
-            }
+              script: "variable output: Color.MultiInit; output.r = 255; output.g = 0; output.b = 0; return output;",
+            },
           },
           {
-            title: "Green Init", 
+            title: "Green Init",
             keyword: "green",
             script: {
               type: "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/initializer",
-              script: "variable output: Color.MultiInit; output.r = 0; output.g = 255; output.b = 0; return output;"
-            }
+              script: "variable output: Color.MultiInit; output.r = 0; output.g = 255; output.b = 0; return output;",
+            },
           },
           {
             title: "Blue Init",
-            keyword: "blue", 
+            keyword: "blue",
             script: {
               type: "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/initializer",
-              script: "variable output: Color.MultiInit; output.r = 0; output.g = 0; output.b = 255; return output;"
-            }
-          }
+              script: "variable output: Color.MultiInit; output.r = 0; output.g = 0; output.b = 255; return output;",
+            },
+          },
         ],
-        conversions: []
+        conversions: [],
       };
 
       manager.register("test://multi", multiSpec);
@@ -588,8 +576,8 @@ describe("ColorManager", () => {
       const registeredSpec = manager.getSpecByType("MultiInit");
       expect(registeredSpec).toBeDefined();
       expect(registeredSpec?.initializers.length).toBe(3);
-      
-      const keywords = registeredSpec?.initializers.map(init => init.keyword);
+
+      const keywords = registeredSpec?.initializers.map((init) => init.keyword);
       expect(keywords).toContain("red");
       expect(keywords).toContain("green");
       expect(keywords).toContain("blue");
@@ -603,10 +591,10 @@ describe("ColorManager", () => {
         schema: {
           type: "object",
           properties: { value: { type: "string" } },
-          additionalProperties: false
+          additionalProperties: false,
         },
         initializers: [],
-        conversions: []
+        conversions: [],
       };
 
       expect(() => {

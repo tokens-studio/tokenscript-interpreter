@@ -1,15 +1,11 @@
-import { describe, expect, it } from "vitest";
 import {
   buildFetchUrl,
   buildSchemaUri,
   compareVersions,
-  DEFAULT_API_PATH,
-  DEFAULT_REGISTRY_URL,
   extractSchemaName,
   extractVersion,
   generateVersionCandidates,
   getBaseUri,
-  getSchemaIdentifier,
   isCoreType,
   isFunctionType,
   isSameSchema,
@@ -21,18 +17,22 @@ import {
   removeVersionFromUri,
   updateVersion,
 } from "@src/utils/schema-uri";
+import { describe, expect, it } from "vitest";
 
 describe("Schema URI Utilities", () => {
   describe("buildSchemaUri", () => {
     it("should build URI with default values", () => {
       const uri = buildSchemaUri({ category: "schema", name: "rgb-color" });
-      expect(uri).toBe(
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/latest/"
-      );
+      expect(uri).toBe("https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/latest/");
     });
 
     it("should build relative path URI with empty baseUrl", () => {
-      const uri = buildSchemaUri({ baseUrl: "", category: "schema", name: "rgb-color", version: parseVersionString("0.0.1") });
+      const uri = buildSchemaUri({
+        baseUrl: "",
+        category: "schema",
+        name: "rgb-color",
+        version: parseVersionString("0.0.1"),
+      });
       expect(uri).toBe("/api/v1/schema/rgb-color/0.0.1/");
     });
 
@@ -42,9 +42,7 @@ describe("Schema URI Utilities", () => {
         name: "rgb-color",
         version: parseVersionString("0.0.1"),
       });
-      expect(uri).toBe(
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0.0.1/"
-      );
+      expect(uri).toBe("https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0.0.1/");
     });
 
     it("should build URI with custom base URL", () => {
@@ -63,9 +61,7 @@ describe("Schema URI Utilities", () => {
         name: "hex-color",
         version: parseVersionString("0"),
       });
-      expect(uri).toBe(
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/hex-color/0/"
-      );
+      expect(uri).toBe("https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/hex-color/0/");
     });
 
     it("should build function URI", () => {
@@ -74,9 +70,7 @@ describe("Schema URI Utilities", () => {
         name: "darken",
         version: parseVersionString("1.0.0"),
       });
-      expect(uri).toBe(
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/function/darken/1.0.0/"
-      );
+      expect(uri).toBe("https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/function/darken/1.0.0/");
     });
   });
 
@@ -228,9 +222,7 @@ describe("Schema URI Utilities", () => {
       const uri = "https://example.com/api/v1/schema/rgb-color/latest/";
       const candidates = generateVersionCandidates(uri);
 
-      expect(candidates).toEqual([
-        "https://example.com/api/v1/schema/rgb-color/latest/",
-      ]);
+      expect(candidates).toEqual(["https://example.com/api/v1/schema/rgb-color/latest/"]);
     });
   });
 
@@ -258,23 +250,17 @@ describe("Schema URI Utilities", () => {
   describe("buildFetchUrl", () => {
     it("should build fetch URL with default format", () => {
       const url = buildFetchUrl("rgb-color", "latest");
-      expect(url).toBe(
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/latest/?format=json"
-      );
+      expect(url).toBe("https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/latest/?format=json");
     });
 
     it("should build fetch URL with custom format", () => {
       const url = buildFetchUrl("rgb-color", "0.0.1", { format: "yaml" });
-      expect(url).toBe(
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0.0.1/?format=yaml"
-      );
+      expect(url).toBe("https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0.0.1/?format=yaml");
     });
 
     it("should build fetch URL for core type", () => {
       const url = buildFetchUrl("hex-color", "0", { category: "core" });
-      expect(url).toBe(
-        "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/hex-color/0/?format=json"
-      );
+      expect(url).toBe("https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/hex-color/0/?format=json");
     });
   });
 
