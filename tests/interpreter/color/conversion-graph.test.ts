@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { ColorManager } from "@interpreter/config/managers/color/manager";
 import { Config } from "@interpreter/config/config";
-import { createInterpreter } from "../test-helpers";
+import { createInterpreter } from "@tests/interpreter/test-helpers";
 
 describe("ColorManager Conversion Graph", () => {
   let manager: ColorManager;

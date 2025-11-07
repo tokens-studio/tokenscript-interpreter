@@ -9,8 +9,8 @@ import {
   ColorSymbol,
   ListSymbol,
   DictionarySymbol
-} from "@src/interpreter/symbols";
-import { createInterpreter } from "../test-helpers";
+} from "@interpreter/symbols";
+import { createInterpreter } from "@tests/interpreter/test-helpers";
 
 describe("NullSymbol", () => {
   describe("constructor", () => {

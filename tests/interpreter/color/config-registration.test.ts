@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Config } from "@interpreter/config/config";
 import { ColorManager } from "@interpreter/config/managers/color/manager";
-import { createInterpreter } from "../test-helpers";
+import { createInterpreter } from "@tests/interpreter/test-helpers";
 import { InterpreterError } from "@interpreter/errors";
 import { ColorSymbol } from "@interpreter/symbols";
 

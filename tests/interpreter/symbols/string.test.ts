@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { interpretAndGetVariable, interpretAndGetVariables } from "../test-helpers";
-import { StringSymbol, NumberSymbol, ListSymbol } from "@src/interpreter/symbols";
-import { InterpreterError } from "@src/interpreter/errors";
+import { interpretAndGetVariable, interpretAndGetVariables } from "@tests/interpreter/test-helpers";
+import { StringSymbol, NumberSymbol, ListSymbol } from "@interpreter/symbols";
+import { InterpreterError } from "@interpreter/errors";
 
 describe("StringSymbol - Unit Tests", () => {
   describe("constructor", () => {

@@ -36,6 +36,9 @@
       ],
       "@interpreter/*": [
         "./src/interpreter/*"
+      ],
+      "@tests/*": [
+        "./tests/*"
       ]
     },
     "typeRoots": [

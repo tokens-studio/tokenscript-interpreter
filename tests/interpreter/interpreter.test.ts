@@ -7,7 +7,7 @@ import {
   interpretAndGetVariables,
   createInterpreter,
   interpretExpectError,
-} from "./test-helpers";
+} from "@tests/interpreter/test-helpers";
 
 describe("Interpreter - Basic Expressions", () => {
   it("should interpret simple expression", () => {

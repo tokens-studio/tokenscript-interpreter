@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { Config } from "@interpreter/config/config";
 import { ColorManager } from "@interpreter/config/managers/color/manager";
 import { InterpreterError } from "@interpreter/errors";
-import { createInterpreter } from "../test-helpers";
+import { createInterpreter } from "@tests/interpreter/test-helpers";
 import { ColorSymbol, ListSymbol as List, NumberSymbol, StringSymbol } from "@interpreter/symbols";
 
 function setupColorManagerWithRgb(): ColorManager {

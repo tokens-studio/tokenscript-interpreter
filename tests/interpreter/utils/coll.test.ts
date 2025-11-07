@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { groupBy } from "../../../src/interpreter/utils/coll";
+import { groupBy } from "@interpreter/utils/coll";
 
 describe("groupBy", () => {
   it("should group strings by their length", () => {

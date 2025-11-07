@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { interpretAndGetVariable, interpretExpectError } from "../test-helpers";
+import { interpretAndGetVariable, interpretExpectError } from "@tests/interpreter/test-helpers";
 import {
   ListSymbol,
   NumberSymbol,
   StringSymbol,
   DictionarySymbol,
   BooleanSymbol,
-} from "@src/interpreter/symbols";
+} from "@interpreter/symbols";
 
 describe("ListSymbol - Unit Tests", () => {
   describe("constructor", () => {

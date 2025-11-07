@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createInterpreter, interpretAndGetVariable, interpretAndGetVariables, interpretExpectError } from "../test-helpers";
+import { createInterpreter, interpretAndGetVariable, interpretAndGetVariables, interpretExpectError } from "@tests/interpreter/test-helpers";
 import { DictionarySymbol, StringSymbol, ListSymbol, BooleanSymbol, NumberSymbol, NullSymbol, ColorSymbol } from "@interpreter/symbols";
 
 describe("DictionarySymbol - Unit Tests", () => {

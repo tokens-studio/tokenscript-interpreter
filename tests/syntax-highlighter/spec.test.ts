@@ -9,7 +9,7 @@ import {
   UNITS,
   createKeywordPattern,
   createUnitPattern,
-} from "../../src/syntax-highlighter/spec";
+} from "@src/syntax-highlighter/spec";
 
 describe("Syntax Highlighter Spec", () => {
   describe("PATTERNS", () => {

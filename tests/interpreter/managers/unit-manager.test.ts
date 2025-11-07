@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createInterpreter, interpret } from "../test-helpers";
+import { createInterpreter, interpret } from "@tests/interpreter/test-helpers";
 import { Config } from "@interpreter/config/config";
 import { UnitManager } from "@interpreter/config/managers/unit/manager";
 

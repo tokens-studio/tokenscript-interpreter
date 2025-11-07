@@ -11,7 +11,7 @@ import {
   setupTempDir,
   writeTokenFile,
   writeTokenFiles,
-} from "./helpers";
+} from "@tests/integration/helpers";
 
 describe("CLI Commands Integration Tests", () => {
   const ctx = createTestContext("cli-commands");

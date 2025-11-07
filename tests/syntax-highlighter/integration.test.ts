@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { tokenscriptLanguage } from "../../src/syntax-highlighter/prism";
-import { PATTERNS } from "../../src/syntax-highlighter/spec";
+import { tokenscriptLanguage } from "@src/syntax-highlighter/prism";
+import { PATTERNS } from "@src/syntax-highlighter/spec";
 
 /**
  * Tokenize code with Prism

@@ -5,7 +5,7 @@ import {
   interpretAndGetVariables,
   createInterpreter,
   interpretExpectError,
-} from "./test-helpers";
+} from "@tests/interpreter/test-helpers";
 
 describe("Variables - Assignment", () => {
   it("should handle variable assignment", () => {

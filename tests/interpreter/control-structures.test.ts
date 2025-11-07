@@ -5,7 +5,7 @@ import {
   interpretAndGetVariables,
   createInterpreter,
   interpretExpectError,
-} from "./test-helpers";
+} from "@tests/interpreter/test-helpers";
 
 describe("Control Structures - While Loops", () => {
   it("should handle basic while loop", () => {
