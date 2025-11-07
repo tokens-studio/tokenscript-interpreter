@@ -355,4 +355,104 @@ describe("DependencyGraph", () => {
       expect(leaves).toContain("test");
     });
   });
+
+  describe("performance and scalability", () => {
+    it("should efficiently handle large graphs", () => {
+      const graph = new DependencyGraph<number>();
+      const nodeCount = 1000;
+
+      // Create a chain of dependencies
+      for (let i = 0; i < nodeCount; i++) {
+        if (i === 0) {
+          graph.addNode(i);
+        } else {
+          graph.addNode(i, [i - 1]);
+        }
+      }
+
+      const startTime = Date.now();
+      const sorted = graph.topologicalSort();
+      const duration = Date.now() - startTime;
+
+      expect(sorted).toHaveLength(nodeCount);
+      expect(sorted[0]).toBe(nodeCount - 1);
+      expect(sorted[nodeCount - 1]).toBe(0);
+      // Should complete in reasonable time (< 100ms for 1000 nodes)
+      expect(duration).toBeLessThan(100);
+    });
+
+    it("should efficiently handle wide dependency graphs", () => {
+      const graph = new DependencyGraph<string>();
+      const width = 100;
+      const depth = 10;
+
+      // Create a wide graph where each level depends on previous level
+      for (let level = 0; level < depth; level++) {
+        for (let node = 0; node < width; node++) {
+          const nodeName = `L${level}N${node}`;
+          if (level === 0) {
+            graph.addNode(nodeName);
+          } else {
+            // Depend on all nodes from previous level
+            const deps: string[] = [];
+            for (let prevNode = 0; prevNode < width; prevNode++) {
+              deps.push(`L${level - 1}N${prevNode}`);
+            }
+            graph.addNode(nodeName, deps);
+          }
+        }
+      }
+
+      const startTime = Date.now();
+      const sorted = graph.topologicalSort();
+      const duration = Date.now() - startTime;
+
+      expect(sorted).toHaveLength(width * depth);
+      // All nodes from last level should come before nodes from first level
+      const lastLevelNode = sorted.indexOf("L9N0");
+      const firstLevelNode = sorted.indexOf("L0N0");
+      expect(lastLevelNode).toBeLessThan(firstLevelNode);
+      // Should complete in reasonable time
+      expect(duration).toBeLessThan(200);
+    });
+
+    it("should handle graphs with many independent nodes efficiently", () => {
+      const graph = new DependencyGraph<number>();
+      const nodeCount = 500;
+
+      // Create many independent nodes
+      for (let i = 0; i < nodeCount; i++) {
+        graph.addNode(i);
+      }
+
+      const startTime = Date.now();
+      const sorted = graph.topologicalSort();
+      const duration = Date.now() - startTime;
+
+      expect(sorted).toHaveLength(nodeCount);
+      // Should complete very quickly for independent nodes
+      expect(duration).toBeLessThan(50);
+    });
+
+    it("should detect cycles efficiently in large graphs", () => {
+      const graph = new DependencyGraph<number>();
+      const nodeCount = 100;
+
+      // Create a chain
+      for (let i = 0; i < nodeCount; i++) {
+        if (i === 0) {
+          graph.addNode(i, [nodeCount - 1]); // Create cycle: 0 depends on 99
+        } else {
+          graph.addNode(i, [i - 1]);
+        }
+      }
+
+      const startTime = Date.now();
+      expect(() => graph.topologicalSort()).toThrow("Circular dependency detected");
+      const duration = Date.now() - startTime;
+
+      // Cycle detection should also be efficient
+      expect(duration).toBeLessThan(100);
+    });
+  });
 });
