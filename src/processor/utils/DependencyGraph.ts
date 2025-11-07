@@ -9,13 +9,9 @@ export class DependencyGraph<N = string> {
 
   // Find nodes with no dependencies
   entryNodes(): N[] {
-    const entries: N[] = [];
-    for (const [node, deps] of this.nodes) {
-      if (deps.size === 0) {
-        entries.push(node);
-      }
-    }
-    return entries;
+    return Array.from(this.nodes.entries())
+      .filter(([, deps]) => deps.size === 0)
+      .map(([node]) => node);
   }
 
   // Find a cycle in the graph starting from the given nodes
@@ -63,7 +59,7 @@ export class DependencyGraph<N = string> {
     const inDegree = new Map<N, number>();
     const result: N[] = [];
 
-    // Calculate in-degrees
+    // Calculate in-degrees - initialize all nodes to 0, then count dependencies
     for (const node of this.nodes.keys()) {
       inDegree.set(node, 0);
     }
@@ -74,12 +70,9 @@ export class DependencyGraph<N = string> {
     }
 
     // Queue nodes with no dependencies
-    const queue: N[] = [];
-    for (const [node, degree] of inDegree) {
-      if (degree === 0) {
-        queue.push(node);
-      }
-    }
+    const queue: N[] = Array.from(inDegree.entries())
+      .filter(([, degree]) => degree === 0)
+      .map(([node]) => node);
 
     while (queue.length > 0) {
       const node = queue.shift();
@@ -100,12 +93,9 @@ export class DependencyGraph<N = string> {
     // If result doesn't contain all nodes, there's a cycle
     if (result.length !== this.nodes.size) {
       const resultSet = new Set(result);
-      const remainingNodes: N[] = [];
-      for (const node of this.nodes.keys()) {
-        if (!resultSet.has(node)) {
-          remainingNodes.push(node);
-        }
-      }
+      const remainingNodes = Array.from(this.nodes.keys()).filter(
+        (node) => !resultSet.has(node),
+      );
       const cycle = this.findCycle(remainingNodes);
       throw new Error(
         `Circular dependency detected: ${cycle.map((n) => String(n)).join(" → ")} → ${String(cycle[0])}`,
