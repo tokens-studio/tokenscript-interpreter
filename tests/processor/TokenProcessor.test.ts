@@ -1,3 +1,4 @@
+import { DictionarySymbol } from "@interpreter/symbols";
 import { DependencyError, TokenProcessor } from "@src/processor";
 import { describe, expect, it } from "vitest";
 
@@ -178,6 +179,38 @@ describe("TokenProcessor", () => {
       expect(result.resolved.get("b")).toBeInstanceOf(Error);
       expect(result.resolved.get("c")?.value).toBe(20);
       expect(result.resolved.get("d")).toBeInstanceOf(DependencyError);
+    });
+
+    it("should resolve tokens depending on prefix subtrees", () => {
+      const processor = new TokenProcessor();
+      const tokens = new Map([
+        ["colors.brand.primary", "#FF0000"],
+        ["colors.brand.secondary", "#00FF00"],
+        ["theme.palette", "{colors.brand}"],
+        ["theme.primary", "{theme.palette.primary}"],
+      ]);
+
+      const result = processor.processTokens(tokens);
+
+      const palette = result.resolved.get("theme.palette");
+      expect(palette).toBeInstanceOf(DictionarySymbol);
+      const themePrimary = result.resolved.get("theme.primary");
+      expect(themePrimary).not.toBeInstanceOf(Error);
+      expect(themePrimary?.value).toBe("#FF0000");
+    });
+
+    it("should allow switching to legacy mode for comparison", () => {
+      const processor = new TokenProcessor();
+      const tokens = new Map([
+        ["base", "3"],
+        ["double", "{base} * 2"],
+      ]);
+
+      const modern = processor.processTokens(tokens);
+      const legacy = processor.processTokens(tokens, undefined, undefined, { mode: "legacy" });
+
+      expect(modern.resolved.get("double")?.value).toBe(6);
+      expect(legacy.resolved.get("double")?.value).toBe(6);
     });
   });
 });
