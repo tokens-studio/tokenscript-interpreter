@@ -1,15 +1,8 @@
 import type { ASTNode } from "@interpreter/ast";
 import type { Config } from "@interpreter/config";
 import { Interpreter, type interpreterResult } from "@interpreter/interpreter";
-import {
-  type ParseExpressionResult,
-  parseExpression,
-} from "@interpreter/parser";
-import {
-  DictionarySymbol,
-  NullSymbol,
-  StringSymbol,
-} from "@interpreter/symbols";
+import { type ParseExpressionResult, parseExpression } from "@interpreter/parser";
+import { DictionarySymbol, NullSymbol, StringSymbol } from "@interpreter/symbols";
 import type { ISymbolType } from "@src/types";
 import { UNINTERPRETED_KEYWORDS } from "@src/types";
 import { DependencyError } from "./errors";
@@ -83,10 +76,7 @@ export class LegacyTokenProcessor {
       config,
     });
 
-    const parseToken = (
-      tokenName: string,
-      tokenValue: string,
-    ): ParseExpressionResult | Error => {
+    const parseToken = (tokenName: string, tokenValue: string): ParseExpressionResult | Error => {
       try {
         return parseExpression(tokenValue);
       } catch (e) {
@@ -98,10 +88,7 @@ export class LegacyTokenProcessor {
       }
     };
 
-    const interpretToken = (
-      ast: ASTNode,
-      tokenName: RefPath,
-    ): interpreterResult | Error => {
+    const interpretToken = (ast: ASTNode, tokenName: RefPath): interpreterResult | Error => {
       const originalValue = tokens.get(tokenName) ?? "";
       try {
         // OPTIMIZATION: Reuse interpreter, just swap AST
@@ -112,8 +99,7 @@ export class LegacyTokenProcessor {
         onResolve?.(tokenName, result);
         return result;
       } catch (error) {
-        const result =
-          error instanceof Error ? error : new Error(String(error));
+        const result = error instanceof Error ? error : new Error(String(error));
         resolved.set(tokenName, result);
         onError?.(tokenName, result, originalValue);
         return result;
@@ -245,6 +231,7 @@ class PrefixResolver {
   private readonly referenceCache: Map<string, TokenResult> = new Map();
   private readonly virtualChildren = new Map<RefPath, Set<RefPath>>();
   private readonly interpreter: Interpreter;
+  private readonly pendingResolution: Set<RefPath> = new Set();
 
   constructor(
     private readonly tokens: Map<RefPath, string>,
@@ -260,9 +247,9 @@ class PrefixResolver {
   }
 
   public resolve(): ProcessorResult {
-    prefixDebug("build-requirements", { tokenCount: this.tokens.size });
-    this.buildRequirementsGraph();
+    const earlyResolved = this.buildRequirementsGraph();
     this.mapToRequiredByPrefixes();
+    this.releaseEarlyResolved(earlyResolved);
     this.resolveDependencyFreeTokens();
     this.finalizeResolution();
     return {
@@ -272,17 +259,17 @@ class PrefixResolver {
     };
   }
 
-  private buildRequirementsGraph(): void {
-    for (const [tokenName, tokenValue] of this.tokens.entries()) {
-      prefixDebug("parse-token", { tokenName });
+  private buildRequirementsGraph(): RefPath[] {
+    const earlyResolved: RefPath[] = [];
 
+    for (const [tokenName, tokenValue] of this.tokens.entries()) {
       if (UNINTERPRETED_KEYWORDS.includes(tokenValue)) {
         const symbol = new StringSymbol(tokenValue, this.config);
         this.resolved.set(tokenName, symbol);
-        this.updateReferenceCache(tokenName, symbol);
+        this.referenceCache.set(tokenName, symbol);
         this.callbacks?.onResolve?.(tokenName, symbol);
         this.graph.addNode(tokenName, []);
-        this.notifyResolution(tokenName);
+        earlyResolved.push(tokenName);
         continue;
       }
 
@@ -291,80 +278,67 @@ class PrefixResolver {
         parseResult = parseExpression(tokenValue);
       } catch (error) {
         const err = error instanceof Error ? error : new Error(String(error));
-        prefixDebug("parse-error", { tokenName, message: err.message });
         this.resolved.set(tokenName, err);
         this.callbacks?.onError?.(tokenName, err, tokenValue);
         this.graph.addNode(tokenName, []);
-        this.notifyResolution(tokenName);
+        earlyResolved.push(tokenName);
         continue;
       }
 
       const { ast, parser } = parseResult;
       if (!ast) {
         this.resolved.set(tokenName, "");
-        this.updateReferenceCache(tokenName, "");
+        this.referenceCache.set(tokenName, "");
         this.callbacks?.onResolve?.(tokenName, "");
         this.graph.addNode(tokenName, []);
-        this.notifyResolution(tokenName);
+        earlyResolved.push(tokenName);
         continue;
       }
 
       this.astNodes.set(tokenName, ast);
       this.addToPrefixes(tokenName);
 
-      const dependencies = new Set(parser.requiredReferences);
+      const dependencies = parser.requiredReferences;
       if (dependencies.size > 0) {
-        this.unresolved.set(tokenName, {
-          ast,
-          dependencies: new Set(dependencies),
-        });
+        this.unresolved.set(tokenName, { ast, dependencies });
       }
 
       this.graph.addNode(tokenName, dependencies);
 
       for (const dep of dependencies) {
-        if (this.allPrefixes.has(dep)) {
+        if (this.allPrefixes.has(dep) && !this.tokens.has(dep)) {
           this.addToSetMap(this.requiredPrefixesMap, dep, tokenName);
           continue;
         }
 
-        if (this.resolved.has(dep)) {
-          continue;
-        }
+        if (this.resolved.has(dep)) continue;
 
         this.addToSetMap(this.requiresTokens, tokenName, dep);
         this.addToSetMap(this.requiredByTokens, dep, tokenName);
 
-        if (this.tokens.has(dep)) {
-          continue;
-        }
+        if (this.tokens.has(dep)) continue;
 
         const parentToken = this.findParentToken(dep);
-        if (parentToken && this.tokens.has(parentToken)) {
+        if (parentToken) {
           this.addToSetMap(this.virtualChildren, parentToken, dep);
           continue;
         }
 
-        if (
-          !this.referenceCache.has(dep) &&
-          !this.resolved.has(dep)
-        ) {
+        if (!this.referenceCache.has(dep)) {
           const error = new Error(`Token '${dep}' not found`);
-          prefixDebug("missing-token", {
-            dependency: dep,
-            requiredBy: tokenName,
-          });
           this.resolved.set(dep, error);
           this.callbacks?.onError?.(dep, error, "");
           this.graph.addNode(dep, []);
-          this.notifyResolution(dep);
+          earlyResolved.push(dep);
         }
       }
     }
+
+    return earlyResolved;
   }
 
   private mapToRequiredByPrefixes(): void {
-    for (const [prefix, tokens] of this.requiredPrefixesMap.entries()) {
+    for (const [prefix, tokens] of this.requiredPrefixesMap) {
       const prefixedTokens = this.allPrefixes.get(prefix);
       if (!prefixedTokens) continue;
 
@@ -377,75 +351,70 @@ class PrefixResolver {
         this.addToSetMap(this.tokensToRequiredPrefixes, token, prefix);
       }
     }
+  }
 
-    const resolvedNames = Array.from(this.resolved.keys());
-    for (const resolvedName of resolvedNames) {
-      this.releasePrefixes(resolvedName);
+  private releaseEarlyResolved(earlyResolved: RefPath[]): void {
+    for (const tokenName of earlyResolved) {
+      this.releaseDependents(tokenName);
+      this.releasePrefixes(tokenName);
     }
   }
 
   private resolveDependencyFreeTokens(): void {
+    const ready: RefPath[] = [];
     for (const tokenName of this.tokens.keys()) {
       if (this.resolved.has(tokenName)) continue;
       const waitsForTokens = this.requiresTokens.get(tokenName);
       const waitsForPrefixes = this.tokensToRequiredPrefixes.get(tokenName);
       if (
-        (waitsForTokens && waitsForTokens.size > 0) ||
-        (waitsForPrefixes && waitsForPrefixes.size > 0)
+        (!waitsForTokens || waitsForTokens.size === 0) &&
+        (!waitsForPrefixes || waitsForPrefixes.size === 0)
       ) {
-        continue;
+        ready.push(tokenName);
       }
+    }
+    for (const tokenName of ready) {
       this.resolveSingleToken(tokenName);
     }
   }
 
   private resolveSingleToken(tokenName: RefPath): void {
-    if (!this.tokens.has(tokenName)) {
-      return;
-    }
+    if (!this.tokens.has(tokenName) || this.resolved.has(tokenName)) return;
 
-    if (!this.resolved.has(tokenName)) {
-      const ast = this.astNodes.get(tokenName);
-      const originalValue = this.tokens.get(tokenName) ?? "";
-      const dependencyError = this.buildDependencyError(tokenName);
-      if (dependencyError) {
-        this.resolved.set(tokenName, dependencyError);
-        prefixDebug("dependency-error", {
-          tokenName,
-          chain: dependencyError.dependencyChain,
-        });
-        this.callbacks?.onError?.(tokenName, dependencyError, originalValue);
-      } else if (!ast) {
-        this.resolved.set(tokenName, originalValue);
-        this.callbacks?.onResolve?.(tokenName, originalValue);
-        this.updateReferenceCache(tokenName, originalValue);
-      } else {
-        try {
-          prefixDebug("interpret-token", { tokenName });
-          this.interpreter.setAst(ast);
-          const result = this.interpreter.interpret();
-          this.resolved.set(tokenName, result);
-          this.callbacks?.onResolve?.(tokenName, result);
-          this.updateReferenceCache(tokenName, result);
-        } catch (error) {
-          const err = error instanceof Error ? error : new Error(String(error));
-          prefixDebug("interpret-error", { tokenName, message: err.message });
-          this.resolved.set(tokenName, err);
-          this.callbacks?.onError?.(tokenName, err, originalValue);
+    const ast = this.astNodes.get(tokenName);
+    const originalValue = this.tokens.get(tokenName)!;
+    const dependencyError = this.buildDependencyError(tokenName);
+
+    let tokenValue: TokenResult;
+
+    if (dependencyError) {
+      tokenValue = dependencyError;
+      this.resolved.set(tokenName, dependencyError);
+      this.callbacks?.onError?.(tokenName, dependencyError, originalValue);
+    } else if (!ast) {
+      tokenValue = originalValue;
+      this.resolved.set(tokenName, originalValue);
+      this.callbacks?.onResolve?.(tokenName, originalValue);
+      this.referenceCache.set(tokenName, originalValue);
+    } else {
+      try {
+        this.interpreter.setAst(ast);
+        tokenValue = this.interpreter.interpret();
+        this.resolved.set(tokenName, tokenValue);
+        this.callbacks?.onResolve?.(tokenName, tokenValue);
+        if (!(tokenValue instanceof Error)) {
+          this.referenceCache.set(tokenName, tokenValue);
         }
+      } catch (error) {
+        tokenValue = error instanceof Error ? error : new Error(String(error));
+        this.resolved.set(tokenName, tokenValue);
+        this.callbacks?.onError?.(tokenName, tokenValue as Error, originalValue);
       }
     }
 
-    const tokenValue = this.resolved.get(tokenName);
-    if (tokenValue === undefined) return;
-
     const flattened = this.flattenIfDictionary(tokenName, tokenValue);
-    this.notifyResolution(tokenName);
-    for (const name of flattened) {
-      this.notifyResolution(name);
-    }
     this.resolveVirtualChildren(tokenName, flattened);
-
+    this.notifyResolution(tokenName, flattened);
     this.requiresTokens.delete(tokenName);
     this.unresolved.delete(tokenName);
   }
@@ -462,23 +431,17 @@ class PrefixResolver {
     return undefined;
   }
 
-  private flattenIfDictionary(
-    tokenName: RefPath,
-    value: TokenResult,
-  ): RefPath[] {
-    if (!(value instanceof DictionarySymbol)) {
+  private flattenIfDictionary(tokenName: RefPath, value: TokenResult): RefPath[] {
+    if (!(value instanceof DictionarySymbol) || !value.value) {
       return [];
     }
 
     const flattenedNames: RefPath[] = [];
     const entries = value.value;
-    if (!entries) return flattenedNames;
 
-    for (const [childKey, childValue] of entries.entries()) {
+    for (const [childKey, childValue] of entries) {
       const flattenedKey = `${tokenName}.${childKey}`;
-      const clone = this.isSymbolType(childValue)
-        ? childValue.cloneIfMutable()
-        : childValue;
+      const clone = this.isSymbolType(childValue) ? childValue.cloneIfMutable() : childValue;
       this.referenceCache.set(flattenedKey, clone);
       flattenedNames.push(flattenedKey);
     }
@@ -490,48 +453,56 @@ class PrefixResolver {
     const children = this.virtualChildren.get(parent);
     if (!children || children.size === 0) return;
 
-    const satisfied = new Set(flattened);
+    const satisfied = flattened.length > 0 ? new Set(flattened) : null;
     const parentValue = this.resolved.get(parent);
 
     for (const child of children) {
-      if (satisfied.has(child) || this.referenceCache.has(child)) {
+      if (satisfied?.has(child) || this.referenceCache.has(child) || this.resolved.has(child)) {
         continue;
       }
 
-      if (this.resolved.has(child)) {
-        continue;
-      }
-
-      let error: Error;
-      if (parentValue instanceof Error) {
-        error = new DependencyError(child, parent, parentValue);
-      } else {
-        error = new Error(`Token '${child}' not found`);
-      }
+      const error =
+        parentValue instanceof Error
+          ? new DependencyError(child, parent, parentValue)
+          : new Error(`Token '${child}' not found`);
 
       this.resolved.set(child, error);
       this.callbacks?.onError?.(child, error, "");
-      this.notifyResolution(child);
     }
 
     this.virtualChildren.delete(parent);
   }
 
-  private notifyResolution(name: RefPath): void {
+  private notifyResolution(name: RefPath, flattened?: RefPath[]): void {
     this.releaseDependents(name);
     this.releasePrefixes(name);
+    if (flattened) {
+      for (const flatName of flattened) {
+        this.releaseDependents(flatName);
+        this.releasePrefixes(flatName);
+      }
+    }
   }
 
   private releaseDependents(name: RefPath): void {
     const dependents = this.requiredByTokens.get(name);
     if (!dependents) return;
+
     for (const dependent of dependents) {
+      if (this.pendingResolution.has(dependent)) continue;
+
       const deps = this.requiresTokens.get(dependent);
       if (!deps) continue;
+
       deps.delete(name);
-      if (deps.size === 0 && !this.tokensToRequiredPrefixes.has(dependent)) {
-        this.requiresTokens.delete(dependent);
-        this.resolveSingleToken(dependent);
+      if (deps.size === 0) {
+        const waitingPrefixes = this.tokensToRequiredPrefixes.get(dependent);
+        if (!waitingPrefixes || waitingPrefixes.size === 0) {
+          this.requiresTokens.delete(dependent);
+          this.pendingResolution.add(dependent);
+          this.resolveSingleToken(dependent);
+          this.pendingResolution.delete(dependent);
+        }
       }
     }
     this.requiredByTokens.delete(name);
@@ -540,138 +511,150 @@ class PrefixResolver {
   private releasePrefixes(name: RefPath): void {
     const prefixes = this.requiredByPrefixes.get(name);
     if (!prefixes) return;
+
     for (const prefix of prefixes) {
       const prefixSet = this.requiredPrefixes.get(prefix);
-      if (!prefixSet) continue;
-      prefixSet.delete(name);
-      if (prefixSet.size === 0) {
-        this.requiredPrefixes.delete(prefix);
-        this.releasePrefix(prefix);
+      if (prefixSet) {
+        prefixSet.delete(name);
+        if (prefixSet.size === 0) {
+          this.requiredPrefixes.delete(prefix);
+          this.releasePrefix(prefix);
+        }
       }
     }
     this.requiredByPrefixes.delete(name);
   }
 
   private releasePrefix(prefix: string): void {
-    prefixDebug("free-prefix", { prefix });
     const prefixedTokens = this.allPrefixes.get(prefix);
     if (!prefixedTokens) return;
 
     const dictionaryEntries = new Map<string, ISymbolType>();
+    const prefixLen = prefix.length + 1;
+
     for (const tokenName of prefixedTokens) {
-      const shortName = tokenName.split(".").pop();
-      if (!shortName) continue;
-      const referenceValue = this.referenceCache.get(tokenName);
-      const symbol = this.toSymbol(referenceValue);
-      if (!symbol) continue;
-      dictionaryEntries.set(shortName, symbol.cloneIfMutable());
+      const shortName = tokenName.slice(prefixLen);
+      if (!shortName.includes(".")) {
+        const referenceValue = this.referenceCache.get(tokenName);
+        const symbol = this.toSymbol(referenceValue);
+        if (symbol) {
+          dictionaryEntries.set(shortName, symbol.cloneIfMutable());
+        }
+      }
     }
 
     if (dictionaryEntries.size > 0) {
-      const dictionary = new DictionarySymbol(dictionaryEntries, this.config);
-      this.referenceCache.set(prefix, dictionary);
+      this.referenceCache.set(prefix, new DictionarySymbol(dictionaryEntries, this.config));
     }
 
     const waitingTokens = this.requiredPrefixesMap.get(prefix);
     if (!waitingTokens) return;
 
     for (const tokenName of waitingTokens) {
+      if (this.pendingResolution.has(tokenName)) continue;
+
       const prefixes = this.tokensToRequiredPrefixes.get(tokenName);
       if (!prefixes) continue;
+
       prefixes.delete(prefix);
       if (prefixes.size === 0) {
         this.tokensToRequiredPrefixes.delete(tokenName);
         const remainingDeps = this.requiresTokens.get(tokenName);
         if (!remainingDeps || remainingDeps.size === 0) {
+          this.pendingResolution.add(tokenName);
           this.resolveSingleToken(tokenName);
+          this.pendingResolution.delete(tokenName);
         }
       }
     }
-  }
-
-  private updateReferenceCache(tokenName: RefPath, value: TokenResult): void {
-    if (value instanceof Error) return;
-    this.referenceCache.set(tokenName, value);
   }
 
   private finalizeResolution(): void {
-    const unresolvedTokens: RefPath[] = [];
-    for (const tokenName of this.tokens.keys()) {
-      if (!this.resolved.has(tokenName)) {
+    let changed = true;
+    while (changed) {
+      changed = false;
+      const unresolvedTokens: RefPath[] = [];
+
+      for (const tokenName of this.tokens.keys()) {
+        if (this.resolved.has(tokenName)) continue;
+
+        const waitsForTokens = this.requiresTokens.get(tokenName);
+        const waitsForPrefixes = this.tokensToRequiredPrefixes.get(tokenName);
+
+        if (
+          (!waitsForTokens || waitsForTokens.size === 0) &&
+          (!waitsForPrefixes || waitsForPrefixes.size === 0)
+        ) {
+          this.resolveSingleToken(tokenName);
+          changed = true;
+          continue;
+        }
+
         const dependencyError = this.buildDependencyError(tokenName);
         if (dependencyError) {
           this.resolved.set(tokenName, dependencyError);
-          this.callbacks?.onError?.(tokenName, dependencyError, this.tokens.get(tokenName) ?? "");
-          this.notifyResolution(tokenName);
+          this.callbacks?.onError?.(tokenName, dependencyError, this.tokens.get(tokenName)!);
           this.resolveVirtualChildren(tokenName, []);
+          this.notifyResolution(tokenName);
           this.requiresTokens.delete(tokenName);
           this.unresolved.delete(tokenName);
-          continue;
+          changed = true;
+        } else {
+          unresolvedTokens.push(tokenName);
         }
-        unresolvedTokens.push(tokenName);
       }
-    }
 
-    if (unresolvedTokens.length > 0) {
-      const message = `Detected circular dependency or unresolved prefixes: ${unresolvedTokens.join(", ")}`;
-      prefixDebug("unresolved", { tokens: unresolvedTokens });
-      throw new Error(message);
+      if (!changed && unresolvedTokens.length > 0) {
+        throw new Error(
+          `Detected circular dependency or unresolved prefixes: ${unresolvedTokens.join(", ")}`,
+        );
+      }
     }
   }
 
   private addToPrefixes(tokenName: RefPath): void {
-    const segments = tokenName.split(".");
-    if (segments.length <= 1) return;
+    let dotIndex = tokenName.indexOf(".");
+    if (dotIndex === -1) return;
 
-    for (let i = 1; i < segments.length; i++) {
-      const prefix = segments.slice(0, i).join(".");
+    while (dotIndex !== -1) {
+      const prefix = tokenName.slice(0, dotIndex);
       this.addToSetMap(this.allPrefixes, prefix, tokenName);
+      dotIndex = tokenName.indexOf(".", dotIndex + 1);
     }
   }
 
   private findParentToken(reference: RefPath): RefPath | undefined {
-    const segments = reference.split(".");
-    for (let i = segments.length - 1; i > 0; i--) {
-      const candidate = segments.slice(0, i).join(".");
+    let lastDotIndex = reference.lastIndexOf(".");
+    while (lastDotIndex > 0) {
+      const candidate = reference.slice(0, lastDotIndex);
       if (this.tokens.has(candidate)) {
         return candidate;
       }
+      lastDotIndex = reference.lastIndexOf(".", lastDotIndex - 1);
     }
     return undefined;
   }
 
   private addToSetMap<K, V>(map: Map<K, Set<V>>, key: K, value: V): void {
-    if (!map.has(key)) {
-      map.set(key, new Set<V>());
+    let set = map.get(key);
+    if (!set) {
+      set = new Set<V>();
+      map.set(key, set);
     }
-    map.get(key)!.add(value);
+    set.add(value);
   }
 
-  private isSymbolType(value: TokenResult | undefined): value is ISymbolType {
-    if (!value || typeof value !== "object") return false;
-    return typeof (value as ISymbolType).cloneIfMutable === "function";
+  private isSymbolType(value: any): value is ISymbolType {
+    return value && typeof value === "object" && typeof value.cloneIfMutable === "function";
   }
 
   private toSymbol(value: TokenResult | undefined): ISymbolType | undefined {
     if (!value) return undefined;
     if (this.isSymbolType(value)) return value;
-    if (typeof value === "string") {
-      return new StringSymbol(value, this.config);
-    }
-    if (value === null) {
-      return new NullSymbol(this.config);
-    }
+    if (typeof value === "string") return new StringSymbol(value, this.config);
+    if (value === null) return new NullSymbol(this.config);
     return undefined;
   }
-}
-
-const PREFIX_DEBUG_LABEL = "[TokenProcessor][prefix]";
-function prefixDebug(message: string, payload?: Record<string, unknown>): void {
-  // if (payload) {
-  //   console.log(`${PREFIX_DEBUG_LABEL} ${message}`, payload);
-  // } else {
-  //   console.log(`${PREFIX_DEBUG_LABEL} ${message}`);
-  // }
 }
 
 export class TokenProcessor {
