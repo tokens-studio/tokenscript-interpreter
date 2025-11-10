@@ -93,6 +93,7 @@ export class LegacyTokenProcessor {
       try {
         // OPTIMIZATION: Reuse interpreter, just swap AST
         // This avoids creating a new Interpreter instance for each token
+        sharedInterpreter.resetSymbolTable();
         sharedInterpreter.setAst(ast);
         const result = sharedInterpreter.interpret();
         resolved.set(tokenName, result);
@@ -398,6 +399,7 @@ class PrefixResolver {
       this.referenceCache.set(tokenName, originalValue);
     } else {
       try {
+        this.interpreter.resetSymbolTable();
         this.interpreter.setAst(ast);
         tokenValue = this.interpreter.interpret();
         this.resolved.set(tokenName, tokenValue);

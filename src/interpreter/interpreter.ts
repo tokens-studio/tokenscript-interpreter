@@ -107,6 +107,10 @@ export class Interpreter {
     this.parser = null; // Clear parser since we're using pre-parsed AST
   }
 
+  public resetSymbolTable(): void {
+    this.symbolTable.reset();
+  }
+
   public coerceValue(
     constructorSymbol: ISymbolType,
     valueSymbol: ISymbolType,

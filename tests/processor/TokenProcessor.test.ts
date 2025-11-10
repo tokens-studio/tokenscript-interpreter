@@ -212,5 +212,20 @@ describe("TokenProcessor", () => {
       expect(modern.resolved.get("double")?.value).toBe(6);
       expect(legacy.resolved.get("double")?.value).toBe(6);
     });
+
+    it("should not share variables between token interpretations", () => {
+      const processor = new TokenProcessor();
+      const tokens = new Map([
+        ["a", "variable b: Number = 1; b"],
+        ["c", "b"],
+      ]);
+
+      const result = processor.processTokens(tokens);
+
+      expect(result.resolved.get("a")?.value).toBe(1);
+      // Token "c" contains bare identifier "b" which should be a string literal
+      // The variable "b" declared in token "a" should not leak into token "c"
+      expect(result.resolved.get("c")?.value).toBe("b");
+    });
   });
 });
