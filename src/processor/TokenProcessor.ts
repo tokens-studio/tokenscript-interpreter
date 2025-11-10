@@ -243,6 +243,7 @@ class PrefixResolver {
   private readonly astNodes = new Map<RefPath, ASTNode>();
   private readonly allPrefixes = new Map<string, Set<RefPath>>();
   private readonly referenceCache: Map<string, TokenResult> = new Map();
+  private readonly virtualChildren = new Map<RefPath, Set<RefPath>>();
   private readonly interpreter: Interpreter;
 
   constructor(
@@ -334,8 +335,17 @@ class PrefixResolver {
         this.addToSetMap(this.requiresTokens, tokenName, dep);
         this.addToSetMap(this.requiredByTokens, dep, tokenName);
 
+        if (this.tokens.has(dep)) {
+          continue;
+        }
+
+        const parentToken = this.findParentToken(dep);
+        if (parentToken && this.tokens.has(parentToken)) {
+          this.addToSetMap(this.virtualChildren, parentToken, dep);
+          continue;
+        }
+
         if (
-          !this.tokens.has(dep) &&
           !this.referenceCache.has(dep) &&
           !this.resolved.has(dep)
         ) {
@@ -434,6 +444,7 @@ class PrefixResolver {
     for (const name of flattened) {
       this.notifyResolution(name);
     }
+    this.resolveVirtualChildren(tokenName, flattened);
 
     this.requiresTokens.delete(tokenName);
     this.unresolved.delete(tokenName);
@@ -473,6 +484,37 @@ class PrefixResolver {
     }
 
     return flattenedNames;
+  }
+
+  private resolveVirtualChildren(parent: RefPath, flattened: RefPath[]): void {
+    const children = this.virtualChildren.get(parent);
+    if (!children || children.size === 0) return;
+
+    const satisfied = new Set(flattened);
+    const parentValue = this.resolved.get(parent);
+
+    for (const child of children) {
+      if (satisfied.has(child) || this.referenceCache.has(child)) {
+        continue;
+      }
+
+      if (this.resolved.has(child)) {
+        continue;
+      }
+
+      let error: Error;
+      if (parentValue instanceof Error) {
+        error = new DependencyError(child, parent, parentValue);
+      } else {
+        error = new Error(`Token '${child}' not found`);
+      }
+
+      this.resolved.set(child, error);
+      this.callbacks?.onError?.(child, error, "");
+      this.notifyResolution(child);
+    }
+
+    this.virtualChildren.delete(parent);
   }
 
   private notifyResolution(name: RefPath): void {
@@ -561,6 +603,7 @@ class PrefixResolver {
           this.resolved.set(tokenName, dependencyError);
           this.callbacks?.onError?.(tokenName, dependencyError, this.tokens.get(tokenName) ?? "");
           this.notifyResolution(tokenName);
+          this.resolveVirtualChildren(tokenName, []);
           this.requiresTokens.delete(tokenName);
           this.unresolved.delete(tokenName);
           continue;
@@ -584,6 +627,17 @@ class PrefixResolver {
       const prefix = segments.slice(0, i).join(".");
       this.addToSetMap(this.allPrefixes, prefix, tokenName);
     }
+  }
+
+  private findParentToken(reference: RefPath): RefPath | undefined {
+    const segments = reference.split(".");
+    for (let i = segments.length - 1; i > 0; i--) {
+      const candidate = segments.slice(0, i).join(".");
+      if (this.tokens.has(candidate)) {
+        return candidate;
+      }
+    }
+    return undefined;
   }
 
   private addToSetMap<K, V>(map: Map<K, Set<V>>, key: K, value: V): void {
