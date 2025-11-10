@@ -421,7 +421,7 @@ class PrefixResolver {
 
     // Process ready queue (event-driven cascade resolution)
     while (this.readyQueue.size > 0) {
-      const tokenName = this.readyQueue.values().next().value;
+      const tokenName = this.readyQueue.values().next().value as RefPath;
       this.readyQueue.delete(tokenName);
       this.resolveSingleToken(tokenName);
     }
@@ -430,6 +430,9 @@ class PrefixResolver {
   private resolveSingleToken(tokenName: RefPath): void {
     const originalValue = this.tokens.get(tokenName);
     if (originalValue === undefined || this.resolved.has(tokenName)) return;
+
+    // At this point, originalValue is guaranteed to be a string (not undefined)
+    const tokenValueStr: string = originalValue;
 
     // Prevent re-entrant resolution during cascade
     this.pendingResolution.add(tokenName);
@@ -448,13 +451,13 @@ class PrefixResolver {
     if (dependencyError) {
       tokenValue = dependencyError;
       this.resolved.set(tokenName, dependencyError);
-      this.callbacks?.onError?.(tokenName, dependencyError, originalValue);
+      this.callbacks?.onError?.(tokenName, dependencyError, tokenValueStr);
     } else {
       tokenValue = this.tokenInterpreter.interpretToken(tokenName, originalValue);
       this.resolved.set(tokenName, tokenValue);
 
       if (tokenValue instanceof Error) {
-        this.callbacks?.onError?.(tokenName, tokenValue, originalValue);
+        this.callbacks?.onError?.(tokenName, tokenValue, tokenValueStr);
       } else {
         this.callbacks?.onResolve?.(tokenName, tokenValue);
         this.tokenInterpreter.updateReferenceCache(tokenName, tokenValue);
@@ -517,6 +520,9 @@ class PrefixResolver {
       const originalValue = this.tokens.get(tokenName);
       if (originalValue === undefined || this.resolved.has(tokenName)) continue;
 
+      // At this point, originalValue is guaranteed to be a string (not undefined)
+      const tokenValueStr: string = originalValue;
+
       // Check for dependency errors
       const unresolved = this.unresolved.get(tokenName);
       if (unresolved) {
@@ -527,7 +533,7 @@ class PrefixResolver {
         );
         if (dependencyError) {
           this.resolved.set(tokenName, dependencyError);
-          this.callbacks?.onError?.(tokenName, dependencyError, originalValue);
+          this.callbacks?.onError?.(tokenName, dependencyError, tokenValueStr);
           this.resolveVirtualChildren(tokenName, []);
           this.notifyResolution(tokenName);
           this.unresolved.delete(tokenName);
