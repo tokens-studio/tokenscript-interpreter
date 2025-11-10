@@ -380,10 +380,10 @@ class PrefixResolver {
   }
 
   private resolveSingleToken(tokenName: RefPath): void {
-    if (!this.tokens.has(tokenName) || this.resolved.has(tokenName)) return;
+    const originalValue = this.tokens.get(tokenName);
+    if (originalValue === undefined || this.resolved.has(tokenName)) return;
 
     const ast = this.astNodes.get(tokenName);
-    const originalValue = this.tokens.get(tokenName)!;
     const dependencyError = this.buildDependencyError(tokenName);
 
     let tokenValue: TokenResult;
@@ -578,7 +578,8 @@ class PrefixResolver {
       const unresolvedTokens: RefPath[] = [];
 
       for (const tokenName of this.tokens.keys()) {
-        if (this.resolved.has(tokenName)) continue;
+        const originalValue = this.tokens.get(tokenName);
+        if (originalValue === undefined || this.resolved.has(tokenName)) continue;
 
         const waitsForTokens = this.requiresTokens.get(tokenName);
         const waitsForPrefixes = this.tokensToRequiredPrefixes.get(tokenName);
@@ -595,7 +596,7 @@ class PrefixResolver {
         const dependencyError = this.buildDependencyError(tokenName);
         if (dependencyError) {
           this.resolved.set(tokenName, dependencyError);
-          this.callbacks?.onError?.(tokenName, dependencyError, this.tokens.get(tokenName)!);
+          this.callbacks?.onError?.(tokenName, dependencyError, originalValue);
           this.resolveVirtualChildren(tokenName, []);
           this.notifyResolution(tokenName);
           this.requiresTokens.delete(tokenName);
