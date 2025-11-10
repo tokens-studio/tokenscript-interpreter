@@ -1,6 +1,16 @@
 {
-  "colors": {
-    "simple": "variable i: Number = 0; variable o: List; while (i < 10) [ i = i + 1; o.append(i); ]; o"
-  },
-  "colorse-referenced": "{colors.simple}.get(0)"
+
+    "colors": {
+        "simple": "variable i: NumberWithUnit = 0px; variable o: List; while (i < 10) [ i = i + 1; o.append(i); ]; o"
+    },
+    "colors-referenced": "{colors.simple}.get(0)",
+    "referenced-type": "type({colors.simple}.get(0))",
+    "deep-ref": "variable f: NumberWithUnit = {colors.simple}.get({colors-referenced}); f",
+
+
+
+    "spacing": {
+        "simple": "variable l: Number = 0; variable ys: List; while (l < 10) [ l = l + 1; ys.set(l.to_string(), l + 0px); ]; return ys;"
+    },
+    "spacing-ref": "{spacing.simple}.get(0)"
 }
