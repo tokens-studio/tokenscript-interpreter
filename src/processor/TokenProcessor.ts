@@ -7,7 +7,10 @@ import { UNINTERPRETED_KEYWORDS } from "@src/types";
 import { DependencyError } from "./errors";
 import {
   DependencyTracker,
+  PrefixExtractor,
   PrefixManager,
+  ReadinessTracker,
+  ResolutionNotifier,
   ResolutionPhase,
   type RefPath,
   TokenInterpreter,
@@ -227,11 +230,17 @@ class PrefixResolver {
   private readonly unresolved: UnresolvedTokens = new Map();
   private readonly referenceCache: Map<string, interpreterResult> = new Map();
   private readonly pendingResolution: Set<RefPath> = new Set();
+  private readonly readyQueue: Set<RefPath> = new Set();
 
   // Core components
   private readonly dependencyTracker: DependencyTracker;
   private readonly prefixManager: PrefixManager;
   private readonly tokenInterpreter: TokenInterpreter;
+
+  // Phase 3: Optimization components
+  private readonly notifier: ResolutionNotifier;
+  private readonly prefixExtractor: PrefixExtractor;
+  private readonly readinessTracker: ReadinessTracker;
 
   // Phase state
   private earlyResolved: RefPath[] = [];
@@ -248,6 +257,19 @@ class PrefixResolver {
     this.dependencyTracker = new DependencyTracker();
     this.prefixManager = new PrefixManager(config);
     this.tokenInterpreter = new TokenInterpreter(this.referenceCache, config);
+
+    // Initialize Phase 3 optimization components
+    this.prefixExtractor = new PrefixExtractor();
+    this.readinessTracker = new ReadinessTracker();
+    this.notifier = new ResolutionNotifier(
+      this.dependencyTracker,
+      this.prefixManager,
+      this.readinessTracker,
+      this.pendingResolution,
+      this.readyQueue,
+      (tokenName) => this.resolveSingleToken(tokenName),
+      (prefix, cache) => this.buildPrefixDictionary(prefix, cache),
+    );
   }
 
   /**
@@ -377,27 +399,30 @@ class PrefixResolver {
    */
   private releaseEarlyResolved(): void {
     for (const tokenName of this.earlyResolved) {
-      this.releaseDependents(tokenName);
-      this.releasePrefixes(tokenName);
+      this.notifyResolution(tokenName);
     }
   }
 
   /**
    * Phase 4: Resolve dependency-free tokens (ResolutionPhase.RESOLVE_DEPENDENCY_FREE)
-   * - Find all tokens with no remaining dependencies
-   * - Interpret and resolve these tokens
-   * - Cascade to trigger dependent token resolutions
+   * - Seed ready queue with initially dependency-free tokens
+   * - Process queue in event-driven manner (cascade resolution)
+   * - Queue is populated by ResolutionNotifier when dependencies are released
    */
   private resolveDependencyFreeTokens(): void {
-    const ready: RefPath[] = [];
+    // Seed ready queue with initially dependency-free tokens
     for (const tokenName of this.tokens.keys()) {
       if (this.resolved.has(tokenName)) continue;
 
-      if (this.dependencyTracker.isTokenReady(tokenName)) {
-        ready.push(tokenName);
+      if (this.readinessTracker.isReady(tokenName, this.dependencyTracker)) {
+        this.readyQueue.add(tokenName);
       }
     }
-    for (const tokenName of ready) {
+
+    // Process ready queue (event-driven cascade resolution)
+    while (this.readyQueue.size > 0) {
+      const tokenName = this.readyQueue.values().next().value;
+      this.readyQueue.delete(tokenName);
       this.resolveSingleToken(tokenName);
     }
   }
@@ -405,6 +430,9 @@ class PrefixResolver {
   private resolveSingleToken(tokenName: RefPath): void {
     const originalValue = this.tokens.get(tokenName);
     if (originalValue === undefined || this.resolved.has(tokenName)) return;
+
+    // Prevent re-entrant resolution during cascade
+    this.pendingResolution.add(tokenName);
 
     const unresolved = this.unresolved.get(tokenName);
     const dependencyError = unresolved
@@ -437,10 +465,11 @@ class PrefixResolver {
     this.resolveVirtualChildren(tokenName, flattened);
     this.notifyResolution(tokenName, flattened);
     this.unresolved.delete(tokenName);
+    this.pendingResolution.delete(tokenName);
   }
 
   private resolveVirtualChildren(parent: RefPath, flattened: RefPath[]): void {
-    const children = this.prefixManager.getVirtualChildren(parent);
+    const children = this.prefixManager.getAndRemoveVirtualChildren(parent);
     if (children.size === 0) return;
 
     const satisfied = flattened.length > 0 ? new Set(flattened) : null;
@@ -459,120 +488,60 @@ class PrefixResolver {
       this.resolved.set(child, error);
       this.callbacks?.onError?.(child, error, "");
     }
-
-    this.prefixManager.removeVirtualChildren(parent);
   }
 
   private notifyResolution(name: RefPath, flattened?: RefPath[]): void {
-    this.releaseDependents(name);
-    this.releasePrefixes(name);
-    if (flattened) {
-      for (const flatName of flattened) {
-        this.releaseDependents(flatName);
-        this.releasePrefixes(flatName);
-      }
-    }
+    this.notifier.releaseDependencies(name, flattened, this.referenceCache);
   }
 
-  private releaseDependents(name: RefPath): void {
-    const dependents = this.dependencyTracker.getTokenDependents(name);
-    if (dependents.size === 0) return;
-
-    for (const dependent of dependents) {
-      if (this.pendingResolution.has(dependent)) continue;
-
-      this.dependencyTracker.removeTokenDependency(dependent, name);
-
-      if (this.dependencyTracker.isTokenReady(dependent)) {
-        this.pendingResolution.add(dependent);
-        this.resolveSingleToken(dependent);
-        this.pendingResolution.delete(dependent);
-      }
-    }
-  }
-
-  private releasePrefixes(name: RefPath): void {
-    const readyPrefixes = this.prefixManager.markTokenResolved(name);
-    if (readyPrefixes.length === 0) return;
-
-    for (const prefix of readyPrefixes) {
-      this.releasePrefix(prefix);
-    }
-  }
-
-  private releasePrefix(prefix: string): void {
-    // Build dictionary for this prefix
-    const dictionary = this.prefixManager.buildPrefixDictionary(prefix, this.referenceCache);
+  /**
+   * Helper for ResolutionNotifier to build prefix dictionaries
+   */
+  private buildPrefixDictionary(prefix: string, cache: Map<string, interpreterResult>): void {
+    const dictionary = this.prefixManager.buildPrefixDictionary(prefix, cache);
     if (dictionary) {
-      this.referenceCache.set(prefix, dictionary);
-    }
-
-    // Release tokens waiting for this prefix
-    const waitingTokens = this.dependencyTracker.getTokensWaitingForPrefix(prefix);
-    if (waitingTokens.size === 0) return;
-
-    for (const tokenName of waitingTokens) {
-      if (this.pendingResolution.has(tokenName)) continue;
-
-      this.dependencyTracker.removePrefixDependency(tokenName, prefix);
-
-      if (this.dependencyTracker.isTokenReady(tokenName)) {
-        this.pendingResolution.add(tokenName);
-        this.resolveSingleToken(tokenName);
-        this.pendingResolution.delete(tokenName);
-      }
+      cache.set(prefix, dictionary);
     }
   }
 
   /**
    * Phase 5: Finalize resolution (ResolutionPhase.FINALIZE)
-   * - Resolve any remaining tokens
-   * - Check for circular dependencies
+   * - Handle any true stragglers not caught by event-driven phase
    * - Generate errors for unresolved tokens with dependency issues
+   * - Check for circular dependencies
    */
   private finalizeResolution(): void {
-    let changed = true;
-    while (changed) {
-      changed = false;
-      const unresolvedTokens: RefPath[] = [];
+    const unresolvedTokens: RefPath[] = [];
 
-      for (const tokenName of this.tokens.keys()) {
-        const originalValue = this.tokens.get(tokenName);
-        if (originalValue === undefined || this.resolved.has(tokenName)) continue;
+    for (const tokenName of this.tokens.keys()) {
+      const originalValue = this.tokens.get(tokenName);
+      if (originalValue === undefined || this.resolved.has(tokenName)) continue;
 
-        if (this.dependencyTracker.isTokenReady(tokenName)) {
-          this.resolveSingleToken(tokenName);
-          changed = true;
+      // Check for dependency errors
+      const unresolved = this.unresolved.get(tokenName);
+      if (unresolved) {
+        const dependencyError = this.tokenInterpreter.buildDependencyError(
+          tokenName,
+          unresolved.dependencies,
+          this.resolved,
+        );
+        if (dependencyError) {
+          this.resolved.set(tokenName, dependencyError);
+          this.callbacks?.onError?.(tokenName, dependencyError, originalValue);
+          this.resolveVirtualChildren(tokenName, []);
+          this.notifyResolution(tokenName);
+          this.unresolved.delete(tokenName);
           continue;
         }
-
-        // Check for dependency errors
-        const unresolved = this.unresolved.get(tokenName);
-        if (unresolved) {
-          const dependencyError = this.tokenInterpreter.buildDependencyError(
-            tokenName,
-            unresolved.dependencies,
-            this.resolved,
-          );
-          if (dependencyError) {
-            this.resolved.set(tokenName, dependencyError);
-            this.callbacks?.onError?.(tokenName, dependencyError, originalValue);
-            this.resolveVirtualChildren(tokenName, []);
-            this.notifyResolution(tokenName);
-            this.unresolved.delete(tokenName);
-            changed = true;
-            continue;
-          }
-        }
-
-        unresolvedTokens.push(tokenName);
       }
 
-      if (!changed && unresolvedTokens.length > 0) {
-        throw new Error(
-          `Detected circular dependency or unresolved prefixes: ${unresolvedTokens.join(", ")}`,
-        );
-      }
+      unresolvedTokens.push(tokenName);
+    }
+
+    if (unresolvedTokens.length > 0) {
+      throw new Error(
+        `Detected circular dependency or unresolved prefixes: ${unresolvedTokens.join(", ")}`,
+      );
     }
   }
 }

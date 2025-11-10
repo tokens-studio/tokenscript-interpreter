@@ -2,6 +2,7 @@ import type { Config } from "@interpreter/config";
 import type { interpreterResult } from "@interpreter/interpreter";
 import { DictionarySymbol, NullSymbol, StringSymbol } from "@interpreter/symbols";
 import type { ISymbolType } from "@src/types";
+import { PrefixExtractor } from "./PrefixExtractor";
 import type { RefPath } from "./types";
 
 /**
@@ -12,18 +13,28 @@ export class PrefixManager {
   private readonly tokenPrefixes = new Map<RefPath, Set<string>>();
   private readonly activePrefixes = new Map<string, Set<RefPath>>();
   private readonly virtualChildren = new Map<RefPath, Set<RefPath>>();
+  private readonly prefixExtractor = new PrefixExtractor();
+
+  // Optimization caches
+  private readonly directChildrenCache = new Map<string, Set<string>>();
+  private readonly parentLookupCache = new Map<RefPath, RefPath | undefined>();
 
   constructor(private readonly config?: Config) {}
 
   addTokenToPrefix(tokenName: RefPath): void {
-    let dotIndex = tokenName.indexOf(".");
-    if (dotIndex === -1) return;
+    const prefixes = this.prefixExtractor.extractPrefixes(tokenName);
+    if (prefixes.length === 0) return;
 
-    while (dotIndex !== -1) {
-      const prefix = tokenName.slice(0, dotIndex);
+    for (const prefix of prefixes) {
       this.addToSetMap(this.prefixes, prefix, tokenName);
       this.addToSetMap(this.tokenPrefixes, tokenName, prefix);
-      dotIndex = tokenName.indexOf(".", dotIndex + 1);
+
+      // Cache direct children for this prefix
+      const prefixLen = prefix.length + 1;
+      const shortName = tokenName.slice(prefixLen);
+      if (!shortName.includes(".")) {
+        this.addToSetMap(this.directChildrenCache, prefix, shortName);
+      }
     }
   }
 
@@ -61,16 +72,14 @@ export class PrefixManager {
     prefix: string,
     referenceCache: Map<string, interpreterResult>,
   ): DictionarySymbol | undefined {
-    const prefixedTokens = this.prefixes.get(prefix);
-    if (!prefixedTokens) return undefined;
+    const directChildren = this.directChildrenCache.get(prefix);
+    if (!directChildren || directChildren.size === 0) return undefined;
 
     const dictionaryEntries = new Map<string, ISymbolType>();
     const prefixLen = prefix.length + 1;
 
-    for (const tokenName of prefixedTokens) {
-      const shortName = tokenName.slice(prefixLen);
-      if (shortName.includes(".")) continue;
-
+    for (const shortName of directChildren) {
+      const tokenName = `${prefix}.${shortName}`;
       const referenceValue = referenceCache.get(tokenName);
       const symbol = this.toSymbol(referenceValue);
       if (symbol) {
@@ -83,14 +92,22 @@ export class PrefixManager {
   }
 
   findParentToken(reference: RefPath, tokens: Map<RefPath, string>): RefPath | undefined {
+    const cached = this.parentLookupCache.get(reference);
+    if (cached !== undefined) {
+      return cached === null ? undefined : cached;
+    }
+
     let lastDotIndex = reference.lastIndexOf(".");
     while (lastDotIndex > 0) {
       const candidate = reference.slice(0, lastDotIndex);
       if (tokens.has(candidate)) {
+        this.parentLookupCache.set(reference, candidate);
         return candidate;
       }
       lastDotIndex = reference.lastIndexOf(".", lastDotIndex - 1);
     }
+
+    this.parentLookupCache.set(reference, null as unknown as undefined);
     return undefined;
   }
 
@@ -103,8 +120,27 @@ export class PrefixManager {
     return children ? new Set(children) : new Set();
   }
 
+  getAndRemoveVirtualChildren(parent: RefPath): Set<RefPath> {
+    const children = this.virtualChildren.get(parent);
+    if (!children) return new Set();
+    this.virtualChildren.delete(parent);
+    return children;
+  }
+
   removeVirtualChildren(parent: RefPath): void {
     this.virtualChildren.delete(parent);
+  }
+
+  getReadyPrefixes(): string[] {
+    return Array.from(this.activePrefixes.keys()).filter((prefix) => {
+      const pending = this.activePrefixes.get(prefix);
+      return pending && pending.size === 0;
+    });
+  }
+
+  clearCaches(): void {
+    this.directChildrenCache.clear();
+    this.parentLookupCache.clear();
   }
 
   private addToSetMap<K, V>(map: Map<K, Set<V>>, key: K, value: V): void {

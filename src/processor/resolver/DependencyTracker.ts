@@ -34,8 +34,16 @@ export class DependencyTracker {
     return this.cloneSet(this.reverseDeps.get(token));
   }
 
+  getTokenDependentsIterable(token: string): Iterable<string> {
+    return this.reverseDeps.get(token) ?? [];
+  }
+
   getTokensWaitingForPrefix(prefix: string): Set<string> {
     return this.cloneSet(this.prefixReverseDeps.get(prefix));
+  }
+
+  getTokensWaitingForPrefixIterable(prefix: string): Iterable<string> {
+    return this.prefixReverseDeps.get(prefix) ?? [];
   }
 
   getTokenDependencies(token: string): Set<string> {
