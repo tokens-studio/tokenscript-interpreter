@@ -5,9 +5,9 @@ import {
   type FunctionSpecification,
   FunctionsManager,
   Interpreter,
-  interpretTokens,
   Lexer,
   Parser,
+  processTokens,
 } from "@tokens-studio/tokenscript-interpreter";
 import { DEFAULT_COLOR_SCHEMAS } from "./default-schemas";
 
@@ -159,15 +159,15 @@ export async function executeCode(options: ExecuteCodeOptions): Promise<Executio
       };
     }
 
-    // JSON token processing
+    // JSON token processing - use "string" output for JSON-safe values
     const jsonTokens = JSON.parse(code);
-    const output = interpretTokens(jsonTokens, config);
+    const processorOutput = processTokens(jsonTokens, { config, output: "string" });
     const executionTime = performance.now() - startTime;
 
     return {
       type: "json",
       executionTime: Math.round(executionTime * 100) / 100,
-      output,
+      output: processorOutput,
       colorManager,
       functionsManager,
     };

@@ -174,7 +174,15 @@ const extractUnit = (value: string): string | null => {
 function JsonOutput({ value, visualMode = false }: { value: any; visualMode?: boolean }) {
   const { theme } = useTheme();
   const currentTheme = getTheme(theme);
-  const jsonString = typeof value === "string" ? value : JSON.stringify(value, null, 2);
+  
+  // Convert ProcessorOutput with Maps to plain object for display
+  let displayValue = value;
+  if (value && typeof value === "object" && "tokens" in value && value.tokens instanceof Map) {
+    // This is a ProcessorOutput - convert tokens Map to plain object
+    displayValue = Object.fromEntries(value.tokens);
+  }
+  
+  const jsonString = typeof displayValue === "string" ? displayValue : JSON.stringify(displayValue, null, 2);
   const themeColors = theme === "light" ? tokenscriptLightThemeColors : tokenscriptThemeColors;
 
   useEffect(() => {
@@ -190,8 +198,8 @@ function JsonOutput({ value, visualMode = false }: { value: any; visualMode?: bo
     Prism.highlightAll();
   }, [themeColors, jsonString]);
 
-  if (visualMode && typeof value === "object" && value !== null && !Array.isArray(value)) {
-    const entries = Object.entries(value).sort(([keyA], [keyB]) => keyA.localeCompare(keyB));
+  if (visualMode && typeof displayValue === "object" && displayValue !== null && !Array.isArray(displayValue)) {
+    const entries = Object.entries(displayValue).sort(([keyA], [keyB]) => keyA.localeCompare(keyB));
     return (
       <div data-testid="json-output-visual">
         {entries.map(([key, val], index) => {

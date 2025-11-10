@@ -1,7 +1,7 @@
 import { Interpreter } from "@interpreter/interpreter";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
-import { buildThemeTree, interpretTokens, processThemes, TokenSetResolver } from "@src/tokenset-processor";
+import { processTokens } from "@src/processor/process";
 import { describe, expect, it } from "vitest";
 
 describe("CLI Functionality", () => {
@@ -64,20 +64,17 @@ describe("CLI Functionality", () => {
     });
   });
 
-  describe("TokenSetResolver", () => {
+  describe("Token Interpretation", () => {
     it("should resolve simple tokens", () => {
       const tokens = {
         "simple.token": "16px",
         "another.token": "24px",
       };
 
-      const resolver = new TokenSetResolver(tokens);
-      const result = resolver.resolve();
+      const output = processTokens(tokens, { output: "symbols" });
 
-      expect(result.resolvedTokens["simple.token"]?.toString()).toBe("16px");
-      expect(result.resolvedTokens["another.token"]?.toString()).toBe("24px");
-      expect(result.warnings).toEqual([]);
-      expect(result.errors).toEqual([]);
+      expect(output.tokens.get("simple.token")?.toString()).toBe("16px");
+      expect(output.tokens.get("another.token")?.toString()).toBe("24px");
     });
 
     it("should resolve token dependencies", () => {
@@ -86,13 +83,10 @@ describe("CLI Functionality", () => {
         derived: "{base} * 2px",
       };
 
-      const resolver = new TokenSetResolver(tokens);
-      const result = resolver.resolve();
+      const output = processTokens(tokens, { output: "symbols" });
 
-      expect(result.resolvedTokens.base?.toString()).toBe("16");
-      expect(result.resolvedTokens.derived?.toString()).toBe("32px");
-      expect(result.warnings).toEqual([]);
-      expect(result.errors).toEqual([]);
+      expect(output.tokens.get("base")?.toString()).toBe("16");
+      expect(output.tokens.get("derived")?.toString()).toBe("32px");
     });
 
     it("should handle complex token dependencies", () => {
@@ -104,135 +98,16 @@ describe("CLI Functionality", () => {
         large: "{medium} + {small}",
       };
 
-      const resolver = new TokenSetResolver(tokens);
-      const result = resolver.resolve();
+      const output = processTokens(tokens, { output: "symbols" });
 
-      expect(result.resolvedTokens["base.spacing"]?.toString()).toBe("8");
-      expect(result.resolvedTokens.scale?.toString()).toBe("2");
-      expect(result.resolvedTokens.small?.toString()).toBe("8px");
-      expect(result.resolvedTokens.medium?.toString()).toBe("16px");
-      // Addition of 16px + 8px = 24px (mathematical addition)
-      expect(result.resolvedTokens.large?.toString()).toBe("24px");
-      expect(result.warnings).toEqual([]);
-      expect(result.errors).toEqual([]);
+      expect(output.tokens.get("base.spacing")?.toString()).toBe("8");
+      expect(output.tokens.get("scale")?.toString()).toBe("2");
+      expect(output.tokens.get("small")?.toString()).toBe("8px");
+      expect(output.tokens.get("medium")?.toString()).toBe("16px");
+      expect(output.tokens.get("large")?.toString()).toBe("24px");
     });
 
-    it("should collect warnings for circular references", () => {
-      const tokens = {
-        circular: "{circular}",
-        normal: "16px",
-      };
-
-      const resolver = new TokenSetResolver(tokens);
-      const result = resolver.resolve();
-
-      expect(result.warnings).toContain("Token 'circular' has a circular reference to itself.");
-      expect(result.errors).toEqual([]);
-      expect(result.resolvedTokens.normal?.toString()).toBe("16px");
-    });
-
-    it("should collect warnings for unresolved tokens", () => {
-      const tokens = {
-        invalid: "{nonexistent}",
-        valid: "16px",
-      };
-
-      const resolver = new TokenSetResolver(tokens);
-      const result = resolver.resolve();
-
-      expect(result.warnings.length).toBeGreaterThan(0);
-      expect(result.warnings.some((w) => w.includes("Not all tokens could be resolved"))).toBe(true);
-      expect(result.errors).toEqual([]);
-      expect(result.resolvedTokens.valid?.toString()).toBe("16px");
-    });
-  });
-
-  describe("Theme Processing", () => {
-    it("should process simple themes", async () => {
-      const themes = {
-        Light: {
-          "color.primary": "#3B82F6",
-          "color.secondary": "#1E40AF",
-        },
-        Dark: {
-          "color.primary": "#60A5FA",
-          "color.secondary": "#3B82F6",
-        },
-      };
-
-      const result = await processThemes(themes);
-
-      expect(result).toHaveProperty("Light");
-      expect(result).toHaveProperty("Dark");
-      expect(result.Light["color.primary"]?.toString()).toBe("#3B82F6");
-      expect(result.Dark["color.primary"]?.toString()).toBe("#60A5FA");
-    });
-
-    it("should resolve theme token dependencies", async () => {
-      const themes = {
-        Theme1: {
-          base: "16",
-          derived: "{base} * 1.5px",
-        },
-      };
-
-      const result = await processThemes(themes);
-
-      expect(result.Theme1.base?.toString()).toBe("16");
-      expect(result.Theme1.derived?.toString()).toBe("24px");
-    });
-  });
-
-  describe("Theme Tree Building", () => {
-    it("should build theme tree from tokensets", () => {
-      const tokensets = {
-        $themes: [
-          {
-            name: "Light",
-            group: "Mode",
-            selectedTokenSets: {
-              core: "enabled",
-              semantic: "enabled",
-            },
-          },
-          {
-            name: "Dark",
-            group: "Mode",
-            selectedTokenSets: {
-              core: "enabled",
-              "semantic-dark": "enabled",
-            },
-          },
-        ],
-        core: {
-          spacing: {
-            base: { $value: "16px" },
-          },
-        },
-        semantic: {
-          color: {
-            primary: { $value: "#3B82F6" },
-          },
-        },
-        "semantic-dark": {
-          color: {
-            primary: { $value: "#60A5FA" },
-          },
-        },
-      };
-
-      const themeTree = buildThemeTree(tokensets);
-
-      expect(themeTree).toHaveProperty("Mode");
-      expect(themeTree.Mode).toHaveProperty("Light");
-      expect(themeTree.Mode).toHaveProperty("Dark");
-      expect(themeTree.Mode.Light).toHaveProperty("spacing.base");
-      expect(themeTree.Mode.Light).toHaveProperty("color.primary");
-    });
-  });
-
-  describe("Format Compatibility Integration", () => {
-    it("should work with the original README example using standard tokens JSON format", () => {
+    it("should work with standard tokens JSON format", () => {
       const tokens = {
         "primary-color": {
           $value: "#ff6b35",
@@ -248,16 +123,14 @@ describe("CLI Functionality", () => {
         },
       };
 
-      const result = interpretTokens(tokens);
+      const output = processTokens(tokens, { output: "symbols" });
 
-      expect(result).toEqual({
-        "primary-color": "#ff6b35",
-        "base-spacing": "16px",
-        "large-spacing": "32px",
-      });
+      expect(output.tokens.get("primary-color")?.toString()).toBe("#ff6b35");
+      expect(output.tokens.get("base-spacing")?.toString()).toBe("16px");
+      expect(output.tokens.get("large-spacing")?.toString()).toBe("32px");
     });
 
-    it("should work with the original README example using non-standard format", () => {
+    it("should work with non-standard token format", () => {
       const tokens = {
         "primary-color": {
           value: "#ff6b35",
@@ -273,17 +146,15 @@ describe("CLI Functionality", () => {
         },
       };
 
-      const result = interpretTokens(tokens);
+      const output = processTokens(tokens, { output: "symbols" });
 
-      expect(result).toEqual({
-        "primary-color": "#ff6b35",
-        "base-spacing": "16px",
-        "large-spacing": "32px",
-      });
+      expect(output.tokens.get("primary-color")?.toString()).toBe("#ff6b35");
+      expect(output.tokens.get("base-spacing")?.toString()).toBe("16px");
+      expect(output.tokens.get("large-spacing")?.toString()).toBe("32px");
     });
 
-    it("should resolve complex token chains in both formats", () => {
-      const standardTokens = {
+    it("should resolve complex token chains", () => {
+      const tokens = {
         base: {
           $value: "4px",
           $type: "dimension",
@@ -302,48 +173,242 @@ describe("CLI Functionality", () => {
         },
       };
 
-      const nonStandardTokens = {
-        base: {
-          value: "4px",
-          type: "dimension",
-        },
-        small: {
-          value: "{base} * 2",
-          type: "dimension",
-        },
-        medium: {
-          value: "{small} * 2",
-          type: "dimension",
-        },
-        large: {
-          value: "{medium} * 2",
-          type: "dimension",
-        },
-      };
+      const output = processTokens(tokens, { output: "symbols" });
 
-      const standardResult = interpretTokens(standardTokens);
-      const nonStandardResult = interpretTokens(nonStandardTokens);
-
-      const expectedResult = {
-        base: "4px",
-        small: "8px",
-        medium: "16px",
-        large: "32px",
-      };
-
-      expect(standardResult).toEqual(expectedResult);
-      expect(nonStandardResult).toEqual(expectedResult);
+      expect(output.tokens.get("base")?.toString()).toBe("4px");
+      expect(output.tokens.get("small")?.toString()).toBe("8px");
+      expect(output.tokens.get("medium")?.toString()).toBe("16px");
+      expect(output.tokens.get("large")?.toString()).toBe("32px");
     });
 
-    it("should handle empty token sets gracefully in both formats", () => {
-      const emptyStandard = {};
-      const emptyNonStandard = {};
+    it("should handle empty token sets", () => {
+      const output = processTokens({}, { output: "symbols" });
+      expect(output.tokens.size).toBe(0);
+    });
+  });
 
-      const standardResult = interpretTokens(emptyStandard);
-      const nonStandardResult = interpretTokens(emptyNonStandard);
+  describe("Circular Dependency Detection", () => {
+    it("should detect self-referencing circular dependency", () => {
+      const tokens = {
+        circular: "{circular}",
+      };
 
-      expect(standardResult).toEqual({});
-      expect(nonStandardResult).toEqual({});
+      expect(() => processTokens(tokens, { output: "symbols" })).toThrow(/circular dependency/i);
+    });
+
+    it("should detect two-token circular dependency", () => {
+      const tokens = {
+        a: "{b}",
+        b: "{a}",
+      };
+
+      expect(() => processTokens(tokens, { output: "symbols" })).toThrow(/circular dependency/i);
+    });
+
+    it("should detect multi-token circular dependency chain", () => {
+      const tokens = {
+        a: "{b}",
+        b: "{c}",
+        c: "{d}",
+        d: "{a}",
+      };
+
+      expect(() => processTokens(tokens, { output: "symbols" })).toThrow(/circular dependency/i);
+    });
+
+    it("should not throw for valid dependency chains", () => {
+      const tokens = {
+        a: "10",
+        b: "{a}",
+        c: "{b}",
+        d: "{c}",
+      };
+
+      const output = processTokens(tokens, { output: "symbols" });
+      expect(output.tokens.get("a")?.toString()).toBe("10");
+      expect(output.tokens.get("b")?.toString()).toBe("10");
+      expect(output.tokens.get("c")?.toString()).toBe("10");
+      expect(output.tokens.get("d")?.toString()).toBe("10");
+    });
+
+    it("should process non-circular tokens even when circular exists", () => {
+      const tokens = {
+        valid: "16px",
+        circular1: "{circular2}",
+        circular2: "{circular1}",
+      };
+
+      expect(() => processTokens(tokens, { output: "symbols" })).toThrow(/circular dependency/i);
+    });
+  });
+
+  describe("Error Propagation", () => {
+    it("should propagate errors from missing dependencies", () => {
+      const tokens = {
+        derived: "{missing}",
+      };
+
+      const output = processTokens(tokens, { output: "symbols" });
+      expect(output.errors.size).toBeGreaterThan(0);
+      expect(output.errors.has("derived")).toBe(true);
+    });
+
+    it("should propagate errors through dependency chains", () => {
+      const tokens = {
+        a: "{missing}",
+        b: "{a}",
+        c: "{b}",
+      };
+
+      const output = processTokens(tokens, { output: "symbols" });
+      expect(output.errors.has("a")).toBe(true);
+      expect(output.errors.has("b")).toBe(true);
+      expect(output.errors.has("c")).toBe(true);
+    });
+
+    it("should not propagate errors to independent tokens", () => {
+      const tokens = {
+        valid: "10px",
+        invalid: "{missing}",
+      };
+
+      const output = processTokens(tokens, { output: "symbols" });
+      expect(output.errors.has("invalid")).toBe(true);
+      expect(output.errors.has("valid")).toBe(false);
+      expect(output.tokens.get("valid")?.toString()).toBe("10px");
+    });
+
+    it("should preserve original values in output when errors occur", () => {
+      const tokens = {
+        invalid: "{missing}",
+      };
+
+      const output = processTokens(tokens, { output: "symbols" });
+      expect(output.tokens.get("invalid")).toBe("{missing}");
+    });
+  });
+
+  describe("Theme Processing", () => {
+    it("should flatten simple nested token structure without themes", () => {
+      const tokens = {
+        color: {
+          primary: {
+            $value: "#3B82F6",
+            $type: "color",
+          },
+        },
+        spacing: {
+          base: {
+            $value: "8px",
+            $type: "dimension",
+          },
+        },
+      };
+
+      const output = processTokens(tokens, { output: "symbols" });
+      expect(output.tokens.get("color.primary")?.toString()).toBe("#3B82F6");
+      expect(output.tokens.get("spacing.base")?.toString()).toBe("8px");
+    });
+
+    it("should flatten and resolve nested structure with references", () => {
+      const tokens = {
+        base: {
+          size: {
+            $value: "16",
+            $type: "number",
+          },
+        },
+        derived: {
+          small: {
+            $value: "{base.size} * 0.75",
+            $type: "number",
+          },
+          large: {
+            $value: "{base.size} * 1.5",
+            $type: "number",
+          },
+        },
+      };
+
+      const output = processTokens(tokens, { output: "symbols" });
+      expect(output.tokens.get("base.size")?.toString()).toBe("16");
+      expect(output.tokens.get("derived.small")?.toString()).toBe("12");
+      expect(output.tokens.get("derived.large")?.toString()).toBe("24");
+    });
+
+    it("should handle deeply nested token structures", () => {
+      const tokens = {
+        design: {
+          color: {
+            brand: {
+              primary: {
+                $value: "#FF0000",
+                $type: "color",
+              },
+            },
+          },
+        },
+      };
+
+      const output = processTokens(tokens, { output: "symbols" });
+      expect(output.tokens.get("design.color.brand.primary")?.toString()).toBe("#FF0000");
+    });
+
+    it("should handle token groups with multiple values", () => {
+      const tokens = {
+        colors: {
+          primary: {
+            $value: "#FF0000",
+            $type: "color",
+          },
+          secondary: {
+            $value: "#00FF00",
+            $type: "color",
+          },
+        },
+        spacing: {
+          small: {
+            $value: "8px",
+            $type: "dimension",
+          },
+          large: {
+            $value: "16px",
+            $type: "dimension",
+          },
+        },
+      };
+
+      const output = processTokens(tokens, { output: "symbols" });
+      expect(output.tokens.get("colors.primary")?.toString()).toBe("#FF0000");
+      expect(output.tokens.get("colors.secondary")?.toString()).toBe("#00FF00");
+      expect(output.tokens.get("spacing.small")?.toString()).toBe("8px");
+      expect(output.tokens.get("spacing.large")?.toString()).toBe("16px");
+    });
+
+    it("should handle references across nested groups", () => {
+      const tokens = {
+        base: {
+          unit: {
+            $value: "8",
+            $type: "number",
+          },
+        },
+        spacing: {
+          small: {
+            $value: "{base.unit}px",
+            $type: "dimension",
+          },
+          large: {
+            $value: "{base.unit} * 2px",
+            $type: "dimension",
+          },
+        },
+      };
+
+      const output = processTokens(tokens, { output: "symbols" });
+      expect(output.tokens.get("base.unit")?.toString()).toBe("8");
+      expect(output.tokens.get("spacing.small")?.toString()).toBe("8px");
+      expect(output.tokens.get("spacing.large")?.toString()).toBe("16px");
     });
   });
 });

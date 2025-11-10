@@ -1,4 +1,4 @@
-import { processTokens } from "@src/processor/process";
+import { processTokensFromFiles } from "@src/processor/processFiles";
 import {
   assertHasErrors,
   assertNoErrors,
@@ -64,7 +64,7 @@ describe("CLI Process Integration Tests", () => {
         },
       });
 
-      const result = await processTokens({
+      const result = await processTokensFromFiles({
         path: ctx.tempDir,
         activeSets: ["core", "semantic"],
       });
@@ -83,7 +83,7 @@ describe("CLI Process Integration Tests", () => {
         "set3.json": { token3: createToken("value3", "other") },
       });
 
-      const result = await processTokens({
+      const result = await processTokensFromFiles({
         path: ctx.tempDir,
         activeSets: ["set1", "set3"],
       });
@@ -99,7 +99,7 @@ describe("CLI Process Integration Tests", () => {
       });
 
       await expect(
-        processTokens({
+        processTokensFromFiles({
           path: ctx.tempDir,
           activeSets: ["nonexistent"],
         }),
@@ -126,7 +126,7 @@ describe("CLI Process Integration Tests", () => {
 
       const filePath = await writeTokenFile(ctx.tempDir, "tokens.json", tokens);
 
-      const lightResult = await processTokens({
+      const lightResult = await processTokensFromFiles({
         path: filePath,
         activeTheme: "Light",
       });
@@ -135,7 +135,7 @@ describe("CLI Process Integration Tests", () => {
       expect(lightResult.tokens.get("bg")).toBe("#FFFFFF");
       expect(lightResult.tokens.get("fg")).toBe("#000000");
 
-      const darkResult = await processTokens({
+      const darkResult = await processTokensFromFiles({
         path: filePath,
         activeTheme: "Dark",
       });
@@ -176,7 +176,7 @@ describe("CLI Process Integration Tests", () => {
       const filePath = await writeTokenFile(ctx.tempDir, "tokens.json", tokens);
 
       await expect(
-        processTokens({
+        processTokensFromFiles({
           path: filePath,
           activeTheme: "NonexistentTheme",
         }),
@@ -193,7 +193,7 @@ describe("CLI Process Integration Tests", () => {
       const filePath = await writeTokenFile(ctx.tempDir, "tokens.json", tokens);
 
       await expect(
-        processTokens({
+        processTokensFromFiles({
           path: filePath,
           activeTheme: "Light",
         }),
@@ -237,7 +237,7 @@ describe("CLI Process Integration Tests", () => {
       await fs.promises.writeFile(tokensFile, "{ invalid json content }");
 
       await expect(
-        processTokens({
+        processTokensFromFiles({
           path: tokensFile,
         }),
       ).rejects.toThrow(/json/i);
@@ -248,7 +248,7 @@ describe("CLI Process Integration Tests", () => {
       const nonExistentPath = path.join(ctx.tempDir, "does-not-exist.json");
 
       await expect(
-        processTokens({
+        processTokensFromFiles({
           path: nonExistentPath,
         }),
       ).rejects.toThrow();
@@ -292,7 +292,7 @@ describe("CLI Process Integration Tests", () => {
         },
       });
 
-      const result = await processTokens({
+      const result = await processTokensFromFiles({
         path: ctx.tempDir,
         activeSets: ["core", "semantic", "component"],
       });

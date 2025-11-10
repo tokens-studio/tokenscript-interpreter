@@ -1,9 +1,8 @@
-import { fetchAndRegisterSchemas } from "@src/utils/schema-fetcher";
+import type { Config } from "@interpreter/config";
 import type { interpreterResult } from "../interpreter/interpreter";
 import { isTokenscriptSymbol } from "../interpreter/symbols";
 import { isObject, isSingleEntryObject } from "../interpreter/utils/type";
 import { type ProcessorOutput, TokenProcessor } from "./TokenProcessor";
-import { collectJsonFiles } from "./utils/file-collector";
 import { extractSetNames, resolveThemes, selectTheme } from "./utils/theme-resolver";
 import { flattenObject, isNested, recordToMap } from "./utils/tokens";
 
@@ -20,14 +19,6 @@ export function collectErrors(
   }
   return errors;
 }
-
-export type ProcessTokensOptions = {
-  path: string;
-  outputPath?: string;
-  schemas?: string[];
-  activeSets?: string[];
-  activeTheme?: string;
-};
 
 // Json Normalization ----------------------------------------------------------
 
@@ -123,19 +114,30 @@ function flattenToTokens(sets: Record<string, unknown>, setNames: string[]): Map
 
 // Step 5: Interpret tokens ---------------------------------------------------
 
-function buildTokens(tokens: Map<string, string>): ProcessorOutput {
+/**
+ * Builds tokens with optional stringification for JSON output.
+ */
+function buildTokens(
+  tokens: Map<string, string>,
+  config?: Config,
+  outputFormat: "string" | "symbols" = "string",
+): ProcessorOutput & { tokens: Map<string, string | interpreterResult> } {
   const processor = new TokenProcessor();
-  const output: Map<string, string> = new Map();
+  const output: Map<string, string | interpreterResult> = new Map();
   const errors: Map<string, Error> = new Map();
 
   const callbacks = {
     onResolve: (tokenName: string, value: interpreterResult) => {
-      if (typeof value === "string") {
+      if (outputFormat === "symbols") {
         output.set(tokenName, value);
-      } else if (isTokenscriptSymbol(value)) {
-        output.set(tokenName, value.toString());
       } else {
-        output.set(tokenName, String(value));
+        if (typeof value === "string") {
+          output.set(tokenName, value);
+        } else if (isTokenscriptSymbol(value)) {
+          output.set(tokenName, value.toString());
+        } else {
+          output.set(tokenName, String(value));
+        }
       }
     },
     onError: (tokenName: string, error: Error, originalValue: string) => {
@@ -144,7 +146,7 @@ function buildTokens(tokens: Map<string, string>): ProcessorOutput {
     },
   };
 
-  const result = processor.processTokens(tokens, callbacks);
+  const result = processor.processTokens(tokens, callbacks, config);
 
   return {
     ...result,
@@ -153,29 +155,74 @@ function buildTokens(tokens: Map<string, string>): ProcessorOutput {
   };
 }
 
-// Main ------------------------------------------------------------------------
+// Core Processing (Node + Browser) ------------------------------------------
 
-export async function processTokens({
-  path: inputPath,
-  schemas,
-  activeSets,
-  activeTheme,
-}: ProcessTokensOptions): Promise<ProcessorOutput> {
-  // Step 0: Register schemas
-  await fetchAndRegisterSchemas(schemas ?? []);
+/**
+ * Process flat tokens directly without token sets or themes.
+ * Accepts Map (preferred), flat Record<string, string>, or nested token JSON.
+ * This is the simplest way to process tokens in-memory.
+ *
+ * @param tokens - Token map, flat record, or nested token JSON
+ * @param options - Processing options
+ * @param options.config - Custom interpreter config
+ * @param options.output - Output format: "string" (default, JSON-safe) or "symbols" (preserves Symbol objects)
+ * @returns ProcessorOutput with resolved tokens
+ *
+ * @example
+ * // Flat tokens
+ * processTokens({ base: "16", large: "{base} * 2" })
+ *
+ * // Nested tokens JSON
+ * processTokens({ color: { primary: { $value: "#FF0000" } } })
+ *
+ * // Map
+ * processTokens(new Map([["base", "16"], ["large", "{base} * 2"]]))
+ */
+export function processTokens(
+  tokens: Map<string, string> | Record<string, any>,
+  options: {
+    config?: Config;
+    output?: "string" | "symbols";
+  } = {},
+): ProcessorOutput & { tokens: Map<string, string | interpreterResult> } {
+  const { config, output = "string" } = options;
 
-  // Step 1: Collect JsonFiles
-  const jsonFiles = await collectJsonFiles(inputPath);
+  const tokenMap: Map<string, string> =
+    tokens instanceof Map ? tokens : flattenToTokens({ tokens }, ["tokens"]);
 
-  // Step 2: Normalize to flat structure
-  const normalizedFiles = normalizeJsonFiles(jsonFiles);
+  return buildTokens(tokenMap, config, output);
+}
 
-  // Step 3: Determine sets to pick
+/**
+ * Process token sets with themes and activeSets support.
+ * Handles complex token JSON structures with $themes, multiple sets, etc.
+ * Does NOT handle schema registration - use processTokensFromFiles for that.
+ *
+ * @param normalizedFiles - Token sets to process
+ * @param options - Processing options
+ * @param options.activeSets - Token sets to include
+ * @param options.activeTheme - Theme to activate
+ * @param options.config - Custom interpreter config
+ * @param options.output - Output format: "string" (default, JSON-safe) or "symbols" (preserves Symbol objects)
+ * @returns ProcessorOutput with resolved tokens
+ */
+export function processTokenSets(
+  normalizedFiles: Record<string, unknown>,
+  options: {
+    activeSets?: string[];
+    activeTheme?: string;
+    config?: Config;
+    output?: "string" | "symbols";
+  } = {},
+): ProcessorOutput & { tokens: Map<string, string | interpreterResult> } {
+  const { activeSets, activeTheme, config, output = "string" } = options;
+
+  // Step 1: Determine sets to pick
   const setNames = determineSets(normalizedFiles, activeSets, activeTheme);
 
-  // Step 4: Flatten to tokens
+  // Step 2: Flatten to tokens
   const tokens = flattenToTokens(normalizedFiles, setNames);
 
-  // Step 5: Interpret tokens
-  return buildTokens(tokens);
+  // Step 3: Interpret tokens
+  return buildTokens(tokens, config, output);
 }

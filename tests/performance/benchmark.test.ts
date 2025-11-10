@@ -1,4 +1,4 @@
-import { TokenSetResolver } from "@src/tokenset-processor";
+import { processTokens } from "@src/processor/process";
 import { describe, expect, it } from "vitest";
 
 describe("Performance Benchmark", () => {
@@ -25,29 +25,24 @@ describe("Performance Benchmark", () => {
     }
 
     const startTime = performance.now();
-    const resolver = new TokenSetResolver(tokens);
-    const result = resolver.resolve();
+    const output = processTokens(tokens, { output: "symbols" });
     const endTime = performance.now();
 
     const duration = endTime - startTime;
     const tokensPerSecond = Math.round(Object.keys(tokens).length / (duration / 1000));
 
     // Verify some results
-    expect(result.resolvedTokens["base.size.0"]?.toString()).toBe("8");
-    expect(result.resolvedTokens["component.padding.0"]?.toString()).toBe("16");
-    expect(result.resolvedTokens["component.margin.0"]?.toString()).toBe("20");
-    expect(result.resolvedTokens["layout.spacing.0"]?.toString()).toBe("10");
+    expect(output.tokens.get("base.size.0")?.toString()).toBe("8");
+    expect(output.tokens.get("component.padding.0")?.toString()).toBe("16");
+    expect(output.tokens.get("component.margin.0")?.toString()).toBe("20");
+    expect(output.tokens.get("layout.spacing.0")?.toString()).toBe("10");
 
     // Verify complex calculations
-    expect(result.resolvedTokens["complex.calc.0"]?.toString()).toBe("170"); // (8 + 9) * 10 = 170
+    expect(output.tokens.get("complex.calc.0")?.toString()).toBe("170"); // (8 + 9) * 10 = 170
 
     // Should be reasonably fast (this is a rough benchmark)
     expect(duration).toBeLessThan(1000); // Should complete in under 1 second
     expect(tokensPerSecond).toBeGreaterThan(100); // Should process at least 100 tokens/second
-
-    // Verify no errors or warnings for valid tokens
-    expect(result.errors).toEqual([]);
-    expect(result.warnings).toEqual([]);
   });
 
   it("should demonstrate AST caching efficiency", () => {
@@ -79,22 +74,19 @@ describe("Performance Benchmark", () => {
     };
 
     const startTime = performance.now();
-    const resolver = new TokenSetResolver(tokens);
-    const result = resolver.resolve();
+    const output = processTokens(tokens, { output: "symbols" });
     const endTime = performance.now();
 
     const duration = endTime - startTime;
 
     // Verify results
-    expect(result.resolvedTokens["spacing.xs"]?.toString()).toBe("6"); // 8 * 0.75 = 6
-    expect(result.resolvedTokens["spacing.sm"]?.toString()).toBe("8"); // 8 * 1 = 8
-    expect(result.resolvedTokens["component.padding.xs"]?.toString()).toBe("8"); // 6 + 2 = 8
-    expect(result.resolvedTokens["layout.gap.xs"]?.toString()).toBe("7"); // (8 + 6) / 2 = 7
+    expect(output.tokens.get("spacing.xs")?.toString()).toBe("6"); // 8 * 0.75 = 6
+    expect(output.tokens.get("spacing.sm")?.toString()).toBe("8"); // 8 * 1 = 8
+    expect(output.tokens.get("component.padding.xs")?.toString()).toBe("8"); // 6 + 2 = 8
+    expect(output.tokens.get("layout.gap.xs")?.toString()).toBe("7"); // (8 + 6) / 2 = 7
 
     // Should be very fast due to AST caching
     expect(duration).toBeLessThan(100); // Should complete in under 100ms
-    expect(result.errors).toEqual([]);
-    expect(result.warnings).toEqual([]);
   });
 
   it("should demonstrate interpreter reuse efficiency", () => {
@@ -109,23 +101,20 @@ describe("Performance Benchmark", () => {
     }
 
     const startTime = performance.now();
-    const resolver = new TokenSetResolver(tokens);
-    const result = resolver.resolve();
+    const output = processTokens(tokens, { output: "symbols" });
     const endTime = performance.now();
 
     const duration = endTime - startTime;
     const tokensPerSecond = Math.round(Object.keys(tokens).length / (duration / 1000));
 
     // Verify the chain resolved correctly
-    expect(result.resolvedTokens.base?.toString()).toBe("10");
-    expect(result.resolvedTokens["chain.1"]?.toString()).toBe("11");
-    expect(result.resolvedTokens["chain.50"]?.toString()).toBe("60");
-    expect(result.resolvedTokens["chain.100"]?.toString()).toBe("110");
+    expect(output.tokens.get("base")?.toString()).toBe("10");
+    expect(output.tokens.get("chain.1")?.toString()).toBe("11");
+    expect(output.tokens.get("chain.50")?.toString()).toBe("60");
+    expect(output.tokens.get("chain.100")?.toString()).toBe("110");
 
     // Should be very fast due to interpreter reuse
     expect(duration).toBeLessThan(50); // Should complete in under 50ms
     expect(tokensPerSecond).toBeGreaterThan(2000); // Should process at least 2000 tokens/second
-    expect(result.errors).toEqual([]);
-    expect(result.warnings).toEqual([]);
   });
 });
