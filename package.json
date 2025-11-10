@@ -103,6 +103,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "bench": "vitest bench",
+    "bench:processor": "vitest bench tests/performance/processor-comparison.bench.ts",
     "check": "biome ci . --diagnostic-level=error",
     "check:all": "npm run check && npm run test",
     "check:errors": "biome ci . --diagnostic-level=error",
