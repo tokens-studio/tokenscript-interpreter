@@ -1,0 +1,6 @@
+{
+  "colors": {
+    "simple": "variable i: Number = 0; variable o: List; while (i < 10) [ i = i + 1; o.append(i); ]; o"
+  },
+  "colorse-referenced": "{colors.simple}.get(0)"
+}
