@@ -37,6 +37,7 @@ export type ProcessFilesOptions = {
   schemas?: string[];
   activeSets?: string[];
   activeTheme?: string;
+  output?: "string" | "symbols";
 };
 
 /**
@@ -52,6 +53,7 @@ export async function processTokensFromFiles({
   schemas,
   activeSets,
   activeTheme,
+  output,
 }: ProcessFilesOptions): Promise<ProcessorOutput> {
   // Step 1: Register schemas (async)
   await fetchAndRegisterSchemas(schemas ?? []);
@@ -66,5 +68,6 @@ export async function processTokensFromFiles({
   return processTokenSets(normalizedFiles, {
     activeSets,
     activeTheme,
+    output,
   });
 }

@@ -39,8 +39,37 @@ describe("CLI Commands Integration Tests", () => {
       const output = JSON.parse(result.stdout);
       expect(output).toEqual(
         expect.objectContaining({
-          base: "8",
-          double: "16",
+          base: 8,
+          double: 16,
+        }),
+      );
+    });
+
+    it("should output nested trees for dotted tokens and prefix references", async () => {
+      const tokens = {
+        colors: {
+          base: createToken("#FFFFFF", "color"),
+          accent: createToken("{colors.base}", "color"),
+        },
+        paletteCopy: createToken("{colors}", "color"),
+      };
+
+      const tokensFile = await writeTokenFile(ctx.tempDir, "nested.json", tokens);
+
+      const result = await runProcessCommand({ input: tokensFile });
+
+      expect(result.exitCode).toBe(0);
+      const output = JSON.parse(result.stdout);
+      expect(output.colors).toEqual(
+        expect.objectContaining({
+          base: "#FFFFFF",
+          accent: "#FFFFFF",
+        }),
+      );
+      expect(output.paletteCopy).toEqual(
+        expect.objectContaining({
+          base: "#FFFFFF",
+          accent: "#FFFFFF",
         }),
       );
     });
@@ -85,7 +114,7 @@ describe("CLI Commands Integration Tests", () => {
       const output = JSON.parse(result.stdout);
       expect(output).toEqual(
         expect.objectContaining({
-          base: "8",
+          base: 8,
           bg: "#FFFFFF",
         }),
       );
@@ -115,7 +144,7 @@ describe("CLI Commands Integration Tests", () => {
       const lightOutput = JSON.parse(lightResult.stdout);
       expect(lightOutput).toEqual(
         expect.objectContaining({
-          base: "8",
+          base: 8,
           bg: "#FFFFFF",
         }),
       );
@@ -128,7 +157,7 @@ describe("CLI Commands Integration Tests", () => {
       const darkOutput = JSON.parse(darkResult.stdout);
       expect(darkOutput).toEqual(
         expect.objectContaining({
-          base: "8",
+          base: 8,
           bg: "#000000",
         }),
       );
