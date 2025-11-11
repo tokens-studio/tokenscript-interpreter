@@ -3,7 +3,8 @@ import type { interpreterResult } from "@interpreter/interpreter";
 import { type ParseExpressionResult, parseExpression } from "@interpreter/parser";
 import { StringSymbol } from "@interpreter/symbols";
 import { UNINTERPRETED_KEYWORDS } from "@src/types";
-import { DependencyError } from "./errors";
+import { DependencyError } from "../errors";
+import { DependencyGraph } from "../utils/DependencyGraph";
 import {
   DependencyTracker,
   PrefixExtractor,
@@ -14,8 +15,7 @@ import {
   TokenInterpreter,
   type TokenResult,
   type UnresolvedToken,
-} from "./resolver";
-import { DependencyGraph } from "./utils/DependencyGraph";
+} from ".";
 
 type ResolvedTokens = Map<RefPath, TokenResult>;
 type UnresolvedTokens = Map<RefPath, UnresolvedToken>;
@@ -358,17 +358,17 @@ class PrefixResolver {
 }
 
 /**
- * TokenProcessor - Resolves tokens with dependencies using prefix-aware resolution
+ * TokenResolver - Resolves tokens with dependencies using prefix-aware resolution
  *
  * @example
- * const processor = new TokenProcessor();
+ * const processor = new TokenResolver();
  * const tokens = new Map([
  *   ["a", "10"],
  *   ["b", "{a} * 2"],
  * ]);
  * const result = processor.build(tokens);
  */
-export class TokenProcessor {
+export class TokenResolver {
   public processTokens(
     tokens: Map<RefPath, string>,
     callbacks?: ProcessorCallbacks,

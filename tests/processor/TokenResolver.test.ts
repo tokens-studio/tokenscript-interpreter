@@ -1,11 +1,11 @@
 import { DictionarySymbol } from "@interpreter/symbols";
-import { DependencyError, TokenProcessor } from "@src/processor";
+import { DependencyError, TokenResolver } from "@src/processor";
 import { describe, expect, it } from "vitest";
 
-describe("TokenProcessor", () => {
+describe("TokenResolver", () => {
   describe("processTokens", () => {
     it("should resolve tokens with no dependencies", () => {
-      const processor = new TokenProcessor();
+      const processor = new TokenResolver();
       const tokens = new Map([
         ["colors.primary", "#FF0000"],
         ["colors.secondary", "#00FF00"],
@@ -18,7 +18,7 @@ describe("TokenProcessor", () => {
     });
 
     it("should resolve tokens with simple references", () => {
-      const processor = new TokenProcessor();
+      const processor = new TokenResolver();
       const tokens = new Map([
         ["colors.primary", "#FF0000"],
         ["colors.secondary", "{colors.primary}"],
@@ -31,7 +31,7 @@ describe("TokenProcessor", () => {
     });
 
     it("should resolve tokens with multiple dependencies", () => {
-      const processor = new TokenProcessor();
+      const processor = new TokenResolver();
       const tokens = new Map([
         ["spacing.base", "8"],
         ["spacing.small", "{spacing.base} / 2"],
@@ -46,7 +46,7 @@ describe("TokenProcessor", () => {
     });
 
     it("should resolve tokens with chained dependencies", () => {
-      const processor = new TokenProcessor();
+      const processor = new TokenResolver();
       const tokens = new Map([
         ["a", "10"],
         ["b", "{a} + 5"],
@@ -61,7 +61,7 @@ describe("TokenProcessor", () => {
     });
 
     it("should throw error on circular dependencies", () => {
-      const processor = new TokenProcessor();
+      const processor = new TokenResolver();
       const tokens = new Map([
         ["a", "{b}"],
         ["b", "{a}"],
@@ -71,7 +71,7 @@ describe("TokenProcessor", () => {
     });
 
     it("should handle mix of simple values and expressions", () => {
-      const processor = new TokenProcessor();
+      const processor = new TokenResolver();
       const tokens = new Map([
         ["colors.primary", "#FF0000"],
         ["colors.secondary", "{colors.primary}"],
@@ -88,7 +88,7 @@ describe("TokenProcessor", () => {
     });
 
     it("should handle tokens with multiple references in one expression", () => {
-      const processor = new TokenProcessor();
+      const processor = new TokenResolver();
       const tokens = new Map([
         ["a", "10"],
         ["b", "20"],
@@ -103,7 +103,7 @@ describe("TokenProcessor", () => {
     });
 
     it("should handle parsing errors", () => {
-      const processor = new TokenProcessor();
+      const processor = new TokenResolver();
       const tokens = new Map([
         ["a", "10"],
         ["b", "{a} + invalid syntax !@#"],
@@ -116,7 +116,7 @@ describe("TokenProcessor", () => {
     });
 
     it("should handle runtime errors", () => {
-      const processor = new TokenProcessor();
+      const processor = new TokenResolver();
       const tokens = new Map([
         ["a", "10"],
         ["b", "{undefinedVar}"],
@@ -129,7 +129,7 @@ describe("TokenProcessor", () => {
     });
 
     it("should create DependencyError for tokens depending on failed tokens", () => {
-      const processor = new TokenProcessor();
+      const processor = new TokenResolver();
       const tokens = new Map([
         ["a", "{nonexistent}"],
         ["b", "{a} + 10"],
@@ -146,7 +146,7 @@ describe("TokenProcessor", () => {
     });
 
     it("should track dependency error chains", () => {
-      const processor = new TokenProcessor();
+      const processor = new TokenResolver();
       const tokens = new Map([
         ["a", "{nonexistent}"],
         ["b", "{a} + 10"],
@@ -165,7 +165,7 @@ describe("TokenProcessor", () => {
     });
 
     it("should continue processing other tokens when some fail", () => {
-      const processor = new TokenProcessor();
+      const processor = new TokenResolver();
       const tokens = new Map([
         ["a", "10"],
         ["b", "{nonexistent}"],
@@ -182,7 +182,7 @@ describe("TokenProcessor", () => {
     });
 
     it("should resolve tokens depending on prefix subtrees", () => {
-      const processor = new TokenProcessor();
+      const processor = new TokenResolver();
       const tokens = new Map([
         ["colors.brand.primary", "#FF0000"],
         ["colors.brand.secondary", "#00FF00"],
@@ -200,7 +200,7 @@ describe("TokenProcessor", () => {
     });
 
     it("should not share variables between token interpretations", () => {
-      const processor = new TokenProcessor();
+      const processor = new TokenResolver();
       const tokens = new Map([
         ["a", "variable b: Number = 1; b"],
         ["c", "b"],
@@ -215,7 +215,7 @@ describe("TokenProcessor", () => {
     });
 
     it("should detect circular dependencies involving prefix references to virtual children", () => {
-      const processor = new TokenProcessor();
+      const processor = new TokenResolver();
       // Edge case: circular through prefix reference
       // a depends on b.x (virtual child of b)
       // b's dictionary contains reference to a
@@ -230,7 +230,7 @@ describe("TokenProcessor", () => {
     });
 
     it("should detect circular dependencies through prefix references", () => {
-      const processor = new TokenProcessor();
+      const processor = new TokenResolver();
       const tokens = new Map([
         ["a", "{b.x}"],
         ["b", "{ x: {a} }"],
@@ -240,7 +240,7 @@ describe("TokenProcessor", () => {
     });
 
     it("should handle prefix with only failed token children", () => {
-      const processor = new TokenProcessor();
+      const processor = new TokenResolver();
       const tokens = new Map([
         ["colors.red", "{missing}"],
         ["theme", "{colors}"],

@@ -1,5 +1,5 @@
 import type { BaseSymbol } from "@interpreter/symbols";
-import { TokenProcessor } from "@src/processor/TokenProcessor";
+import { TokenResolver } from "@src/processor";
 import { describe, expect, it } from "vitest";
 
 function getValue(v: unknown): unknown {
@@ -8,7 +8,7 @@ function getValue(v: unknown): unknown {
 
 describe("Ready Queue Optimization", () => {
   it("should resolve tokens via event-driven queue instead of repeated scanning", () => {
-    const processor = new TokenProcessor("prefix");
+    const processor = new TokenResolver("prefix");
 
     // Create a chain of dependencies: a -> b -> c -> d -> e
     const tokens = new Map([
@@ -30,7 +30,7 @@ describe("Ready Queue Optimization", () => {
   });
 
   it("should handle complex dependency graph with multiple branches", () => {
-    const processor = new TokenProcessor("prefix");
+    const processor = new TokenResolver("prefix");
 
     // Create a diamond dependency:
     //     a
@@ -55,7 +55,7 @@ describe("Ready Queue Optimization", () => {
   });
 
   it("should efficiently resolve large chain of dependencies", () => {
-    const processor = new TokenProcessor("prefix");
+    const processor = new TokenResolver("prefix");
 
     // Create a chain of 100 tokens
     const tokens = new Map<string, string>();
@@ -80,7 +80,7 @@ describe("Ready Queue Optimization", () => {
   });
 
   it("should resolve prefix dependencies via ready queue", () => {
-    const processor = new TokenProcessor("prefix");
+    const processor = new TokenResolver("prefix");
 
     const tokens = new Map([
       ["colors.red", "#ff0000"],
@@ -99,7 +99,7 @@ describe("Ready Queue Optimization", () => {
   });
 
   it("should handle mixed prefix and token dependencies", () => {
-    const processor = new TokenProcessor("prefix");
+    const processor = new TokenResolver("prefix");
 
     const tokens = new Map([
       ["base.size", "16"],

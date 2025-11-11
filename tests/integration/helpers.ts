@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import type { ProcessorOutput } from "@src/processor";
 import { processTokensFromFiles } from "@src/processor/processFiles";
-import type { ProcessorOutput } from "@src/processor/TokenProcessor";
 
 export interface TokenFile {
   [key: string]: any;

@@ -2,7 +2,7 @@ import type { Config } from "@interpreter/config";
 import type { interpreterResult } from "../interpreter/interpreter";
 import { isTokenscriptSymbol } from "../interpreter/symbols";
 import { isObject, isSingleEntryObject } from "../interpreter/utils/type";
-import { type ProcessorOutput, TokenProcessor } from "./TokenProcessor";
+import { type ProcessorOutput, TokenResolver } from "./resolver/TokenResolver";
 import { extractSetNames, resolveThemes, selectTheme } from "./utils/theme-resolver";
 import { flattenObject, isNested, recordToMap } from "./utils/tokens";
 
@@ -122,7 +122,7 @@ function buildTokens(
   config?: Config,
   outputFormat: "string" | "symbols" = "string",
 ): ProcessorOutput & { tokens: Map<string, string | interpreterResult> } {
-  const processor = new TokenProcessor();
+  const processor = new TokenResolver();
   const output: Map<string, string | interpreterResult> = new Map();
   const errors: Map<string, Error> = new Map();
 

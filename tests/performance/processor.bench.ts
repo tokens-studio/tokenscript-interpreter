@@ -1,10 +1,10 @@
-import { TokenProcessor } from "@src/processor";
+import { TokenResolver } from "@src/processor";
 import { bench, describe } from "vitest";
 
 /**
- * TokenProcessor Performance Benchmarks
+ * TokenResolver Performance Benchmarks
  *
- * This benchmark suite tests the performance characteristics of the TokenProcessor
+ * This benchmark suite tests the performance characteristics of the TokenResolver
  * implementation across various workload patterns:
  *
  * - Phase-based resolution with prefix optimization
@@ -16,7 +16,7 @@ import { bench, describe } from "vitest";
  * good performance for flat token structures.
  */
 
-describe("TokenProcessor Performance Benchmarks", () => {
+describe("TokenResolver Performance Benchmarks", () => {
   describe("Simple tokens (no dependencies)", () => {
     const tokens = new Map([
       ["color.red", "#FF0000"],
@@ -30,7 +30,7 @@ describe("TokenProcessor Performance Benchmarks", () => {
     ]);
 
     bench("Process tokens", () => {
-      const processor = new TokenProcessor();
+      const processor = new TokenResolver();
       processor.processTokens(tokens);
     });
   });
@@ -46,7 +46,7 @@ describe("TokenProcessor Performance Benchmarks", () => {
     ]);
 
     bench("Process tokens", () => {
-      const processor = new TokenProcessor();
+      const processor = new TokenResolver();
       processor.processTokens(tokens);
     });
   });
@@ -59,7 +59,7 @@ describe("TokenProcessor Performance Benchmarks", () => {
     }
 
     bench("Process tokens", () => {
-      const processor = new TokenProcessor();
+      const processor = new TokenResolver();
       processor.processTokens(tokens);
     });
   });
@@ -71,7 +71,7 @@ describe("TokenProcessor Performance Benchmarks", () => {
     }
 
     bench("Process tokens", () => {
-      const processor = new TokenProcessor();
+      const processor = new TokenResolver();
       processor.processTokens(tokens);
     });
   });
@@ -87,7 +87,7 @@ describe("TokenProcessor Performance Benchmarks", () => {
     }
 
     bench("Process tokens", () => {
-      const processor = new TokenProcessor();
+      const processor = new TokenResolver();
       processor.processTokens(tokens);
     });
   });
@@ -100,7 +100,7 @@ describe("TokenProcessor Performance Benchmarks", () => {
     }
 
     bench("Process tokens", () => {
-      const processor = new TokenProcessor();
+      const processor = new TokenResolver();
       processor.processTokens(tokens);
     });
   });
@@ -119,7 +119,7 @@ describe("TokenProcessor Performance Benchmarks", () => {
     ]);
 
     bench("Process tokens", () => {
-      const processor = new TokenProcessor();
+      const processor = new TokenResolver();
       processor.processTokens(tokens);
     });
   });
@@ -144,7 +144,7 @@ describe("TokenProcessor Performance Benchmarks", () => {
     }
 
     bench("Process tokens", () => {
-      const processor = new TokenProcessor();
+      const processor = new TokenResolver();
       processor.processTokens(tokens);
     });
   });
@@ -187,7 +187,7 @@ describe("TokenProcessor Performance Benchmarks", () => {
     }
 
     bench("Process tokens", () => {
-      const processor = new TokenProcessor();
+      const processor = new TokenResolver();
       processor.processTokens(tokens);
     });
   });
@@ -199,7 +199,7 @@ describe("TokenProcessor Performance Benchmarks", () => {
     }
 
     bench("Process tokens", () => {
-      const processor = new TokenProcessor();
+      const processor = new TokenResolver();
       processor.processTokens(tokens);
     });
   });
@@ -217,7 +217,7 @@ describe("TokenProcessor Performance Benchmarks", () => {
     }
 
     bench("Process tokens", () => {
-      const processor = new TokenProcessor();
+      const processor = new TokenResolver();
       processor.processTokens(tokens);
     });
   });
@@ -268,7 +268,7 @@ describe("TokenProcessor Performance Benchmarks", () => {
     }
 
     bench("Process tokens", () => {
-      const processor = new TokenProcessor();
+      const processor = new TokenResolver();
       processor.processTokens(tokens);
     });
   });

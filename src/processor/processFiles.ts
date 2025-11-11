@@ -1,6 +1,6 @@
 import { fetchAndRegisterSchemas } from "@src/utils/schema-fetcher";
 import { processTokenSets } from "./process";
-import type { ProcessorOutput } from "./TokenProcessor";
+import type { ProcessorOutput } from "./resolver/TokenResolver";
 import { collectJsonFiles as collectJsonFilesUtil } from "./utils/file-collector";
 
 function normalizeJsonFiles(jsonFiles: Record<string, unknown>): Record<string, unknown> {
