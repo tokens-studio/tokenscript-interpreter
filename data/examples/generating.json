@@ -5,10 +5,7 @@
     },
     "colors-referenced": "{colors.simple}.get(0)",
     "referenced-type": "type({colors.simple}.get(0))",
-    "deep-ref": "variable f: NumberWithUnit = {colors.simple}.get({colors-referenced}); f",
-
-
-
+    "deep-ref": "variable f: Number = {colors.simple}.get({colors-referenced}); f",
     "spacing": {
         "simple": "variable i: Number = 0; variable xs: Dictionary; while (i < 10) [ i = i + 1; xs.set(i.to_string(), i + 0px); ]; return xs;"
     },

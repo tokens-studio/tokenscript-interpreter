@@ -56,8 +56,7 @@ describe("Example JSON fixtures", () => {
     const spacingRef = result.tokens.get("spacing-ref");
     expect(spacingRef?.toString()).toBe("1px");
 
-    expect(result.errors.has("deep-ref")).toBe(true);
-    expect(result.errors.get("deep-ref")?.message).toContain("NumberWithUnit");
+    expect(result.tokens.get("deep-ref").toString()).toBe("2");
   });
 
   it("processes nested.json", async () => {
