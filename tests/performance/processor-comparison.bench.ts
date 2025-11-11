@@ -308,7 +308,7 @@ describe("TokenProcessor Performance Comparison", () => {
 
     // Spacing
     for (let i = 0; i < 20; i++) {
-      tokens.set(`spacing.${i}`, `{scale.base} * ${Math.pow(1.5, i / 4)}`);
+      tokens.set(`spacing.${i}`, `{scale.base} * ${1.5 ** (i / 4)}`);
     }
 
     // Components

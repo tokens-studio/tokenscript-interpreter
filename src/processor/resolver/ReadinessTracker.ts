@@ -1,4 +1,4 @@
-import { DependencyTracker } from "./DependencyTracker";
+import type { DependencyTracker } from "./DependencyTracker";
 import type { RefPath } from "./types";
 
 /**
@@ -23,8 +23,10 @@ export class ReadinessTracker {
     if (!this.readyCache.has(tokenName)) {
       const ready = dependencyTracker.isTokenReady(tokenName);
       this.readyCache.set(tokenName, ready);
+      return ready;
     }
-    return this.readyCache.get(tokenName)!;
+    const cached = this.readyCache.get(tokenName);
+    return cached ?? false;
   }
 
   /**

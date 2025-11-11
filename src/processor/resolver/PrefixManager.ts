@@ -76,7 +76,7 @@ export class PrefixManager {
     if (!directChildren || directChildren.size === 0) return undefined;
 
     const dictionaryEntries = new Map<string, ISymbolType>();
-    const prefixLen = prefix.length + 1;
+    const _prefixLen = prefix.length + 1;
 
     for (const shortName of directChildren) {
       const tokenName = `${prefix}.${shortName}`;

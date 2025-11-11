@@ -251,8 +251,7 @@ describe("TokenProcessor", () => {
       ]);
 
       // Test prefix mode (default)
-      expect(() => processor.processTokens(tokens, undefined, undefined, { mode: "prefix" }))
-        .toThrow(/circular dependency|unresolved/i);
+      expect(() => processor.processTokens(tokens, undefined, undefined, { mode: "prefix" })).toThrow(/circular dependency|unresolved/i);
     });
 
     it("should handle prefix with only failed token children", () => {
@@ -272,7 +271,7 @@ describe("TokenProcessor", () => {
       // All tokens should be resolved (not hanging)
       expect(result.resolved.has("colors.red")).toBe(true);
       expect(result.resolved.has("theme")).toBe(true);
-      
+
       // Verify no tokens are left unresolved
       expect(result.unresolved.size).toBe(0);
     });

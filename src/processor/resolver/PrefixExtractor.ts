@@ -20,8 +20,9 @@ export class PrefixExtractor {
    * Cached after first call for the same token.
    */
   extractPrefixes(tokenName: RefPath): string[] {
-    if (this.prefixCache.has(tokenName)) {
-      return this.prefixCache.get(tokenName)!;
+    const cached = this.prefixCache.get(tokenName);
+    if (cached) {
+      return cached;
     }
 
     const prefixes: string[] = [];

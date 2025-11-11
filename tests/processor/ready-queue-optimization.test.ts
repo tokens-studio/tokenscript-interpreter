@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
-import { TokenProcessor } from "@src/processor/TokenProcessor";
 import type { BaseSymbol } from "@interpreter/symbols";
+import { TokenProcessor } from "@src/processor/TokenProcessor";
+import { describe, expect, it } from "vitest";
 
 function getValue(v: unknown): unknown {
   return v && typeof v === "object" && "value" in v ? (v as BaseSymbol).value : v;

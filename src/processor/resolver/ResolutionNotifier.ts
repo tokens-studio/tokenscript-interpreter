@@ -1,7 +1,7 @@
 import type { interpreterResult } from "@interpreter/interpreter";
-import { DependencyTracker } from "./DependencyTracker";
-import { PrefixManager } from "./PrefixManager";
-import { ReadinessTracker } from "./ReadinessTracker";
+import type { DependencyTracker } from "./DependencyTracker";
+import type { PrefixManager } from "./PrefixManager";
+import type { ReadinessTracker } from "./ReadinessTracker";
 import type { RefPath } from "./types";
 
 /**
@@ -83,7 +83,10 @@ export class ResolutionNotifier {
   /**
    * Release tokens waiting for a specific prefix and add to ready queue
    */
-  private releasePrefixDependents(prefix: string, referenceCache: Map<string, interpreterResult>): void {
+  private releasePrefixDependents(
+    prefix: string,
+    referenceCache: Map<string, interpreterResult>,
+  ): void {
     // Build dictionary for this prefix
     this.buildDictionaryCallback(prefix, referenceCache);
 
