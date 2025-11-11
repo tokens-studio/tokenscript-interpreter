@@ -199,19 +199,7 @@ describe("TokenProcessor", () => {
       expect(themePrimary?.value).toBe("#FF0000");
     });
 
-    it("should allow switching to legacy mode for comparison", () => {
-      const processor = new TokenProcessor();
-      const tokens = new Map([
-        ["base", "3"],
-        ["double", "{base} * 2"],
-      ]);
 
-      const modern = processor.processTokens(tokens);
-      const legacy = processor.processTokens(tokens, undefined, undefined, { mode: "legacy" });
-
-      expect(modern.resolved.get("double")?.value).toBe(6);
-      expect(legacy.resolved.get("double")?.value).toBe(6);
-    });
 
     it("should not share variables between token interpretations", () => {
       const processor = new TokenProcessor();
@@ -243,15 +231,14 @@ describe("TokenProcessor", () => {
       expect(() => processor.processTokens(tokens)).toThrow(/circular dependency/i);
     });
 
-    it("should detect circular dependencies through prefix references in both modes", () => {
+    it("should detect circular dependencies through prefix references", () => {
       const processor = new TokenProcessor();
       const tokens = new Map([
         ["a", "{b.x}"],
         ["b", "{ x: {a} }"],
       ]);
 
-      // Test prefix mode (default)
-      expect(() => processor.processTokens(tokens, undefined, undefined, { mode: "prefix" })).toThrow(/circular dependency|unresolved/i);
+      expect(() => processor.processTokens(tokens)).toThrow(/circular dependency|unresolved/i);
     });
 
     it("should handle prefix with only failed token children", () => {

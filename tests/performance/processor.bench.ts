@@ -2,29 +2,21 @@ import { TokenProcessor } from "@src/processor";
 import { bench, describe } from "vitest";
 
 /**
- * Performance Comparison: Legacy vs Prefix-Aware TokenProcessor
+ * TokenProcessor Performance Benchmarks
  *
- * This benchmark suite compares the performance characteristics of two
- * TokenProcessor implementations:
+ * This benchmark suite tests the performance characteristics of the TokenProcessor
+ * implementation across various workload patterns:
  *
- * 1. **Legacy Mode**: Original implementation using topological sort
- *    - Single interpreter instance with shared references
- *    - Processes all tokens in dependency order
- *    - Optimized for general token resolution
+ * - Phase-based resolution with prefix optimization
+ * - Event-driven cascade resolution
+ * - Specialized handling for virtual children
+ * - Five-phase resolution strategy
  *
- * 2. **Prefix Mode** (default): Phase-based resolution with prefix optimization
- *    - Optimized for prefix-based token hierarchies
- *    - Event-driven cascade resolution
- *    - Specialized handling for virtual children
- *    - Five-phase resolution strategy
- *
- * Performance expectations:
- * - Legacy: Fast for flat token structures, general purpose
- * - Prefix: Similar performance for flat structures, significantly faster for
- *           prefix-based hierarchies with virtual children
+ * The processor is optimized for prefix-based token hierarchies while maintaining
+ * good performance for flat token structures.
  */
 
-describe("TokenProcessor Performance Comparison", () => {
+describe("TokenProcessor Performance Benchmarks", () => {
   describe("Simple tokens (no dependencies)", () => {
     const tokens = new Map([
       ["color.red", "#FF0000"],
@@ -37,13 +29,8 @@ describe("TokenProcessor Performance Comparison", () => {
       ["spacing.xl", "32"],
     ]);
 
-    bench("Legacy Processor", () => {
-      const processor = new TokenProcessor("legacy");
-      processor.processTokens(tokens);
-    });
-
-    bench("Prefix Processor", () => {
-      const processor = new TokenProcessor("prefix");
+    bench("Process tokens", () => {
+      const processor = new TokenProcessor();
       processor.processTokens(tokens);
     });
   });
@@ -58,13 +45,8 @@ describe("TokenProcessor Performance Comparison", () => {
       ["spacing.xl", "{base.unit} * 5"],
     ]);
 
-    bench("Legacy Processor", () => {
-      const processor = new TokenProcessor("legacy");
-      processor.processTokens(tokens);
-    });
-
-    bench("Prefix Processor", () => {
-      const processor = new TokenProcessor("prefix");
+    bench("Process tokens", () => {
+      const processor = new TokenProcessor();
       processor.processTokens(tokens);
     });
   });
@@ -76,13 +58,8 @@ describe("TokenProcessor Performance Comparison", () => {
       tokens.set(`chain.${i}`, `{${i === 1 ? "base" : `chain.${i - 1}`}} + 1`);
     }
 
-    bench("Legacy Processor", () => {
-      const processor = new TokenProcessor("legacy");
-      processor.processTokens(tokens);
-    });
-
-    bench("Prefix Processor", () => {
-      const processor = new TokenProcessor("prefix");
+    bench("Process tokens", () => {
+      const processor = new TokenProcessor();
       processor.processTokens(tokens);
     });
   });
@@ -93,13 +70,8 @@ describe("TokenProcessor Performance Comparison", () => {
       tokens.set(`token.${i}`, `${i}`);
     }
 
-    bench("Legacy Processor", () => {
-      const processor = new TokenProcessor("legacy");
-      processor.processTokens(tokens);
-    });
-
-    bench("Prefix Processor", () => {
-      const processor = new TokenProcessor("prefix");
+    bench("Process tokens", () => {
+      const processor = new TokenProcessor();
       processor.processTokens(tokens);
     });
   });
@@ -114,13 +86,8 @@ describe("TokenProcessor Performance Comparison", () => {
       tokens.set(`spacing.${i}`, `{base.unit} * {base.scale} * ${i}`);
     }
 
-    bench("Legacy Processor", () => {
-      const processor = new TokenProcessor("legacy");
-      processor.processTokens(tokens);
-    });
-
-    bench("Prefix Processor", () => {
-      const processor = new TokenProcessor("prefix");
+    bench("Process tokens", () => {
+      const processor = new TokenProcessor();
       processor.processTokens(tokens);
     });
   });
@@ -132,13 +99,8 @@ describe("TokenProcessor Performance Comparison", () => {
       tokens.set(`level.${i}`, `{level.${i - 1}} * 1.2`);
     }
 
-    bench("Legacy Processor", () => {
-      const processor = new TokenProcessor("legacy");
-      processor.processTokens(tokens);
-    });
-
-    bench("Prefix Processor", () => {
-      const processor = new TokenProcessor("prefix");
+    bench("Process tokens", () => {
+      const processor = new TokenProcessor();
       processor.processTokens(tokens);
     });
   });
@@ -156,13 +118,8 @@ describe("TokenProcessor Performance Comparison", () => {
       ["theme.text", "{colors.neutral.100}"],
     ]);
 
-    bench("Legacy Processor", () => {
-      const processor = new TokenProcessor("legacy");
-      processor.processTokens(tokens);
-    });
-
-    bench("Prefix Processor", () => {
-      const processor = new TokenProcessor("prefix");
+    bench("Process tokens", () => {
+      const processor = new TokenProcessor();
       processor.processTokens(tokens);
     });
   });
@@ -186,13 +143,8 @@ describe("TokenProcessor Performance Comparison", () => {
       tokens.set(`component.border.${i}`, `{theme.colors.${i}.dark}`);
     }
 
-    bench("Legacy Processor", () => {
-      const processor = new TokenProcessor("legacy");
-      processor.processTokens(tokens);
-    });
-
-    bench("Prefix Processor", () => {
-      const processor = new TokenProcessor("prefix");
+    bench("Process tokens", () => {
+      const processor = new TokenProcessor();
       processor.processTokens(tokens);
     });
   });
@@ -234,13 +186,8 @@ describe("TokenProcessor Performance Comparison", () => {
       tokens.set(`ui.border.${i}`, `{theme.colorSet${i}.accent}`);
     }
 
-    bench("Legacy Processor", () => {
-      const processor = new TokenProcessor("legacy");
-      processor.processTokens(tokens);
-    });
-
-    bench("Prefix Processor", () => {
-      const processor = new TokenProcessor("prefix");
+    bench("Process tokens", () => {
+      const processor = new TokenProcessor();
       processor.processTokens(tokens);
     });
   });
@@ -251,13 +198,8 @@ describe("TokenProcessor Performance Comparison", () => {
       tokens.set(`token.${i}`, `${i * 2}`);
     }
 
-    bench("Legacy Processor", () => {
-      const processor = new TokenProcessor("legacy");
-      processor.processTokens(tokens);
-    });
-
-    bench("Prefix Processor", () => {
-      const processor = new TokenProcessor("prefix");
+    bench("Process tokens", () => {
+      const processor = new TokenProcessor();
       processor.processTokens(tokens);
     });
   });
@@ -274,13 +216,8 @@ describe("TokenProcessor Performance Comparison", () => {
       }
     }
 
-    bench("Legacy Processor", () => {
-      const processor = new TokenProcessor("legacy");
-      processor.processTokens(tokens);
-    });
-
-    bench("Prefix Processor", () => {
-      const processor = new TokenProcessor("prefix");
+    bench("Process tokens", () => {
+      const processor = new TokenProcessor();
       processor.processTokens(tokens);
     });
   });
@@ -330,13 +267,8 @@ describe("TokenProcessor Performance Comparison", () => {
       tokens.set(`componentTheme.button.${i}.fontSize`, `{theme.typography.${i}}`);
     }
 
-    bench("Legacy Processor", () => {
-      const processor = new TokenProcessor("legacy");
-      processor.processTokens(tokens);
-    });
-
-    bench("Prefix Processor", () => {
-      const processor = new TokenProcessor("prefix");
+    bench("Process tokens", () => {
+      const processor = new TokenProcessor();
       processor.processTokens(tokens);
     });
   });
