@@ -2,10 +2,6 @@
 export {
   type BuilderFormat,
   FlatObjectBuilder,
-  getAvailableFormats,
-  getBuilder,
-  getDefaultBuilder,
-  isValidBuilderFormat,
   type JsValue,
   MapBuilder,
   NestedObjectBuilder,

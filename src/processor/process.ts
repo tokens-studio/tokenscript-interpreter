@@ -1,7 +1,7 @@
 import type { Config } from "@interpreter/config";
 import type { interpreterResult } from "../interpreter/interpreter";
 import { isObject, isSingleEntryObject } from "../interpreter/utils/type";
-import { getDefaultBuilder, type TokenBuilder } from "./builders";
+import { MapBuilder, type TokenBuilder } from "./builders";
 import { type ProcessorOutput, TokenResolver } from "./resolver/TokenResolver";
 import { extractSetNames, resolveThemes, selectTheme } from "./utils/theme-resolver";
 import { flattenObject, isNested, recordToMap } from "./utils/tokens";
@@ -205,7 +205,7 @@ export function processTokens<T = Map<string, string | interpreterResult>>(
   const tokenMap: Map<string, string> =
     tokens instanceof Map ? tokens : flattenToTokens({ tokens }, ["tokens"]);
 
-  const tokenBuilder = builder ?? getDefaultBuilder(output);
+  const tokenBuilder = builder ?? new MapBuilder(output);
 
   return buildTokens(tokenMap, tokenBuilder, config) as ProcessResult<T>;
 }
@@ -242,7 +242,7 @@ export function processTokenSets<T = Map<string, string | interpreterResult>>(
   const tokens = flattenToTokens(normalizedFiles, setNames);
 
   // Step 3: Build tokens using builder
-  const tokenBuilder = builder ?? getDefaultBuilder(output);
+  const tokenBuilder = builder ?? new MapBuilder(output);
 
   return buildTokens(tokens, tokenBuilder, config) as ProcessResult<T>;
 }
