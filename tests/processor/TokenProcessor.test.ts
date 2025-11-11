@@ -199,8 +199,6 @@ describe("TokenProcessor", () => {
       expect(themePrimary?.value).toBe("#FF0000");
     });
 
-
-
     it("should not share variables between token interpretations", () => {
       const processor = new TokenProcessor();
       const tokens = new Map([

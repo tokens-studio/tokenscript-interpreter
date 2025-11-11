@@ -36,10 +36,6 @@ export type ProcessorOutput = ProcessorResult & {
   errors: Map<RefPath, Error>;
 };
 
-
-
-
-
 class PrefixResolver {
   private readonly callbacks?: ProcessorCallbacks;
   private readonly config?: Config;
@@ -90,14 +86,6 @@ class PrefixResolver {
     );
   }
 
-  /**
-   * Resolve tokens in phases:
-   * 1. Parse and build dependency graph
-   * 2. Map prefix dependencies
-   * 3. Release early resolved tokens
-   * 4. Resolve dependency-free tokens
-   * 5. Finalize remaining resolutions
-   */
   public resolve(): ProcessorResult {
     this.parseAndBuildGraph();
     this.mapPrefixDependencies();
@@ -338,7 +326,6 @@ class PrefixResolver {
       const originalValue = this.tokens.get(tokenName);
       if (originalValue === undefined || this.resolved.has(tokenName)) continue;
 
-      // At this point, originalValue is guaranteed to be a string (not undefined)
       const tokenValueStr: string = originalValue;
 
       // Check for dependency errors

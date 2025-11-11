@@ -1,6 +1,11 @@
 import type { Config } from "@interpreter/config";
 import type { interpreterResult } from "@interpreter/interpreter";
-import { DictionarySymbol, NullSymbol, StringSymbol } from "@interpreter/symbols";
+import {
+  DictionarySymbol,
+  isTokenscriptSymbol,
+  NullSymbol,
+  StringSymbol,
+} from "@interpreter/symbols";
 import type { ISymbolType } from "@src/types";
 import { PrefixExtractor } from "./PrefixExtractor";
 import type { RefPath } from "./types";
@@ -152,18 +157,12 @@ export class PrefixManager {
     set.add(value);
   }
 
-  private isSymbolType(value: unknown): value is ISymbolType {
-    return Boolean(value && typeof value === "object" && "cloneIfMutable" in (value as object));
-  }
-
   private toSymbol(value: interpreterResult | undefined): ISymbolType | undefined {
     if (value === undefined) return undefined;
-    if (value === null) {
-      return new NullSymbol(this.config);
-    }
-    if (this.isSymbolType(value)) {
-      return value;
-    }
+
+    if (value === null) return new NullSymbol(this.config);
+    if (isTokenscriptSymbol(value)) return value;
+
     return new StringSymbol(String(value), this.config);
   }
 }

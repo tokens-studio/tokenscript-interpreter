@@ -5,10 +5,6 @@ import type { RefPath } from "./types";
  *
  * Instead of repeatedly computing prefix paths by scanning for dots,
  * this class caches the computed results to avoid redundant string operations.
- *
- * Performance improvement:
- * - Cached lookups: O(1) instead of O(n) string scans
- * - 15-20% improvement for token sets with many dots
  */
 export class PrefixExtractor {
   private readonly prefixCache = new Map<RefPath, string[]>();
@@ -37,24 +33,7 @@ export class PrefixExtractor {
     return prefixes;
   }
 
-  /**
-   * Check if a token has any prefix paths
-   */
-  hasAnyPrefix(tokenName: RefPath): boolean {
-    return tokenName.includes(".");
-  }
-
-  /**
-   * Clear the cache if needed (e.g., for testing or memory cleanup)
-   */
   clearCache(): void {
     this.prefixCache.clear();
-  }
-
-  /**
-   * Get cache size (useful for diagnostics)
-   */
-  getCacheSize(): number {
-    return this.prefixCache.size;
   }
 }

@@ -11,11 +11,6 @@ import type { RefPath } from "./types";
  * - Releasing token dependencies
  * - Releasing prefix constraints
  * - Cascade resolving dependents when they become ready
- *
- * Performance improvement:
- * - Reduces code duplication
- * - Centralizes the complex notification and cascade logic
- * - Uses ready queue for event-driven resolution (O(n) vs O(n²))
  */
 export class ResolutionNotifier {
   constructor(

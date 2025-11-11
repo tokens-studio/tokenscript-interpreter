@@ -24,23 +24,14 @@ export class TokenInterpreter {
     });
   }
 
-  /**
-   * Store AST for a token
-   */
   setTokenAST(tokenName: RefPath, ast: ASTNode): void {
     this.astNodes.set(tokenName, ast);
   }
 
-  /**
-   * Get AST for a token
-   */
   getTokenAST(tokenName: RefPath): ASTNode | undefined {
     return this.astNodes.get(tokenName);
   }
 
-  /**
-   * Interpret a token using its stored AST
-   */
   interpretToken(tokenName: RefPath, originalValue: string): TokenResult {
     const ast = this.astNodes.get(tokenName);
 
@@ -57,9 +48,6 @@ export class TokenInterpreter {
     }
   }
 
-  /**
-   * Check if a token has dependency errors and build appropriate error
-   */
   buildDependencyError(
     tokenName: RefPath,
     dependencies: Set<string>,
@@ -74,10 +62,6 @@ export class TokenInterpreter {
     return undefined;
   }
 
-  /**
-   * Flatten a dictionary symbol into the reference cache
-   * Returns list of flattened reference paths
-   */
   flattenDictionaryToCache(tokenName: RefPath, value: TokenResult): RefPath[] {
     if (!(value instanceof DictionarySymbol) || !value.value) {
       return [];
@@ -96,9 +80,6 @@ export class TokenInterpreter {
     return flattenedNames;
   }
 
-  /**
-   * Update reference cache with a resolved token value
-   */
   updateReferenceCache(tokenName: RefPath, value: TokenResult): void {
     if (value instanceof Error) return;
     this.referenceCache.set(tokenName, value);

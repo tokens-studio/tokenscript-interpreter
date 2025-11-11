@@ -24,7 +24,7 @@ const OKLCH_COLOR_SCHEMA: ColorSpecification = {
     {
       script: {
         type: "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/",
-        script: String.raw` variable color_parts: List = {input}.to_string().split('#'); 
+        script: ` variable color_parts: List = {input}.to_string().split('#'); 
  variable color: List = color_parts.get(1).split(); 
  variable length: Number = color.length(); 
  variable rgb: List = 0, 0, 0; 
@@ -86,7 +86,7 @@ const OKLCH_COLOR_SCHEMA: ColorSpecification = {
     {
       script: {
         type: "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/",
-        script: String.raw` // OKLCH to OKLab 
+        script: ` // OKLCH to OKLab 
  variable lch_l: Number = {input}.l; 
  variable lch_c: Number = {input}.c; 
  variable lch_h: Number = {input}.h; 
@@ -159,7 +159,7 @@ const OKLCH_COLOR_SCHEMA: ColorSpecification = {
       },
       script: {
         type: "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/",
-        script: String.raw`variable color_parts: List = {input}; 
+        script: `variable color_parts: List = {input}; 
  variable output: Color.OKLCH;
  output.l = color_parts.get(0);
  output.c = color_parts.get(1);
@@ -191,7 +191,7 @@ const RAMP_FUNCTION_SCHEMA: FunctionSpecification = {
   description: "Creates a perceptually uniform lightness ramp from a base OKLCH color.",
   script: {
     type: "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/",
-    script: String.raw`variable args: List = {input};
+    script: `variable args: List = {input};
 variable baseColor: Color.Oklch = args.get(0).to.oklch();
 variable steps: Number = args.get(1);
 variable ramp: Dictionary;
@@ -230,7 +230,7 @@ const INVERT_LIST_FUNCTION_SCHEMA: FunctionSpecification = {
 
   script: {
     type: "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/",
-    script: String.raw`variable args: List = {input};
+    script: `variable args: List = {input};
 variable items: List = args.get(0);
 
 variable index: Number = 0;
