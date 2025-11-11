@@ -17,4 +17,8 @@ export class SymbolTable {
   isDefined(name: string): boolean {
     return !!this.symbols[name.toLowerCase()];
   }
+
+  reset(): void {
+    this.symbols = {};
+  }
 }

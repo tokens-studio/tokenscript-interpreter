@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
-
 import { Command } from "commander";
 import packageJson from "../package.json" with { type: "json" };
+import { FlatObjectBuilder, NestedObjectBuilder } from "./processor/builders";
 import { collectErrors } from "./processor/process";
 import {
   collectJsonFiles,
@@ -45,17 +45,25 @@ program
   .option("--sets <sets>", "Comma-separated list of token sets to process")
   .option("--theme <theme>", "Theme name to use for token set selection")
 
+  // Output format
+  .option("--format <format>", "Output format: nested (default) or flat", "nested")
+
   // Logging
   .option("--log-level <level>", "Log level (warn, error, none)", "none")
   .option("--strict", "Output errors if any exist, otherwise output tokens", false)
 
   .action(async (options) => {
+    // Select builder based on format option
+    const builder = options.format === "flat" ? new FlatObjectBuilder() : new NestedObjectBuilder();
+
     const result = await processTokensFromFiles({
       path: options.input,
       outputPath: options.output,
       schemas: options.schema,
       activeSets: options.sets ? options.sets.split(",").map((s: string) => s.trim()) : undefined,
       activeTheme: options.theme,
+      output: "symbols",
+      builder,
     });
 
     const hasErrors = result.errors.size > 0;
@@ -68,12 +76,12 @@ program
       process.exit(1);
     }
 
-    const output = JSON.stringify(Object.fromEntries(result.tokens), null, 2);
+    const outputJson = JSON.stringify(result.output, null, 2);
 
     if (options.output) {
-      fs.writeFileSync(options.output, output);
+      fs.writeFileSync(options.output, outputJson);
     } else {
-      console.log(output);
+      console.log(outputJson);
     }
   });
 
