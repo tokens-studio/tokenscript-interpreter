@@ -254,5 +254,27 @@ describe("TokenProcessor", () => {
       expect(() => processor.processTokens(tokens, undefined, undefined, { mode: "prefix" }))
         .toThrow(/circular dependency|unresolved/i);
     });
+
+    it("should handle prefix with only failed token children", () => {
+      const processor = new TokenProcessor();
+      const tokens = new Map([
+        ["colors.red", "{missing}"],
+        ["theme", "{colors}"],
+      ]);
+
+      const result = processor.processTokens(tokens);
+
+      expect(result.resolved.get("colors.red")).toBeInstanceOf(Error);
+
+      const theme = result.resolved.get("theme");
+      expect(theme).toBeInstanceOf(Error);
+
+      // All tokens should be resolved (not hanging)
+      expect(result.resolved.has("colors.red")).toBe(true);
+      expect(result.resolved.has("theme")).toBe(true);
+      
+      // Verify no tokens are left unresolved
+      expect(result.unresolved.size).toBe(0);
+    });
   });
 });
