@@ -9,11 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **TokenResolver Architecture**: Complete rewrite of token resolution system
-  - Comprehensive documentation in `src/processor/resolver/TOKEN_RESOLVER.md`
+  - [TokenResolver Documentation](src/processor/resolver/README.md)
 - **Browser-Compatible Processor**: Split processor into browser and Node.js variants
   - `interpretTokens()` available in main processor export (browser-safe)
   - File-based processing via separate `processor-node` export (Node.js only)
   - Web REPL now works without Node.js dependencies
+
+- **Token Builder Architecture**: Incremental structure building during token resolution
+  - [Builder Documentation](src/processor/builders/README.md)
+  - `NestedObjectBuilder` for hierarchical JavaScript objects
+  - `FlatObjectBuilder` for flat key-value objects
+  - `MapBuilder` for Map structures (default)
+  - Custom builder interface for target-specific formats (CSS, etc.)
 
 ### Changed
 - **Token Value Types**: Tokens can now return complex structures
