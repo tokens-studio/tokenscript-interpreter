@@ -1,17 +1,18 @@
 import type { Config } from "@interpreter/config";
 import type { interpreterResult } from "../interpreter/interpreter";
-import { isTokenscriptSymbol } from "../interpreter/symbols";
 import { isObject, isSingleEntryObject } from "../interpreter/utils/type";
+import { getDefaultBuilder, type TokenBuilder } from "./builders";
 import { type ProcessorOutput, TokenResolver } from "./resolver/TokenResolver";
 import { extractSetNames, resolveThemes, selectTheme } from "./utils/theme-resolver";
 import { flattenObject, isNested, recordToMap } from "./utils/tokens";
 
-export function collectErrors(
-  result: ProcessorOutput,
-): Record<string, { message: string; originalValue: string }> {
+export function collectErrors(result: {
+  errors: Map<string, Error>;
+  resolved: Map<string, any>;
+}): Record<string, { message: string; originalValue: string }> {
   const errors: Record<string, { message: string; originalValue: string }> = {};
   for (const [tokenName, error] of result.errors) {
-    const originalValue = result.tokens.get(tokenName);
+    const originalValue = result.resolved.get(tokenName);
     errors[tokenName] = {
       message: error.message,
       originalValue: String(originalValue),
@@ -114,48 +115,59 @@ function flattenToTokens(sets: Record<string, unknown>, setNames: string[]): Map
 
 // Step 5: Interpret tokens ---------------------------------------------------
 
+export type OutputFormat = "string" | "symbols";
+
 /**
- * Builds tokens with optional stringification for JSON output.
+ * Builds tokens using a builder to accumulate results.
  */
-function buildTokens(
+function buildTokens<T>(
   tokens: Map<string, string>,
+  builder: TokenBuilder<T>,
   config?: Config,
-  outputFormat: "string" | "symbols" = "string",
-): ProcessorOutput & { tokens: Map<string, string | interpreterResult> } {
+): ProcessorOutput & { tokens: Map<string, string | interpreterResult>; output: T } {
   const processor = new TokenResolver();
-  const output: Map<string, string | interpreterResult> = new Map();
   const errors: Map<string, Error> = new Map();
 
   const callbacks = {
     onResolve: (tokenName: string, value: interpreterResult) => {
-      if (outputFormat === "symbols") {
-        output.set(tokenName, value);
-      } else {
-        if (typeof value === "string") {
-          output.set(tokenName, value);
-        } else if (isTokenscriptSymbol(value)) {
-          output.set(tokenName, value.toString());
-        } else {
-          output.set(tokenName, String(value));
-        }
-      }
+      builder.onResolve(tokenName, value);
     },
     onError: (tokenName: string, error: Error, originalValue: string) => {
-      output.set(tokenName, originalValue);
+      builder.onError(tokenName, error, originalValue);
       errors.set(tokenName, error);
     },
   };
 
   const result = processor.processTokens(tokens, callbacks, config);
 
+  // For backward compatibility, tokens property points to builder result if it's a Map,
+  // otherwise use the builder's output
+  const tokensOutput =
+    builder.getResult() instanceof Map
+      ? (builder.getResult() as Map<string, string | interpreterResult>)
+      : (builder.getResult() as any);
+
   return {
     ...result,
-    tokens: output,
+    tokens: tokensOutput,
+    output: builder.getResult(),
     errors,
   };
 }
 
 // Core Processing (Node + Browser) ------------------------------------------
+
+export interface ProcessOptions {
+  config?: Config;
+  output?: OutputFormat;
+  builder?: TokenBuilder<any>;
+}
+
+export interface ProcessResult<T = Map<string, string | interpreterResult>>
+  extends ProcessorOutput {
+  tokens: Map<string, string | interpreterResult>;
+  output: T;
+}
 
 /**
  * Process flat tokens directly without token sets or themes.
@@ -166,31 +178,41 @@ function buildTokens(
  * @param options - Processing options
  * @param options.config - Custom interpreter config
  * @param options.output - Output format: "string" (default, JSON-safe) or "symbols" (preserves Symbol objects)
- * @returns ProcessorOutput with resolved tokens
+ * @param options.builder - Custom builder for constructing output structure (overrides output format)
+ * @returns ProcessorOutput with resolved tokens and output structure
  *
  * @example
- * // Flat tokens
- * processTokens({ base: "16", large: "{base} * 2" })
+ * // Default map builder
+ * const result = processTokens({ base: "16", large: "{base} * 2" })
+ * console.log(result.tokens) // Map { "base" => "16", "large" => "32" }
  *
- * // Nested tokens JSON
- * processTokens({ color: { primary: { $value: "#FF0000" } } })
+ * // Nested JSON builder
+ * import { NestedJsonBuilder } from './builders'
+ * const result = processTokens({ "color.primary": "#FF0000" }, {
+ *   builder: new NestedJsonBuilder()
+ * })
+ * console.log(result.output) // { color: { primary: "#FF0000" } }
  *
  * // Map
  * processTokens(new Map([["base", "16"], ["large", "{base} * 2"]]))
  */
-export function processTokens(
+export function processTokens<T = Map<string, string | interpreterResult>>(
   tokens: Map<string, string> | Record<string, any>,
-  options: {
-    config?: Config;
-    output?: "string" | "symbols";
-  } = {},
-): ProcessorOutput & { tokens: Map<string, string | interpreterResult> } {
-  const { config, output = "string" } = options;
+  options: ProcessOptions = {},
+): ProcessResult<T> {
+  const { config, output = "string", builder } = options;
 
   const tokenMap: Map<string, string> =
     tokens instanceof Map ? tokens : flattenToTokens({ tokens }, ["tokens"]);
 
-  return buildTokens(tokenMap, config, output);
+  const tokenBuilder = builder ?? getDefaultBuilder(output);
+
+  return buildTokens(tokenMap, tokenBuilder, config) as ProcessResult<T>;
+}
+
+export interface ProcessSetsOptions extends ProcessOptions {
+  activeSets?: string[];
+  activeTheme?: string;
 }
 
 /**
@@ -204,18 +226,14 @@ export function processTokens(
  * @param options.activeTheme - Theme to activate
  * @param options.config - Custom interpreter config
  * @param options.output - Output format: "string" (default, JSON-safe) or "symbols" (preserves Symbol objects)
- * @returns ProcessorOutput with resolved tokens
+ * @param options.builder - Custom builder for constructing output structure (overrides output format)
+ * @returns ProcessorOutput with resolved tokens and output structure
  */
-export function processTokenSets(
+export function processTokenSets<T = Map<string, string | interpreterResult>>(
   normalizedFiles: Record<string, unknown>,
-  options: {
-    activeSets?: string[];
-    activeTheme?: string;
-    config?: Config;
-    output?: "string" | "symbols";
-  } = {},
-): ProcessorOutput & { tokens: Map<string, string | interpreterResult> } {
-  const { activeSets, activeTheme, config, output = "string" } = options;
+  options: ProcessSetsOptions = {},
+): ProcessResult<T> {
+  const { activeSets, activeTheme, config, output = "string", builder } = options;
 
   // Step 1: Determine sets to pick
   const setNames = determineSets(normalizedFiles, activeSets, activeTheme);
@@ -223,6 +241,8 @@ export function processTokenSets(
   // Step 2: Flatten to tokens
   const tokens = flattenToTokens(normalizedFiles, setNames);
 
-  // Step 3: Interpret tokens
-  return buildTokens(tokens, config, output);
+  // Step 3: Build tokens using builder
+  const tokenBuilder = builder ?? getDefaultBuilder(output);
+
+  return buildTokens(tokens, tokenBuilder, config) as ProcessResult<T>;
 }

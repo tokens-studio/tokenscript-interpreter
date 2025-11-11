@@ -1,19 +1,7 @@
 import * as fs from "node:fs";
-import type { interpreterResult } from "@interpreter/interpreter";
-import {
-  BooleanSymbol,
-  ColorSymbol,
-  DictionarySymbol,
-  isTokenscriptSymbol,
-  ListSymbol,
-  NullSymbol,
-  NumberSymbol,
-  NumberWithUnitSymbol,
-  StringSymbol,
-} from "@interpreter/symbols";
-import type { ISymbolType } from "@src/types";
 import { Command } from "commander";
 import packageJson from "../package.json" with { type: "json" };
+import { FlatObjectBuilder, NestedObjectBuilder } from "./processor/builders";
 import { collectErrors } from "./processor/process";
 import {
   collectJsonFiles,
@@ -25,89 +13,6 @@ import { extractSetNames, resolveThemes } from "./processor/utils/theme-resolver
 import { startRepl } from "./repl";
 
 const program = new Command();
-
-function serializeSymbolValue(symbol: ISymbolType): unknown {
-  if (symbol instanceof StringSymbol) {
-    return symbol.value;
-  }
-  if (symbol instanceof NumberSymbol) {
-    return symbol.value;
-  }
-  if (symbol instanceof BooleanSymbol) {
-    return symbol.value;
-  }
-  if (symbol instanceof NullSymbol) {
-    return null;
-  }
-  if (symbol instanceof NumberWithUnitSymbol) {
-    return symbol.toString();
-  }
-  if (symbol instanceof ColorSymbol) {
-    return symbol.toString();
-  }
-  if (symbol instanceof ListSymbol) {
-    return symbol.elements.map((item) => serializeSymbolValue(item));
-  }
-  if (symbol instanceof DictionarySymbol) {
-    const obj: Record<string, unknown> = {};
-    for (const [key, child] of symbol.value.entries()) {
-      obj[key] = serializeSymbolValue(child);
-    }
-    return obj;
-  }
-  return symbol.toString();
-}
-
-function toSerializableValue(value: string | interpreterResult): unknown {
-  if (typeof value === "string") {
-    return value;
-  }
-  if (value === null) {
-    return null;
-  }
-  if (isTokenscriptSymbol(value)) {
-    return serializeSymbolValue(value);
-  }
-  return value;
-}
-
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function setNestedValue(target: Record<string, unknown>, path: string, value: unknown): void {
-  if (path.length === 0) {
-    return;
-  }
-  const segments = path.split(".");
-  let cursor: Record<string, unknown> = target;
-  for (let i = 0; i < segments.length; i++) {
-    const key = segments[i];
-    const isLast = i === segments.length - 1;
-    if (isLast) {
-      cursor[key] = value;
-      return;
-    }
-    if (!isPlainObject(cursor[key])) {
-      cursor[key] = {};
-    }
-    cursor = cursor[key] as Record<string, unknown>;
-  }
-}
-
-function buildNestedTokens(
-  tokens: Map<string, string | interpreterResult>,
-): Record<string, unknown> {
-  const root: Record<string, unknown> = {};
-  for (const [path, value] of tokens.entries()) {
-    const plainValue = toSerializableValue(value);
-    if (typeof plainValue === "undefined") {
-      continue;
-    }
-    setNestedValue(root, path, plainValue);
-  }
-  return root;
-}
 
 program
   .name("tokenscript")
@@ -140,11 +45,17 @@ program
   .option("--sets <sets>", "Comma-separated list of token sets to process")
   .option("--theme <theme>", "Theme name to use for token set selection")
 
+  // Output format
+  .option("--format <format>", "Output format: nested (default) or flat", "nested")
+
   // Logging
   .option("--log-level <level>", "Log level (warn, error, none)", "none")
   .option("--strict", "Output errors if any exist, otherwise output tokens", false)
 
   .action(async (options) => {
+    // Select builder based on format option
+    const builder = options.format === "flat" ? new FlatObjectBuilder() : new NestedObjectBuilder();
+
     const result = await processTokensFromFiles({
       path: options.input,
       outputPath: options.output,
@@ -152,6 +63,7 @@ program
       activeSets: options.sets ? options.sets.split(",").map((s: string) => s.trim()) : undefined,
       activeTheme: options.theme,
       output: "symbols",
+      builder,
     });
 
     const hasErrors = result.errors.size > 0;
@@ -164,13 +76,12 @@ program
       process.exit(1);
     }
 
-    const nestedTokens = buildNestedTokens(result.tokens);
-    const output = JSON.stringify(nestedTokens, null, 2);
+    const outputJson = JSON.stringify(result.output, null, 2);
 
     if (options.output) {
-      fs.writeFileSync(options.output, output);
+      fs.writeFileSync(options.output, outputJson);
     } else {
-      console.log(output);
+      console.log(outputJson);
     }
   });
 

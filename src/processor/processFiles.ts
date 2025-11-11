@@ -1,6 +1,6 @@
 import { fetchAndRegisterSchemas } from "@src/utils/schema-fetcher";
-import { processTokenSets } from "./process";
-import type { ProcessorOutput } from "./resolver/TokenResolver";
+import type { TokenBuilder } from "./builders";
+import { type ProcessResult, processTokenSets } from "./process";
 import { collectJsonFiles as collectJsonFilesUtil } from "./utils/file-collector";
 
 function normalizeJsonFiles(jsonFiles: Record<string, unknown>): Record<string, unknown> {
@@ -31,13 +31,14 @@ function normalizeJsonFiles(jsonFiles: Record<string, unknown>): Record<string, 
 export { collectJsonFilesUtil as collectJsonFiles };
 export { normalizeJsonFiles };
 
-export type ProcessFilesOptions = {
+export type ProcessFilesOptions<T = any> = {
   path: string;
   outputPath?: string;
   schemas?: string[];
   activeSets?: string[];
   activeTheme?: string;
   output?: "string" | "symbols";
+  builder?: TokenBuilder<T>;
 };
 
 /**
@@ -46,15 +47,16 @@ export type ProcessFilesOptions = {
  * Handles async schema registration before processing.
  *
  * @param options - Configuration for file reading and processing
- * @returns ProcessorOutput with resolved tokens
+ * @returns ProcessResult with resolved tokens and output structure
  */
-export async function processTokensFromFiles({
+export async function processTokensFromFiles<T = any>({
   path: inputPath,
   schemas,
   activeSets,
   activeTheme,
   output,
-}: ProcessFilesOptions): Promise<ProcessorOutput> {
+  builder,
+}: ProcessFilesOptions<T>): Promise<ProcessResult<T>> {
   // Step 1: Register schemas (async)
   await fetchAndRegisterSchemas(schemas ?? []);
 
@@ -65,9 +67,10 @@ export async function processTokensFromFiles({
   const normalizedFiles = normalizeJsonFiles(jsonFiles);
 
   // Step 4: Core synchronous processing
-  return processTokenSets(normalizedFiles, {
+  return processTokenSets<T>(normalizedFiles, {
     activeSets,
     activeTheme,
     output,
+    builder,
   });
 }

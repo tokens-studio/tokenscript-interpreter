@@ -1231,3 +1231,47 @@ export const isNullableSymbol = (symbol: ISymbolType): boolean =>
 
 export const hasNullValue = (symbol: ISymbolType): boolean =>
   isNullableSymbol(symbol) && isNull(symbol.value);
+
+// Symbol to JS Value Conversion -----------------------------------------------
+
+/**
+ * Represents a JavaScript value that can be produced from a TokenScript symbol.
+ * This includes primitives, arrays, and plain objects (recursively).
+ */
+export type JsValue = string | number | boolean | null | JsValue[] | { [key: string]: JsValue };
+
+/**
+ * Converts a TokenScript symbol to a plain JavaScript value.
+ * This function recursively serializes symbol types to their JS equivalents.
+ */
+export function symbolTypeToJsValue(symbol: ISymbolType): JsValue {
+  if (symbol instanceof StringSymbol) {
+    return symbol.value;
+  }
+  if (symbol instanceof NumberSymbol) {
+    return symbol.value;
+  }
+  if (symbol instanceof BooleanSymbol) {
+    return symbol.value;
+  }
+  if (symbol instanceof NullSymbol) {
+    return null;
+  }
+  if (symbol instanceof NumberWithUnitSymbol) {
+    return symbol.toString();
+  }
+  if (symbol instanceof ColorSymbol) {
+    return symbol.toString();
+  }
+  if (symbol instanceof ListSymbol) {
+    return symbol.elements.map((item) => symbolTypeToJsValue(item));
+  }
+  if (symbol instanceof DictionarySymbol) {
+    const obj: Record<string, JsValue> = {};
+    for (const [key, child] of symbol.value.entries()) {
+      obj[key] = symbolTypeToJsValue(child);
+    }
+    return obj;
+  }
+  return symbol.toString();
+}
