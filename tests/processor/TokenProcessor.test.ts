@@ -227,5 +227,32 @@ describe("TokenProcessor", () => {
       // The variable "b" declared in token "a" should not leak into token "c"
       expect(result.resolved.get("c")?.value).toBe("b");
     });
+
+    it("should detect circular dependencies involving prefix references to virtual children", () => {
+      const processor = new TokenProcessor();
+      // Edge case: circular through prefix reference
+      // a depends on b.x (virtual child of b)
+      // b's dictionary contains reference to a
+      // Creates circular: a → b.x → b → a
+      const tokens = new Map([
+        ["a", "{b.x}"],
+        ["b", "{ x: {a} }"],
+      ]);
+
+      // This should detect the circular dependency and throw an error
+      expect(() => processor.processTokens(tokens)).toThrow(/circular dependency/i);
+    });
+
+    it("should detect circular dependencies through prefix references in both modes", () => {
+      const processor = new TokenProcessor();
+      const tokens = new Map([
+        ["a", "{b.x}"],
+        ["b", "{ x: {a} }"],
+      ]);
+
+      // Test prefix mode (default)
+      expect(() => processor.processTokens(tokens, undefined, undefined, { mode: "prefix" }))
+        .toThrow(/circular dependency|unresolved/i);
+    });
   });
 });
