@@ -40,6 +40,19 @@ export const typeName = (base: string, sub?: string): string => {
   return baseStr;
 };
 
+export const getResultTypeName = (result: unknown): string => {
+  if (isNull(result)) {
+    return "Null";
+  }
+  if (isString(result)) {
+    return "String";
+  }
+  if (isTokenscriptSymbol(result)) {
+    return result.getTypeName();
+  }
+  return "Unknown";
+};
+
 const formatObjectEntries = (
   data: Record<string, any> | Map<string, any> | Array<[string, any]>,
 ): string => {
@@ -53,7 +66,9 @@ const formatObjectEntries = (
     entries = Object.entries(data);
   }
 
-  const formattedEntries = entries.map(([key, value]) => `${key}: ${value.toString()}`).join(", ");
+  const formattedEntries = entries
+    .map(([key, value]) => `${key}: ${value.toString()}`)
+    .join(", ");
   return `{${formattedEntries}}`;
 };
 
@@ -129,7 +144,9 @@ export abstract class BaseSymbolType implements ISymbolType {
     if (!methodDefinition) return false;
     if (methodDefinition.args.length === 0) return true;
 
-    const requiredArgs = methodDefinition.args.filter((arg: MethodArgumentDef) => !arg.optional);
+    const requiredArgs = methodDefinition.args.filter(
+      (arg: MethodArgumentDef) => !arg.optional,
+    );
 
     if (args.length < requiredArgs.length) {
       return false;
@@ -142,7 +159,10 @@ export abstract class BaseSymbolType implements ISymbolType {
     return true;
   }
 
-  callMethod?(methodName: string, args: ISymbolType[]): ISymbolType | null | undefined {
+  callMethod?(
+    methodName: string,
+    args: ISymbolType[],
+  ): ISymbolType | null | undefined {
     const methodDefinition = (this.constructor as any)._SUPPORTED_METHODS?.[
       methodName.toLowerCase()
     ];
@@ -158,15 +178,17 @@ export abstract class BaseSymbolType implements ISymbolType {
 
     const processedArgs: ISymbolType[] = [];
 
-    methodDefinition.args.forEach((argDef: MethodArgumentDef, index: number) => {
-      if (args[index] !== undefined) {
-        processedArgs.push(args[index]);
-      } else if (!argDef.optional) {
-        throw new InterpreterError(
-          `Missing required argument '${argDef.name}' for method '${methodName}'.`,
-        );
-      }
-    });
+    methodDefinition.args.forEach(
+      (argDef: MethodArgumentDef, index: number) => {
+        if (args[index] !== undefined) {
+          processedArgs.push(args[index]);
+        } else if (!argDef.optional) {
+          throw new InterpreterError(
+            `Missing required argument '${argDef.name}' for method '${methodName}'.`,
+          );
+        }
+      },
+    );
 
     return methodDefinition.function.call(this, ...processedArgs);
   }
@@ -176,11 +198,15 @@ export abstract class BaseSymbolType implements ISymbolType {
   }
 
   getAttribute?(attributeName: string): ISymbolType | null {
-    throw new InterpreterError(`Attribute '${attributeName}' not found on type '${this.type}'.`);
+    throw new InterpreterError(
+      `Attribute '${attributeName}' not found on type '${this.type}'.`,
+    );
   }
 
   setAttribute?(attributeName: string, _value: ISymbolType): void {
-    throw new InterpreterError(`Cannot set attribute '${attributeName}' on type '${this.type}'.`);
+    throw new InterpreterError(
+      `Cannot set attribute '${attributeName}' on type '${this.type}'.`,
+    );
   }
 }
 
@@ -248,16 +274,24 @@ export class NumberSymbol extends BaseSymbolType {
 
   public value: numberValue;
 
-  constructor(value: number | NumberSymbol | NumberWithUnitSymbol | null, config?: Config) {
+  constructor(
+    value: number | NumberSymbol | NumberWithUnitSymbol | null,
+    config?: Config,
+  ) {
     let safeValue: numberValue;
     if (typeof value === "number") {
       safeValue = value;
-    } else if (value instanceof NumberSymbol || value instanceof NumberWithUnitSymbol) {
+    } else if (
+      value instanceof NumberSymbol ||
+      value instanceof NumberWithUnitSymbol
+    ) {
       safeValue = value.value as number;
     } else if (value === null) {
       safeValue = null;
     } else {
-      throw new InterpreterError(`Value must be int or float, got ${typeof value}.`);
+      throw new InterpreterError(
+        `Value must be int or float, got ${typeof value}.`,
+      );
     }
     super(safeValue, config);
     this.value = safeValue;
@@ -297,7 +331,9 @@ export class NumberSymbol extends BaseSymbolType {
     if (attributeName === "value") {
       return new NumberSymbol(this.value, this.config);
     }
-    throw new InterpreterError(`Attribute '${attributeName}' not found on Number.`);
+    throw new InterpreterError(
+      `Attribute '${attributeName}' not found on Number.`,
+    );
   }
 
   // Direct translation of to_string method from token_interpreter/symbols.py
@@ -312,7 +348,9 @@ export class NumberSymbol extends BaseSymbolType {
 
     const base = radix.value;
     if (!Number.isInteger(base) || base < 2 || base > 36) {
-      throw new InterpreterError(`Invalid radix: ${base}. Must be between 2 and 36.`);
+      throw new InterpreterError(
+        `Invalid radix: ${base}. Must be between 2 and 36.`,
+      );
     }
 
     let numValue: number;
@@ -339,7 +377,9 @@ export class NumberSymbol extends BaseSymbolType {
         return new StringSymbol(String(this.value), this.config);
       }
     } catch (e) {
-      throw new InterpreterError(`Error converting to base ${base}: ${String(e)}.`);
+      throw new InterpreterError(
+        `Error converting to base ${base}: ${String(e)}.`,
+      );
     }
   }
 }
@@ -445,7 +485,9 @@ export class StringSymbol extends BaseSymbolType {
       other.expectSafeValue(other.value);
       return new StringSymbol(this.value + other.value, this.config);
     }
-    throw new InterpreterError(`Cannot concatenate String ${typeof other} to String.`);
+    throw new InterpreterError(
+      `Cannot concatenate String ${typeof other} to String.`,
+    );
   }
 
   splitImpl(delimiter?: StringSymbol): ListSymbol {
@@ -540,7 +582,11 @@ export class ListSymbol extends BaseSymbolType {
       returnType: "List",
     },
     insert: {
-      function: function (this: ListSymbol, index: NumberSymbol, item: ISymbolType) {
+      function: function (
+        this: ListSymbol,
+        index: NumberSymbol,
+        item: ISymbolType,
+      ) {
         return this.insertImpl(index, item);
       },
       args: [
@@ -578,7 +624,11 @@ export class ListSymbol extends BaseSymbolType {
       returnType: "any",
     },
     update: {
-      function: function (this: ListSymbol, index: NumberSymbol, item: ISymbolType) {
+      function: function (
+        this: ListSymbol,
+        index: NumberSymbol,
+        item: ISymbolType,
+      ) {
         return this.updateImpl(index, item);
       },
       args: [
@@ -600,7 +650,11 @@ export class ListSymbol extends BaseSymbolType {
   public elements: ISymbolType[];
   public isImplicit: boolean;
 
-  constructor(elements: ISymbolType[] | null, isImplicit = false, config?: Config) {
+  constructor(
+    elements: ISymbolType[] | null,
+    isImplicit = false,
+    config?: Config,
+  ) {
     const safeElements = elements === null ? [] : elements;
     super(safeElements, config);
     this.value = safeElements;
@@ -614,7 +668,9 @@ export class ListSymbol extends BaseSymbolType {
 
   toString(): string {
     const delimiter = this.isImplicit ? " " : ", ";
-    return this.elements.map((x) => (x.value === null ? "null" : x.toString())).join(delimiter);
+    return this.elements
+      .map((x) => (x.value === null ? "null" : x.toString()))
+      .join(delimiter);
   }
 
   appendImpl(item: ISymbolType): ListSymbol {
@@ -627,7 +683,9 @@ export class ListSymbol extends BaseSymbolType {
     // Handle both individual arguments and ListSymbol arguments
     for (const item of items) {
       if (item instanceof ListSymbol) {
-        this.elements.push(...item.elements.map((element) => element.cloneIfMutable()));
+        this.elements.push(
+          ...item.elements.map((element) => element.cloneIfMutable()),
+        );
       } else {
         this.elements.push(item.cloneIfMutable());
       }
@@ -700,7 +758,9 @@ export class ListSymbol extends BaseSymbolType {
   }
 
   getTypeName(): string {
-    return this.isImplicit ? typeName(this.type, "Implicit") : typeName(this.type);
+    return this.isImplicit
+      ? typeName(this.type, "Implicit")
+      : typeName(this.type);
   }
 }
 
@@ -747,12 +807,17 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
     } else if (value === null) {
       safeValue = null;
     } else {
-      throw new InterpreterError(`Value must be number or NumberSymbol, got ${typeof value}.`);
+      throw new InterpreterError(
+        `Value must be number or NumberSymbol, got ${typeof value}.`,
+      );
     }
     super(safeValue, config);
     this.value = safeValue;
 
-    if (typeof unit === "string" && !(Object.values(SupportedFormats) as string[]).includes(unit)) {
+    if (
+      typeof unit === "string" &&
+      !(Object.values(SupportedFormats) as string[]).includes(unit)
+    ) {
       throw new InterpreterError(`Invalid unit: ${unit}`);
     }
     this.unit = typeof unit === "string" ? (unit as SupportedFormats) : unit;
@@ -826,7 +891,9 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
     if (attributeName === "value") {
       return new NumberSymbol(this.value, this.config);
     }
-    throw new InterpreterError(`Attribute '${attributeName}' not found on NumberWithUnit.`);
+    throw new InterpreterError(
+      `Attribute '${attributeName}' not found on NumberWithUnit.`,
+    );
   }
 
   getTypeName(): string {
@@ -846,7 +913,11 @@ export class DictionarySymbol extends BaseSymbolType {
       returnType: "any",
     },
     set: {
-      function: function (this: DictionarySymbol, key: StringSymbol, value: ISymbolType) {
+      function: function (
+        this: DictionarySymbol,
+        key: StringSymbol,
+        value: ISymbolType,
+      ) {
         return this.setImpl(key, value);
       },
       args: [
@@ -902,7 +973,11 @@ export class DictionarySymbol extends BaseSymbolType {
   public value: Map<string, ISymbolType>;
 
   constructor(
-    value: Map<string, ISymbolType> | Record<string, ISymbolType> | DictionarySymbol | null,
+    value:
+      | Map<string, ISymbolType>
+      | Record<string, ISymbolType>
+      | DictionarySymbol
+      | null,
     config?: Config,
   ) {
     let safeValue: Map<string, ISymbolType> | null;
@@ -957,7 +1032,9 @@ export class DictionarySymbol extends BaseSymbolType {
   }
 
   keysImpl(): ListSymbol {
-    const keys = Array.from(this.value.keys()).map((key) => new StringSymbol(key, this.config));
+    const keys = Array.from(this.value.keys()).map(
+      (key) => new StringSymbol(key, this.config),
+    );
     return new ListSymbol(keys, false, this.config);
   }
 
@@ -1032,8 +1109,14 @@ export class ColorSymbol extends BaseSymbolType {
     return new ColorSymbol(null);
   }
 
-  constructor(value: string | dynamicColorValue | null, subType?: string, config?: Config) {
-    const isHex = (isUndefined(subType) || subType?.toLowerCase() === "hex") && isString(value);
+  constructor(
+    value: string | dynamicColorValue | null,
+    subType?: string,
+    config?: Config,
+  ) {
+    const isHex =
+      (isUndefined(subType) || subType?.toLowerCase() === "hex") &&
+      isString(value);
     const isDynamic = isString(subType) && isObject(value);
     const isValid = isNull(value) || isHex || isDynamic;
 
@@ -1077,7 +1160,11 @@ export class ColorSymbol extends BaseSymbolType {
     if (!typeEquals(this.type, other.type)) return false;
     const otherColor = other as ColorSymbol;
     // Edge-Case Color without type is equal to Hex only
-    if ((!this.subType && otherColor.isHex()) || (this.isHex() && !otherColor.subType)) return true;
+    if (
+      (!this.subType && otherColor.isHex()) ||
+      (this.isHex() && !otherColor.subType)
+    )
+      return true;
     return typeEquals(this.subType, (other as ColorSymbol).subType);
   }
 
@@ -1086,7 +1173,12 @@ export class ColorSymbol extends BaseSymbolType {
   }
 
   validValue(val: any): boolean {
-    return val instanceof ColorSymbol || isNull(val) || isObject(val) || isValidHex(val);
+    return (
+      val instanceof ColorSymbol ||
+      isNull(val) ||
+      isObject(val) ||
+      isValidHex(val)
+    );
   }
 
   deepCopy(): ColorSymbol {
@@ -1096,7 +1188,11 @@ export class ColorSymbol extends BaseSymbolType {
       for (const [key, val] of Object.entries(this.value)) {
         copiedValue[key] = val.deepCopy();
       }
-      return new ColorSymbol(copiedValue, this.subType || undefined, this.config);
+      return new ColorSymbol(
+        copiedValue,
+        this.subType || undefined,
+        this.config,
+      );
     }
     // For hex colors (string values), no deep copy needed
     return new ColorSymbol(this.value, this.subType || undefined, this.config);
@@ -1137,7 +1233,9 @@ export class ColorSymbol extends BaseSymbolType {
       }
     }
 
-    throw new InterpreterError(`Attribute '${attributeName}' not found on Color.`);
+    throw new InterpreterError(
+      `Attribute '${attributeName}' not found on Color.`,
+    );
   }
 
   hasMethod(methodName: string, args: ISymbolType[]): boolean {
@@ -1154,7 +1252,10 @@ export class ColorSymbol extends BaseSymbolType {
     return false;
   }
 
-  callMethod(methodName: string, args: ISymbolType[]): ISymbolType | null | undefined {
+  callMethod(
+    methodName: string,
+    args: ISymbolType[],
+  ): ISymbolType | null | undefined {
     // First check if it's a built-in method
     const methodDefinition = (this.constructor as any)._SUPPORTED_METHODS?.[
       methodName.toLowerCase()
@@ -1168,7 +1269,9 @@ export class ColorSymbol extends BaseSymbolType {
       return this.config.colorManager.convertToByType(this, methodName);
     }
 
-    throw new InterpreterError(`Method '${methodName}' not found on type '${this.type}'.`);
+    throw new InterpreterError(
+      `Method '${methodName}' not found on type '${this.type}'.`,
+    );
   }
 
   getTypeName(): string {
@@ -1178,7 +1281,10 @@ export class ColorSymbol extends BaseSymbolType {
 
 // Symbol Normalization Utilities ----------------------------------------------
 
-export const jsValueToSymbolType = (value: any, config?: Config): ISymbolType => {
+export const jsValueToSymbolType = (
+  value: any,
+  config?: Config,
+): ISymbolType => {
   if (value instanceof BaseSymbolType) {
     value.config = config;
     return value;
@@ -1224,7 +1330,8 @@ export const basicSymbolTypes = {
   [DictionarySymbol.type.toLowerCase()]: DictionarySymbol,
 } as const;
 
-export type BasicSymbolTypeConstructor = (typeof basicSymbolTypes)[keyof typeof basicSymbolTypes];
+export type BasicSymbolTypeConstructor =
+  (typeof basicSymbolTypes)[keyof typeof basicSymbolTypes];
 
 export const isNullableSymbol = (symbol: ISymbolType): boolean =>
   symbol.type.toLowerCase() in nullableSymbolTypes;
@@ -1238,7 +1345,13 @@ export const hasNullValue = (symbol: ISymbolType): boolean =>
  * Represents a JavaScript value that can be produced from a TokenScript symbol.
  * This includes primitives, arrays, and plain objects (recursively).
  */
-export type JsValue = string | number | boolean | null | JsValue[] | { [key: string]: JsValue };
+export type JsValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JsValue[]
+  | { [key: string]: JsValue };
 
 /**
  * Converts a TokenScript symbol to a plain JavaScript value.

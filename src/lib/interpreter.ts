@@ -31,6 +31,7 @@ export {
   BooleanSymbol,
   ColorSymbol,
   DictionarySymbol,
+  getResultTypeName,
   jsValueToSymbolType,
   ListSymbol,
   NullSymbol,
