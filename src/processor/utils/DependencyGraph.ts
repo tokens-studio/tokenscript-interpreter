@@ -7,6 +7,10 @@ export class DependencyGraph<N = string> {
     }
   }
 
+  getNodes(): Map<N, Set<N>> {
+    return this.nodes;
+  }
+
   // Find nodes with no dependencies
   entryNodes(): N[] {
     const entries: N[] = [];
