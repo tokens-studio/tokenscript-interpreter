@@ -2,6 +2,9 @@
 export {
   type BuilderFormat,
   FlatObjectBuilder,
+  type FlattenCallback,
+  flattenChildrenMap,
+  flattenChildrenObject,
   type JsValue,
   MapBuilder,
   NestedObjectBuilder,

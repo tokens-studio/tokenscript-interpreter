@@ -1,0 +1,40 @@
+{
+  "example1-simple-dictionary": {
+    "colors": "{ primary: #FF0000, secondary: #00FF00 }",
+    "ui.bg": "{colors.primary}",
+    "ui.text": "{colors.secondary}"
+  },
+  
+  "example2-list": {
+    "sizes": "[10px, 20px, 30px]",
+    "spacing.small": "{sizes.0}",
+    "spacing.medium": "{sizes.1}",
+    "spacing.large": "{sizes.2}"
+  },
+
+  "example3-generated-dictionary": {
+    "colors": "variable i: Number = 0; variable result: Dictionary; while (i < 5) [ result.set(i.to_string(), '#' + (i * 10).to_string()); i = i + 1; ]; result",
+    "theme.color1": "{colors.0}",
+    "theme.color2": "{colors.1}"
+  },
+
+  "example4-nested-references": {
+    "base": "16",
+    "scale": "{base} * 2",
+    "large": "{scale} * 1.5",
+    "xlarge": "{large} * 2"
+  },
+
+  "example5-complex": {
+    "palette": "{ red: #FF0000, green: #00FF00, blue: #0000FF }",
+    "primary": "{palette.red}",
+    "secondary": "{palette.blue}",
+    "sizes": "[8px, 16px, 24px, 32px]",
+    "spacing.xs": "{sizes.0}",
+    "spacing.sm": "{sizes.1}",
+    "spacing.md": "{sizes.2}",
+    "spacing.lg": "{sizes.3}",
+    "button.padding": "{spacing.md}",
+    "button.color": "{primary}"
+  }
+}

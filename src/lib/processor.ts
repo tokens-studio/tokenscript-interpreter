@@ -2,4 +2,14 @@
 // For Node.js file-based processing, use:
 // import { processTokensFromFiles } from "@tokens-studio/tokenscript-interpreter/processor-node";
 
+export {
+  type FlattenCallback,
+  flattenChildrenMap,
+  flattenChildrenObject,
+  type ProcessorOutput,
+  type ProcessorResult,
+  serializeInterpreterResult,
+  type TokenBuilder,
+  TokenResolver,
+} from "@src/processor";
 export { processTokenSets, processTokens } from "@src/processor/process";
