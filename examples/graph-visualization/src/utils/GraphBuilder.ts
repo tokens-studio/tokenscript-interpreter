@@ -2,11 +2,8 @@ import {
   flattenChildrenObject,
   serializeInterpreterResult,
   type TokenBuilder,
+  type InterpreterResult,
 } from "@tokens-studio/tokenscript-interpreter";
-import type { ISymbolType } from "@tokens-studio/tokenscript-interpreter";
-
-// InterpreterResult type: ISymbolType | string | null
-type InterpreterResult = ISymbolType | string | null;
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);

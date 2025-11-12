@@ -1,14 +1,11 @@
 import {
   Config,
   TokenResolver,
-  type ISymbolType,
+  type InterpreterResult,
 } from "@tokens-studio/tokenscript-interpreter";
 import type { Node, Edge } from "@xyflow/react";
 import { GraphBuilder } from "./GraphBuilder";
 import { ReactFlowBuilder } from "./ReactFlowBuilder";
-
-// InterpreterResult type: ISymbolType | string | null
-type InterpreterResult = ISymbolType | string | null;
 
 export type TokensInput = Record<string, string | Record<string, string>>;
 
