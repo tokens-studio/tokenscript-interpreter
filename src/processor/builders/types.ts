@@ -1,4 +1,4 @@
-import type { interpreterResult } from "@interpreter/interpreter";
+import type { InterpreterResult } from "@interpreter/interpreter";
 
 /**
  * Token builder interface for constructing output structures incrementally.
@@ -13,7 +13,7 @@ export interface TokenBuilder<T = unknown> {
    * @param tokenName - The token path/name
    * @param value - The resolved interpreter result
    */
-  onResolve(tokenName: string, value: interpreterResult): void;
+  onResolve(tokenName: string, value: InterpreterResult): void;
 
   /**
    * Called when a token fails to resolve.

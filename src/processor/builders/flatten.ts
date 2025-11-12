@@ -1,12 +1,12 @@
-import type { interpreterResult } from "@interpreter/interpreter";
+import type { InterpreterResult } from "@interpreter/interpreter";
 import { DictionarySymbol } from "@interpreter/symbols";
 
-export type FlattenCallback<T> = (key: string, value: interpreterResult) => T;
+export type FlattenCallback<T> = (key: string, value: InterpreterResult) => T;
 
 /**
  * Flatten a DictionarySymbol into key-value pairs
  *
- * @param result - The interpreterResult to flatten (only DictionarySymbol will be flattened)
+ * @param result - The InterpreterResult to flatten (only DictionarySymbol will be flattened)
  * @param prefix - The prefix to prepend to keys
  * @param callback - Callback function that receives each flattened key-value pair
  *
@@ -17,7 +17,7 @@ export type FlattenCallback<T> = (key: string, value: interpreterResult) => T;
  * });
  */
 export function flattenChildrenObject<T>(
-  result: interpreterResult,
+  result: InterpreterResult,
   prefix: string,
   callback: FlattenCallback<T>,
 ): void {
@@ -40,7 +40,7 @@ export function flattenChildrenObject<T>(
  * });
  */
 export function flattenChildrenMap<T>(
-  map: Map<string, interpreterResult>,
+  map: Map<string, InterpreterResult>,
   prefix: string,
   callback: FlattenCallback<T>,
 ): void {

@@ -1,5 +1,5 @@
 import type { Config } from "@interpreter/config";
-import type { interpreterResult } from "@interpreter/interpreter";
+import type { InterpreterResult } from "@interpreter/interpreter";
 import { type ParseExpressionResult, parseExpression } from "@interpreter/parser";
 import { StringSymbol } from "@interpreter/symbols";
 import { UNINTERPRETED_KEYWORDS } from "@src/types";
@@ -27,12 +27,12 @@ export type ProcessorResult = {
 };
 
 export type ProcessorCallbacks = {
-  onResolve?: (tokenName: RefPath, value: interpreterResult) => void;
+  onResolve?: (tokenName: RefPath, value: InterpreterResult) => void;
   onError?: (tokenName: RefPath, error: Error, originalValue: string) => void;
 };
 
 export type ProcessorOutput = ProcessorResult & {
-  tokens: Map<RefPath, string | interpreterResult>;
+  tokens: Map<RefPath, string | InterpreterResult>;
   errors: Map<RefPath, Error>;
 };
 
@@ -42,7 +42,7 @@ class PrefixResolver {
   private readonly graph = new DependencyGraph<RefPath>();
   private readonly resolved: ResolvedTokens = new Map();
   private readonly unresolved: UnresolvedTokens = new Map();
-  private readonly referenceCache: Map<string, interpreterResult> = new Map();
+  private readonly referenceCache: Map<string, InterpreterResult> = new Map();
   private readonly pendingResolution: Set<RefPath> = new Set();
   private readonly readyQueue: Set<RefPath> = new Set();
 
@@ -306,7 +306,7 @@ class PrefixResolver {
   /**
    * Helper for ResolutionNotifier to build prefix dictionaries
    */
-  private buildPrefixDictionary(prefix: string, cache: Map<string, interpreterResult>): void {
+  private buildPrefixDictionary(prefix: string, cache: Map<string, InterpreterResult>): void {
     const dictionary = this.prefixManager.buildPrefixDictionary(prefix, cache);
     if (dictionary) {
       cache.set(prefix, dictionary);
@@ -379,7 +379,7 @@ export class TokenResolver {
   }
 
   public build(tokens: Map<RefPath, string>, config?: Config): ProcessorOutput {
-    const output: Map<RefPath, string | interpreterResult> = new Map();
+    const output: Map<RefPath, string | InterpreterResult> = new Map();
     const errors: Map<RefPath, Error> = new Map();
 
     const callbacks: ProcessorCallbacks = {

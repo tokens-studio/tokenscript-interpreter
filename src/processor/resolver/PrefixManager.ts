@@ -1,5 +1,5 @@
 import type { Config } from "@interpreter/config";
-import type { interpreterResult } from "@interpreter/interpreter";
+import type { InterpreterResult } from "@interpreter/interpreter";
 import {
   DictionarySymbol,
   isTokenscriptSymbol,
@@ -75,7 +75,7 @@ export class PrefixManager {
 
   buildPrefixDictionary(
     prefix: string,
-    referenceCache: Map<string, interpreterResult>,
+    referenceCache: Map<string, InterpreterResult>,
   ): DictionarySymbol | undefined {
     const directChildren = this.directChildrenCache.get(prefix);
     if (!directChildren || directChildren.size === 0) return undefined;
@@ -157,7 +157,7 @@ export class PrefixManager {
     set.add(value);
   }
 
-  private toSymbol(value: interpreterResult | undefined): ISymbolType | undefined {
+  private toSymbol(value: InterpreterResult | undefined): ISymbolType | undefined {
     if (value === undefined) return undefined;
 
     if (value === null) return new NullSymbol(this.config);

@@ -3,26 +3,35 @@ import {
   TokenResolver,
   type ISymbolType,
 } from "@tokens-studio/tokenscript-interpreter";
-import { GraphBuilder, type GraphData } from "./GraphBuilder";
+import type { Node, Edge } from "@xyflow/react";
+import { GraphBuilder } from "./GraphBuilder";
+import { ReactFlowBuilder } from "./ReactFlowBuilder";
 
-// interpreterResult type: ISymbolType | string | null
-type interpreterResult = ISymbolType | string | null;
+// InterpreterResult type: ISymbolType | string | null
+type InterpreterResult = ISymbolType | string | null;
 
 export type TokensInput = Record<string, string | Record<string, string>>;
 
-export function processTokensToGraph(tokensInput: TokensInput): GraphData {
+/**
+ * Main process function that orchestrates the token resolution,
+ * graph building, and ReactFlow conversion
+ */
+export function process(tokensInput: TokensInput): {
+  nodes: Node[];
+  edges: Edge[];
+} {
   const config = new Config();
   const resolver = new TokenResolver();
-  const builder = new GraphBuilder();
+  const graphBuilder = new GraphBuilder();
 
   const tokens = flattenTokens(tokensInput);
 
   const callbacks = {
-    onResolve: (tokenName: string, value: interpreterResult) => {
-      builder.onResolve(tokenName, value);
+    onResolve: (tokenName: string, value: InterpreterResult) => {
+      graphBuilder.onResolve(tokenName, value);
     },
     onError: (tokenName: string, error: Error, originalValue: string) => {
-      builder.onError(tokenName, error, originalValue);
+      graphBuilder.onError(tokenName, error, originalValue);
     },
   };
 
@@ -30,9 +39,15 @@ export function processTokensToGraph(tokensInput: TokensInput): GraphData {
 
   console.log("Dependencies:", Array.from(result.graph.getNodes()));
   
-  builder.addDependencies(result.graph);
+  graphBuilder.addDependencies(result.graph);
 
-  return builder.getResult();
+  const graphData = graphBuilder.getResult();
+  const reactFlowBuilder = new ReactFlowBuilder(graphData);
+
+  return {
+    nodes: reactFlowBuilder.toReactFlowNodes(),
+    edges: reactFlowBuilder.toReactFlowEdges(),
+  };
 }
 
 /**

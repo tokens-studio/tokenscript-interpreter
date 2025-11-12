@@ -5,8 +5,8 @@ import {
 } from "@tokens-studio/tokenscript-interpreter";
 import type { ISymbolType } from "@tokens-studio/tokenscript-interpreter";
 
-// interpreterResult type: ISymbolType | string | null
-type interpreterResult = ISymbolType | string | null;
+// InterpreterResult type: ISymbolType | string | null
+type InterpreterResult = ISymbolType | string | null;
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -53,7 +53,7 @@ export class GraphBuilder implements TokenBuilder<GraphData> {
 
   constructor() {}
 
-  onResolve(tokenName: string, value: interpreterResult): void {
+  onResolve(tokenName: string, value: InterpreterResult): void {
     this.originalTokens.add(tokenName);
     this.toGraphNode(tokenName, value, false);
   }
@@ -99,7 +99,15 @@ export class GraphBuilder implements TokenBuilder<GraphData> {
     }
   }
 
-  private toGraphNode(tokenName: string, value: interpreterResult, isVirtual: boolean): void {
+  getNodes(): GraphNode[] {
+    return Array.from(this.nodes.values());
+  }
+
+  getEdges(): GraphEdge[] {
+    return this.edges;
+  }
+
+  private toGraphNode(tokenName: string, value: InterpreterResult, isVirtual: boolean): void {
     const valueType = this.getValueType(value);
     const serialized = serializeInterpreterResult(value);
     const preview = this.getPreview(value, valueType);
@@ -151,14 +159,13 @@ export class GraphBuilder implements TokenBuilder<GraphData> {
   }
 
   getResult(): GraphData {
-    const nodes = Array.from(this.nodes.values());
     return {
-      nodes: this.layoutNodes(nodes),
-      edges: this.edges,
+      nodes: this.getNodes(),
+      edges: this.getEdges(),
     };
   }
 
-  private getValueType(value: interpreterResult): string {
+  private getValueType(value: InterpreterResult): string {
     if (value === null) return "null";
     if (value === undefined) return "undefined";
     if (typeof value === "string") return "string";
@@ -173,7 +180,7 @@ export class GraphBuilder implements TokenBuilder<GraphData> {
     return "unknown";
   }
 
-  private getPreview(value: interpreterResult, valueType: string): string {
+  private getPreview(value: InterpreterResult, valueType: string): string {
     const maxLength = 50;
 
     if (value === null) return "null";
@@ -238,174 +245,5 @@ export class GraphBuilder implements TokenBuilder<GraphData> {
         return str.length > maxLength ? `${str.substring(0, maxLength)}...` : str;
       }
     }
-  }
-
-  /**
-   * Layout nodes in a hierarchical tree structure using Sugiyama framework
-   */
-  private layoutNodes(nodes: GraphNode[]): GraphNode[] {
-    const nodeMap = new Map(nodes.map((n) => [n.id, n]));
-    
-    // Build parent-child relationships
-    const parents = new Map<string, Set<string>>();
-    const children = new Map<string, Set<string>>();
-    
-    for (const edge of this.edges) {
-      if (!children.has(edge.source)) {
-        children.set(edge.source, new Set());
-      }
-      children.get(edge.source)?.add(edge.target);
-      
-      if (!parents.has(edge.target)) {
-        parents.set(edge.target, new Set());
-      }
-      parents.get(edge.target)?.add(edge.source);
-    }
-
-    // Find root nodes (no parents)
-    const roots: string[] = [];
-    for (const node of nodes) {
-      if (!parents.has(node.id) || parents.get(node.id)?.size === 0) {
-        roots.push(node.id);
-      }
-    }
-
-    // Assign layers using longest path
-    const layers = new Map<string, number>();
-    const assignLayer = (nodeId: string, visited = new Set<string>()): number => {
-      if (layers.has(nodeId)) {
-        return layers.get(nodeId)!;
-      }
-      
-      if (visited.has(nodeId)) {
-        return 0; // Circular dependency
-      }
-      
-      visited.add(nodeId);
-      
-      const nodeParents = parents.get(nodeId);
-      if (!nodeParents || nodeParents.size === 0) {
-        layers.set(nodeId, 0);
-        return 0;
-      }
-      
-      let maxParentLayer = -1;
-      for (const parentId of nodeParents) {
-        const parentLayer = assignLayer(parentId, new Set(visited));
-        maxParentLayer = Math.max(maxParentLayer, parentLayer);
-      }
-      
-      const layer = maxParentLayer + 1;
-      layers.set(nodeId, layer);
-      return layer;
-    };
-
-    // Assign layers to all nodes
-    for (const node of nodes) {
-      assignLayer(node.id);
-    }
-
-    // Group nodes by layer
-    const layerGroups = new Map<number, string[]>();
-    for (const [nodeId, layer] of layers) {
-      if (!layerGroups.has(layer)) {
-        layerGroups.set(layer, []);
-      }
-      layerGroups.get(layer)?.push(nodeId);
-    }
-
-    // Calculate positions with better spacing
-    const horizontalSpacing = 250;
-    const verticalSpacing = 120;
-
-    // Calculate x positions trying to center children under parents
-    const positions = new Map<string, { x: number; y: number }>();
-    
-    // Sort layers
-    const sortedLayers = Array.from(layerGroups.keys()).sort((a, b) => a - b);
-    
-    for (const layer of sortedLayers) {
-      const nodeIds = layerGroups.get(layer)!;
-      const y = layer * verticalSpacing;
-      
-      if (layer === 0) {
-        // Position root nodes centered
-        const totalWidth = (nodeIds.length - 1) * horizontalSpacing;
-        const startX = -totalWidth / 2;
-        
-        nodeIds.forEach((nodeId, index) => {
-          positions.set(nodeId, {
-            x: startX + index * horizontalSpacing,
-            y,
-          });
-        });
-      } else {
-        // Group nodes by their parent
-        const nodesByParent = new Map<string, string[]>();
-        const nodesWithoutParent: string[] = [];
-        
-        for (const nodeId of nodeIds) {
-          const nodeParents = parents.get(nodeId);
-          if (nodeParents && nodeParents.size > 0) {
-            // Get first parent (for simplicity)
-            const parentId = Array.from(nodeParents)[0];
-            if (!nodesByParent.has(parentId)) {
-              nodesByParent.set(parentId, []);
-            }
-            nodesByParent.get(parentId)!.push(nodeId);
-          } else {
-            nodesWithoutParent.push(nodeId);
-          }
-        }
-        
-        // Position children under each parent
-        for (const [parentId, childIds] of nodesByParent) {
-          const parentPos = positions.get(parentId);
-          if (parentPos) {
-            // Spread children horizontally centered under parent
-            const childCount = childIds.length;
-            const totalChildWidth = (childCount - 1) * horizontalSpacing;
-            const startX = parentPos.x - totalChildWidth / 2;
-            
-            childIds.forEach((childId, index) => {
-              positions.set(childId, {
-                x: startX + index * horizontalSpacing,
-                y,
-              });
-            });
-          }
-        }
-        
-        // Position nodes without parents
-        if (nodesWithoutParent.length > 0) {
-          const totalWidth = (nodesWithoutParent.length - 1) * horizontalSpacing;
-          const startX = -totalWidth / 2;
-          
-          nodesWithoutParent.forEach((nodeId, index) => {
-            positions.set(nodeId, {
-              x: startX + index * horizontalSpacing,
-              y,
-            });
-          });
-        }
-      }
-    }
-
-    // Apply positions to nodes
-    for (const [nodeId, pos] of positions) {
-      const node = nodeMap.get(nodeId);
-      if (node) {
-        node.position = pos;
-      }
-    }
-
-    // Handle any unpositioned nodes
-    for (const node of nodes) {
-      if (!node.position) {
-        node.position = { x: 0, y: 0 };
-      }
-    }
-
-    return nodes;
   }
 }

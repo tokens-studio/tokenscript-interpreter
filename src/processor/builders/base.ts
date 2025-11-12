@@ -1,7 +1,7 @@
-import type { interpreterResult } from "@interpreter/interpreter";
+import type { InterpreterResult } from "@interpreter/interpreter";
 import { isTokenscriptSymbol, symbolTypeToJsValue } from "@interpreter/symbols";
 
-export function serializeInterpreterResult(value: string | interpreterResult): unknown {
+export function serializeInterpreterResult(value: string | InterpreterResult): unknown {
   if (typeof value === "string") {
     return value;
   }
@@ -14,7 +14,7 @@ export function serializeInterpreterResult(value: string | interpreterResult): u
   return value;
 }
 
-export function stringifyInterpreterResult(value: interpreterResult): string {
+export function stringifyInterpreterResult(value: InterpreterResult): string {
   if (typeof value === "string") {
     return value;
   }

@@ -1,4 +1,4 @@
-import type { interpreterResult } from "@interpreter/interpreter";
+import type { InterpreterResult } from "@interpreter/interpreter";
 import { isObject } from "@/src/interpreter/utils/type";
 import { serializeInterpreterResult } from "./base";
 import { flattenChildrenObject } from "./flatten";
@@ -35,7 +35,7 @@ export class NestedObjectBuilder implements TokenBuilder<Record<string, unknown>
   readonly name = "nested";
   private result: Record<string, unknown> = {};
 
-  onResolve(tokenName: string, value: interpreterResult): void {
+  onResolve(tokenName: string, value: InterpreterResult): void {
     const serialized = serializeInterpreterResult(value);
     if (typeof serialized !== "undefined") {
       setNestedValue(this.result, tokenName, serialized);
@@ -62,8 +62,8 @@ export class FlatObjectBuilder implements TokenBuilder<Record<string, unknown>> 
   readonly name = "flat";
   private result: Record<string, unknown> = {};
 
-  onResolve(tokenName: string, value: interpreterResult): void {
-    // First try to flatten the interpreterResult directly (handles Dictionary symbols)
+  onResolve(tokenName: string, value: InterpreterResult): void {
+    // First try to flatten the InterpreterResult directly (handles Dictionary symbols)
     let didFlatten = false;
     flattenChildrenObject(value, tokenName, (key, val) => {
       didFlatten = true;
