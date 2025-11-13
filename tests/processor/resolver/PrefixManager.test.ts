@@ -1,4 +1,4 @@
-import type { interpreterResult } from "@interpreter/interpreter";
+import type { InterpreterResult } from "@interpreter/interpreter";
 import { StringSymbol } from "@interpreter/symbols";
 import { PrefixManager } from "@src/processor/resolver";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -126,7 +126,7 @@ describe("PrefixManager", () => {
       manager.addTokenToPrefix("colors.primary");
       manager.addTokenToPrefix("colors.secondary");
 
-      const referenceCache = new Map<string, interpreterResult>([
+      const referenceCache = new Map<string, InterpreterResult>([
         ["colors.primary", new StringSymbol("#FF0000")],
         ["colors.secondary", new StringSymbol("#00FF00")],
       ]);
@@ -141,7 +141,7 @@ describe("PrefixManager", () => {
       manager.addTokenToPrefix("colors.primary");
       manager.addTokenToPrefix("colors.primary.dark");
 
-      const referenceCache = new Map<string, interpreterResult>([
+      const referenceCache = new Map<string, InterpreterResult>([
         ["colors.primary", new StringSymbol("#FF0000")],
         ["colors.primary.dark", new StringSymbol("#880000")],
       ]);
@@ -152,14 +152,14 @@ describe("PrefixManager", () => {
     });
 
     it("should return undefined for nonexistent prefix", () => {
-      const referenceCache = new Map<string, interpreterResult>();
+      const referenceCache = new Map<string, InterpreterResult>();
       const dict = manager.buildPrefixDictionary("nonexistent", referenceCache);
       expect(dict).toBeUndefined();
     });
 
     it("should return undefined for prefix with no resolved tokens", () => {
       manager.addTokenToPrefix("colors.primary");
-      const referenceCache = new Map<string, interpreterResult>();
+      const referenceCache = new Map<string, InterpreterResult>();
       const dict = manager.buildPrefixDictionary("colors", referenceCache);
       expect(dict).toBeUndefined();
     });
@@ -168,7 +168,7 @@ describe("PrefixManager", () => {
       manager.addTokenToPrefix("colors.primary");
       manager.addTokenToPrefix("colors.secondary");
 
-      const referenceCache = new Map<string, interpreterResult>([
+      const referenceCache = new Map<string, InterpreterResult>([
         ["colors.primary", null],
         ["colors.secondary", new StringSymbol("#00FF00")],
       ]);
@@ -182,7 +182,7 @@ describe("PrefixManager", () => {
       manager.addTokenToPrefix("colors.primary");
       manager.addTokenToPrefix("colors.secondary");
 
-      const referenceCache = new Map<string, interpreterResult>([
+      const referenceCache = new Map<string, InterpreterResult>([
         ["colors.primary", "#FF0000"],
         ["colors.secondary", 123],
       ]);
@@ -196,7 +196,7 @@ describe("PrefixManager", () => {
       manager.addTokenToPrefix("colors.primary");
 
       const symbol = new StringSymbol("#FF0000");
-      const referenceCache = new Map<string, interpreterResult>([["colors.primary", symbol]]);
+      const referenceCache = new Map<string, InterpreterResult>([["colors.primary", symbol]]);
 
       const dict = manager.buildPrefixDictionary("colors", referenceCache);
       const entry = dict?.value?.get("primary");
@@ -302,7 +302,7 @@ describe("PrefixManager", () => {
       manager.addTokenToPrefix("colors.primary");
 
       const symbol = new StringSymbol("#FF0000");
-      const referenceCache = new Map<string, interpreterResult>([["colors.primary", symbol]]);
+      const referenceCache = new Map<string, InterpreterResult>([["colors.primary", symbol]]);
 
       const dict = manager.buildPrefixDictionary("colors", referenceCache);
       expect(dict?.value?.has("primary")).toBe(true);
@@ -311,7 +311,7 @@ describe("PrefixManager", () => {
     it("should handle null values", () => {
       manager.addTokenToPrefix("colors.null");
 
-      const referenceCache = new Map<string, interpreterResult>([["colors.null", null]]);
+      const referenceCache = new Map<string, InterpreterResult>([["colors.null", null]]);
 
       const dict = manager.buildPrefixDictionary("colors", referenceCache);
       expect(dict?.value?.has("null")).toBe(true);
@@ -320,7 +320,7 @@ describe("PrefixManager", () => {
     it("should handle undefined values by skipping them", () => {
       manager.addTokenToPrefix("colors.primary");
 
-      const referenceCache = new Map<string, interpreterResult>();
+      const referenceCache = new Map<string, InterpreterResult>();
       const dict = manager.buildPrefixDictionary("colors", referenceCache);
       expect(dict).toBeUndefined();
     });
@@ -328,7 +328,7 @@ describe("PrefixManager", () => {
     it("should convert strings to StringSymbol", () => {
       manager.addTokenToPrefix("colors.primary");
 
-      const referenceCache = new Map<string, interpreterResult>([["colors.primary", "#FF0000"]]);
+      const referenceCache = new Map<string, InterpreterResult>([["colors.primary", "#FF0000"]]);
 
       const dict = manager.buildPrefixDictionary("colors", referenceCache);
       expect(dict?.value?.has("primary")).toBe(true);
@@ -347,7 +347,7 @@ describe("PrefixManager", () => {
     });
 
     it("should build dictionaries for multiple prefixes", () => {
-      const referenceCache = new Map<string, interpreterResult>([
+      const referenceCache = new Map<string, InterpreterResult>([
         ["colors.primary", new StringSymbol("#FF0000")],
         ["colors.secondary", new StringSymbol("#00FF00")],
         ["spacing.small", new StringSymbol("4px")],

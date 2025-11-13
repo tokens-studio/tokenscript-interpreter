@@ -22,7 +22,7 @@ export {
 } from "@interpreter/config/managers/unit/schema";
 export * from "@interpreter/errors";
 // Core interpreter
-export { Interpreter } from "@interpreter/interpreter";
+export { Interpreter, type InterpreterResult } from "@interpreter/interpreter";
 export { Lexer } from "@interpreter/lexer";
 export { Parser, parseExpression } from "@interpreter/parser";
 // Symbols
@@ -31,6 +31,7 @@ export {
   BooleanSymbol,
   ColorSymbol,
   DictionarySymbol,
+  getResultTypeName,
   jsValueToSymbolType,
   ListSymbol,
   NullSymbol,

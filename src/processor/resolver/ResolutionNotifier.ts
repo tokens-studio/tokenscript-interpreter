@@ -1,4 +1,4 @@
-import type { interpreterResult } from "@interpreter/interpreter";
+import type { InterpreterResult } from "@interpreter/interpreter";
 import type { DependencyTracker } from "./DependencyTracker";
 import type { PrefixManager } from "./PrefixManager";
 import type { ReadinessTracker } from "./ReadinessTracker";
@@ -22,7 +22,7 @@ export class ResolutionNotifier {
     private readonly resolveCallback: (tokenName: RefPath) => void,
     private readonly buildDictionaryCallback: (
       prefix: string,
-      referenceCache: Map<string, interpreterResult>,
+      referenceCache: Map<string, InterpreterResult>,
     ) => void,
   ) {}
 
@@ -34,7 +34,7 @@ export class ResolutionNotifier {
   releaseDependencies(
     tokenName: RefPath,
     flattened: RefPath[] | undefined,
-    referenceCache: Map<string, interpreterResult>,
+    referenceCache: Map<string, InterpreterResult>,
   ): void {
     this.releaseDependentsFor(tokenName);
     this.releasePrefixesFor(tokenName, referenceCache);
@@ -66,7 +66,7 @@ export class ResolutionNotifier {
   /**
    * Release prefixes that may now be complete after a token resolution
    */
-  private releasePrefixesFor(name: RefPath, referenceCache: Map<string, interpreterResult>): void {
+  private releasePrefixesFor(name: RefPath, referenceCache: Map<string, InterpreterResult>): void {
     const readyPrefixes = this.prefixManager.markTokenResolved(name);
     if (readyPrefixes.length === 0) return;
 
@@ -80,7 +80,7 @@ export class ResolutionNotifier {
    */
   private releasePrefixDependents(
     prefix: string,
-    referenceCache: Map<string, interpreterResult>,
+    referenceCache: Map<string, InterpreterResult>,
   ): void {
     // Build dictionary for this prefix
     this.buildDictionaryCallback(prefix, referenceCache);

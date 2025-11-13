@@ -1,4 +1,4 @@
-import type { interpreterResult } from "@interpreter/interpreter";
+import type { InterpreterResult } from "@interpreter/interpreter";
 import { parseExpression } from "@interpreter/parser";
 import { DictionarySymbol, StringSymbol } from "@interpreter/symbols";
 import { DependencyError } from "@src/processor/errors";
@@ -6,7 +6,7 @@ import { TokenInterpreter } from "@src/processor/resolver";
 import { beforeEach, describe, expect, it } from "vitest";
 
 describe("TokenInterpreter", () => {
-  let referenceCache: Map<string, interpreterResult>;
+  let referenceCache: Map<string, InterpreterResult>;
   let interpreter: TokenInterpreter;
 
   beforeEach(() => {

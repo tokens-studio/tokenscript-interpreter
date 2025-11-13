@@ -1,5 +1,5 @@
 import type { Config } from "@interpreter/config";
-import type { interpreterResult } from "../interpreter/interpreter";
+import type { InterpreterResult } from "../interpreter/interpreter";
 import { isObject, isSingleEntryObject } from "../interpreter/utils/type";
 import { MapBuilder, type TokenBuilder } from "./builders";
 import { type ProcessorOutput, TokenResolver } from "./resolver/TokenResolver";
@@ -124,12 +124,12 @@ function buildTokens<T>(
   tokens: Map<string, string>,
   builder: TokenBuilder<T>,
   config?: Config,
-): ProcessorOutput & { tokens: Map<string, string | interpreterResult>; output: T } {
+): ProcessorOutput & { tokens: Map<string, string | InterpreterResult>; output: T } {
   const processor = new TokenResolver();
   const errors: Map<string, Error> = new Map();
 
   const callbacks = {
-    onResolve: (tokenName: string, value: interpreterResult) => {
+    onResolve: (tokenName: string, value: InterpreterResult) => {
       builder.onResolve(tokenName, value);
     },
     onError: (tokenName: string, error: Error, originalValue: string) => {
@@ -144,7 +144,7 @@ function buildTokens<T>(
   // otherwise use the builder's output
   const tokensOutput =
     builder.getResult() instanceof Map
-      ? (builder.getResult() as Map<string, string | interpreterResult>)
+      ? (builder.getResult() as Map<string, string | InterpreterResult>)
       : (builder.getResult() as any);
 
   return {
@@ -163,9 +163,9 @@ export interface ProcessOptions {
   builder?: TokenBuilder<any>;
 }
 
-export interface ProcessResult<T = Map<string, string | interpreterResult>>
+export interface ProcessResult<T = Map<string, string | InterpreterResult>>
   extends ProcessorOutput {
-  tokens: Map<string, string | interpreterResult>;
+  tokens: Map<string, string | InterpreterResult>;
   output: T;
 }
 
@@ -196,7 +196,7 @@ export interface ProcessResult<T = Map<string, string | interpreterResult>>
  * // Map
  * processTokens(new Map([["base", "16"], ["large", "{base} * 2"]]))
  */
-export function processTokens<T = Map<string, string | interpreterResult>>(
+export function processTokens<T = Map<string, string | InterpreterResult>>(
   tokens: Map<string, string> | Record<string, any>,
   options: ProcessOptions = {},
 ): ProcessResult<T> {
@@ -229,7 +229,7 @@ export interface ProcessSetsOptions extends ProcessOptions {
  * @param options.builder - Custom builder for constructing output structure (overrides output format)
  * @returns ProcessorOutput with resolved tokens and output structure
  */
-export function processTokenSets<T = Map<string, string | interpreterResult>>(
+export function processTokenSets<T = Map<string, string | InterpreterResult>>(
   normalizedFiles: Record<string, unknown>,
   options: ProcessSetsOptions = {},
 ): ProcessResult<T> {

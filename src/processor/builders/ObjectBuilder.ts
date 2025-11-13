@@ -1,6 +1,7 @@
-import type { interpreterResult } from "@interpreter/interpreter";
+import type { InterpreterResult } from "@interpreter/interpreter";
 import { isObject } from "@/src/interpreter/utils/type";
 import { serializeInterpreterResult } from "./base";
+import { flattenChildrenObject } from "./flatten";
 import type { TokenBuilder } from "./types";
 
 function setNestedValue(target: Record<string, unknown>, path: string, value: unknown): void {
@@ -34,7 +35,7 @@ export class NestedObjectBuilder implements TokenBuilder<Record<string, unknown>
   readonly name = "nested";
   private result: Record<string, unknown> = {};
 
-  onResolve(tokenName: string, value: interpreterResult): void {
+  onResolve(tokenName: string, value: InterpreterResult): void {
     const serialized = serializeInterpreterResult(value);
     if (typeof serialized !== "undefined") {
       setNestedValue(this.result, tokenName, serialized);
@@ -61,40 +62,23 @@ export class FlatObjectBuilder implements TokenBuilder<Record<string, unknown>> 
   readonly name = "flat";
   private result: Record<string, unknown> = {};
 
-  private flattenObject(obj: Record<string, unknown>, prefix: string): void {
-    for (const key in obj) {
-      // Check for own properties to avoid iterating prototype chain
-      if (Object.hasOwn(obj, key)) {
-        const value = obj[key];
-        const newKey = `${prefix}.${key}`;
+  onResolve(tokenName: string, value: InterpreterResult): void {
+    // First try to flatten the InterpreterResult directly (handles Dictionary symbols)
+    let didFlatten = false;
+    flattenChildrenObject(value, tokenName, (key, val) => {
+      didFlatten = true;
+      this.result[key] = serializeInterpreterResult(val);
+    });
 
-        if (typeof value === "undefined") {
-          continue; // Skip undefined values
-        }
-
-        // Recurse if it's a plain object, otherwise assign
-        if (isObject(value)) {
-          this.flattenObject(value as Record<string, unknown>, newKey);
-        } else {
-          this.result[newKey] = value;
-        }
+    // If nothing was flattened, serialize and store the value directly
+    if (!didFlatten) {
+      const serialized = serializeInterpreterResult(value);
+      if (typeof serialized !== "undefined") {
+        this.result[tokenName] = serialized;
       }
     }
   }
 
-  onResolve(tokenName: string, value: interpreterResult): void {
-    const serialized = serializeInterpreterResult(value);
-
-    if (typeof serialized === "undefined") {
-      return;
-    }
-
-    if (isObject(serialized)) {
-      this.flattenObject(serialized as Record<string, unknown>, tokenName);
-    } else {
-      this.result[tokenName] = serialized;
-    }
-  }
   onError(tokenName: string, _error: Error, originalValue: string): void {
     // Store original value for failed tokens
     this.result[tokenName] = originalValue;

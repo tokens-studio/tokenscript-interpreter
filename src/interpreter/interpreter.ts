@@ -51,7 +51,7 @@ class ReturnSignal {
   constructor(public value: ISymbolType | null) {}
 }
 
-export type interpreterResult = ISymbolType | string | null;
+export type InterpreterResult = ISymbolType | string | null;
 
 export class Interpreter {
   private parser: Parser | null = null; // Null if created with pre-parsed AST
@@ -543,7 +543,7 @@ export class Interpreter {
     return null;
   }
 
-  public interpret(): interpreterResult {
+  public interpret(): InterpreterResult {
     const tree = this.ast || (this.parser ? this.parser.parse() : null);
     if (!tree) return "";
 

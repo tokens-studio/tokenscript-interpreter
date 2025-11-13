@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { Config } from "@interpreter/config/config";
 import { ColorManager } from "@interpreter/config/managers/color/manager";
-import { Interpreter, type interpreterResult } from "@interpreter/interpreter";
+import { Interpreter, type InterpreterResult } from "@interpreter/interpreter";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
 import { BaseSymbolType, ColorSymbol, NumberWithUnitSymbol } from "@interpreter/symbols";
@@ -132,7 +132,7 @@ function transformContextToSymbols(obj: any, config: Config): any {
   ]);
 }
 
-const runTest = (test: TestCase): { interpreter: Interpreter; result: interpreterResult } => {
+const runTest = (test: TestCase): { interpreter: Interpreter; result: InterpreterResult } => {
   const lexer = new Lexer(test.input);
   const parser = new Parser(lexer);
   const ast = parser.parse(test.inline);

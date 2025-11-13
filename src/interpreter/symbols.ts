@@ -40,6 +40,19 @@ export const typeName = (base: string, sub?: string): string => {
   return baseStr;
 };
 
+export const getResultTypeName = (result: unknown): string => {
+  if (isNull(result)) {
+    return "Null";
+  }
+  if (isString(result)) {
+    return "String";
+  }
+  if (isTokenscriptSymbol(result)) {
+    return result.getTypeName();
+  }
+  return "Unknown";
+};
+
 const formatObjectEntries = (
   data: Record<string, any> | Map<string, any> | Array<[string, any]>,
 ): string => {
