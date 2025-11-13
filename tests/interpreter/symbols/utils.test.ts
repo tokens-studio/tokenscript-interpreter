@@ -2,13 +2,13 @@ import { Config } from "@interpreter/config/config";
 import {
   BooleanSymbol,
   ColorSymbol,
+  getResultTypeName,
+  isTokenscriptSymbol,
   ListSymbol,
   NullSymbol,
   NumberSymbol,
   NumberWithUnitSymbol,
   StringSymbol,
-  getResultTypeName,
-  isTokenscriptSymbol,
   typeEquals,
   typeName,
 } from "@interpreter/symbols";
