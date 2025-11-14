@@ -7,21 +7,6 @@ import type { ProcessorOutput } from "./resolver/TokenResolver";
 import { extractSetNames, resolveThemes, selectTheme } from "./utils/theme-resolver";
 import { flattenObject, isNested, recordToMap } from "./utils/tokens";
 
-export function collectErrors(result: {
-  errors: Map<string, Error>;
-  resolved: Map<string, any>;
-}): Record<string, { message: string; originalValue: string }> {
-  const errors: Record<string, { message: string; originalValue: string }> = {};
-  for (const [tokenName, error] of result.errors) {
-    const originalValue = result.resolved.get(tokenName);
-    errors[tokenName] = {
-      message: error.message,
-      originalValue: String(originalValue),
-    };
-  }
-  return errors;
-}
-
 // Json Normalization ----------------------------------------------------------
 
 /**
