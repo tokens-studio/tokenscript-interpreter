@@ -15,6 +15,11 @@ export interface ProcessOptions {
   builder?: TokenBuilder<any>;
 }
 
+export interface ProcessSetsOptions extends ProcessOptions {
+  activeSets?: string[];
+  activeTheme?: string;
+}
+
 export interface ProcessResult<T = Map<string, string | InterpreterResult>>
   extends ProcessorOutput {
   output: T;
@@ -86,6 +91,9 @@ function flattenToTokens(sets: Record<string, unknown>, setNames: string[]): Map
 
 // Main ------------------------------------------------------------------------
 
+/**
+ * Process flat token collection.
+ */
 export function processTokens<T = Map<string, string | InterpreterResult>>(
   tokens: Map<string, string> | Record<string, any>,
   options: ProcessOptions = {},
@@ -96,11 +104,6 @@ export function processTokens<T = Map<string, string | InterpreterResult>>(
     tokens instanceof Map ? tokens : flattenToTokens({ tokens }, ["tokens"]);
 
   return buildTokens(tokenMap, { builder, config, output }) as ProcessResult<T>;
-}
-
-export interface ProcessSetsOptions extends ProcessOptions {
-  activeSets?: string[];
-  activeTheme?: string;
 }
 
 /**
