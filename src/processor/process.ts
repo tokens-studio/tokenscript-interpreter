@@ -1,39 +1,26 @@
 import type { Config } from "@interpreter/config";
 import type { InterpreterResult } from "../interpreter/interpreter";
-import { isObject, isSingleEntryObject } from "../interpreter/utils/type";
-import type { OutputFormat, TokenBuilder } from "./builders";
+import { isObject } from "../interpreter/utils/type";
 import { buildTokens } from "./builders/base";
+import type { OutputFormat, TokenBuilder } from "./builders/types";
 import type { ProcessorOutput } from "./resolver/TokenResolver";
 import { extractSetNames, resolveThemes, selectTheme } from "./utils/theme-resolver";
 import { flattenObject, isNested, recordToMap } from "./utils/tokens";
 
-// Json Normalization ----------------------------------------------------------
+// Types -----------------------------------------------------------------------
 
-/**
- * If single file has $-prefixed keys (themes/metadata), expand top-level keys to separate sets.
- * Otherwise return as-is.
- */
-export function normalizeJsonFiles(jsonFiles: Record<string, unknown>): Record<string, unknown> {
-  if (!isSingleEntryObject(jsonFiles)) {
-    return jsonFiles; // Already multi-file
-  }
-
-  const [, content] = Object.entries(jsonFiles)[0];
-
-  if (!isObject(content)) {
-    throw new Error("File content is not an object");
-  }
-
-  // Check if single file has metadata keys (like $themes, $metadata)
-  const hasMetadata = Object.keys(content).some((key) => key.startsWith("$"));
-  if (hasMetadata) {
-    return content;
-  }
-
-  return jsonFiles;
+export interface ProcessOptions {
+  config?: Config;
+  output?: OutputFormat;
+  builder?: TokenBuilder<any>;
 }
 
-// Determine sets to pick ------------------------------------------------------
+export interface ProcessResult<T = Map<string, string | InterpreterResult>>
+  extends ProcessorOutput {
+  output: T;
+}
+
+// Helpers ---------------------------------------------------------------------
 
 function determineSets(
   jsonFiles: Record<string, unknown>,
@@ -73,8 +60,6 @@ function determineSets(
   throw new Error("No sets to process");
 }
 
-// Step 4: Flatten sets to tokens ----------------------------------------------
-
 function flattenToTokens(sets: Record<string, unknown>, setNames: string[]): Map<string, string> {
   const tokens = new Map<string, string>();
 
@@ -99,22 +84,8 @@ function flattenToTokens(sets: Record<string, unknown>, setNames: string[]): Map
   return tokens;
 }
 
-// Step 5: Interpret tokens ---------------------------------------------------
+// Main ------------------------------------------------------------------------
 
-export interface ProcessOptions {
-  config?: Config;
-  output?: OutputFormat;
-  builder?: TokenBuilder<any>;
-}
-
-export interface ProcessResult<T = Map<string, string | InterpreterResult>>
-  extends ProcessorOutput {
-  output: T;
-}
-
-/**
- * Process flat tokens directly without token sets or themes.
- */
 export function processTokens<T = Map<string, string | InterpreterResult>>(
   tokens: Map<string, string> | Record<string, any>,
   options: ProcessOptions = {},
@@ -133,8 +104,7 @@ export interface ProcessSetsOptions extends ProcessOptions {
 }
 
 /**
- * Process token sets with themes and activeSets support.
- * Handles complex token JSON structures with $themes, multiple sets, etc.
+ * Process token sets with theme or set selection.
  */
 export function processTokenSets<T = Map<string, string | InterpreterResult>>(
   normalizedFiles: Record<string, unknown>,
@@ -142,12 +112,9 @@ export function processTokenSets<T = Map<string, string | InterpreterResult>>(
 ): ProcessResult<T> {
   const { activeSets, activeTheme, config, output = "string", builder } = options;
 
-  // Step 1: Determine sets to pick
   const setNames = determineSets(normalizedFiles, activeSets, activeTheme);
 
-  // Step 2: Flatten to tokens
   const tokens = flattenToTokens(normalizedFiles, setNames);
 
-  // Step 3: Build tokens using builder
   return buildTokens(tokens, { builder, config, output }) as ProcessResult<T>;
 }
