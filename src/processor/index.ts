@@ -8,6 +8,7 @@ export {
   type JsValue,
   MapBuilder,
   NestedObjectBuilder,
+  type OutputFormat,
   serializeInterpreterResult,
   stringifyInterpreterResult,
   symbolTypeToJsValue,
@@ -15,7 +16,6 @@ export {
 } from "./builders";
 export { DependencyError } from "./errors";
 export {
-  type OutputFormat,
   type ProcessOptions,
   type ProcessResult,
   type ProcessSetsOptions,
