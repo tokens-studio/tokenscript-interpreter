@@ -1,0 +1,30 @@
+import type { Config } from "@interpreter/config";
+import type { InterpreterResult } from "../interpreter/interpreter";
+import type { OutputFormat, TokenBuilder } from "./builders/types";
+import type { ProcessorOutput } from "./resolver/TokenResolver";
+
+export interface ProcessOptions {
+  config?: Config;
+  output?: OutputFormat;
+  builder?: TokenBuilder<any>;
+}
+
+export interface ProcessSetsOptions extends ProcessOptions {
+  activeSets?: string[];
+  activeTheme?: string;
+}
+
+export interface ProcessResult<T = Map<string, string | InterpreterResult>>
+  extends ProcessorOutput {
+  output: T;
+}
+
+export type ProcessFilesOptions<T = any> = {
+  path: string;
+  outputPath?: string;
+  schemas?: string[];
+  activeSets?: string[];
+  activeTheme?: string;
+  output?: "string" | "symbols";
+  builder?: TokenBuilder<T>;
+};
