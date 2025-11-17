@@ -1,4 +1,4 @@
-import { BooleanSymbol, ColorSymbol, DictionarySymbol, ListSymbol, NumberSymbol, NumberWithUnitSymbol, StringSymbol, TokenSymbol } from "@interpreter/symbols";
+import { BooleanSymbol, DictionarySymbol, ListSymbol, NumberSymbol, NumberWithUnitSymbol, StringSymbol, TokenSymbol } from "@interpreter/symbols";
 import { describe, expect, it } from "vitest";
 
 describe("TokenSymbol", () => {
@@ -436,13 +436,7 @@ describe("TokenSymbol", () => {
         const colorValue = new DictionarySymbol(
           new Map([
             ["colorSpace", new StringSymbol("srgb")],
-            [
-              "components",
-              new ListSymbol(
-                [new NumberSymbol(255), new NumberSymbol(0), new NumberSymbol(0)],
-                false,
-              ),
-            ],
+            ["components", new ListSymbol([new NumberSymbol(255), new NumberSymbol(0), new NumberSymbol(0)], false)],
             ["alpha", new NumberSymbol(1)],
             ["hex", new StringSymbol("#ff0000")],
           ]),
@@ -466,13 +460,7 @@ describe("TokenSymbol", () => {
               new DictionarySymbol(
                 new Map([
                   ["colorSpace", new StringSymbol("srgb")],
-                  [
-                    "components",
-                    new ListSymbol(
-                      [new NumberSymbol(0), new NumberSymbol(0), new NumberSymbol(0)],
-                      false,
-                    ),
-                  ],
+                  ["components", new ListSymbol([new NumberSymbol(0), new NumberSymbol(0), new NumberSymbol(0)], false)],
                   ["alpha", new NumberSymbol(0.5)],
                   ["hex", new StringSymbol("#000000")],
                 ]),
@@ -509,13 +497,7 @@ describe("TokenSymbol", () => {
               new DictionarySymbol(
                 new Map([
                   ["colorSpace", new StringSymbol("srgb")],
-                  [
-                    "components",
-                    new ListSymbol(
-                      [new NumberSymbol(0), new NumberSymbol(0), new NumberSymbol(0)],
-                      false,
-                    ),
-                  ],
+                  ["components", new ListSymbol([new NumberSymbol(0), new NumberSymbol(0), new NumberSymbol(0)], false)],
                   ["alpha", new NumberSymbol(0.5)],
                   ["hex", new StringSymbol("#000000")],
                 ]),
@@ -535,13 +517,7 @@ describe("TokenSymbol", () => {
               new DictionarySymbol(
                 new Map([
                   ["colorSpace", new StringSymbol("srgb")],
-                  [
-                    "components",
-                    new ListSymbol(
-                      [new NumberSymbol(255), new NumberSymbol(0), new NumberSymbol(0)],
-                      false,
-                    ),
-                  ],
+                  ["components", new ListSymbol([new NumberSymbol(255), new NumberSymbol(0), new NumberSymbol(0)], false)],
                   ["alpha", new NumberSymbol(0.3)],
                   ["hex", new StringSymbol("#ff0000")],
                 ]),
@@ -583,13 +559,7 @@ describe("TokenSymbol", () => {
               new DictionarySymbol(
                 new Map([
                   ["colorSpace", new StringSymbol("srgb")],
-                  [
-                    "components",
-                    new ListSymbol(
-                      [new NumberSymbol(255), new NumberSymbol(0), new NumberSymbol(0)],
-                      false,
-                    ),
-                  ],
+                  ["components", new ListSymbol([new NumberSymbol(255), new NumberSymbol(0), new NumberSymbol(0)], false)],
                   ["alpha", new NumberSymbol(1)],
                   ["hex", new StringSymbol("#ff0000")],
                 ]),
