@@ -1020,6 +1020,345 @@ export class DictionarySymbol extends BaseSymbolType {
   }
 }
 
+export type TokenValue = Map<string, ISymbolType> | ISymbolType[];
+
+export class TokenSymbol extends BaseSymbolType {
+  type = "Token";
+  static readonly type = "Token";
+  static _SUPPORTED_METHODS = {
+    get: {
+      function: function (this: TokenSymbol, keyOrIndex: StringSymbol | NumberSymbol) {
+        return this.get(keyOrIndex);
+      },
+      args: [{ name: "keyOrIndex", type: "String|Number", optional: false }],
+      returnType: "any",
+    },
+    set: {
+      function: function (this: TokenSymbol, key: StringSymbol, value: ISymbolType) {
+        return this.set(key, value);
+      },
+      args: [
+        { name: "key", type: "String", optional: false },
+        { name: "value", type: "any", optional: false },
+      ],
+      returnType: "Token",
+    },
+    keys: {
+      function: function (this: TokenSymbol) {
+        return this.keys();
+      },
+      args: [],
+      returnType: "List",
+    },
+    values: {
+      function: function (this: TokenSymbol) {
+        return this.values();
+      },
+      args: [],
+      returnType: "List",
+    },
+    length: {
+      function: function (this: TokenSymbol) {
+        return this.length();
+      },
+      args: [],
+      returnType: "Number",
+    },
+    // List methods (when value is Array)
+    append: {
+      function: function (this: TokenSymbol, item: ISymbolType) {
+        return this.append(item);
+      },
+      args: [{ name: "item", type: "any" }],
+      returnType: "Token",
+    },
+    extend: {
+      function: function (this: TokenSymbol, ...items: ISymbolType[]) {
+        return this.extend(...items);
+      },
+      args: [],
+      returnType: "Token",
+    },
+    insert: {
+      function: function (this: TokenSymbol, index: NumberSymbol, item: ISymbolType) {
+        return this.insert(index, item);
+      },
+      args: [
+        { name: "index", type: "Number" },
+        { name: "item", type: "any" },
+      ],
+      returnType: "Token",
+    },
+    delete: {
+      function: function (this: TokenSymbol, index: NumberSymbol) {
+        return this.delete(index);
+      },
+      args: [{ name: "index", type: "Number" }],
+      returnType: "Token",
+    },
+    index: {
+      function: function (this: TokenSymbol, item: ISymbolType) {
+        return this.index(item);
+      },
+      args: [{ name: "item", type: "any" }],
+      returnType: "Number",
+    },
+    update: {
+      function: function (this: TokenSymbol, index: NumberSymbol, item: ISymbolType) {
+        return this.update(index, item);
+      },
+      args: [
+        { name: "index", type: "Number" },
+        { name: "item", type: "any" },
+      ],
+      returnType: "Token",
+    },
+    join: {
+      function: function (this: TokenSymbol, separator?: StringSymbol) {
+        return this.join(separator);
+      },
+      args: [{ name: "separator", type: "String", optional: true }],
+      returnType: "String",
+    },
+  };
+
+  public subType: string;
+  public value: TokenValue;
+
+  constructor(
+    subType: string,
+    value: TokenValue | Record<string, ISymbolType> | TokenSymbol | null,
+    config?: Config,
+  ) {
+    let safeValue: TokenValue;
+    if (value instanceof TokenSymbol) {
+      safeValue = value.value;
+    } else if (isMap(value)) {
+      safeValue = value;
+    } else if (isObject(value)) {
+      safeValue = new Map(Object.entries(value));
+    } else if (isArray(value)) {
+      safeValue = value;
+    } else if (isNull(value)) {
+      safeValue = new Map();
+    } else {
+      throw new InterpreterError(`Token value must be a Record or List, got ${typeof value}.`);
+    }
+
+    super(safeValue, config);
+    this.value = safeValue;
+    this.subType = subType;
+  }
+
+  validValue(val: any): boolean {
+    return isMap(val) || isArray(val) || isNull(val);
+  }
+
+  toString(): string {
+    if (isMap(this.value)) {
+      return formatObjectEntries(this.value);
+    }
+    if (isArray(this.value)) {
+      const delimiter = ", ";
+      return this.value.map((x) => (x.value === null ? "null" : x.toString())).join(delimiter);
+    }
+    return "";
+  }
+
+  private ensureKeyIsString(key: ISymbolType): string {
+    if (key instanceof StringSymbol && key.value !== null) {
+      return key.value;
+    }
+    if (typeof key === "string") {
+      return key;
+    }
+    throw new InterpreterError(`Key must be a string, got ${typeof key}.`);
+  }
+
+  get(keyOrIndex: StringSymbol | NumberSymbol): ISymbolType {
+    if (isArray(this.value)) {
+      // List behavior - get by index
+      if (!(keyOrIndex instanceof NumberSymbol)) {
+        throw new InterpreterError("List get requires a Number index.");
+      }
+      const index = keyOrIndex.value as number;
+      if (index < 0 || index >= this.value.length) {
+        throw new InterpreterError("Index out of range for get.");
+      }
+      return this.value[index];
+    }
+    // Dictionary behavior - get by key
+    if (!(keyOrIndex instanceof StringSymbol)) {
+      throw new InterpreterError("Dictionary get requires a String key.");
+    }
+    const keyStr = this.ensureKeyIsString(keyOrIndex);
+    return this.value.get(keyStr) || new NullSymbol(this.config);
+  }
+
+  set(key: StringSymbol, value: ISymbolType): TokenSymbol {
+    if (isArray(this.value)) {
+      throw new InterpreterError("Cannot set key on Token with List value.");
+    }
+    const keyStr = this.ensureKeyIsString(key);
+    this.value.set(keyStr, value.cloneIfMutable());
+    return this;
+  }
+
+  keys(): ListSymbol {
+    if (isArray(this.value)) {
+      throw new InterpreterError("Cannot get keys from Token with List value.");
+    }
+    const keys = Array.from(this.value.keys()).map((key) => new StringSymbol(key, this.config));
+    return new ListSymbol(keys, false, this.config);
+  }
+
+  values(): ListSymbol {
+    if (isMap(this.value)) {
+      const values = Array.from(this.value.values());
+      return new ListSymbol(values, false, this.config);
+    }
+    return new ListSymbol(this.value, false, this.config);
+  }
+
+  length(): NumberSymbol {
+    if (isMap(this.value)) {
+      return new NumberSymbol(this.value.size, this.config);
+    }
+    return new NumberSymbol(this.value.length, this.config);
+  }
+
+  // List-specific methods
+  append(item: ISymbolType): TokenSymbol {
+    if (isMap(this.value)) {
+      throw new InterpreterError("Cannot append to Token with Dictionary value.");
+    }
+    this.value.push(item.cloneIfMutable());
+    return this;
+  }
+
+  extend(...items: ISymbolType[]): TokenSymbol {
+    if (isMap(this.value)) {
+      throw new InterpreterError("Cannot extend Token with Dictionary value.");
+    }
+    for (const item of items) {
+      if (item instanceof ListSymbol) {
+        this.value.push(...item.value.map((element) => element.cloneIfMutable()));
+      } else {
+        this.value.push(item.cloneIfMutable());
+      }
+    }
+    return this;
+  }
+
+  insert(indexSymbol: NumberSymbol, item: ISymbolType): TokenSymbol {
+    if (isMap(this.value)) {
+      throw new InterpreterError("Cannot insert into Token with Dictionary value.");
+    }
+    const index = indexSymbol.value as number;
+    if (index < 0 || index > this.value.length) {
+      throw new InterpreterError("Index out of range for insert.");
+    }
+    this.value.splice(index, 0, item.cloneIfMutable());
+    return this;
+  }
+
+  delete(indexSymbol: NumberSymbol): TokenSymbol {
+    if (isMap(this.value)) {
+      throw new InterpreterError("Cannot delete from Token with Dictionary value.");
+    }
+    const index = indexSymbol.value as number;
+    if (index < 0 || index >= this.value.length) {
+      throw new InterpreterError("Index out of range for deletion.");
+    }
+    this.value.splice(index, 1);
+    return this;
+  }
+
+  index(item: ISymbolType): NumberSymbol {
+    if (isMap(this.value)) {
+      throw new InterpreterError("Cannot get index from Token with Dictionary value.");
+    }
+    const idx = this.value.findIndex((el) => el.equals(item));
+    return new NumberSymbol(idx, this.config);
+  }
+
+  update(indexSymbol: NumberSymbol, item: ISymbolType): TokenSymbol {
+    if (isMap(this.value)) {
+      throw new InterpreterError("Cannot update Token with Dictionary value.");
+    }
+    const index = indexSymbol.value as number;
+    if (index < 0 || index >= this.value.length) {
+      throw new InterpreterError("Index out of range for update.");
+    }
+    this.value[index] = item.cloneIfMutable();
+    return this;
+  }
+
+  join(separator?: StringSymbol): StringSymbol {
+    if (isMap(this.value)) {
+      throw new InterpreterError("Cannot join Token with Dictionary value.");
+    }
+    const sep = separator?.value || "";
+    const stringElements = this.value.map((element) => {
+      if (element.value === null) {
+        return "null";
+      }
+      return element.toString();
+    });
+    return new StringSymbol(stringElements.join(sep), this.config);
+  }
+
+  deepCopy(): TokenSymbol {
+    if (isMap(this.value)) {
+      const copiedMap = new Map<string, ISymbolType>();
+      for (const [key, val] of this.value.entries()) {
+        copiedMap.set(key, val.deepCopy());
+      }
+      return new TokenSymbol(this.subType, copiedMap, this.config);
+    }
+    const copiedArray = this.value.map((item) => item.deepCopy());
+    return new TokenSymbol(this.subType, copiedArray, this.config);
+  }
+
+  cloneIfMutable(): TokenSymbol {
+    return this.deepCopy();
+  }
+
+  static empty(): TokenSymbol {
+    return new TokenSymbol("unknown", null);
+  }
+
+  hasAttribute(attributeName: string): boolean {
+    if (attributeName === "subType" || attributeName === "type") {
+      return true;
+    }
+    if (isMap(this.value)) {
+      return this.value.has(attributeName);
+    }
+    return false;
+  }
+
+  getAttribute(attributeName: string): ISymbolType | null {
+    if (attributeName === "subType") {
+      return new StringSymbol(this.subType, this.config);
+    }
+    if (attributeName === "type") {
+      return new StringSymbol(this.type, this.config);
+    }
+    if (isMap(this.value)) {
+      const val = this.value.get(attributeName);
+      if (val !== undefined) {
+        return val;
+      }
+    }
+    return null;
+  }
+
+  getTypeName(): string {
+    return typeName(this.type, this.subType);
+  }
+}
+
 export type dynamicColorValue = Record<string, ISymbolType>;
 
 export class ColorSymbol extends BaseSymbolType {
@@ -1233,6 +1572,7 @@ export const basicSymbolTypes = {
   ...nullableSymbolTypes,
   [ListSymbol.type.toLowerCase()]: ListSymbol,
   [DictionarySymbol.type.toLowerCase()]: DictionarySymbol,
+  [TokenSymbol.type.toLowerCase()]: TokenSymbol,
 } as const;
 
 export type BasicSymbolTypeConstructor = (typeof basicSymbolTypes)[keyof typeof basicSymbolTypes];
@@ -1283,6 +1623,20 @@ export function symbolTypeToJsValue(symbol: ISymbolType): JsValue {
       obj[key] = symbolTypeToJsValue(child);
     }
     return obj;
+  }
+  if (symbol instanceof TokenSymbol) {
+    if (isMap(symbol.value)) {
+      const obj: Record<string, JsValue> = {};
+      const mapValue = symbol.value as Map<string, ISymbolType>;
+      for (const [key, child] of mapValue.entries()) {
+        obj[key] = symbolTypeToJsValue(child);
+      }
+      return obj;
+    }
+    if (isArray(symbol.value)) {
+      const arrayValue = symbol.value as ISymbolType[];
+      return arrayValue.map((item) => symbolTypeToJsValue(item));
+    }
   }
   return symbol.toString();
 }
