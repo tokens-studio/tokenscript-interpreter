@@ -1,10 +1,10 @@
-import { isObject } from "@/src/interpreter/utils/type";
+import { getFirstKey, isObject } from "@/src/interpreter/utils/type";
 
 /**
  * Flattens a nested tokens object structure into a flat key-value map with dot-separated paths.
  *
  * @param obj - The nested object to flatten
- * @param prefix - Current path prefix (used in recursion)
+ * @param prefixAccumulator - Recursion prefix accumulator
  * @returns Flat map of token paths to values
  *
  * @example
@@ -13,28 +13,25 @@ import { isObject } from "@/src/interpreter/utils/type";
  */
 export function flattenTokensObject(
   obj: Record<string, unknown>,
-  prefix = "",
+  prefixAccumulator = "",
 ): Map<string, string> {
   const result = new Map<string, string>();
 
-  for (const [key, value] of Object.entries(obj)) {
-    if (key.startsWith("$")) {
+  for (const [prefix, value] of Object.entries(obj)) {
+    if (prefix.startsWith("$")) {
       continue;
     }
 
-    const path = prefix ? `${prefix}.${key}` : key;
+    const path = prefixAccumulator ? `${prefixAccumulator}.${prefix}` : prefix;
 
     if (isObject(value)) {
       const objValue = value as Record<string, unknown>;
-      // Check for token with $value property (Design Tokens format)
-      if ("$value" in objValue) {
-        result.set(path, String(objValue.$value));
+      const tokenValue = getFirstKey(["$value", "value"], objValue);
+
+      if (tokenValue) {
+        result.set(path, String(tokenValue));
       }
-      // Check for token with value property (legacy format)
-      else if ("value" in objValue) {
-        result.set(path, String(objValue.value));
-      }
-      // Otherwise, recurse into nested object
+      // Recurse into structure
       else {
         const nested = flattenTokensObject(objValue, path);
         for (const [nestedKey, nestedValue] of nested) {
