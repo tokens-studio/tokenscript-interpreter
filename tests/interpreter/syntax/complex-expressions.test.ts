@@ -191,7 +191,7 @@ describe("Complex Expressions - List Operations", () => {
     interpreter.interpret();
 
     const result = interpreter.symbolTable.get("list1");
-    expect(result?.elements.map((e) => e.value)).toEqual([2, 3, 99, 4, 5]);
+    expect(result?.value.map((e) => e.value)).toEqual([2, 3, 99, 4, 5]);
   });
 
   it("should handle list operations with variables", () => {
@@ -278,11 +278,11 @@ describe("Complex Expressions - Mixed Types", () => {
     interpreter.interpret();
 
     const list = interpreter.symbolTable.get("list");
-    expect(list?.elements.length).toBe(4);
-    expect(list?.elements[0].value).toBe(42);
-    expect(list?.elements[1].toString()).toBe("hello");
-    expect(list?.elements[2].value).toBe(true);
-    expect(list?.elements[3].value).toBe(50);
+    expect(list?.value.length).toBe(4);
+    expect(list?.value[0].value).toBe(42);
+    expect(list?.value[1].toString()).toBe("hello");
+    expect(list?.value[2].value).toBe(true);
+    expect(list?.value[3].value).toBe(50);
   });
 
   it("should handle complex implicit lists", () => {

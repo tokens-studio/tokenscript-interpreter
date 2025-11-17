@@ -609,15 +609,13 @@ export class ListSymbol extends BaseSymbolType {
     },
   };
 
-  public value: ISymbolType[] | null;
-  public elements: ISymbolType[];
+  public value: ISymbolType[];
   public isImplicit: boolean;
 
   constructor(elements: ISymbolType[] | null, isImplicit = false, config?: Config) {
     const safeElements = elements === null ? [] : elements;
     super(safeElements, config);
     this.value = safeElements;
-    this.elements = safeElements;
     this.isImplicit = isImplicit;
   }
 
@@ -627,12 +625,12 @@ export class ListSymbol extends BaseSymbolType {
 
   toString(): string {
     const delimiter = this.isImplicit ? " " : ", ";
-    return this.elements.map((x) => (x.value === null ? "null" : x.toString())).join(delimiter);
+    return this.value.map((x) => (x.value === null ? "null" : x.toString())).join(delimiter);
   }
 
   appendImpl(item: ISymbolType): ListSymbol {
     const itemToAdd = item.cloneIfMutable();
-    this.elements.push(itemToAdd);
+    this.value.push(itemToAdd);
     return this;
   }
 
@@ -640,9 +638,9 @@ export class ListSymbol extends BaseSymbolType {
     // Handle both individual arguments and ListSymbol arguments
     for (const item of items) {
       if (item instanceof ListSymbol) {
-        this.elements.push(...item.elements.map((element) => element.cloneIfMutable()));
+        this.value.push(...item.value.map((element) => element.cloneIfMutable()));
       } else {
-        this.elements.push(item.cloneIfMutable());
+        this.value.push(item.cloneIfMutable());
       }
     }
     return this;
@@ -650,47 +648,47 @@ export class ListSymbol extends BaseSymbolType {
 
   insertImpl(indexSymbol: NumberSymbol, item: ISymbolType): ListSymbol {
     const index = indexSymbol.value as number;
-    if (index < 0 || index > this.elements.length)
+    if (index < 0 || index > this.value.length)
       throw new InterpreterError("Index out of range for insert.");
-    this.elements.splice(index, 0, item.cloneIfMutable());
+    this.value.splice(index, 0, item.cloneIfMutable());
     return this;
   }
 
   deleteImpl(indexSymbol: NumberSymbol): ListSymbol {
     const index = indexSymbol.value as number;
-    if (index < 0 || index >= this.elements.length)
+    if (index < 0 || index >= this.value.length)
       throw new InterpreterError("Index out of range for deletion.");
-    this.elements.splice(index, 1);
+    this.value.splice(index, 1);
     return this;
   }
 
   length(): NumberSymbol {
-    return new NumberSymbol(this.elements.length, this.config);
+    return new NumberSymbol(this.value.length, this.config);
   }
 
   indexImpl(item: ISymbolType): NumberSymbol {
-    const idx = this.elements.findIndex((el) => el.equals(item));
+    const idx = this.value.findIndex((el) => el.equals(item));
     return new NumberSymbol(idx, this.config);
   }
 
   getImpl(indexSymbol: NumberSymbol): ISymbolType {
     const index = indexSymbol.value as number;
-    if (index < 0 || index >= this.elements.length)
+    if (index < 0 || index >= this.value.length)
       throw new InterpreterError("Index out of range for get.");
-    return this.elements[index];
+    return this.value[index];
   }
 
   updateImpl(indexSymbol: NumberSymbol, item: ISymbolType): ListSymbol {
     const index = indexSymbol.value as number;
-    if (index < 0 || index >= this.elements.length)
+    if (index < 0 || index >= this.value.length)
       throw new InterpreterError("Index out of range for update.");
-    this.elements[index] = item.cloneIfMutable();
+    this.value[index] = item.cloneIfMutable();
     return this;
   }
 
   joinImpl(separator?: StringSymbol): StringSymbol {
     const sep = separator?.value || "";
-    const stringElements = this.elements.map((element) => {
+    const stringElements = this.value.map((element) => {
       if (element.value === null) {
         return "null";
       }
@@ -700,7 +698,7 @@ export class ListSymbol extends BaseSymbolType {
   }
 
   deepCopy(): ListSymbol {
-    const copiedElements = this.elements.map((element) => element.deepCopy());
+    const copiedElements = this.value.map((element) => element.deepCopy());
     return new ListSymbol(copiedElements, this.isImplicit, this.config);
   }
 
@@ -1277,7 +1275,7 @@ export function symbolTypeToJsValue(symbol: ISymbolType): JsValue {
     return symbol.toString();
   }
   if (symbol instanceof ListSymbol) {
-    return symbol.elements.map((item) => symbolTypeToJsValue(item));
+    return symbol.value.map((item) => symbolTypeToJsValue(item));
   }
   if (symbol instanceof DictionarySymbol) {
     const obj: Record<string, JsValue> = {};

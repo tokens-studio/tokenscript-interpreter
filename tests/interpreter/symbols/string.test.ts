@@ -117,29 +117,29 @@ describe("StringSymbol - Unit Tests", () => {
       const str = new StringSymbol("a,b,c");
       const result = str.splitImpl(new StringSymbol(","));
       expect(result).toBeInstanceOf(ListSymbol);
-      expect(result.elements.length).toBe(3);
-      expect(result.elements.map((e) => e.value)).toEqual(["a", "b", "c"]);
+      expect(result.value.length).toBe(3);
+      expect(result.value.map((e) => e.value)).toEqual(["a", "b", "c"]);
     });
 
     it("should split by string delimiter", () => {
       const str = new StringSymbol("a,b,c");
       const result = str.splitImpl(",");
-      expect(result.elements.length).toBe(3);
-      expect(result.elements.map((e) => e.value)).toEqual(["a", "b", "c"]);
+      expect(result.value.length).toBe(3);
+      expect(result.value.map((e) => e.value)).toEqual(["a", "b", "c"]);
     });
 
     it("should split into characters when no delimiter", () => {
       const str = new StringSymbol("abc");
       const result = str.splitImpl();
-      expect(result.elements.length).toBe(3);
-      expect(result.elements.map((e) => e.value)).toEqual(["a", "b", "c"]);
+      expect(result.value.length).toBe(3);
+      expect(result.value.map((e) => e.value)).toEqual(["a", "b", "c"]);
     });
 
     it("should split into characters when delimiter is null", () => {
       const str = new StringSymbol("abc");
       const result = str.splitImpl(null);
-      expect(result.elements.length).toBe(3);
-      expect(result.elements.map((e) => e.value)).toEqual(["a", "b", "c"]);
+      expect(result.value.length).toBe(3);
+      expect(result.value.map((e) => e.value)).toEqual(["a", "b", "c"]);
     });
 
     it("should throw error for invalid delimiter type", () => {
@@ -201,8 +201,8 @@ describe("String Methods - Split Operations", () => {
     `;
     const vars = interpretAndGetVariables(text, ["parts", "color_parts"]);
 
-    expect(vars.parts?.elements.map((e) => e.toString())).toEqual(["hello", "world"]);
-    expect(vars.color_parts?.elements.map((e) => e.toString())).toEqual(["", "000000"]);
+    expect(vars.parts?.value.map((e) => e.toString())).toEqual(["hello", "world"]);
+    expect(vars.color_parts?.value.map((e) => e.toString())).toEqual(["", "000000"]);
   });
 
   it("should handle split with multiple delimiters", () => {
@@ -213,7 +213,7 @@ describe("String Methods - Split Operations", () => {
     `;
     const vars = interpretAndGetVariables(text, ["parts", "length"]);
 
-    expect(vars.parts?.elements.map((e) => e.toString())).toEqual(["a", "b", "c", "d"]);
+    expect(vars.parts?.value.map((e) => e.toString())).toEqual(["a", "b", "c", "d"]);
     expect(vars.length?.value).toBe(4);
   });
 
@@ -224,7 +224,7 @@ describe("String Methods - Split Operations", () => {
     `;
     const parts = interpretAndGetVariable(text, "parts");
 
-    expect(parts?.elements.map((e) => e.toString())).toEqual(["hello world"]);
+    expect(parts?.value.map((e) => e.toString())).toEqual(["hello world"]);
   });
 
   it("should handle split without delimiter (character split)", () => {
@@ -234,7 +234,7 @@ describe("String Methods - Split Operations", () => {
     `;
     const chars = interpretAndGetVariable(text, "chars");
 
-    expect(chars?.elements.map((e) => e.toString())).toEqual(["a", "b", "c"]);
+    expect(chars?.value.map((e) => e.toString())).toEqual(["a", "b", "c"]);
   });
 });
 

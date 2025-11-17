@@ -47,7 +47,7 @@ describe("DictionarySymbol - Unit Tests", () => {
       const copy = original.deepCopy();
 
       expect(copy.value.get("list")).not.toBe(original.value.get("list"));
-      expect((copy.value.get("list") as ListSymbol).elements[0].value).toBe("nested");
+      expect((copy.value.get("list") as ListSymbol).value[0].value).toBe("nested");
     });
   });
 
@@ -64,8 +64,8 @@ describe("DictionarySymbol - Unit Tests", () => {
 
       list.appendImpl(new StringSymbol("modified"));
 
-      expect((dict.value.get("list1") as ListSymbol).elements.length).toBe(1);
-      expect((dict.value.get("list2") as ListSymbol).elements.length).toBe(1);
+      expect((dict.value.get("list1") as ListSymbol).value.length).toBe(1);
+      expect((dict.value.get("list2") as ListSymbol).value.length).toBe(1);
     });
 
     it("should handle the tokenscript scenario correctly", () => {
@@ -120,8 +120,8 @@ describe("DictionarySymbol - Unit Tests", () => {
         ]),
       );
       const keys = dict.keysImpl();
-      expect(keys.elements.length).toBe(2);
-      expect(keys.elements.map((k) => k.value)).toEqual(["key1", "key2"]);
+      expect(keys.value.length).toBe(2);
+      expect(keys.value.map((k) => k.value)).toEqual(["key1", "key2"]);
     });
   });
 
@@ -134,8 +134,8 @@ describe("DictionarySymbol - Unit Tests", () => {
         ]),
       );
       const values = dict.valuesImpl();
-      expect(values.elements.length).toBe(2);
-      expect(values.elements.map((v) => v.value)).toEqual(["value1", 42]);
+      expect(values.value.length).toBe(2);
+      expect(values.value.map((v) => v.value)).toEqual(["value1", 42]);
     });
   });
 

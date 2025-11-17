@@ -94,7 +94,7 @@ describe("Color Objects - Color Operations", () => {
     `;
     const vars = interpretAndGetVariables(text, ["palette", "first", "length"]);
 
-    expect(vars.palette?.elements.length).toBe(4);
+    expect(vars.palette?.value.length).toBe(4);
     expect(vars.first?.toString()).toBe("#FF0000");
     expect(vars.length?.value).toBe(4);
   });

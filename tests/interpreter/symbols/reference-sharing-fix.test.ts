@@ -34,11 +34,11 @@ describe("Reference Sharing Fix", () => {
       }
 
       // Verify that each dictionary in the list has different values
-      expect(scale.elements.length).toBe(3);
+      expect(scale.value.length).toBe(3);
 
-      const dict0 = scale.elements[0] as DictionarySymbol;
-      const dict1 = scale.elements[1] as DictionarySymbol;
-      const dict2 = scale.elements[2] as DictionarySymbol;
+      const dict0 = scale.value[0] as DictionarySymbol;
+      const dict1 = scale.value[1] as DictionarySymbol;
+      const dict2 = scale.value[2] as DictionarySymbol;
 
       // Each should be a different instance
       expect(dict0).not.toBe(dict1);
@@ -73,8 +73,8 @@ describe("Reference Sharing Fix", () => {
       nestedDict.setImpl(new StringSymbol("nested"), new StringSymbol("modified"));
 
       // Both appended dictionaries should be unaffected
-      const first = list.elements[0] as DictionarySymbol;
-      const second = list.elements[1] as DictionarySymbol;
+      const first = list.value[0] as DictionarySymbol;
+      const second = list.value[1] as DictionarySymbol;
 
       expect(first).not.toBe(second);
       expect(first).not.toBe(mainDict);
@@ -101,7 +101,7 @@ describe("Reference Sharing Fix", () => {
       dict.setImpl(new StringSymbol("key"), new StringSymbol("modified"));
 
       // List should be unaffected
-      expect((list.elements[0] as DictionarySymbol).getImpl(new StringSymbol("key")).value).toBe("value");
+      expect((list.value[0] as DictionarySymbol).getImpl(new StringSymbol("key")).value).toBe("value");
     });
 
     it("should deep copy in insertImpl", () => {
@@ -114,7 +114,7 @@ describe("Reference Sharing Fix", () => {
       dict.setImpl(new StringSymbol("key"), new StringSymbol("modified"));
 
       // List should be unaffected
-      expect((list.elements[0] as DictionarySymbol).getImpl(new StringSymbol("key")).value).toBe("inserted");
+      expect((list.value[0] as DictionarySymbol).getImpl(new StringSymbol("key")).value).toBe("inserted");
     });
 
     it("should deep copy in updateImpl", () => {
@@ -127,7 +127,7 @@ describe("Reference Sharing Fix", () => {
       dict.setImpl(new StringSymbol("key"), new StringSymbol("modified"));
 
       // List should be unaffected
-      expect((list.elements[0] as DictionarySymbol).getImpl(new StringSymbol("key")).value).toBe("updated");
+      expect((list.value[0] as DictionarySymbol).getImpl(new StringSymbol("key")).value).toBe("updated");
     });
 
     it("should deep copy in extendImpl with individual items", () => {
@@ -140,7 +140,7 @@ describe("Reference Sharing Fix", () => {
       dict.setImpl(new StringSymbol("key"), new StringSymbol("modified"));
 
       // List should be unaffected
-      expect((list.elements[0] as DictionarySymbol).getImpl(new StringSymbol("key")).value).toBe("extended");
+      expect((list.value[0] as DictionarySymbol).getImpl(new StringSymbol("key")).value).toBe("extended");
     });
 
     it("should deep copy in extendImpl with list argument", () => {
@@ -154,7 +154,7 @@ describe("Reference Sharing Fix", () => {
       dict.setImpl(new StringSymbol("key"), new StringSymbol("modified"));
 
       // Extended list should be unaffected
-      expect((list1.elements[0] as DictionarySymbol).getImpl(new StringSymbol("key")).value).toBe("from_list");
+      expect((list1.value[0] as DictionarySymbol).getImpl(new StringSymbol("key")).value).toBe("from_list");
     });
   });
 
@@ -187,12 +187,12 @@ describe("Reference Sharing Fix", () => {
       list.appendImpl(str);
       list.appendImpl(num);
 
-      expect(list.elements.length).toBe(3);
-      expect(list.elements[0].value).toBe(42);
-      expect(list.elements[1].value).toBe("test");
-      expect(list.elements[2].value).toBe(42);
+      expect(list.value.length).toBe(3);
+      expect(list.value[0].value).toBe(42);
+      expect(list.value[1].value).toBe("test");
+      expect(list.value[2].value).toBe(42);
 
-      expect(list.elements[0]).toBe(list.elements[2]);
+      expect(list.value[0]).toBe(list.value[2]);
     });
   });
 });

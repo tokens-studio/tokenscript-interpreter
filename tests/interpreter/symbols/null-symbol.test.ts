@@ -191,7 +191,7 @@ describe("Null Coercion", () => {
     const result = interpreter.interpret();
 
     expect(result).toBeInstanceOf(ListSymbol);
-    expect((result as ListSymbol).elements).toEqual([]);
+    expect((result as ListSymbol).value).toEqual([]);
     expect(result?.type).toBe("List");
   });
 
@@ -241,13 +241,13 @@ describe("Null Coercion", () => {
     expect(result).toBeInstanceOf(ListSymbol);
     const list = result as ListSymbol;
 
-    expect(list.elements).toHaveLength(3);
-    expect(list.elements[0]).toBeInstanceOf(StringSymbol);
-    expect(list.elements[0].value).toBe(null);
-    expect(list.elements[1]).toBeInstanceOf(NumberSymbol);
-    expect(list.elements[1].value).toBe(null);
-    expect(list.elements[2]).toBeInstanceOf(BooleanSymbol);
-    expect(list.elements[2].value).toBe(null);
+    expect(list.value).toHaveLength(3);
+    expect(list.value[0]).toBeInstanceOf(StringSymbol);
+    expect(list.value[0].value).toBe(null);
+    expect(list.value[1]).toBeInstanceOf(NumberSymbol);
+    expect(list.value[1].value).toBe(null);
+    expect(list.value[2]).toBeInstanceOf(BooleanSymbol);
+    expect(list.value[2].value).toBe(null);
   });
 
   it("should handle null coercion with NumberWithUnit subtypes", () => {
