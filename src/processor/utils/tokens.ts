@@ -2,12 +2,13 @@
  * Utility functions for token processing
  */
 
+import { isObject } from "@/src/interpreter/utils/type";
+
 /**
  * Flattens a nested object structure into a flat key-value map with dot-separated paths.
  *
  * @param obj - The nested object to flatten
  * @param prefix - Current path prefix (used in recursion)
- * @param skipMetadata - Whether to skip keys starting with $
  * @returns Flat map of token paths to values
  *
  * @example
@@ -17,19 +18,17 @@
 export function flattenObject(
   obj: Record<string, unknown>,
   prefix = "",
-  skipMetadata = true,
 ): Map<string, string> {
   const result = new Map<string, string>();
 
   for (const [key, value] of Object.entries(obj)) {
-    // Skip metadata keys if configured
-    if (skipMetadata && key.startsWith("$")) {
+    if (key.startsWith("$")) {
       continue;
     }
 
     const path = prefix ? `${prefix}.${key}` : key;
 
-    if (value && typeof value === "object" && !Array.isArray(value)) {
+    if (isObject(value)) {
       const objValue = value as Record<string, unknown>;
       // Check for token with $value property (Design Tokens format)
       if ("$value" in objValue) {
@@ -41,7 +40,7 @@ export function flattenObject(
       }
       // Otherwise, recurse into nested object
       else {
-        const nested = flattenObject(objValue, path, skipMetadata);
+        const nested = flattenObject(objValue, path);
         for (const [nestedKey, nestedValue] of nested) {
           result.set(nestedKey, nestedValue);
         }
