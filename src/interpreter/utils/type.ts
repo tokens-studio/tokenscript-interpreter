@@ -83,6 +83,16 @@ export const isNonEmptyArray = <T>(v: unknown): v is [T, ...T[]] => {
   return isArray(v) && v.length > 0;
 };
 
+export const isOutOfBounds = <T>(value: unknown, index: number): boolean => {
+  if (!isArray<T>(value)) return true;
+  return index < 0 || index >= value.length;
+};
+
+export const isOutOfBoundsInclusive = <T>(value: unknown, index: number): boolean => {
+  if (!isArray<T>(value)) return true;
+  return index < 0 || index > value.length;
+};
+
 export const isEmpty = (v: unknown): boolean => {
   if (isNone(v)) return true;
   if (isString(v) || isArray(v)) return v.length === 0;

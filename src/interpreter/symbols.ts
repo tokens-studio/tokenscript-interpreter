@@ -12,6 +12,8 @@ import {
   isNumber,
   isObject,
   isObjectWithKey,
+  isOutOfBounds,
+  isOutOfBoundsInclusive,
   isString,
   isUndefined,
   nullToUndefined,
@@ -54,29 +56,29 @@ export const getResultTypeName = (result: unknown): string => {
 };
 
 const formatObjectEntries = (
-  data: Record<string, any> | Map<string, any> | Array<[string, any]>,
+  data: Record<string, unknown> | Map<string, unknown> | Array<[string, unknown]>,
 ): string => {
-  let entries: Array<[string, any]>;
+  let entries: Array<[string, unknown]>;
 
-  if (Array.isArray(data)) {
+  if (isArray(data)) {
     entries = data;
-  } else if (data instanceof Map) {
+  } else if (isMap(data)) {
     entries = Array.from(data.entries());
   } else {
     entries = Object.entries(data);
   }
 
-  const formattedEntries = entries.map(([key, value]) => `${key}: ${value.toString()}`).join(", ");
+  const formattedEntries = entries.map(([key, value]) => `${key}: ${String(value)}`).join(", ");
   return `{${formattedEntries}}`;
 };
 
 // Dictionary and List Implementation Functions --------------------------------
 
 const ensureKeyIsString = (key: ISymbolType | string): string => {
-  if (typeof key === "string") {
+  if (isString(key)) {
     return key;
   }
-  if (key && typeof key === "object" && "value" in key && key.value !== null) {
+  if (isObjectWithKey(key, "value") && !isNull(key.value)) {
     return key.value as string;
   }
   throw new InterpreterError(`Key must be a string, got ${typeof key}.`);
@@ -164,7 +166,7 @@ export const ListImpl = {
 
   insert(value: ISymbolType[], indexSymbol: ISymbolType, item: ISymbolType): void {
     const index = indexSymbol.value as number;
-    if (index < 0 || index > value.length) {
+    if (isOutOfBoundsInclusive(value, index)) {
       throw new InterpreterError("Index out of range for insert.");
     }
     value.splice(index, 0, item.cloneIfMutable());
@@ -172,7 +174,7 @@ export const ListImpl = {
 
   deleteAt(value: ISymbolType[], indexSymbol: ISymbolType): void {
     const index = indexSymbol.value as number;
-    if (index < 0 || index >= value.length) {
+    if (isOutOfBounds(value, index)) {
       throw new InterpreterError("Index out of range for deletion.");
     }
     value.splice(index, 1);
@@ -189,7 +191,7 @@ export const ListImpl = {
 
   get(value: ISymbolType[], indexSymbol: ISymbolType): ISymbolType {
     const index = indexSymbol.value as number;
-    if (index < 0 || index >= value.length) {
+    if (isOutOfBounds(value, index)) {
       throw new InterpreterError("Index out of range for get.");
     }
     return value[index];
@@ -197,7 +199,7 @@ export const ListImpl = {
 
   update(value: ISymbolType[], indexSymbol: ISymbolType, item: ISymbolType): void {
     const index = indexSymbol.value as number;
-    if (index < 0 || index >= value.length) {
+    if (isOutOfBounds(value, index)) {
       throw new InterpreterError("Index out of range for update.");
     }
     value[index] = item.cloneIfMutable();
@@ -417,11 +419,11 @@ export class NumberSymbol extends BaseSymbolType {
 
   constructor(value: number | NumberSymbol | NumberWithUnitSymbol | null, config?: Config) {
     let safeValue: numberValue;
-    if (typeof value === "number") {
+    if (isNumber(value)) {
       safeValue = value;
     } else if (value instanceof NumberSymbol || value instanceof NumberWithUnitSymbol) {
       safeValue = value.value as number;
-    } else if (value === null) {
+    } else if (isNull(value)) {
       safeValue = null;
     } else {
       throw new InterpreterError(`Value must be int or float, got ${typeof value}.`);
@@ -431,11 +433,11 @@ export class NumberSymbol extends BaseSymbolType {
   }
 
   validValue(val: any): boolean {
-    return typeof val === "number" || val instanceof NumberSymbol;
+    return isNumber(val) || val instanceof NumberSymbol;
   }
 
   expectSafeValue(val: any): asserts val is number {
-    if (val === null || val === undefined) {
+    if (isNone(val)) {
       throw new InterpreterError("Value must be int or float, got null.");
     }
   }
@@ -802,7 +804,7 @@ export class ListSymbol extends BaseSymbolType {
 
   insertImpl(indexSymbol: NumberSymbol, item: ISymbolType): ListSymbol {
     const index = indexSymbol.value as number;
-    if (index < 0 || index > this.value.length)
+    if (isOutOfBoundsInclusive(this.value, index))
       throw new InterpreterError("Index out of range for insert.");
     this.value.splice(index, 0, item.cloneIfMutable());
     return this;
@@ -810,7 +812,7 @@ export class ListSymbol extends BaseSymbolType {
 
   deleteImpl(indexSymbol: NumberSymbol): ListSymbol {
     const index = indexSymbol.value as number;
-    if (index < 0 || index >= this.value.length)
+    if (isOutOfBounds(this.value, index))
       throw new InterpreterError("Index out of range for deletion.");
     this.value.splice(index, 1);
     return this;
@@ -827,14 +829,13 @@ export class ListSymbol extends BaseSymbolType {
 
   getImpl(indexSymbol: NumberSymbol): ISymbolType {
     const index = indexSymbol.value as number;
-    if (index < 0 || index >= this.value.length)
-      throw new InterpreterError("Index out of range for get.");
+    if (isOutOfBounds(this.value, index)) throw new InterpreterError("Index out of range for get.");
     return this.value[index];
   }
 
   updateImpl(indexSymbol: NumberSymbol, item: ISymbolType): ListSymbol {
     const index = indexSymbol.value as number;
-    if (index < 0 || index >= this.value.length)
+    if (isOutOfBounds(this.value, index))
       throw new InterpreterError("Index out of range for update.");
     this.value[index] = item.cloneIfMutable();
     return this;
