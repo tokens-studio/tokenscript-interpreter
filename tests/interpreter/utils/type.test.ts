@@ -1,6 +1,7 @@
 import {
   assertIsSome,
   assertIsType,
+  getFirstKey,
   hasProperty,
   isArray,
   isBoolean,
@@ -348,6 +349,23 @@ describe("Assertion Utilities", () => {
 });
 
 describe("Helper Utilities", () => {
+  describe("getFirstKey", () => {
+    test("returns value for first matching key", () => {
+      const record = { bar: 1, baz: 2 };
+      expect(getFirstKey(["foo", "bar", "baz"], record)).toBe(1);
+    });
+
+    test("returns value following key order", () => {
+      const record = { bar: 1, baz: 2 };
+      expect(getFirstKey(["baz", "bar"], record)).toBe(2);
+    });
+
+    test("returns undefined when no keys match", () => {
+      const record = { bar: 1, baz: 2 };
+      expect(getFirstKey(["foo", "qux"], record)).toBeUndefined();
+    });
+  });
+
   describe("optional", () => {
     test("applies function when value is defined", () => {
       const result = optional("hello", (s) => s.toUpperCase());

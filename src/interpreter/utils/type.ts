@@ -62,6 +62,18 @@ export const hasProperty = <K extends string>(obj: unknown, key: K): obj is Reco
   return isObject(obj) && key in obj;
 };
 
+export const getFirstKey = <K extends string, T>(
+  keys: readonly K[],
+  record: Partial<Record<K, T>>,
+): T | undefined => {
+  for (const key of keys) {
+    if (key in record) {
+      return record[key];
+    }
+  }
+  return undefined;
+};
+
 export const isObjectWithKey = <K extends string>(
   value: unknown,
   key: K,
