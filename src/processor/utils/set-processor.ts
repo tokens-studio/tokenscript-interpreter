@@ -1,6 +1,6 @@
 import { isObject } from "../../interpreter/utils/type";
 import { extractSetNames, resolveThemes, selectTheme } from "./theme-resolver";
-import { flattenObject, isNested, recordToMap } from "./tokens";
+import { flattenTokensObject, isNested, recordToMap } from "./tokens";
 
 export function determineSets(
   jsonFiles: Record<string, unknown>,
@@ -57,7 +57,9 @@ export function flattenToTokens(
       throw new Error(`Token set "${setName}" is not an object`);
     }
 
-    const setTokens = isNested(setData) ? flattenObject(setData, "", true) : recordToMap(setData);
+    const setTokens = isNested(setData)
+      ? flattenTokensObject(setData, "", true)
+      : recordToMap(setData);
 
     for (const [key, value] of setTokens) {
       tokens.set(key, value);

@@ -1,11 +1,7 @@
-/**
- * Utility functions for token processing
- */
-
 import { isObject } from "@/src/interpreter/utils/type";
 
 /**
- * Flattens a nested object structure into a flat key-value map with dot-separated paths.
+ * Flattens a nested tokens object structure into a flat key-value map with dot-separated paths.
  *
  * @param obj - The nested object to flatten
  * @param prefix - Current path prefix (used in recursion)
@@ -15,7 +11,7 @@ import { isObject } from "@/src/interpreter/utils/type";
  * Input:  { color: { red: { $value: "#FF0000" } } }
  * Output: Map { "color.red" => "#FF0000" }
  */
-export function flattenObject(
+export function flattenTokensObject(
   obj: Record<string, unknown>,
   prefix = "",
 ): Map<string, string> {
@@ -40,7 +36,7 @@ export function flattenObject(
       }
       // Otherwise, recurse into nested object
       else {
-        const nested = flattenObject(objValue, path);
+        const nested = flattenTokensObject(objValue, path);
         for (const [nestedKey, nestedValue] of nested) {
           result.set(nestedKey, nestedValue);
         }
