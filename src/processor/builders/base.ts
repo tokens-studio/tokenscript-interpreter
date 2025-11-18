@@ -6,7 +6,7 @@ import type { TokenData } from "../utils/tokens";
 import { MapBuilder } from "./MapBuilder";
 import type { OutputFormat, TokenBuilder } from "./types";
 
-export function serializeInterpreterResult(value: string | InterpreterResult): unknown {
+export function serializeInterpreterResult(value: InterpreterResult): unknown {
   if (typeof value === "string") {
     return value;
   }
@@ -39,7 +39,6 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
   tokens: Map<string, string | TokenData>,
   options?: BuildTokensOptions<T>,
 ): ProcessorOutput & {
-  tokens: Map<string, string | InterpreterResult>;
   output: T;
 } {
   const { config, output = "string", builder = new MapBuilder(output) } = options ?? {};

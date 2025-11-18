@@ -41,7 +41,7 @@ export type ProcessorCallbacks = {
 };
 
 export type ProcessorOutput = ProcessorResult & {
-  tokens: Map<RefPath, string | InterpreterResult>;
+  tokens: Map<RefPath, InterpreterResult>;
   errors: Map<RefPath, Error>;
 };
 
