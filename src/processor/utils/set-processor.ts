@@ -1,5 +1,6 @@
 import { isObject } from "../../interpreter/utils/type";
 import { extractSetNames, resolveThemes, selectTheme } from "./theme-resolver";
+import type { TokenData } from "./tokens";
 import { flattenTokensObject, isNested, recordToMap } from "./tokens";
 
 export function determineSets(
@@ -43,8 +44,8 @@ export function determineSets(
 export function flattenToTokens(
   sets: Record<string, unknown>,
   setNames: string[],
-): Map<string, string> {
-  const tokens = new Map<string, string>();
+): Map<string, TokenData> {
+  const tokens = new Map<string, TokenData>();
 
   for (const setName of setNames) {
     const setData = sets[setName];
@@ -57,9 +58,7 @@ export function flattenToTokens(
       throw new Error(`Token set "${setName}" is not an object`);
     }
 
-    const setTokens = isNested(setData)
-      ? flattenTokensObject(setData, "", true)
-      : recordToMap(setData);
+    const setTokens = isNested(setData) ? flattenTokensObject(setData, "") : recordToMap(setData);
 
     for (const [key, value] of setTokens) {
       tokens.set(key, value);
