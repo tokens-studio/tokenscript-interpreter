@@ -5,6 +5,7 @@ import { StringSymbol } from "@interpreter/symbols";
 import { isString } from "@interpreter/utils/type";
 import { UNINTERPRETED_KEYWORDS } from "@src/types";
 import { DependencyError } from "../errors";
+import type { ObjectParser } from "../parsers/object-parsers";
 import { DependencyGraph } from "../utils/DependencyGraph";
 import {
   assembleStructuredToken,
@@ -49,6 +50,7 @@ export type ProcessorOutput = ProcessorResult & {
 class PrefixResolver {
   private readonly callbacks?: ProcessorCallbacks;
   private readonly config?: Config;
+  private readonly objectParsers?: ObjectParser[];
   private readonly graph = new DependencyGraph<RefPath>();
   private readonly resolved: ResolvedTokens = new Map();
   private readonly unresolved: UnresolvedTokens = new Map();
@@ -77,9 +79,11 @@ class PrefixResolver {
     private readonly tokens: Map<RefPath, string | TokenData>,
     callbacks?: ProcessorCallbacks,
     config?: Config,
+    objectParsers?: ObjectParser[],
   ) {
     this.callbacks = callbacks;
     this.config = config;
+    this.objectParsers = objectParsers;
 
     // Initialize components
     this.dependencyTracker = new DependencyTracker();
@@ -265,7 +269,12 @@ class PrefixResolver {
 
       // Wrap in TokenSymbol for reference cache so other tokens can call .get() on it
       const tokenType = tokenData.$type || "unknown";
-      const tokenSymbol = wrapStructuredTokenAsSymbol(tokenValue, tokenType, this.config);
+      const tokenSymbol = wrapStructuredTokenAsSymbol(
+        tokenValue,
+        tokenType,
+        this.config,
+        this.objectParsers,
+      );
       this.referenceCache.set(tokenName, tokenSymbol);
 
       this.callbacks?.onResolve?.(tokenName, tokenValue as InterpreterResult);
@@ -495,7 +504,12 @@ class PrefixResolver {
 
       // Wrap in TokenSymbol for reference cache so other tokens can call .get() on it
       const tokenType = tokenData.$type || "unknown";
-      const tokenSymbol = wrapStructuredTokenAsSymbol(assembled, tokenType, this.config);
+      const tokenSymbol = wrapStructuredTokenAsSymbol(
+        assembled,
+        tokenType,
+        this.config,
+        this.objectParsers,
+      );
       this.referenceCache.set(tokenName, tokenSymbol);
 
       this.callbacks?.onResolve?.(tokenName, assembled as InterpreterResult);
@@ -601,12 +615,17 @@ export class TokenResolver {
     tokens: Map<RefPath, string | TokenData>,
     callbacks?: ProcessorCallbacks,
     config?: Config,
+    objectParsers?: ObjectParser[],
   ): ProcessorResult {
-    const resolver = new PrefixResolver(tokens, callbacks, config);
+    const resolver = new PrefixResolver(tokens, callbacks, config, objectParsers);
     return resolver.resolve();
   }
 
-  public build(tokens: Map<RefPath, TokenData>, config?: Config): ProcessorOutput {
+  public build(
+    tokens: Map<RefPath, TokenData>,
+    config?: Config,
+    objectParsers?: ObjectParser[],
+  ): ProcessorOutput {
     const output: Map<RefPath, string | InterpreterResult> = new Map();
     const errors: Map<RefPath, Error> = new Map();
     let subFieldPaths: Set<RefPath> | undefined;
@@ -621,7 +640,7 @@ export class TokenResolver {
       },
     };
 
-    const result = this.processTokens(tokens, callbacks, config);
+    const result = this.processTokens(tokens, callbacks, config, objectParsers);
     subFieldPaths = result.subFieldPaths;
 
     // Filter out sub-field paths from output

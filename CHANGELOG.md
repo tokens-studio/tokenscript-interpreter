@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## UNRELEASED - 2025-11-19
+
+### Added 
+
+- Adds [ObjectParsers](src/processor/parsers/README.md) to turn structured data into `TokenSymbol`
+- Adds `TokenSymbol` to handle structured data in tokenscript
+  - Handles Objects with `Dictionary` interface
+  - Handles Arrays with `List` interface
+
 ## [0.8.0] - 2025-11-11
 
 ### Added

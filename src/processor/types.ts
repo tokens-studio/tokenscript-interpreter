@@ -1,12 +1,14 @@
 import type { Config } from "@interpreter/config";
 import type { InterpreterResult } from "../interpreter/interpreter";
 import type { OutputFormat, TokenBuilder } from "./builders/types";
+import type { ObjectParser } from "./parsers/object-parsers";
 import type { ProcessorOutput } from "./resolver/TokenResolver";
 
 export interface ProcessOptions {
   config?: Config;
   output?: OutputFormat;
   builder?: TokenBuilder<any>;
+  objectParsers?: ObjectParser[];
 }
 
 export interface ProcessSetsOptions extends ProcessOptions {
@@ -27,4 +29,5 @@ export type ProcessFilesOptions<T = any> = {
   activeTheme?: string;
   output?: "string" | "symbols";
   builder?: TokenBuilder<T>;
+  objectParsers?: ObjectParser[];
 };

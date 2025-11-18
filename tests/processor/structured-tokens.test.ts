@@ -374,4 +374,30 @@ describe("Structured Tokens - End-to-End Resolution", () => {
 
     expect(getValue(offsetXInc)).toBe(1);
   });
+
+  it("should parse NumberWithUnit objects using default object parsers", () => {
+    const tokens = {
+      spacing: {
+        $value: {
+          small: { value: 8, unit: "px" },
+          large: { value: 2, unit: "rem" },
+          lol: { foo: 1 },
+        },
+      },
+      "spacing-small": '{spacing}.get("small")',
+    };
+
+    const result = processTokens(tokens, { output: "symbols" });
+
+    const spacing = result.tokens.get("spacing");
+    const spacingSmall = result.tokens.get("spacing-small");
+
+    expect(spacing).toBeDefined();
+    expect(spacingSmall).toBeDefined();
+
+    // spacing-small should return a NumberWithUnitSymbol
+    const smallValue = spacingSmall as BaseSymbol;
+    expect(smallValue.getTypeName()).toBe("NumberWithUnit.Px");
+    expect(smallValue.toString()).toBe("8px");
+  });
 });

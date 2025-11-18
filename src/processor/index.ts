@@ -17,6 +17,11 @@ export {
   toJsonSafe,
 } from "./builders";
 export { DependencyError } from "./errors";
+export {
+  defaultObjectParsers,
+  numberWithUnitParser,
+  type ObjectParser,
+} from "./parsers/object-parsers";
 export { processTokenSets, processTokens } from "./process";
 // Note: collectJsonFiles, normalizeJsonFiles, and processTokensFromFiles are Node.js-only
 // and should be imported from "@tokens-studio/tokenscript-interpreter/processor-node"

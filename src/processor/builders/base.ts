@@ -1,20 +1,22 @@
 import type { Config } from "@interpreter/config";
 import type { InterpreterResult } from "@interpreter/interpreter";
 import { isTokenscriptSymbol, symbolTypeToJsValue } from "@interpreter/symbols";
+import { isNull, isString } from "@interpreter/utils/type";
+import type { ObjectParser } from "../parsers/object-parsers";
 import { type ProcessorOutput, TokenResolver } from "../resolver/TokenResolver";
 import type { TokenData } from "../utils/tokens";
 import { MapBuilder } from "./MapBuilder";
 import type { OutputFormat, TokenBuilder } from "./types";
 
 export function serializeInterpreterResult(value: InterpreterResult): unknown {
-  if (typeof value === "string") return value;
-  if (value === null) return null;
+  if (isString(value)) return value;
+  if (isNull(value)) return null;
   if (isTokenscriptSymbol(value)) return symbolTypeToJsValue(value);
   return value;
 }
 
 export function stringifyInterpreterResult(value: InterpreterResult): string {
-  if (typeof value === "string") return value;
+  if (isString(value)) return value;
   if (isTokenscriptSymbol(value)) return value.toString();
   return String(value);
 }
@@ -46,6 +48,7 @@ export interface BuildTokensOptions<T> {
   builder?: TokenBuilder<T>;
   config?: Config;
   output?: OutputFormat;
+  objectParsers?: ObjectParser[];
 }
 
 export function buildTokens<T = Map<string, InterpreterResult>>(
@@ -54,7 +57,12 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
 ): ProcessorOutput & {
   output: T;
 } {
-  const { config, output = "string", builder = new MapBuilder(output) } = options ?? {};
+  const {
+    config,
+    output = "string",
+    builder = new MapBuilder(output),
+    objectParsers,
+  } = options ?? {};
 
   const processor = new TokenResolver();
   const errors: Map<string, Error> = new Map();
@@ -79,7 +87,7 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
     },
   };
 
-  const result = processor.processTokens(tokens, callbacks, config);
+  const result = processor.processTokens(tokens, callbacks, config, objectParsers);
 
   let tokensMap = tokensMapBuilder.getResult();
   const builderOutput = builder.getResult();
