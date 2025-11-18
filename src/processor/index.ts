@@ -18,7 +18,8 @@ export {
 } from "./builders";
 export { DependencyError } from "./errors";
 export { processTokenSets, processTokens } from "./process";
-export { collectJsonFiles, normalizeJsonFiles, processTokensFromFiles } from "./processFiles";
+// Note: collectJsonFiles, normalizeJsonFiles, and processTokensFromFiles are Node.js-only
+// and should be imported from "@tokens-studio/tokenscript-interpreter/processor-node"
 export type { ProcessorOutput, ProcessorResult } from "./resolver/TokenResolver";
 export { TokenResolver } from "./resolver/TokenResolver";
 export type {
