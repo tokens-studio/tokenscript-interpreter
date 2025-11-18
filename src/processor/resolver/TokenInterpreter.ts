@@ -39,6 +39,10 @@ export class TokenInterpreter {
       return originalValue;
     }
 
+    return this.interpretTokenWithAST(tokenName, ast);
+  }
+
+  interpretTokenWithAST(_tokenName: RefPath, ast: ASTNode): TokenResult {
     try {
       this.interpreter.resetSymbolTable();
       this.interpreter.setAst(ast);

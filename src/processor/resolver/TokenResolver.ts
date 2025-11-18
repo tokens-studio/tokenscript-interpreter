@@ -2,9 +2,17 @@ import type { Config } from "@interpreter/config";
 import type { InterpreterResult } from "@interpreter/interpreter";
 import { type ParseExpressionResult, parseExpression } from "@interpreter/parser";
 import { StringSymbol } from "@interpreter/symbols";
+import { isString } from "@interpreter/utils/type";
 import { UNINTERPRETED_KEYWORDS } from "@src/types";
 import { DependencyError } from "../errors";
 import { DependencyGraph } from "../utils/DependencyGraph";
+import {
+  assembleStructuredToken,
+  extractStringFields,
+  isPrimitive,
+  primitiveToSymbol,
+} from "../utils/structured-tokens";
+import type { TokenData } from "../utils/tokens";
 import {
   DependencyTracker,
   PrefixExtractor,
@@ -24,6 +32,7 @@ export type ProcessorResult = {
   graph: DependencyGraph<RefPath>;
   resolved: ResolvedTokens;
   unresolved: UnresolvedTokens;
+  subFieldPaths?: Set<RefPath>;
 };
 
 export type ProcessorCallbacks = {
@@ -56,11 +65,15 @@ class PrefixResolver {
   private readonly prefixExtractor: PrefixExtractor;
   private readonly readinessTracker: ReadinessTracker;
 
+  // Structured tokens tracking
+  private readonly subFieldPaths: Set<RefPath> = new Set();
+  private readonly structuredTokens: Map<RefPath, TokenData> = new Map();
+
   // Phase state
   private earlyResolved: RefPath[] = [];
 
   constructor(
-    private readonly tokens: Map<RefPath, string>,
+    private readonly tokens: Map<RefPath, string | TokenData>,
     callbacks?: ProcessorCallbacks,
     config?: Config,
   ) {
@@ -86,6 +99,82 @@ class PrefixResolver {
     );
   }
 
+  /**
+   * Extract value from either string or TokenData structure
+   */
+  private getTokenValue(data: string | TokenData): unknown {
+    return isString(data) ? data : data.$value;
+  }
+
+  /**
+   * Normalize to TokenData structure
+   */
+  private setTokenValue(value: string | TokenData): TokenData {
+    return isString(value) ? { $value: value } : value;
+  }
+
+  /**
+   * Parse a string value and handle errors
+   */
+  private parseStringValue(
+    tokenName: RefPath,
+    tokenValue: string,
+  ): ParseExpressionResult | Error {
+    try {
+      return parseExpression(tokenValue);
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      this.resolved.set(tokenName, err);
+      this.callbacks?.onError?.(tokenName, err, tokenValue);
+      this.graph.addNode(tokenName, []);
+      this.earlyResolved.push(tokenName);
+      return err;
+    }
+  }
+
+  /**
+   * Process parsed AST and register dependencies
+   */
+  private processParsedToken(
+    tokenName: RefPath,
+    ast: any,
+    dependencies: Set<RefPath>,
+  ): void {
+    this.tokenInterpreter.setTokenAST(tokenName, ast);
+
+    if (dependencies.size > 0) {
+      this.unresolved.set(tokenName, { ast, dependencies });
+    }
+
+    this.graph.addNode(tokenName, dependencies);
+
+    for (const dep of dependencies) {
+      if (this.prefixManager.hasPrefix(dep) && !this.tokens.has(dep)) {
+        continue;
+      }
+
+      if (this.resolved.has(dep)) continue;
+
+      this.dependencyTracker.addTokenDependency(tokenName, dep);
+
+      if (this.tokens.has(dep)) continue;
+
+      const parentToken = this.prefixManager.findParentToken(dep, this.tokens);
+      if (parentToken) {
+        this.prefixManager.addVirtualChild(parentToken, dep);
+        continue;
+      }
+
+      if (!this.referenceCache.has(dep)) {
+        const error = new Error(`Token '${dep}' not found`);
+        this.resolved.set(dep, error);
+        this.callbacks?.onError?.(dep, error, "");
+        this.graph.addNode(dep, []);
+        this.earlyResolved.push(dep);
+      }
+    }
+  }
+
   public resolve(): ProcessorResult {
     this.parseAndBuildGraph();
     this.mapPrefixDependencies();
@@ -96,6 +185,7 @@ class PrefixResolver {
       graph: this.graph,
       resolved: this.resolved,
       unresolved: this.unresolved,
+      subFieldPaths: this.subFieldPaths,
     };
   }
 
@@ -105,12 +195,16 @@ class PrefixResolver {
    * - Build dependency graph
    * - Identify and mark early-resolved tokens
    * - Detect missing token dependencies
+   * - Handle primitive and structured tokens
    */
   private parseAndBuildGraph(): void {
     this.earlyResolved = [];
 
-    for (const [tokenName, tokenValue] of this.tokens.entries()) {
-      if (UNINTERPRETED_KEYWORDS.includes(tokenValue)) {
+    for (const [tokenName, tokenData] of this.tokens.entries()) {
+      const tokenValue = this.getTokenValue(tokenData);
+
+      // Handle uninterpreted keywords
+      if (isString(tokenValue) && UNINTERPRETED_KEYWORDS.includes(tokenValue)) {
         const symbol = new StringSymbol(tokenValue, this.config);
         this.resolved.set(tokenName, symbol);
         this.referenceCache.set(tokenName, symbol);
@@ -120,15 +214,27 @@ class PrefixResolver {
         continue;
       }
 
-      let parseResult: ParseExpressionResult;
-      try {
-        parseResult = parseExpression(tokenValue);
-      } catch (error) {
-        const err = error instanceof Error ? error : new Error(String(error));
-        this.resolved.set(tokenName, err);
-        this.callbacks?.onError?.(tokenName, err, tokenValue);
+      // Handle primitive non-string values (numbers, booleans, null)
+      if (isPrimitive(tokenValue) && !isString(tokenValue)) {
+        const symbol = primitiveToSymbol(tokenValue, this.config);
+        this.resolved.set(tokenName, symbol);
+        this.referenceCache.set(tokenName, symbol);
+        this.callbacks?.onResolve?.(tokenName, symbol);
         this.graph.addNode(tokenName, []);
         this.earlyResolved.push(tokenName);
+        continue;
+      }
+
+      // Handle structured tokens (objects/arrays)
+      if (!isPrimitive(tokenValue)) {
+        this.handleStructuredToken(tokenName, this.setTokenValue(tokenData));
+        continue;
+      }
+
+      // Handle string values (may contain references)
+      const tokenValueStr = String(tokenValue);
+      const parseResult = this.parseStringValue(tokenName, tokenValueStr);
+      if (parseResult instanceof Error) {
         continue;
       }
 
@@ -142,42 +248,64 @@ class PrefixResolver {
         continue;
       }
 
-      this.tokenInterpreter.setTokenAST(tokenName, ast);
       this.prefixManager.addTokenToPrefix(tokenName);
-
-      const dependencies = parser.requiredReferences;
-      if (dependencies.size > 0) {
-        this.unresolved.set(tokenName, { ast, dependencies });
-      }
-
-      this.graph.addNode(tokenName, dependencies);
-
-      for (const dep of dependencies) {
-        if (this.prefixManager.hasPrefix(dep) && !this.tokens.has(dep)) {
-          continue;
-        }
-
-        if (this.resolved.has(dep)) continue;
-
-        this.dependencyTracker.addTokenDependency(tokenName, dep);
-
-        if (this.tokens.has(dep)) continue;
-
-        const parentToken = this.prefixManager.findParentToken(dep, this.tokens);
-        if (parentToken) {
-          this.prefixManager.addVirtualChild(parentToken, dep);
-          continue;
-        }
-
-        if (!this.referenceCache.has(dep)) {
-          const error = new Error(`Token '${dep}' not found`);
-          this.resolved.set(dep, error);
-          this.callbacks?.onError?.(dep, error, "");
-          this.graph.addNode(dep, []);
-          this.earlyResolved.push(dep);
-        }
-      }
+      this.processParsedToken(tokenName, ast, parser.requiredReferences);
     }
+  }
+
+  /**
+   * Handle structured tokens (objects/arrays with potential references)
+   */
+  private handleStructuredToken(tokenName: RefPath, tokenData: TokenData): void {
+    const tokenValue = tokenData.$value;
+
+    // Store for later assembly
+    this.structuredTokens.set(tokenName, tokenData);
+
+    // Extract string fields that may contain references
+    const stringFields = extractStringFields(tokenValue, tokenName);
+
+    if (stringFields.size === 0) {
+      // No string fields to resolve, token is ready
+      this.resolved.set(tokenName, tokenValue as TokenResult);
+      this.referenceCache.set(tokenName, tokenValue as InterpreterResult);
+      this.callbacks?.onResolve?.(tokenName, tokenValue as InterpreterResult);
+      this.graph.addNode(tokenName, []);
+      this.earlyResolved.push(tokenName);
+      return;
+    }
+
+    // Add string fields as virtual tokens
+    for (const [fieldPath, fieldValue] of stringFields) {
+      this.subFieldPaths.add(fieldPath);
+
+      const parseResult = this.parseStringValue(fieldPath, fieldValue);
+      if (parseResult instanceof Error) {
+        continue;
+      }
+
+      const { ast, parser } = parseResult;
+      if (!ast) {
+        this.resolved.set(fieldPath, "");
+        this.referenceCache.set(fieldPath, "");
+        this.graph.addNode(fieldPath, []);
+        this.earlyResolved.push(fieldPath);
+        continue;
+      }
+
+      this.processParsedToken(fieldPath, ast, parser.requiredReferences);
+    }
+
+    // Parent token depends on all its sub-fields
+    const subFieldDeps = Array.from(stringFields.keys());
+    this.graph.addNode(tokenName, subFieldDeps);
+    for (const dep of subFieldDeps) {
+      this.dependencyTracker.addTokenDependency(tokenName, dep);
+    }
+    this.unresolved.set(tokenName, {
+      ast: null as any,
+      dependencies: new Set(subFieldDeps),
+    });
   }
 
   /**
@@ -216,8 +344,10 @@ class PrefixResolver {
    * - Queue is populated by ResolutionNotifier when dependencies are released
    */
   private resolveDependencyFreeTokens(): void {
-    // Seed ready queue with initially dependency-free tokens
-    for (const tokenName of this.tokens.keys()) {
+    // Seed ready queue with initially dependency-free tokens (including sub-fields)
+    const allTokens = new Set([...this.tokens.keys(), ...this.subFieldPaths]);
+
+    for (const tokenName of allTokens) {
       if (this.resolved.has(tokenName)) continue;
 
       if (this.readinessTracker.isReady(tokenName, this.dependencyTracker)) {
@@ -234,14 +364,60 @@ class PrefixResolver {
   }
 
   private resolveSingleToken(tokenName: RefPath): void {
-    const originalValue = this.tokens.get(tokenName);
-    if (originalValue === undefined || this.resolved.has(tokenName)) return;
-
-    // At this point, originalValue is guaranteed to be a string (not undefined)
-    const tokenValueStr: string = originalValue;
+    if (this.resolved.has(tokenName)) return;
 
     // Prevent re-entrant resolution during cascade
     this.pendingResolution.add(tokenName);
+
+    // Check if this is a structured token
+    if (this.structuredTokens.has(tokenName)) {
+      this.resolveStructuredToken(tokenName);
+      this.pendingResolution.delete(tokenName);
+      return;
+    }
+
+    // Check if this is a sub-field (virtual token)
+    if (this.subFieldPaths.has(tokenName)) {
+      // Sub-fields are resolved via TokenInterpreter
+      const ast = this.tokenInterpreter.getTokenAST(tokenName);
+      if (ast) {
+        const unresolved = this.unresolved.get(tokenName);
+        const dependencyError = unresolved
+          ? this.tokenInterpreter.buildDependencyError(
+              tokenName,
+              unresolved.dependencies,
+              this.resolved,
+            )
+          : undefined;
+
+        if (dependencyError) {
+          this.resolved.set(tokenName, dependencyError);
+          this.callbacks?.onError?.(tokenName, dependencyError, "");
+        } else {
+          const tokenValue = this.tokenInterpreter.interpretTokenWithAST(tokenName, ast);
+          this.resolved.set(tokenName, tokenValue);
+
+          if (tokenValue instanceof Error) {
+            this.callbacks?.onError?.(tokenName, tokenValue, "");
+          } else {
+            this.callbacks?.onResolve?.(tokenName, tokenValue);
+            this.tokenInterpreter.updateReferenceCache(tokenName, tokenValue);
+          }
+        }
+      }
+
+      this.unresolved.delete(tokenName);
+      this.notifyResolution(tokenName);
+      this.pendingResolution.delete(tokenName);
+      return;
+    }
+
+    // For regular tokens
+    const originalValue = this.tokens.get(tokenName);
+    if (originalValue === undefined) return;
+
+    // For string/primitive tokens
+    const tokenValueStr: string = String(this.getTokenValue(originalValue));
 
     const unresolved = this.unresolved.get(tokenName);
     const dependencyError = unresolved
@@ -259,7 +435,7 @@ class PrefixResolver {
       this.resolved.set(tokenName, dependencyError);
       this.callbacks?.onError?.(tokenName, dependencyError, tokenValueStr);
     } else {
-      tokenValue = this.tokenInterpreter.interpretToken(tokenName, originalValue);
+      tokenValue = this.tokenInterpreter.interpretToken(tokenName, tokenValueStr);
       this.resolved.set(tokenName, tokenValue);
 
       if (tokenValue instanceof Error) {
@@ -275,6 +451,54 @@ class PrefixResolver {
     this.notifyResolution(tokenName, flattened);
     this.unresolved.delete(tokenName);
     this.pendingResolution.delete(tokenName);
+  }
+
+  /**
+   * Resolve a structured token by assembling resolved sub-fields
+   */
+  private resolveStructuredToken(tokenName: RefPath): void {
+    const tokenData = this.structuredTokens.get(tokenName);
+    if (!tokenData) return;
+
+    const originalValue = tokenData.$value;
+
+    // Extract string fields
+    const stringFields = extractStringFields(originalValue, tokenName);
+
+    // Check for dependency errors in sub-fields
+    const resolvedFields = new Map<string, InterpreterResult>();
+    let hasError = false;
+
+    for (const [fieldPath] of stringFields) {
+      const fieldValue = this.resolved.get(fieldPath);
+      if (fieldValue === undefined) {
+        // Sub-field not resolved yet (shouldn't happen if dependencies are correct)
+        const error = new Error(`Sub-field '${fieldPath}' not resolved`);
+        this.resolved.set(tokenName, error);
+        this.callbacks?.onError?.(tokenName, error, String(originalValue));
+        hasError = true;
+        break;
+      }
+      if (fieldValue instanceof Error) {
+        // Sub-field has error, propagate to parent
+        this.resolved.set(tokenName, fieldValue);
+        this.callbacks?.onError?.(tokenName, fieldValue, String(originalValue));
+        hasError = true;
+        break;
+      }
+      resolvedFields.set(fieldPath, fieldValue);
+    }
+
+    if (!hasError) {
+      // Assemble the structured token with resolved values
+      const assembled = assembleStructuredToken(tokenName, resolvedFields, originalValue);
+      this.resolved.set(tokenName, assembled as TokenResult);
+      this.referenceCache.set(tokenName, assembled as InterpreterResult);
+      this.callbacks?.onResolve?.(tokenName, assembled as InterpreterResult);
+    }
+
+    this.unresolved.delete(tokenName);
+    this.notifyResolution(tokenName);
   }
 
   private resolveVirtualChildren(parent: RefPath, flattened: RefPath[]): void {
@@ -326,7 +550,7 @@ class PrefixResolver {
       const originalValue = this.tokens.get(tokenName);
       if (originalValue === undefined || this.resolved.has(tokenName)) continue;
 
-      const tokenValueStr: string = originalValue;
+      const tokenValueStr: string = String(this.getTokenValue(originalValue));
 
       // Check for dependency errors
       const unresolved = this.unresolved.get(tokenName);
@@ -363,14 +587,14 @@ class PrefixResolver {
  * @example
  * const processor = new TokenResolver();
  * const tokens = new Map([
- *   ["a", "10"],
- *   ["b", "{a} * 2"],
+ *   ["a", { $value: "10" }],
+ *   ["b", { $value: "{a} * 2" }],
  * ]);
  * const result = processor.build(tokens);
  */
 export class TokenResolver {
   public processTokens(
-    tokens: Map<RefPath, string>,
+    tokens: Map<RefPath, string | TokenData>,
     callbacks?: ProcessorCallbacks,
     config?: Config,
   ): ProcessorResult {
@@ -378,7 +602,7 @@ export class TokenResolver {
     return resolver.resolve();
   }
 
-  public build(tokens: Map<RefPath, string>, config?: Config): ProcessorOutput {
+  public build(tokens: Map<RefPath, TokenData>, config?: Config): ProcessorOutput {
     const output: Map<RefPath, string | InterpreterResult> = new Map();
     const errors: Map<RefPath, Error> = new Map();
 

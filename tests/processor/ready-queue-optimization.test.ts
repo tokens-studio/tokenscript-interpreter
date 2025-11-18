@@ -1,6 +1,16 @@
 import type { BaseSymbol } from "@interpreter/symbols";
 import { TokenResolver } from "@src/processor";
+import type { TokenData } from "@src/processor/utils/tokens";
 import { describe, expect, it } from "vitest";
+
+// Helper to convert string maps to TokenData maps for testing
+function toTokenData(tokens: Map<string, string>): Map<string, TokenData> {
+  const result = new Map<string, TokenData>();
+  for (const [key, value] of tokens) {
+    result.set(key, { $value: value });
+  }
+  return result;
+}
 
 function getValue(v: unknown): unknown {
   return v && typeof v === "object" && "value" in v ? (v as BaseSymbol).value : v;
@@ -11,13 +21,15 @@ describe("Ready Queue Optimization", () => {
     const processor = new TokenResolver("prefix");
 
     // Create a chain of dependencies: a -> b -> c -> d -> e
-    const tokens = new Map([
-      ["a", "1"],
-      ["b", "{a} + 1"],
-      ["c", "{b} + 1"],
-      ["d", "{c} + 1"],
-      ["e", "{d} + 1"],
-    ]);
+    const tokens = toTokenData(
+      new Map([
+        ["a", "1"],
+        ["b", "{a} + 1"],
+        ["c", "{b} + 1"],
+        ["d", "{c} + 1"],
+        ["e", "{d} + 1"],
+      ]),
+    );
 
     const result = processor.build(tokens);
 
@@ -38,12 +50,14 @@ describe("Ready Queue Optimization", () => {
     //   b   c
     //    \ /
     //     d
-    const tokens = new Map([
-      ["a", "10"],
-      ["b", "{a} * 2"],
-      ["c", "{a} * 3"],
-      ["d", "{b} + {c}"],
-    ]);
+    const tokens = toTokenData(
+      new Map([
+        ["a", "10"],
+        ["b", "{a} * 2"],
+        ["c", "{a} * 3"],
+        ["d", "{b} + {c}"],
+      ]),
+    );
 
     const result = processor.build(tokens);
 
@@ -58,13 +72,14 @@ describe("Ready Queue Optimization", () => {
     const processor = new TokenResolver("prefix");
 
     // Create a chain of 100 tokens
-    const tokens = new Map<string, string>();
-    tokens.set("token0", "1");
+    const stringTokens = new Map<string, string>();
+    stringTokens.set("token0", "1");
 
     for (let i = 1; i < 100; i++) {
-      tokens.set(`token${i}`, `{token${i - 1}} + 1`);
+      stringTokens.set(`token${i}`, `{token${i - 1}} + 1`);
     }
 
+    const tokens = toTokenData(stringTokens);
     const result = processor.build(tokens);
 
     // Verify the chain resolved correctly
@@ -82,12 +97,14 @@ describe("Ready Queue Optimization", () => {
   it("should resolve prefix dependencies via ready queue", () => {
     const processor = new TokenResolver("prefix");
 
-    const tokens = new Map([
-      ["colors.red", "#ff0000"],
-      ["colors.blue", "#0000ff"],
-      ["primary", "{colors.red}"],
-      ["secondary", "{colors.blue}"],
-    ]);
+    const tokens = toTokenData(
+      new Map([
+        ["colors.red", "#ff0000"],
+        ["colors.blue", "#0000ff"],
+        ["primary", "{colors.red}"],
+        ["secondary", "{colors.blue}"],
+      ]),
+    );
 
     const result = processor.build(tokens);
 
@@ -101,13 +118,15 @@ describe("Ready Queue Optimization", () => {
   it("should handle mixed prefix and token dependencies", () => {
     const processor = new TokenResolver("prefix");
 
-    const tokens = new Map([
-      ["base.size", "16"],
-      ["base.scale", "1.5"],
-      ["size.small", "{base.size}"],
-      ["size.medium", "{base.size} * {base.scale}"],
-      ["size.large", "{size.medium} * {base.scale}"],
-    ]);
+    const tokens = toTokenData(
+      new Map([
+        ["base.size", "16"],
+        ["base.scale", "1.5"],
+        ["size.small", "{base.size}"],
+        ["size.medium", "{base.size} * {base.scale}"],
+        ["size.large", "{size.medium} * {base.scale}"],
+      ]),
+    );
 
     const result = processor.build(tokens);
 

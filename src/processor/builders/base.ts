@@ -2,6 +2,7 @@ import type { Config } from "@interpreter/config";
 import type { InterpreterResult } from "@interpreter/interpreter";
 import { isTokenscriptSymbol, symbolTypeToJsValue } from "@interpreter/symbols";
 import { type ProcessorOutput, TokenResolver } from "../resolver/TokenResolver";
+import type { TokenData } from "../utils/tokens";
 import { MapBuilder } from "./MapBuilder";
 import type { OutputFormat, TokenBuilder } from "./types";
 
@@ -35,24 +36,23 @@ export interface BuildTokensOptions<T> {
 }
 
 export function buildTokens<T = Map<string, InterpreterResult>>(
-  tokens: Map<string, string>,
+  tokens: Map<string, string | TokenData>,
   options?: BuildTokensOptions<T>,
 ): ProcessorOutput & {
   tokens: Map<string, string | InterpreterResult>;
   output: T;
 } {
-  const { builder, config, output = "string" } = options ?? {};
-  const finalBuilder = (builder ?? new MapBuilder(output)) as TokenBuilder<T>;
+  const { config, output = "string", builder = new MapBuilder(output) } = options ?? {};
 
   const processor = new TokenResolver();
   const errors: Map<string, Error> = new Map();
 
   const callbacks = {
     onResolve: (tokenName: string, value: InterpreterResult) => {
-      finalBuilder.onResolve(tokenName, value);
+      builder.onResolve(tokenName, value);
     },
     onError: (tokenName: string, error: Error, originalValue: string) => {
-      finalBuilder.onError(tokenName, error, originalValue);
+      builder.onError(tokenName, error, originalValue);
       errors.set(tokenName, error);
     },
   };
@@ -61,15 +61,24 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
 
   // For backward compatibility, tokens property points to builder result if it's a Map,
   // otherwise use the builder's output
-  const tokensOutput =
-    finalBuilder.getResult() instanceof Map
-      ? (finalBuilder.getResult() as Map<string, string | InterpreterResult>)
-      : (finalBuilder.getResult() as any);
+  let tokensOutput =
+    builder.getResult() instanceof Map
+      ? (builder.getResult() as Map<string, string | InterpreterResult>)
+      : (builder.getResult() as T);
+
+  // Filter out sub-field paths from output
+  if (result.subFieldPaths && result.subFieldPaths.size > 0 && tokensOutput instanceof Map) {
+    tokensOutput = new Map(tokensOutput);
+    for (const subFieldPath of result.subFieldPaths) {
+      tokensOutput.delete(subFieldPath);
+      errors.delete(subFieldPath);
+    }
+  }
 
   return {
     ...result,
     tokens: tokensOutput,
-    output: finalBuilder.getResult(),
+    output: tokensOutput as T,
     errors,
   };
 }
