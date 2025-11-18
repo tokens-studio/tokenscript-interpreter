@@ -605,6 +605,7 @@ export class TokenResolver {
   public build(tokens: Map<RefPath, TokenData>, config?: Config): ProcessorOutput {
     const output: Map<RefPath, string | InterpreterResult> = new Map();
     const errors: Map<RefPath, Error> = new Map();
+    let subFieldPaths: Set<RefPath> | undefined;
 
     const callbacks: ProcessorCallbacks = {
       onResolve: (tokenName, value) => {
@@ -617,6 +618,15 @@ export class TokenResolver {
     };
 
     const result = this.processTokens(tokens, callbacks, config);
+    subFieldPaths = result.subFieldPaths;
+
+    // Filter out sub-field paths from output
+    if (subFieldPaths && subFieldPaths.size > 0) {
+      for (const subFieldPath of subFieldPaths) {
+        output.delete(subFieldPath);
+        errors.delete(subFieldPath);
+      }
+    }
 
     return {
       ...result,
