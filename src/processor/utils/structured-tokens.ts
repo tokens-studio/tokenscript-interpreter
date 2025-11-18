@@ -1,6 +1,12 @@
 import type { Config } from "@interpreter/config";
 import type { InterpreterResult } from "@interpreter/interpreter";
-import { BooleanSymbol, NumberSymbol } from "@interpreter/symbols";
+import type { ISymbolType } from "@interpreter/symbols";
+import {
+  BooleanSymbol,
+  jsValueToSymbolType,
+  NumberSymbol,
+  TokenSymbol,
+} from "@interpreter/symbols";
 import { isArray, isBoolean, isNumber, isObject, isString } from "@interpreter/utils/type";
 
 /**
@@ -116,4 +122,59 @@ export function assembleStructuredToken(
   }
 
   return originalValue;
+}
+
+/**
+ * Convert JavaScript values to interpreter symbols recursively.
+ * This ensures that all values in a structured token can be used by the interpreter.
+ *
+ * @param value - The value to convert (can be primitive, object, array, or already a symbol)
+ * @param config - Optional interpreter config
+ * @returns The value converted to a symbol type
+ */
+function convertToSymbol(value: unknown, config?: Config): ISymbolType | unknown {
+  // If already a symbol, return as-is
+  if (value && typeof value === "object" && "getTypeName" in value) {
+    return value;
+  }
+
+  // Use jsValueToSymbolType for primitives, objects, and arrays
+  return jsValueToSymbolType(value, config);
+}
+
+/**
+ * Wrap a structured token value in a TokenSymbol for use in the reference cache.
+ * This allows other tokens to reference it and call methods like .get() on it.
+ * All field values are converted to interpreter symbols.
+ *
+ * @param assembledValue - The assembled structured value (object or array)
+ * @param tokenType - The token type (from $type field, or 'unknown')
+ * @param config - Optional interpreter config
+ * @returns A TokenSymbol wrapping the structured value with symbol-converted fields
+ *
+ * @example
+ * wrapStructuredTokenAsSymbol({ offsetX: 0 }, "shadow")
+ * => TokenSymbol with Map { "offsetX" => NumberSymbol(0) }
+ */
+export function wrapStructuredTokenAsSymbol(
+  assembledValue: unknown,
+  tokenType: string = "unknown",
+  config?: Config,
+): TokenSymbol {
+  // Convert all fields to symbols
+  if (isObject(assembledValue)) {
+    const symbolMap: Record<string, ISymbolType> = {};
+    for (const [key, val] of Object.entries(assembledValue)) {
+      symbolMap[key] = convertToSymbol(val, config) as ISymbolType;
+    }
+    return new TokenSymbol(tokenType, symbolMap, config);
+  }
+
+  if (isArray(assembledValue)) {
+    const symbolArray = assembledValue.map((val) => convertToSymbol(val, config) as ISymbolType);
+    return new TokenSymbol(tokenType, symbolArray, config);
+  }
+
+  // Fallback for other types
+  return new TokenSymbol(tokenType, assembledValue as Record<string, any>, config);
 }

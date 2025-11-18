@@ -11,6 +11,7 @@ import {
   extractStringFields,
   isPrimitive,
   primitiveToSymbol,
+  wrapStructuredTokenAsSymbol,
 } from "../utils/structured-tokens";
 import type { TokenData } from "../utils/tokens";
 import {
@@ -116,10 +117,7 @@ class PrefixResolver {
   /**
    * Parse a string value and handle errors
    */
-  private parseStringValue(
-    tokenName: RefPath,
-    tokenValue: string,
-  ): ParseExpressionResult | Error {
+  private parseStringValue(tokenName: RefPath, tokenValue: string): ParseExpressionResult | Error {
     try {
       return parseExpression(tokenValue);
     } catch (error) {
@@ -135,11 +133,7 @@ class PrefixResolver {
   /**
    * Process parsed AST and register dependencies
    */
-  private processParsedToken(
-    tokenName: RefPath,
-    ast: any,
-    dependencies: Set<RefPath>,
-  ): void {
+  private processParsedToken(tokenName: RefPath, ast: any, dependencies: Set<RefPath>): void {
     this.tokenInterpreter.setTokenAST(tokenName, ast);
 
     if (dependencies.size > 0) {
@@ -268,7 +262,12 @@ class PrefixResolver {
     if (stringFields.size === 0) {
       // No string fields to resolve, token is ready
       this.resolved.set(tokenName, tokenValue as TokenResult);
-      this.referenceCache.set(tokenName, tokenValue as InterpreterResult);
+
+      // Wrap in TokenSymbol for reference cache so other tokens can call .get() on it
+      const tokenType = tokenData.$type || "unknown";
+      const tokenSymbol = wrapStructuredTokenAsSymbol(tokenValue, tokenType, this.config);
+      this.referenceCache.set(tokenName, tokenSymbol);
+
       this.callbacks?.onResolve?.(tokenName, tokenValue as InterpreterResult);
       this.graph.addNode(tokenName, []);
       this.earlyResolved.push(tokenName);
@@ -493,7 +492,12 @@ class PrefixResolver {
       // Assemble the structured token with resolved values
       const assembled = assembleStructuredToken(tokenName, resolvedFields, originalValue);
       this.resolved.set(tokenName, assembled as TokenResult);
-      this.referenceCache.set(tokenName, assembled as InterpreterResult);
+
+      // Wrap in TokenSymbol for reference cache so other tokens can call .get() on it
+      const tokenType = tokenData.$type || "unknown";
+      const tokenSymbol = wrapStructuredTokenAsSymbol(assembled, tokenType, this.config);
+      this.referenceCache.set(tokenName, tokenSymbol);
+
       this.callbacks?.onResolve?.(tokenName, assembled as InterpreterResult);
     }
 

@@ -346,26 +346,32 @@ describe("Structured Tokens - End-to-End Resolution", () => {
     expect(configValue.ratio).toBe(1.5);
   });
 
-  it("should handle nested structure references", () => {
+  it("should handle nested structure references with key access", () => {
     const tokens = {
-      "some-shadow": {
+      shadow: {
         $value: { offsetX: 0 },
       },
-      "other-shadow": "{some-shadow}",
+      "shadow-offsetX": '{shadow}.get("offsetX")',
+      "shadow-offsetInc": '{shadow}.get("offsetX") + 1',
     };
 
     const result = processTokens(tokens, { output: "symbols" });
 
-    const someShadow = result.tokens.get("some-shadow");
-    const otherShadow = result.tokens.get("other-shadow");
+    const someShadow = result.tokens.get("shadow");
+    const testAccess = result.tokens.get("shadow-offsetX");
+    const offsetXInc = result.tokens.get("shadow-offsetInc");
 
     expect(someShadow).toBeDefined();
-    expect(otherShadow).toBeDefined();
+    expect(testAccess).toBeDefined();
 
     const someShadowValue = getValue(someShadow) as any;
-    const otherShadowValue = getValue(otherShadow) as any;
 
+    // shadow should have offsetX = 0
     expect(someShadowValue.offsetX).toBe(0);
-    expect(otherShadowValue.offsetX).toBe(0);
+
+    // shadow-offsetX should be able to access the offsetX key from the referenced structure using .get()
+    expect(getValue(testAccess)).toBe(0);
+
+    expect(getValue(offsetXInc)).toBe(1);
   });
 });
