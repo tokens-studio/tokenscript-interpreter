@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import { Command } from "commander";
 import packageJson from "../package.json" with { type: "json" };
-import { FlatObjectBuilder, NestedObjectBuilder } from "./processor/builders";
+import { FlatObjectBuilder, NestedObjectBuilder, stringifyOutput } from "./processor/builders";
 import { collectErrors } from "./processor/errors";
 import {
   collectJsonFiles,
@@ -76,7 +76,7 @@ program
       process.exit(1);
     }
 
-    const outputJson = JSON.stringify(result.output, null, 2);
+    const outputJson = stringifyOutput(result.output);
 
     if (options.output) {
       fs.writeFileSync(options.output, outputJson);

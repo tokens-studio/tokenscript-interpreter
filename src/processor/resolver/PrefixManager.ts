@@ -6,10 +6,10 @@ import {
   NullSymbol,
   StringSymbol,
 } from "@interpreter/symbols";
+import type { TokenData } from "@src/processor/utils/tokens";
 import type { ISymbolType } from "@src/types";
 import { PrefixExtractor } from "./PrefixExtractor";
 import type { RefPath } from "./types";
-import type { TokenData } from "@src/processor/utils/tokens";
 
 /**
  * Handles prefix bookkeeping, dictionary construction, and virtual child tracking.
@@ -96,7 +96,10 @@ export class PrefixManager {
     return new DictionarySymbol(dictionaryEntries, this.config);
   }
 
-  findParentToken(reference: RefPath, tokens: Map<RefPath, string | TokenData>): RefPath | undefined {
+  findParentToken(
+    reference: RefPath,
+    tokens: Map<RefPath, string | TokenData>,
+  ): RefPath | undefined {
     const cached = this.parentLookupCache.get(reference);
     if (cached !== undefined) {
       return cached === null ? undefined : cached;

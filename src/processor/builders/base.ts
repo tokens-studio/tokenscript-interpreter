@@ -19,6 +19,29 @@ export function stringifyInterpreterResult(value: InterpreterResult): string {
   return String(value);
 }
 
+/**
+ * Converts processor output to JSON-safe format.
+ * Handles Map serialization and symbol conversion to avoid circular references.
+ */
+export function toJsonSafe(value: unknown): unknown {
+  // Handle Map serialization
+  if (value instanceof Map) {
+    return Object.fromEntries(value);
+  }
+  // Handle symbol serialization (they may have circular Config references)
+  if (isTokenscriptSymbol(value)) {
+    return symbolTypeToJsValue(value);
+  }
+  return value;
+}
+
+/**
+ * Stringify processor output to JSON, handling Maps and symbols properly.
+ */
+export function stringifyOutput(output: unknown, indent = 2): string {
+  return JSON.stringify(output, (_key, value) => toJsonSafe(value), indent);
+}
+
 export interface BuildTokensOptions<T> {
   builder?: TokenBuilder<T>;
   config?: Config;
