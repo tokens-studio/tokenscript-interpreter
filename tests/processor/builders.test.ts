@@ -1,9 +1,86 @@
 import { NumberSymbol, StringSymbol } from "@interpreter/symbols";
+import { buildTokens } from "@src/processor/builders/base";
 import { MapBuilder } from "@src/processor/builders/MapBuilder";
 import { FlatObjectBuilder, NestedObjectBuilder } from "@src/processor/builders/ObjectBuilder";
 import { describe, expect, it } from "vitest";
 
 describe("Token Builders", () => {
+  describe("buildTokens integration", () => {
+    it("should return both tokens Map and builder output when using ObjectBuilder", () => {
+      const tokens = new Map([
+        ["color.primary", "#FF0000"],
+        ["color.secondary", "#00FF00"],
+        ["spacing.base", "8px"],
+      ]);
+
+      const result = buildTokens(tokens, {
+        builder: new FlatObjectBuilder(),
+        output: "string",
+      });
+
+      // Should always have a tokens Map
+      expect(result.tokens).toBeInstanceOf(Map);
+      expect(result.tokens.get("color.primary")).toBe("#FF0000");
+      expect(result.tokens.get("color.secondary")).toBe("#00FF00");
+      expect(result.tokens.get("spacing.base")).toBe("8px");
+
+      // Output should be the FlatObjectBuilder result
+      expect(result.output).toEqual({
+        "color.primary": "#FF0000",
+        "color.secondary": "#00FF00",
+        "spacing.base": "8px",
+      });
+    });
+
+    it("should return both tokens Map and builder output when using NestedObjectBuilder", () => {
+      const tokens = new Map([
+        ["color.primary", "#FF0000"],
+        ["color.secondary", "#00FF00"],
+        ["spacing.base", "8px"],
+      ]);
+
+      const result = buildTokens(tokens, {
+        builder: new NestedObjectBuilder(),
+        output: "string",
+      });
+
+      // Should always have a tokens Map
+      expect(result.tokens).toBeInstanceOf(Map);
+      expect(result.tokens.get("color.primary")).toBe("#FF0000");
+      expect(result.tokens.get("color.secondary")).toBe("#00FF00");
+      expect(result.tokens.get("spacing.base")).toBe("8px");
+
+      // Output should be the NestedObjectBuilder result
+      expect(result.output).toEqual({
+        color: {
+          primary: "#FF0000",
+          secondary: "#00FF00",
+        },
+        spacing: {
+          base: "8px",
+        },
+      });
+    });
+
+    it("should return the same Map for both tokens and output when using MapBuilder", () => {
+      const tokens = new Map([
+        ["color.primary", "#FF0000"],
+        ["color.secondary", "#00FF00"],
+      ]);
+
+      const result = buildTokens(tokens, {
+        builder: new MapBuilder("string"),
+        output: "string",
+      });
+
+      // Both should be the same Map instance
+      expect(result.tokens).toBeInstanceOf(Map);
+      expect(result.output).toBeInstanceOf(Map);
+      expect(result.tokens).toBe(result.output);
+      expect(result.tokens.get("color.primary")).toBe("#FF0000");
+    });
+  });
+
   describe("NestedObjectBuilder", () => {
     it("should build a nested object from flat token paths", () => {
       const builder = new NestedObjectBuilder();

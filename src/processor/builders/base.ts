@@ -7,25 +7,15 @@ import { MapBuilder } from "./MapBuilder";
 import type { OutputFormat, TokenBuilder } from "./types";
 
 export function serializeInterpreterResult(value: InterpreterResult): unknown {
-  if (typeof value === "string") {
-    return value;
-  }
-  if (value === null) {
-    return null;
-  }
-  if (isTokenscriptSymbol(value)) {
-    return symbolTypeToJsValue(value);
-  }
+  if (typeof value === "string") return value;
+  if (value === null) return null;
+  if (isTokenscriptSymbol(value)) return symbolTypeToJsValue(value);
   return value;
 }
 
 export function stringifyInterpreterResult(value: InterpreterResult): string {
-  if (typeof value === "string") {
-    return value;
-  }
-  if (isTokenscriptSymbol(value)) {
-    return value.toString();
-  }
+  if (typeof value === "string") return value;
+  if (isTokenscriptSymbol(value)) return value.toString();
   return String(value);
 }
 
@@ -46,38 +36,44 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
   const processor = new TokenResolver();
   const errors: Map<string, Error> = new Map();
 
+  // Always create a MapBuilder for the tokens map output
+  const tokensMapBuilder = builder instanceof MapBuilder ? builder : new MapBuilder(output);
+
   const callbacks = {
     onResolve: (tokenName: string, value: InterpreterResult) => {
       builder.onResolve(tokenName, value);
+
+      // If using a non-Map builder, also populate the map for the tokens property
+      if (!(builder instanceof MapBuilder)) tokensMapBuilder.onResolve(tokenName, value);
     },
     onError: (tokenName: string, error: Error, originalValue: string) => {
       builder.onError(tokenName, error, originalValue);
       errors.set(tokenName, error);
+
+      // If using a non-Map builder, also populate the map for the tokens property
+      if (!(builder instanceof MapBuilder))
+        tokensMapBuilder.onError(tokenName, error, originalValue);
     },
   };
 
   const result = processor.processTokens(tokens, callbacks, config);
 
-  // For backward compatibility, tokens property points to builder result if it's a Map,
-  // otherwise use the builder's output
-  let tokensOutput =
-    builder.getResult() instanceof Map
-      ? (builder.getResult() as Map<string, string | InterpreterResult>)
-      : (builder.getResult() as T);
+  let tokensMap = tokensMapBuilder.getResult();
+  const builderOutput = builder.getResult();
 
-  // Filter out sub-field paths from output
-  if (result.subFieldPaths && result.subFieldPaths.size > 0 && tokensOutput instanceof Map) {
-    tokensOutput = new Map(tokensOutput);
+  // Filter out sub-field paths from both outputs
+  if (result.subFieldPaths && result.subFieldPaths.size > 0) {
+    tokensMap = new Map(tokensMap);
     for (const subFieldPath of result.subFieldPaths) {
-      tokensOutput.delete(subFieldPath);
+      tokensMap.delete(subFieldPath);
       errors.delete(subFieldPath);
     }
   }
 
   return {
     ...result,
-    tokens: tokensOutput,
-    output: tokensOutput as T,
+    tokens: tokensMap,
+    output: builderOutput as T,
     errors,
   };
 }
