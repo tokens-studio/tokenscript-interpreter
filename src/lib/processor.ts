@@ -8,7 +8,6 @@ export {
   flattenChildrenObject,
   type ProcessorOutput,
   type ProcessorResult,
-  serializeInterpreterResult,
   type TokenBuilder,
   TokenResolver,
 } from "@src/processor";

@@ -9,12 +9,7 @@ export {
   MapBuilder,
   NestedObjectBuilder,
   type OutputFormat,
-  serializeInterpreterResult,
-  stringifyInterpreterResult,
-  stringifyOutput,
-  symbolTypeToJsValue,
   type TokenBuilder,
-  toJsonSafe,
 } from "./builders";
 export { DependencyError } from "./errors";
 export {

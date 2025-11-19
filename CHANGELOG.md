@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Handles Objects with `Dictionary` interface
   - Handles Arrays with `List` interface
 
+### Fixes
+
+- Builder now always returns tokens map in `.tokens` regardless of build output format in `.build`
+
 ## [0.8.0] - 2025-11-11
 
 ### Added
