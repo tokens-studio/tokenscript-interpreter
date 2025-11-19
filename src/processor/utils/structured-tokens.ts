@@ -1,40 +1,9 @@
 import type { Config } from "@interpreter/config";
 import type { InterpreterResult } from "@interpreter/interpreter";
-import {
-  BooleanSymbol,
-  jsValueToSymbolType,
-  NumberSymbol,
-  TokenSymbol,
-} from "@interpreter/symbols";
-import { isArray, isBoolean, isNumber, isObject, isString } from "@interpreter/utils/type";
+import { jsValueToSymbolType, TokenSymbol } from "@interpreter/symbols";
+import { isArray, isObject, isString } from "@interpreter/utils/type";
 import type { ISymbolType } from "@src/types";
 import { defaultObjectParsers, type ObjectParser } from "../object-parsers";
-
-/**
- * Check if a value is a primitive (string, number, boolean, null, undefined)
- */
-export function isPrimitive(value: unknown): value is string | number | boolean | null | undefined {
-  return (
-    value === null || value === undefined || isString(value) || isNumber(value) || isBoolean(value)
-  );
-}
-
-/**
- * Convert a JavaScript primitive directly to a TokenScript symbol
- */
-export function primitiveToSymbol(value: unknown, config?: Config): InterpreterResult {
-  if (value === null || value === undefined) {
-    return String(value);
-  }
-  if (isNumber(value)) {
-    return new NumberSymbol(value, config);
-  }
-  if (isBoolean(value)) {
-    return new BooleanSymbol(value, config);
-  }
-  // String values still need to be parsed for references
-  return String(value);
-}
 
 /**
  * Extract string fields from a structured value (object or array).

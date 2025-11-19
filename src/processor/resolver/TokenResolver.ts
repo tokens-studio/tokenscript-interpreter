@@ -2,7 +2,7 @@ import type { ASTNode } from "@interpreter/ast";
 import type { Config } from "@interpreter/config";
 import type { InterpreterResult } from "@interpreter/interpreter";
 import { type ParseExpressionResult, parseExpression } from "@interpreter/parser";
-import { StringSymbol } from "@interpreter/symbols";
+import { BooleanSymbol, NullSymbol, NumberSymbol, StringSymbol } from "@interpreter/symbols";
 import { isArray, isBoolean, isNull, isNumber, isObject, isString } from "@interpreter/utils/type";
 import { UNINTERPRETED_KEYWORDS } from "@src/types";
 import { DependencyError } from "../errors";
@@ -11,7 +11,6 @@ import { DependencyGraph } from "../utils/DependencyGraph";
 import {
   assembleStructuredToken,
   extractStringFields,
-  primitiveToSymbol,
   wrapStructuredTokenAsSymbol,
 } from "../utils/structured-tokens";
 import { getTokenValue, setTokenValue, type TokenData } from "../utils/tokens";
@@ -194,9 +193,18 @@ class PrefixResolver {
         continue;
       }
 
-      if (isNumber(tokenValue) || isBoolean(tokenValue) || isNull(tokenValue)) {
-        const symbol = primitiveToSymbol(tokenValue, this.config);
-        this.earlyResolvePrimitiveToken(tokenName, symbol);
+      if (isNumber(tokenValue)) {
+        this.earlyResolvePrimitiveToken(tokenName, new NumberSymbol(tokenValue, this.config));
+        continue;
+      }
+
+      if (isBoolean(tokenValue)) {
+        this.earlyResolvePrimitiveToken(tokenName, new BooleanSymbol(tokenValue, this.config));
+        continue;
+      }
+
+      if (isNull(tokenValue)) {
+        this.earlyResolvePrimitiveToken(tokenName, new NullSymbol(this.config));
         continue;
       }
 
@@ -223,9 +231,6 @@ class PrefixResolver {
     }
   }
 
-  /**
-   * Handle structured tokens (objects/arrays with potential references)
-   */
   private handleStructuredToken(tokenName: RefPath, tokenData: TokenData): void {
     const tokenValue = tokenData.$value;
 
