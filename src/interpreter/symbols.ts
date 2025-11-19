@@ -14,6 +14,7 @@ import {
   isObjectWithKey,
   isOutOfBounds,
   isOutOfBoundsInclusive,
+  isSome,
   isString,
   isUndefined,
   nullToUndefined,
@@ -74,21 +75,21 @@ const formatObjectEntries = (
 
 // Dictionary and List Implementation Functions --------------------------------
 
-const ensureKeyIsString = (key: ISymbolType | string): string => {
+const expectStringKey = (key: StringSymbol | string): string => {
   if (isString(key)) {
     return key;
   }
-  if (isObjectWithKey(key, "value") && !isNull(key.value)) {
-    return key.value as string;
+  if (key instanceof StringSymbol && isSome(key.value)) {
+    return key.value;
   }
-  throw new InterpreterError(`Key must be a string, got ${typeof key}.`);
+  throw new InterpreterError(`Key must be a StringSymbol or string, got ${typeof key}.`);
 };
 
 export const DictionaryImpl = {
-  get(value: Map<string, ISymbolType>, key: ISymbolType, config?: Config): ISymbolType {
-    const keyStr = ensureKeyIsString(key);
+  get(value: Map<string, ISymbolType>, key: StringSymbol | string, config?: Config): ISymbolType {
+    const keyStr = expectStringKey(key);
     const result = value.get(keyStr);
-    if (result !== undefined) {
+    if (isSome(result)) {
       return result;
     }
     return new NullSymbol(config);
