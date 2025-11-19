@@ -12,7 +12,7 @@ function examplePath(fileName: string): string {
 }
 
 function listValues(list: ListSymbol): string[] {
-  return list.elements.map((symbol) => symbol.toString());
+  return list.value.map((symbol) => symbol.toString());
 }
 
 function dictionaryValues(dictionary: DictionarySymbol): Record<string, string> {

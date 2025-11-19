@@ -6,6 +6,7 @@ import {
   NullSymbol,
   StringSymbol,
 } from "@interpreter/symbols";
+import type { TokenData } from "@src/processor/utils/tokens";
 import type { ISymbolType } from "@src/types";
 import { PrefixExtractor } from "./PrefixExtractor";
 import type { RefPath } from "./types";
@@ -81,7 +82,6 @@ export class PrefixManager {
     if (!directChildren || directChildren.size === 0) return undefined;
 
     const dictionaryEntries = new Map<string, ISymbolType>();
-    const _prefixLen = prefix.length + 1;
 
     for (const shortName of directChildren) {
       const tokenName = `${prefix}.${shortName}`;
@@ -96,7 +96,10 @@ export class PrefixManager {
     return new DictionarySymbol(dictionaryEntries, this.config);
   }
 
-  findParentToken(reference: RefPath, tokens: Map<RefPath, string>): RefPath | undefined {
+  findParentToken(
+    reference: RefPath,
+    tokens: Map<RefPath, string | TokenData>,
+  ): RefPath | undefined {
     const cached = this.parentLookupCache.get(reference);
     if (cached !== undefined) {
       return cached === null ? undefined : cached;

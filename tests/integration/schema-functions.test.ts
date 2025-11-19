@@ -297,11 +297,11 @@ describe("Schema Function Integration", () => {
     expect(lightList).toBeInstanceOf(ListSymbol);
     expect(darkList).toBeInstanceOf(ListSymbol);
 
-    const _lightValues = (lightList as ListSymbol).elements.map((symbol) => symbol.toString());
-    const _darkValues = (darkList as ListSymbol).elements.map((symbol) => symbol.toString());
+    const _lightValues = (lightList as ListSymbol).value.map((symbol) => symbol.toString());
+    const _darkValues = (darkList as ListSymbol).value.map((symbol) => symbol.toString());
 
-    const from = lightList.elements.map((x) => x.value)[0];
-    const to = lightBack.elements.map((x) => x.value)[0];
+    const from = lightList.value.map((x) => x.value)[0];
+    const to = lightBack.value.map((x) => x.value)[0];
 
     // Use toBeCloseTo for floating point comparisons to account for rounding errors
     // Default precision is 2 decimal places, adjust if needed

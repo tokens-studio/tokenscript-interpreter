@@ -1,47 +1,66 @@
-/**
- * Utility functions for token processing
- */
+import { getKeyAlt, isObject, isString } from "@/src/interpreter/utils/type";
 
 /**
- * Flattens a nested object structure into a flat key-value map with dot-separated paths.
+ * Structured token data containing value and optional type information
+ */
+export interface TokenData {
+  $value: unknown;
+  $type?: string;
+}
+
+export function getTokenValue(data: string | TokenData): unknown {
+  return isString(data) ? data : data.$value;
+}
+
+export function setTokenValue(value: string | TokenData): TokenData {
+  return isString(value) ? { $value: value } : value;
+}
+
+/**
+ * Flattens a nested tokens object structure into a flat key-value map with dot-separated paths.
+ * Now preserves structured values and captures $type information.
  *
  * @param obj - The nested object to flatten
- * @param prefix - Current path prefix (used in recursion)
- * @param skipMetadata - Whether to skip keys starting with $
- * @returns Flat map of token paths to values
+ * @param prefixAccumulator - Recursion prefix accumulator
+ * @returns Flat map of token paths to TokenData
  *
  * @example
  * Input:  { color: { red: { $value: "#FF0000" } } }
- * Output: Map { "color.red" => "#FF0000" }
+ * Output: Map { "color.red" => { $value: "#FF0000" } }
+ *
+ * @example
+ * Input:  { shadow: { $type: "shadow", $value: { offsetX: 0, offsetY: 4 } } }
+ * Output: Map { "shadow" => { $value: { offsetX: 0, offsetY: 4 }, $type: "shadow" } }
  */
-export function flattenObject(
+export function flattenTokensObject(
   obj: Record<string, unknown>,
-  prefix = "",
-  skipMetadata = true,
-): Map<string, string> {
-  const result = new Map<string, string>();
+  prefixAccumulator = "",
+): Map<string, TokenData> {
+  const result = new Map<string, TokenData>();
 
-  for (const [key, value] of Object.entries(obj)) {
-    // Skip metadata keys if configured
-    if (skipMetadata && key.startsWith("$")) {
+  for (const [prefix, value] of Object.entries(obj)) {
+    if (prefix.startsWith("$")) {
       continue;
     }
 
-    const path = prefix ? `${prefix}.${key}` : key;
+    const path = prefixAccumulator ? `${prefixAccumulator}.${prefix}` : prefix;
 
-    if (value && typeof value === "object" && !Array.isArray(value)) {
+    if (isObject(value)) {
       const objValue = value as Record<string, unknown>;
-      // Check for token with $value property (Design Tokens format)
-      if ("$value" in objValue) {
-        result.set(path, String(objValue.$value));
+      const tokenValue = getKeyAlt(["$value", "value"], objValue);
+
+      if (tokenValue !== undefined) {
+        // Capture $type if present
+        const tokenType = objValue.$type;
+        const tokenData: TokenData = {
+          $value: tokenValue,
+          ...(tokenType !== undefined && { $type: String(tokenType) }),
+        };
+        result.set(path, tokenData);
       }
-      // Check for token with value property (legacy format)
-      else if ("value" in objValue) {
-        result.set(path, String(objValue.value));
-      }
-      // Otherwise, recurse into nested object
+      // Recurse into structure
       else {
-        const nested = flattenObject(objValue, path, skipMetadata);
+        const nested = flattenTokensObject(objValue, path);
         for (const [nestedKey, nestedValue] of nested) {
           result.set(nestedKey, nestedValue);
         }
@@ -49,7 +68,7 @@ export function flattenObject(
     }
     // Primitive values are stored directly
     else {
-      result.set(path, String(value));
+      result.set(path, { $value: value });
     }
   }
 
@@ -57,12 +76,12 @@ export function flattenObject(
 }
 
 /**
- * Converts a Record to a Map with string values
+ * Converts a Record to a Map with TokenData values
  */
-export function recordToMap(record: Record<string, unknown>): Map<string, string> {
-  const map = new Map<string, string>();
+export function recordToMap(record: Record<string, unknown>): Map<string, TokenData> {
+  const map = new Map<string, TokenData>();
   for (const [key, value] of Object.entries(record)) {
-    map.set(key, String(value));
+    map.set(key, { $value: value });
   }
   return map;
 }

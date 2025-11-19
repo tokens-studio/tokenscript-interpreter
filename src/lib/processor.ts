@@ -8,8 +8,8 @@ export {
   flattenChildrenObject,
   type ProcessorOutput,
   type ProcessorResult,
-  serializeInterpreterResult,
   type TokenBuilder,
   TokenResolver,
 } from "@src/processor";
 export { processTokenSets, processTokens } from "@src/processor/process";
+export type { TokenData } from "@src/processor/utils/tokens";

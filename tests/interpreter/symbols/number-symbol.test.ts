@@ -73,47 +73,47 @@ describe("NumberSymbol", () => {
     });
   });
 
-  describe("toStringImpl", () => {
+  describe("toStringSymbol", () => {
     it("should convert to string without radix", () => {
       const num = new NumberSymbol(42);
-      const result = num.toStringImpl();
+      const result = num.toStringSymbol();
       expect(result).toBeInstanceOf(StringSymbol);
       expect(result.value).toBe("42");
     });
 
     it("should convert to binary with radix 2", () => {
       const num = new NumberSymbol(10);
-      const result = num.toStringImpl(new NumberSymbol(2));
+      const result = num.toStringSymbol(new NumberSymbol(2));
       expect(result.value).toBe("1010");
     });
 
     it("should convert to hexadecimal with radix 16", () => {
       const num = new NumberSymbol(255);
-      const result = num.toStringImpl(new NumberSymbol(16));
+      const result = num.toStringSymbol(new NumberSymbol(16));
       expect(result.value).toBe("ff");
     });
 
     it("should handle fractional values in hex (rounds .5 down)", () => {
       const num = new NumberSymbol(15.5);
-      const result = num.toStringImpl(new NumberSymbol(16));
+      const result = num.toStringSymbol(new NumberSymbol(16));
       expect(result.value).toBe("f");
     });
 
     it("should handle other fractional values in hex (normal rounding)", () => {
       const num = new NumberSymbol(15.7);
-      const result = num.toStringImpl(new NumberSymbol(16));
+      const result = num.toStringSymbol(new NumberSymbol(16));
       expect(result.value).toBe("10");
     });
 
     it("should throw error for invalid radix", () => {
       const num = new NumberSymbol(42);
-      expect(() => num.toStringImpl(new NumberSymbol(1))).toThrow(InterpreterError);
-      expect(() => num.toStringImpl(new NumberSymbol(37))).toThrow(InterpreterError);
+      expect(() => num.toStringSymbol(new NumberSymbol(1))).toThrow(InterpreterError);
+      expect(() => num.toStringSymbol(new NumberSymbol(37))).toThrow(InterpreterError);
     });
 
     it("should throw error for null value", () => {
       const num = new NumberSymbol(null);
-      expect(() => num.toStringImpl()).toThrow(InterpreterError);
+      expect(() => num.toStringSymbol()).toThrow(InterpreterError);
     });
   });
 

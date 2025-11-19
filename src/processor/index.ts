@@ -1,4 +1,3 @@
-// Builders
 export {
   type BuilderFormat,
   FlatObjectBuilder,
@@ -9,14 +8,15 @@ export {
   MapBuilder,
   NestedObjectBuilder,
   type OutputFormat,
-  serializeInterpreterResult,
-  stringifyInterpreterResult,
-  symbolTypeToJsValue,
   type TokenBuilder,
 } from "./builders";
 export { DependencyError } from "./errors";
+export {
+  defaultObjectParsers,
+  numberWithUnitParser,
+  type ObjectParser,
+} from "./object-parsers";
 export { processTokenSets, processTokens } from "./process";
-export { collectJsonFiles, normalizeJsonFiles, processTokensFromFiles } from "./processFiles";
 export type { ProcessorOutput, ProcessorResult } from "./resolver/TokenResolver";
 export { TokenResolver } from "./resolver/TokenResolver";
 export type {

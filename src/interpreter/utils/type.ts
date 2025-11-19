@@ -62,6 +62,18 @@ export const hasProperty = <K extends string>(obj: unknown, key: K): obj is Reco
   return isObject(obj) && key in obj;
 };
 
+export const getKeyAlt = <K extends string, T>(
+  keys: readonly K[],
+  record: Partial<Record<K, T>>,
+): T | undefined => {
+  for (const key of keys) {
+    if (key in record) {
+      return record[key];
+    }
+  }
+  return undefined;
+};
+
 export const isObjectWithKey = <K extends string>(
   value: unknown,
   key: K,
@@ -81,6 +93,16 @@ export const isSingleEntryObject = (v: unknown): boolean => {
 
 export const isNonEmptyArray = <T>(v: unknown): v is [T, ...T[]] => {
   return isArray(v) && v.length > 0;
+};
+
+export const isOutOfBounds = <T>(value: unknown, index: number): boolean => {
+  if (!isArray<T>(value)) return true;
+  return index < 0 || index >= value.length;
+};
+
+export const isOutOfBoundsInclusive = <T>(value: unknown, index: number): boolean => {
+  if (!isArray<T>(value)) return true;
+  return index < 0 || index > value.length;
 };
 
 export const isEmpty = (v: unknown): boolean => {

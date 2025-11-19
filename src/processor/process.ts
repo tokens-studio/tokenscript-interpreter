@@ -2,6 +2,7 @@ import type { InterpreterResult } from "../interpreter/interpreter";
 import { buildTokens } from "./builders/base";
 import type { ProcessOptions, ProcessResult, ProcessSetsOptions } from "./types";
 import { determineSets, flattenToTokens } from "./utils/set-processor";
+import type { TokenData } from "./utils/tokens";
 
 // Main ------------------------------------------------------------------------
 
@@ -9,15 +10,15 @@ import { determineSets, flattenToTokens } from "./utils/set-processor";
  * Process flat token collection.
  */
 export function processTokens<T = Map<string, string | InterpreterResult>>(
-  tokens: Map<string, string> | Record<string, any>,
+  tokens: Map<string, TokenData> | Map<string, string> | Record<string, any>,
   options: ProcessOptions = {},
 ): ProcessResult<T> {
-  const { config, output = "string", builder } = options;
+  const { config, output = "string", builder, objectParsers } = options;
 
-  const tokenMap: Map<string, string> =
+  const tokenMap: Map<string, string | TokenData> =
     tokens instanceof Map ? tokens : flattenToTokens({ tokens }, ["tokens"]);
 
-  return buildTokens(tokenMap, { builder, config, output }) as ProcessResult<T>;
+  return buildTokens(tokenMap, { builder, config, objectParsers, output }) as ProcessResult<T>;
 }
 
 /**
@@ -27,11 +28,11 @@ export function processTokenSets<T = Map<string, string | InterpreterResult>>(
   normalizedFiles: Record<string, unknown>,
   options: ProcessSetsOptions = {},
 ): ProcessResult<T> {
-  const { activeSets, activeTheme, config, output = "string", builder } = options;
+  const { activeSets, activeTheme, config, output = "string", builder, objectParsers } = options;
 
   const setNames = determineSets(normalizedFiles, activeSets, activeTheme);
 
   const tokens = flattenToTokens(normalizedFiles, setNames);
 
-  return buildTokens(tokens, { builder, config, output }) as ProcessResult<T>;
+  return buildTokens(tokens, { builder, config, objectParsers, output }) as ProcessResult<T>;
 }

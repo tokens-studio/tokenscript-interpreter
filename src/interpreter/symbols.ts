@@ -12,6 +12,9 @@ import {
   isNumber,
   isObject,
   isObjectWithKey,
+  isOutOfBounds,
+  isOutOfBoundsInclusive,
+  isSome,
   isString,
   isUndefined,
   nullToUndefined,
@@ -54,20 +57,178 @@ export const getResultTypeName = (result: unknown): string => {
 };
 
 const formatObjectEntries = (
-  data: Record<string, any> | Map<string, any> | Array<[string, any]>,
+  data: Record<string, unknown> | Map<string, unknown> | Array<[string, unknown]>,
 ): string => {
-  let entries: Array<[string, any]>;
+  let entries: Array<[string, unknown]>;
 
-  if (Array.isArray(data)) {
+  if (isArray(data)) {
     entries = data;
-  } else if (data instanceof Map) {
+  } else if (isMap(data)) {
     entries = Array.from(data.entries());
   } else {
     entries = Object.entries(data);
   }
 
-  const formattedEntries = entries.map(([key, value]) => `${key}: ${value.toString()}`).join(", ");
+  const formattedEntries = entries.map(([key, value]) => `${key}: ${String(value)}`).join(", ");
   return `{${formattedEntries}}`;
+};
+
+// Dictionary and List Implementation Functions --------------------------------
+
+const expectStringKey = (key: StringSymbol | string): string => {
+  if (isString(key)) {
+    return key;
+  }
+  if (key instanceof StringSymbol && isSome(key.value)) {
+    return key.value;
+  }
+  throw new InterpreterError(`Key must be a StringSymbol or string, got ${typeof key}.`);
+};
+
+export const DictionaryImpl = {
+  get(value: Map<string, ISymbolType>, key: StringSymbol | string, config?: Config): ISymbolType {
+    const keyStr = expectStringKey(key);
+    const result = value.get(keyStr);
+    if (isSome(result)) {
+      return result;
+    }
+    return new NullSymbol(config);
+  },
+
+  set(value: Map<string, ISymbolType>, key: StringSymbol | string, val: ISymbolType): void {
+    const keyStr = expectStringKey(key);
+    value.set(keyStr, val.cloneIfMutable());
+  },
+
+  deleteKey(value: Map<string, ISymbolType>, key: StringSymbol | string): void {
+    const keyStr = expectStringKey(key);
+    value.delete(keyStr);
+  },
+
+  keys(value: Map<string, ISymbolType>, config?: Config): ListSymbol {
+    const keys = Array.from(value.keys()).map((key) => new StringSymbol(key, config));
+    return new ListSymbol(keys, false, config);
+  },
+
+  values(value: Map<string, ISymbolType>, config?: Config): ListSymbol {
+    const values = Array.from(value.values());
+    return new ListSymbol(values, false, config);
+  },
+
+  keyExists(
+    value: Map<string, ISymbolType>,
+    key: StringSymbol | string,
+    config?: Config,
+  ): BooleanSymbol {
+    const keyStr = expectStringKey(key);
+    return new BooleanSymbol(value.has(keyStr), config);
+  },
+
+  length(value: Map<string, ISymbolType>, config?: Config): NumberSymbol {
+    return new NumberSymbol(value.size, config);
+  },
+
+  clear(value: Map<string, ISymbolType>): void {
+    value.clear();
+  },
+
+  deepCopy(value: Map<string, ISymbolType>): Map<string, ISymbolType> {
+    const copiedMap = new Map<string, ISymbolType>();
+    for (const [key, val] of value.entries()) {
+      copiedMap.set(key, val.deepCopy());
+    }
+    return copiedMap;
+  },
+
+  toString(value: Map<string, ISymbolType>): string {
+    return formatObjectEntries(value);
+  },
+
+  hasAttribute(value: Map<string, ISymbolType>, attributeName: string): boolean {
+    return value.has(attributeName);
+  },
+
+  getAttribute(value: Map<string, ISymbolType>, attributeName: string): ISymbolType | null {
+    const val = value.get(attributeName);
+    return val !== undefined ? val : null;
+  },
+};
+
+export const ListImpl = {
+  append(value: ISymbolType[], item: ISymbolType): void {
+    value.push(item.cloneIfMutable());
+  },
+
+  extend(value: ISymbolType[], ...items: ISymbolType[]): void {
+    for (const item of items) {
+      if (item instanceof ListSymbol) {
+        value.push(...item.value.map((element: ISymbolType) => element.cloneIfMutable()));
+      } else {
+        value.push(item.cloneIfMutable());
+      }
+    }
+  },
+
+  insert(value: ISymbolType[], indexSymbol: ISymbolType, item: ISymbolType): void {
+    const index = indexSymbol.value as number;
+    if (isOutOfBoundsInclusive(value, index)) {
+      throw new InterpreterError("Index out of range for insert.");
+    }
+    value.splice(index, 0, item.cloneIfMutable());
+  },
+
+  deleteAt(value: ISymbolType[], indexSymbol: ISymbolType): void {
+    const index = indexSymbol.value as number;
+    if (isOutOfBounds(value, index)) {
+      throw new InterpreterError("Index out of range for deletion.");
+    }
+    value.splice(index, 1);
+  },
+
+  length(value: ISymbolType[], config?: Config): NumberSymbol {
+    return new NumberSymbol(value.length, config);
+  },
+
+  indexOf(value: ISymbolType[], item: ISymbolType, config?: Config): NumberSymbol {
+    const idx = value.findIndex((el) => el.equals(item));
+    return new NumberSymbol(idx, config);
+  },
+
+  get(value: ISymbolType[], indexSymbol: ISymbolType): ISymbolType {
+    const index = indexSymbol.value as number;
+    if (isOutOfBounds(value, index)) {
+      throw new InterpreterError("Index out of range for get.");
+    }
+    return value[index];
+  },
+
+  update(value: ISymbolType[], indexSymbol: ISymbolType, item: ISymbolType): void {
+    const index = indexSymbol.value as number;
+    if (isOutOfBounds(value, index)) {
+      throw new InterpreterError("Index out of range for update.");
+    }
+    value[index] = item.cloneIfMutable();
+  },
+
+  join(value: ISymbolType[], separator: ISymbolType | undefined, config?: Config): StringSymbol {
+    const sep = separator?.value || "";
+    const stringElements = value.map((element) => {
+      if (element.value === null) {
+        return "null";
+      }
+      return element.toString();
+    });
+    return new StringSymbol(stringElements.join(sep), config);
+  },
+
+  deepCopy(value: ISymbolType[]): ISymbolType[] {
+    return value.map((element) => element.deepCopy());
+  },
+
+  toString(value: ISymbolType[], isImplicit: boolean = false): string {
+    const delimiter = isImplicit ? " " : ", ";
+    return value.map((x) => (x.value === null ? "null" : x.toString())).join(delimiter);
+  },
 };
 
 // Base Type -------------------------------------------------------------------
@@ -246,7 +407,7 @@ export class NumberSymbol extends BaseSymbolType {
     to_string: {
       name: "to_string",
       function: function (this: NumberSymbol, radix?: NumberSymbol) {
-        return this.toStringImpl(radix);
+        return this.toStringSymbol(radix);
       },
       args: [
         {
@@ -263,11 +424,11 @@ export class NumberSymbol extends BaseSymbolType {
 
   constructor(value: number | NumberSymbol | NumberWithUnitSymbol | null, config?: Config) {
     let safeValue: numberValue;
-    if (typeof value === "number") {
+    if (isNumber(value)) {
       safeValue = value;
     } else if (value instanceof NumberSymbol || value instanceof NumberWithUnitSymbol) {
       safeValue = value.value as number;
-    } else if (value === null) {
+    } else if (isNull(value)) {
       safeValue = null;
     } else {
       throw new InterpreterError(`Value must be int or float, got ${typeof value}.`);
@@ -277,11 +438,11 @@ export class NumberSymbol extends BaseSymbolType {
   }
 
   validValue(val: any): boolean {
-    return typeof val === "number" || val instanceof NumberSymbol;
+    return isNumber(val) || val instanceof NumberSymbol;
   }
 
   expectSafeValue(val: any): asserts val is number {
-    if (val === null || val === undefined) {
+    if (isNone(val)) {
       throw new InterpreterError("Value must be int or float, got null.");
     }
   }
@@ -314,7 +475,7 @@ export class NumberSymbol extends BaseSymbolType {
   }
 
   // Direct translation of to_string method from token_interpreter/symbols.py
-  toStringImpl(radix?: NumberSymbol): StringSymbol {
+  toStringSymbol(radix?: NumberSymbol): StringSymbol {
     this.expectSafeValue(this.value);
 
     if (radix) {
@@ -363,35 +524,35 @@ export class StringSymbol extends BaseSymbolType {
   static _SUPPORTED_METHODS = {
     upper: {
       function: function (this: StringSymbol) {
-        return this.upperImpl();
+        return this.upper();
       },
       args: [],
       returnType: "String",
     },
     lower: {
       function: function (this: StringSymbol) {
-        return this.lowerImpl();
+        return this.lower();
       },
       args: [],
       returnType: "String",
     },
     length: {
       function: function (this: StringSymbol) {
-        return this.lengthImpl();
+        return this.length();
       },
       args: [],
       returnType: "Number",
     },
     concat: {
       function: function (this: StringSymbol, other: StringSymbol) {
-        return this.concatImpl(other);
+        return this.concat(other);
       },
       args: [{ name: "other", type: "String" }],
       returnType: "String",
     },
     split: {
       function: function (this: StringSymbol, delimiter?: StringSymbol) {
-        return this.splitImpl(delimiter);
+        return this.split(delimiter);
       },
       args: [{ name: "delimiter", type: "String", optional: true }],
       returnType: "List",
@@ -425,7 +586,7 @@ export class StringSymbol extends BaseSymbolType {
     }
   }
 
-  upperImpl(): StringSymbol {
+  upper(): StringSymbol {
     this.expectSafeValue(this.value);
     return new StringSymbol(this.value.toUpperCase(), this.config);
   }
@@ -442,17 +603,17 @@ export class StringSymbol extends BaseSymbolType {
     return new StringSymbol(null);
   }
 
-  lowerImpl(): StringSymbol {
+  lower(): StringSymbol {
     this.expectSafeValue(this.value);
     return new StringSymbol(this.value.toLowerCase(), this.config);
   }
 
-  lengthImpl(): NumberSymbol {
+  length(): NumberSymbol {
     this.expectSafeValue(this.value);
     return new NumberSymbol(this.value.length, this.config);
   }
 
-  concatImpl(other: StringSymbol): StringSymbol {
+  concat(other: StringSymbol): StringSymbol {
     this.expectSafeValue(this.value);
     if (other instanceof StringSymbol) {
       other.expectSafeValue(other.value);
@@ -461,7 +622,7 @@ export class StringSymbol extends BaseSymbolType {
     throw new InterpreterError(`Cannot concatenate String ${typeof other} to String.`);
   }
 
-  splitImpl(delimiter?: StringSymbol): ListSymbol {
+  split(delimiter?: StringSymbol): ListSymbol {
     this.expectSafeValue(this.value);
     const strValue = this.value;
 
@@ -511,6 +672,7 @@ export class BooleanSymbol extends BaseSymbolType {
     super(safeValue, config);
     this.value = safeValue;
   }
+
   validValue(val: any): boolean {
     return typeof val === "boolean" || val instanceof BooleanSymbol;
   }
@@ -540,21 +702,21 @@ export class ListSymbol extends BaseSymbolType {
   static _SUPPORTED_METHODS = {
     append: {
       function: function (this: ListSymbol, item: ISymbolType) {
-        return this.appendImpl(item);
+        return this.append(item);
       },
       args: [{ name: "item", type: "any" }],
       returnType: "List",
     },
     extend: {
       function: function (this: ListSymbol, ...items: ISymbolType[]) {
-        return this.extendImpl(...items);
+        return this.extend(...items);
       },
       args: [],
       returnType: "List",
     },
     insert: {
       function: function (this: ListSymbol, index: NumberSymbol, item: ISymbolType) {
-        return this.insertImpl(index, item);
+        return this.insert(index, item);
       },
       args: [
         { name: "index", type: "Number" },
@@ -564,7 +726,7 @@ export class ListSymbol extends BaseSymbolType {
     },
     delete: {
       function: function (this: ListSymbol, index: NumberSymbol) {
-        return this.deleteImpl(index);
+        return this.delete(index);
       },
       args: [{ name: "index", type: "Number" }],
       returnType: "List",
@@ -578,21 +740,21 @@ export class ListSymbol extends BaseSymbolType {
     },
     index: {
       function: function (this: ListSymbol, item: ISymbolType) {
-        return this.indexImpl(item);
+        return this.index(item);
       },
       args: [{ name: "item", type: "any" }],
       returnType: "Number",
     },
     get: {
       function: function (this: ListSymbol, index: NumberSymbol) {
-        return this.getImpl(index);
+        return this.get(index);
       },
       args: [{ name: "index", type: "Number" }],
       returnType: "any",
     },
     update: {
       function: function (this: ListSymbol, index: NumberSymbol, item: ISymbolType) {
-        return this.updateImpl(index, item);
+        return this.update(index, item);
       },
       args: [
         { name: "index", type: "Number" },
@@ -602,22 +764,20 @@ export class ListSymbol extends BaseSymbolType {
     },
     join: {
       function: function (this: ListSymbol, separator?: StringSymbol) {
-        return this.joinImpl(separator);
+        return this.join(separator);
       },
       args: [{ name: "separator", type: "String", optional: true }],
       returnType: "String",
     },
   };
 
-  public value: ISymbolType[] | null;
-  public elements: ISymbolType[];
+  public value: ISymbolType[];
   public isImplicit: boolean;
 
   constructor(elements: ISymbolType[] | null, isImplicit = false, config?: Config) {
     const safeElements = elements === null ? [] : elements;
     super(safeElements, config);
     this.value = safeElements;
-    this.elements = safeElements;
     this.isImplicit = isImplicit;
   }
 
@@ -626,81 +786,52 @@ export class ListSymbol extends BaseSymbolType {
   }
 
   toString(): string {
-    const delimiter = this.isImplicit ? " " : ", ";
-    return this.elements.map((x) => (x.value === null ? "null" : x.toString())).join(delimiter);
+    return ListImpl.toString(this.value, this.isImplicit);
   }
 
-  appendImpl(item: ISymbolType): ListSymbol {
-    const itemToAdd = item.cloneIfMutable();
-    this.elements.push(itemToAdd);
+  append(item: ISymbolType): ListSymbol {
+    ListImpl.append(this.value, item);
     return this;
   }
 
-  extendImpl(...items: ISymbolType[]): ListSymbol {
-    // Handle both individual arguments and ListSymbol arguments
-    for (const item of items) {
-      if (item instanceof ListSymbol) {
-        this.elements.push(...item.elements.map((element) => element.cloneIfMutable()));
-      } else {
-        this.elements.push(item.cloneIfMutable());
-      }
-    }
+  extend(...items: ISymbolType[]): ListSymbol {
+    ListImpl.extend(this.value, ...items);
     return this;
   }
 
-  insertImpl(indexSymbol: NumberSymbol, item: ISymbolType): ListSymbol {
-    const index = indexSymbol.value as number;
-    if (index < 0 || index > this.elements.length)
-      throw new InterpreterError("Index out of range for insert.");
-    this.elements.splice(index, 0, item.cloneIfMutable());
+  insert(indexSymbol: NumberSymbol, item: ISymbolType): ListSymbol {
+    ListImpl.insert(this.value, indexSymbol, item);
     return this;
   }
 
-  deleteImpl(indexSymbol: NumberSymbol): ListSymbol {
-    const index = indexSymbol.value as number;
-    if (index < 0 || index >= this.elements.length)
-      throw new InterpreterError("Index out of range for deletion.");
-    this.elements.splice(index, 1);
+  delete(indexSymbol: NumberSymbol): ListSymbol {
+    ListImpl.deleteAt(this.value, indexSymbol);
     return this;
   }
 
   length(): NumberSymbol {
-    return new NumberSymbol(this.elements.length, this.config);
+    return ListImpl.length(this.value, this.config);
   }
 
-  indexImpl(item: ISymbolType): NumberSymbol {
-    const idx = this.elements.findIndex((el) => el.equals(item));
-    return new NumberSymbol(idx, this.config);
+  index(item: ISymbolType): NumberSymbol {
+    return ListImpl.indexOf(this.value, item, this.config);
   }
 
-  getImpl(indexSymbol: NumberSymbol): ISymbolType {
-    const index = indexSymbol.value as number;
-    if (index < 0 || index >= this.elements.length)
-      throw new InterpreterError("Index out of range for get.");
-    return this.elements[index];
+  get(indexSymbol: NumberSymbol): ISymbolType {
+    return ListImpl.get(this.value, indexSymbol);
   }
 
-  updateImpl(indexSymbol: NumberSymbol, item: ISymbolType): ListSymbol {
-    const index = indexSymbol.value as number;
-    if (index < 0 || index >= this.elements.length)
-      throw new InterpreterError("Index out of range for update.");
-    this.elements[index] = item.cloneIfMutable();
+  update(indexSymbol: NumberSymbol, item: ISymbolType): ListSymbol {
+    ListImpl.update(this.value, indexSymbol, item);
     return this;
   }
 
-  joinImpl(separator?: StringSymbol): StringSymbol {
-    const sep = separator?.value || "";
-    const stringElements = this.elements.map((element) => {
-      if (element.value === null) {
-        return "null";
-      }
-      return element.toString();
-    });
-    return new StringSymbol(stringElements.join(sep), this.config);
+  join(separator?: StringSymbol): StringSymbol {
+    return ListImpl.join(this.value, separator, this.config);
   }
 
   deepCopy(): ListSymbol {
-    const copiedElements = this.elements.map((element) => element.deepCopy());
+    const copiedElements = ListImpl.deepCopy(this.value);
     return new ListSymbol(copiedElements, this.isImplicit, this.config);
   }
 
@@ -724,7 +855,7 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
     to_string: {
       name: "to_string",
       function: function (this: NumberWithUnitSymbol) {
-        return this.toStringImpl();
+        return this.toStringSymbol();
       },
       args: [
         {
@@ -801,7 +932,7 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
     }
   }
 
-  toStringImpl(): StringSymbol {
+  toStringSymbol(): StringSymbol {
     this.expectSafeValue(this.value);
     return new StringSymbol(`${this.value}${this.unit}`, this.config);
   }
@@ -853,14 +984,14 @@ export class DictionarySymbol extends BaseSymbolType {
   static _SUPPORTED_METHODS = {
     get: {
       function: function (this: DictionarySymbol, key: StringSymbol) {
-        return this.getImpl(key);
+        return this.get(key);
       },
       args: [{ name: "key", type: "String", optional: false }],
       returnType: "any",
     },
     set: {
       function: function (this: DictionarySymbol, key: StringSymbol, value: ISymbolType) {
-        return this.setImpl(key, value);
+        return this.set(key, value);
       },
       args: [
         { name: "key", type: "String", optional: false },
@@ -870,42 +1001,42 @@ export class DictionarySymbol extends BaseSymbolType {
     },
     delete: {
       function: function (this: DictionarySymbol, key: StringSymbol) {
-        return this.deleteImpl(key);
+        return this.delete(key);
       },
       args: [{ name: "key", type: "String", optional: false }],
       returnType: "Dictionary",
     },
     keys: {
       function: function (this: DictionarySymbol) {
-        return this.keysImpl();
+        return this.keys();
       },
       args: [],
       returnType: "List",
     },
     values: {
       function: function (this: DictionarySymbol) {
-        return this.valuesImpl();
+        return this.values();
       },
       args: [],
       returnType: "List",
     },
     key_exists: {
       function: function (this: DictionarySymbol, key: StringSymbol) {
-        return this.keyExistsImpl(key);
+        return this.keyExists(key);
       },
       args: [{ name: "key", type: "String", optional: false }],
       returnType: "Boolean",
     },
     length: {
       function: function (this: DictionarySymbol) {
-        return this.lengthImpl();
+        return this.length();
       },
       args: [],
       returnType: "Number",
     },
     clear: {
       function: function (this: DictionarySymbol) {
-        return this.clearImpl();
+        return this.clear();
       },
       args: [],
       returnType: "Dictionary",
@@ -939,65 +1070,46 @@ export class DictionarySymbol extends BaseSymbolType {
   }
 
   toString(): string {
-    return formatObjectEntries(this.value);
+    return DictionaryImpl.toString(this.value);
   }
 
-  private ensureKeyIsString(key: ISymbolType): string {
-    if (key instanceof StringSymbol && key.value !== null) {
-      return key.value;
-    }
-    if (typeof key === "string") {
-      return key;
-    }
-    throw new InterpreterError(`Key must be a string, got ${typeof key}.`);
+  get(key: StringSymbol): ISymbolType {
+    return DictionaryImpl.get(this.value, key, this.config);
   }
 
-  getImpl(key: StringSymbol): ISymbolType {
-    const keyStr = this.ensureKeyIsString(key);
-    return this.value.get(keyStr) || new NullSymbol(this.config);
-  }
-
-  setImpl(key: StringSymbol, value: ISymbolType): DictionarySymbol {
-    const keyStr = this.ensureKeyIsString(key);
-    this.value.set(keyStr, value.cloneIfMutable());
+  set(key: StringSymbol, value: ISymbolType): DictionarySymbol {
+    DictionaryImpl.set(this.value, key, value);
     return this;
   }
 
-  deleteImpl(key: StringSymbol): DictionarySymbol {
-    const keyStr = this.ensureKeyIsString(key);
-    this.value.delete(keyStr);
+  delete(key: StringSymbol): DictionarySymbol {
+    DictionaryImpl.deleteKey(this.value, key);
     return this;
   }
 
-  keysImpl(): ListSymbol {
-    const keys = Array.from(this.value.keys()).map((key) => new StringSymbol(key, this.config));
-    return new ListSymbol(keys, false, this.config);
+  keys(): ListSymbol {
+    return DictionaryImpl.keys(this.value, this.config);
   }
 
-  valuesImpl(): ListSymbol {
-    const values = Array.from(this.value.values());
-    return new ListSymbol(values, false, this.config);
+  values(): ListSymbol {
+    return DictionaryImpl.values(this.value, this.config);
   }
 
-  keyExistsImpl(key: StringSymbol): BooleanSymbol {
-    const keyStr = this.ensureKeyIsString(key);
-    return new BooleanSymbol(this.value.has(keyStr), this.config);
+  keyExists(key: StringSymbol): BooleanSymbol {
+    return DictionaryImpl.keyExists(this.value, key, this.config);
   }
 
-  lengthImpl(): NumberSymbol {
-    return new NumberSymbol(this.value.size, this.config);
+  length(): NumberSymbol {
+    return DictionaryImpl.length(this.value, this.config);
   }
 
-  clearImpl(): DictionarySymbol {
-    this.value.clear();
+  clear(): DictionarySymbol {
+    DictionaryImpl.clear(this.value);
     return this;
   }
 
   deepCopy(): DictionarySymbol {
-    const copiedMap = new Map<string, ISymbolType>();
-    for (const [key, value] of this.value.entries()) {
-      copiedMap.set(key, value.deepCopy());
-    }
+    const copiedMap = DictionaryImpl.deepCopy(this.value);
     return new DictionarySymbol(copiedMap, this.config);
   }
 
@@ -1010,15 +1122,296 @@ export class DictionarySymbol extends BaseSymbolType {
   }
 
   hasAttribute(attributeName: string): boolean {
-    return this.value.has(attributeName);
+    return DictionaryImpl.hasAttribute(this.value, attributeName);
   }
 
   getAttribute(attributeName: string): ISymbolType | null {
-    const value = this.value.get(attributeName);
-    if (value === undefined) {
-      return null;
+    return DictionaryImpl.getAttribute(this.value, attributeName);
+  }
+}
+
+export type TokenValue = Map<string, ISymbolType> | ISymbolType[];
+
+export class TokenSymbol extends BaseSymbolType {
+  type = "Token";
+  static readonly type = "Token";
+  static _SUPPORTED_METHODS = {
+    get: {
+      function: function (this: TokenSymbol, keyOrIndex: StringSymbol | NumberSymbol) {
+        return this.get(keyOrIndex);
+      },
+      args: [{ name: "keyOrIndex", type: "String|Number", optional: false }],
+      returnType: "any",
+    },
+    set: {
+      function: function (this: TokenSymbol, key: StringSymbol, value: ISymbolType) {
+        return this.set(key, value);
+      },
+      args: [
+        { name: "key", type: "String", optional: false },
+        { name: "value", type: "any", optional: false },
+      ],
+      returnType: "Token",
+    },
+    keys: {
+      function: function (this: TokenSymbol) {
+        return this.keys();
+      },
+      args: [],
+      returnType: "List",
+    },
+    values: {
+      function: function (this: TokenSymbol) {
+        return this.values();
+      },
+      args: [],
+      returnType: "List",
+    },
+    length: {
+      function: function (this: TokenSymbol) {
+        return this.length();
+      },
+      args: [],
+      returnType: "Number",
+    },
+    // List methods (when value is Array)
+    append: {
+      function: function (this: TokenSymbol, item: ISymbolType) {
+        return this.append(item);
+      },
+      args: [{ name: "item", type: "any" }],
+      returnType: "Token",
+    },
+    extend: {
+      function: function (this: TokenSymbol, ...items: ISymbolType[]) {
+        return this.extend(...items);
+      },
+      args: [],
+      returnType: "Token",
+    },
+    insert: {
+      function: function (this: TokenSymbol, index: NumberSymbol, item: ISymbolType) {
+        return this.insert(index, item);
+      },
+      args: [
+        { name: "index", type: "Number" },
+        { name: "item", type: "any" },
+      ],
+      returnType: "Token",
+    },
+    delete: {
+      function: function (this: TokenSymbol, index: NumberSymbol) {
+        return this.delete(index);
+      },
+      args: [{ name: "index", type: "Number" }],
+      returnType: "Token",
+    },
+    index: {
+      function: function (this: TokenSymbol, item: ISymbolType) {
+        return this.index(item);
+      },
+      args: [{ name: "item", type: "any" }],
+      returnType: "Number",
+    },
+    update: {
+      function: function (this: TokenSymbol, index: NumberSymbol, item: ISymbolType) {
+        return this.update(index, item);
+      },
+      args: [
+        { name: "index", type: "Number" },
+        { name: "item", type: "any" },
+      ],
+      returnType: "Token",
+    },
+    join: {
+      function: function (this: TokenSymbol, separator?: StringSymbol) {
+        return this.join(separator);
+      },
+      args: [{ name: "separator", type: "String", optional: true }],
+      returnType: "String",
+    },
+  };
+
+  public subType: string;
+  public value: TokenValue;
+
+  constructor(
+    subType: string,
+    value: TokenValue | Record<string, ISymbolType> | TokenSymbol | null,
+    config?: Config,
+  ) {
+    let safeValue: TokenValue;
+    if (value instanceof TokenSymbol) {
+      safeValue = value.value;
+    } else if (isMap(value)) {
+      safeValue = value;
+    } else if (isObject(value)) {
+      safeValue = new Map(Object.entries(value));
+    } else if (isArray(value)) {
+      safeValue = value;
+    } else if (isNull(value)) {
+      safeValue = new Map();
+    } else {
+      throw new InterpreterError(`Token value must be a Record or List, got ${typeof value}.`);
     }
-    return value;
+
+    super(safeValue, config);
+    this.value = safeValue;
+    this.subType = subType;
+  }
+
+  validValue(val: any): boolean {
+    return isMap(val) || isArray(val) || isNull(val);
+  }
+
+  toString(): string {
+    if (isMap(this.value)) {
+      return DictionaryImpl.toString(this.value);
+    }
+    return ListImpl.toString(this.value);
+  }
+
+  get(keyOrIndex: StringSymbol | NumberSymbol | string | number): ISymbolType {
+    if (isArray(this.value)) {
+      const indexSymbol =
+        typeof keyOrIndex === "number" ? new NumberSymbol(keyOrIndex, this.config) : keyOrIndex;
+      if (!(indexSymbol instanceof NumberSymbol)) {
+        throw new InterpreterError("List get requires a Number index.");
+      }
+      return ListImpl.get(this.value, indexSymbol);
+    }
+    const keySymbol =
+      typeof keyOrIndex === "string" ? new StringSymbol(keyOrIndex, this.config) : keyOrIndex;
+    if (!(keySymbol instanceof StringSymbol)) {
+      throw new InterpreterError("Dictionary get requires a String key.");
+    }
+    return DictionaryImpl.get(this.value, keySymbol, this.config);
+  }
+
+  set(key: StringSymbol, value: ISymbolType): TokenSymbol {
+    if (isArray(this.value)) {
+      throw new InterpreterError("Cannot set key on Token with List value.");
+    }
+    DictionaryImpl.set(this.value, key, value);
+    return this;
+  }
+
+  keys(): ListSymbol {
+    if (isArray(this.value)) {
+      throw new InterpreterError("Cannot get keys from Token with List value.");
+    }
+    return DictionaryImpl.keys(this.value, this.config);
+  }
+
+  values(): ListSymbol {
+    if (isMap(this.value)) {
+      return DictionaryImpl.values(this.value, this.config);
+    }
+    return new ListSymbol(this.value, false, this.config);
+  }
+
+  length(): NumberSymbol {
+    if (isMap(this.value)) {
+      return DictionaryImpl.length(this.value, this.config);
+    }
+    return ListImpl.length(this.value, this.config);
+  }
+
+  // List-specific methods
+  append(item: ISymbolType): TokenSymbol {
+    if (isMap(this.value)) {
+      throw new InterpreterError("Cannot append to Token with Dictionary value.");
+    }
+    ListImpl.append(this.value, item);
+    return this;
+  }
+
+  extend(...items: ISymbolType[]): TokenSymbol {
+    if (isMap(this.value)) {
+      throw new InterpreterError("Cannot extend Token with Dictionary value.");
+    }
+    ListImpl.extend(this.value, ...items);
+    return this;
+  }
+
+  insert(indexSymbol: NumberSymbol, item: ISymbolType): TokenSymbol {
+    if (isMap(this.value)) {
+      throw new InterpreterError("Cannot insert into Token with Dictionary value.");
+    }
+    ListImpl.insert(this.value, indexSymbol, item);
+    return this;
+  }
+
+  delete(indexSymbol: NumberSymbol): TokenSymbol {
+    if (isMap(this.value)) {
+      throw new InterpreterError("Cannot delete from Token with Dictionary value.");
+    }
+    ListImpl.deleteAt(this.value, indexSymbol);
+    return this;
+  }
+
+  index(item: ISymbolType): NumberSymbol {
+    if (isMap(this.value)) {
+      throw new InterpreterError("Cannot get index from Token with Dictionary value.");
+    }
+    return ListImpl.indexOf(this.value, item, this.config);
+  }
+
+  update(indexSymbol: NumberSymbol, item: ISymbolType): TokenSymbol {
+    if (isMap(this.value)) {
+      throw new InterpreterError("Cannot update Token with Dictionary value.");
+    }
+    ListImpl.update(this.value, indexSymbol, item);
+    return this;
+  }
+
+  join(separator?: StringSymbol): StringSymbol {
+    if (isMap(this.value)) {
+      throw new InterpreterError("Cannot join Token with Dictionary value.");
+    }
+    return ListImpl.join(this.value, separator, this.config);
+  }
+
+  deepCopy(): TokenSymbol {
+    if (isMap(this.value)) {
+      return new TokenSymbol(this.subType, DictionaryImpl.deepCopy(this.value), this.config);
+    }
+    return new TokenSymbol(this.subType, ListImpl.deepCopy(this.value), this.config);
+  }
+
+  cloneIfMutable(): TokenSymbol {
+    return this.deepCopy();
+  }
+
+  static empty(): TokenSymbol {
+    return new TokenSymbol("unknown", null);
+  }
+
+  hasAttribute(attributeName: string): boolean {
+    if (attributeName === "subType" || attributeName === "type") {
+      return true;
+    }
+    if (isMap(this.value)) {
+      return DictionaryImpl.hasAttribute(this.value, attributeName);
+    }
+    return false;
+  }
+
+  getAttribute(attributeName: string): ISymbolType | null {
+    if (attributeName === "subType") {
+      return new StringSymbol(this.subType, this.config);
+    }
+    if (attributeName === "type") {
+      return new StringSymbol(this.type, this.config);
+    }
+    if (isMap(this.value)) {
+      return DictionaryImpl.getAttribute(this.value, attributeName);
+    }
+    return null;
+  }
+
+  getTypeName(): string {
+    return typeName(this.type, this.subType);
   }
 }
 
@@ -1031,7 +1424,7 @@ export class ColorSymbol extends BaseSymbolType {
     to_string: {
       name: "to_string",
       function: function (this: ColorSymbol) {
-        return this.toStringImpl();
+        return this.toStringSymbol();
       },
       args: [],
       returnType: "String",
@@ -1068,7 +1461,7 @@ export class ColorSymbol extends BaseSymbolType {
     this.subType = isHex ? "Hex" : subType || null;
   }
 
-  toStringImpl(): StringSymbol {
+  toStringSymbol(): StringSymbol {
     if (this.config?.colorManager) {
       const formatted = this.config.colorManager.formatColorMethod(this);
       return new StringSymbol(formatted, this.config);
@@ -1083,7 +1476,7 @@ export class ColorSymbol extends BaseSymbolType {
   }
 
   toString(): string {
-    return this.toStringImpl().toString();
+    return this.toStringSymbol().toString();
   }
 
   typeEquals(other: ISymbolType): boolean {
@@ -1235,6 +1628,7 @@ export const basicSymbolTypes = {
   ...nullableSymbolTypes,
   [ListSymbol.type.toLowerCase()]: ListSymbol,
   [DictionarySymbol.type.toLowerCase()]: DictionarySymbol,
+  [TokenSymbol.type.toLowerCase()]: TokenSymbol,
 } as const;
 
 export type BasicSymbolTypeConstructor = (typeof basicSymbolTypes)[keyof typeof basicSymbolTypes];
@@ -1277,7 +1671,7 @@ export function symbolTypeToJsValue(symbol: ISymbolType): JsValue {
     return symbol.toString();
   }
   if (symbol instanceof ListSymbol) {
-    return symbol.elements.map((item) => symbolTypeToJsValue(item));
+    return symbol.value.map((item) => symbolTypeToJsValue(item));
   }
   if (symbol instanceof DictionarySymbol) {
     const obj: Record<string, JsValue> = {};
@@ -1285,6 +1679,20 @@ export function symbolTypeToJsValue(symbol: ISymbolType): JsValue {
       obj[key] = symbolTypeToJsValue(child);
     }
     return obj;
+  }
+  if (symbol instanceof TokenSymbol) {
+    if (isMap(symbol.value)) {
+      const obj: Record<string, JsValue> = {};
+      const mapValue = symbol.value as Map<string, ISymbolType>;
+      for (const [key, child] of mapValue.entries()) {
+        obj[key] = symbolTypeToJsValue(child);
+      }
+      return obj;
+    }
+    if (isArray(symbol.value)) {
+      const arrayValue = symbol.value as ISymbolType[];
+      return arrayValue.map((item) => symbolTypeToJsValue(item));
+    }
   }
   return symbol.toString();
 }

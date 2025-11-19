@@ -458,6 +458,6 @@ describe("Legacy Color Converter Tests", () => {
 
     expect(result).toBeDefined();
     const expectedR = 5 / 255 / 12.92;
-    expect(Number.parseFloat(result?.elements[0].toString())).toBeCloseTo(expectedR, 5);
+    expect(Number.parseFloat(result?.value[0].toString())).toBeCloseTo(expectedR, 5);
   });
 });

@@ -6,13 +6,13 @@ describe("ListSymbol - Unit Tests", () => {
   describe("constructor", () => {
     it("should create empty list when passed null", () => {
       const list = new ListSymbol(null);
-      expect(list.elements).toEqual([]);
+      expect(list.value).toEqual([]);
     });
 
     it("should create list with elements", () => {
       const elements = [new NumberSymbol(1), new StringSymbol("test")];
       const list = new ListSymbol(elements);
-      expect(list.elements).toEqual(elements);
+      expect(list.value).toEqual(elements);
     });
 
     it("should support implicit lists", () => {
@@ -29,10 +29,10 @@ describe("ListSymbol - Unit Tests", () => {
       const copy = original.deepCopy();
 
       expect(copy).not.toBe(original);
-      expect(copy.elements).not.toBe(original.elements);
-      expect(copy.elements.length).toBe(3);
-      expect(copy.elements[0]).not.toBe(original.elements[0]);
-      expect(copy.elements[0].value).toBe(42);
+      expect(copy.value).not.toBe(original.value);
+      expect(copy.value.length).toBe(3);
+      expect(copy.value[0]).not.toBe(original.value[0]);
+      expect(copy.value[0].value).toBe(42);
     });
 
     it("should create a deep copy with nested mutable objects", () => {
@@ -41,26 +41,26 @@ describe("ListSymbol - Unit Tests", () => {
 
       const copy = original.deepCopy();
 
-      expect(copy.elements[0]).not.toBe(original.elements[0]);
-      expect((copy.elements[0] as DictionarySymbol).value).not.toBe((original.elements[0] as DictionarySymbol).value);
+      expect(copy.value[0]).not.toBe(original.value[0]);
+      expect((copy.value[0] as DictionarySymbol).value).not.toBe((original.value[0] as DictionarySymbol).value);
     });
   });
 
-  describe("appendImpl", () => {
+  describe("append", () => {
     it("should deep copy appended items to prevent reference sharing", () => {
       const list = new ListSymbol([]);
       const dict = new DictionarySymbol(new Map([["name", new StringSymbol("test")]]));
 
-      list.appendImpl(dict);
-      list.appendImpl(dict);
+      list.append(dict);
+      list.append(dict);
 
-      expect(list.elements[0]).not.toBe(list.elements[1]);
-      expect(list.elements[0]).not.toBe(dict);
+      expect(list.value[0]).not.toBe(list.value[1]);
+      expect(list.value[0]).not.toBe(dict);
 
-      dict.setImpl(new StringSymbol("name"), new StringSymbol("modified"));
+      dict.set(new StringSymbol("name"), new StringSymbol("modified"));
 
-      expect((list.elements[0] as DictionarySymbol).getImpl(new StringSymbol("name")).value).toBe("test");
-      expect((list.elements[1] as DictionarySymbol).getImpl(new StringSymbol("name")).value).toBe("test");
+      expect((list.value[0] as DictionarySymbol).get(new StringSymbol("name")).value).toBe("test");
+      expect((list.value[1] as DictionarySymbol).get(new StringSymbol("name")).value).toBe("test");
     });
 
     it("should handle the tokenscript scenario correctly", () => {
@@ -68,83 +68,83 @@ describe("ListSymbol - Unit Tests", () => {
       const step_dict = new DictionarySymbol(new Map());
 
       for (let i = 0; i < 3; i++) {
-        step_dict.setImpl(new StringSymbol("name"), new StringSymbol(`item${i}`));
-        step_dict.setImpl(new StringSymbol("value"), new NumberSymbol(i * 10));
-        scale.appendImpl(step_dict);
+        step_dict.set(new StringSymbol("name"), new StringSymbol(`item${i}`));
+        step_dict.set(new StringSymbol("value"), new NumberSymbol(i * 10));
+        scale.append(step_dict);
       }
 
-      expect(scale.elements.length).toBe(3);
-      expect((scale.elements[0] as DictionarySymbol).getImpl(new StringSymbol("name")).value).toBe("item0");
-      expect((scale.elements[1] as DictionarySymbol).getImpl(new StringSymbol("name")).value).toBe("item1");
-      expect((scale.elements[2] as DictionarySymbol).getImpl(new StringSymbol("name")).value).toBe("item2");
+      expect(scale.value.length).toBe(3);
+      expect((scale.value[0] as DictionarySymbol).get(new StringSymbol("name")).value).toBe("item0");
+      expect((scale.value[1] as DictionarySymbol).get(new StringSymbol("name")).value).toBe("item1");
+      expect((scale.value[2] as DictionarySymbol).get(new StringSymbol("name")).value).toBe("item2");
 
-      expect((scale.elements[0] as DictionarySymbol).getImpl(new StringSymbol("value")).value).toBe(0);
-      expect((scale.elements[1] as DictionarySymbol).getImpl(new StringSymbol("value")).value).toBe(10);
-      expect((scale.elements[2] as DictionarySymbol).getImpl(new StringSymbol("value")).value).toBe(20);
+      expect((scale.value[0] as DictionarySymbol).get(new StringSymbol("value")).value).toBe(0);
+      expect((scale.value[1] as DictionarySymbol).get(new StringSymbol("value")).value).toBe(10);
+      expect((scale.value[2] as DictionarySymbol).get(new StringSymbol("value")).value).toBe(20);
     });
   });
 
-  describe("extendImpl", () => {
+  describe("extend", () => {
     it("should deep copy elements from another list", () => {
       const list1 = new ListSymbol([]);
       const dict = new DictionarySymbol(new Map([["key", new StringSymbol("original")]]));
       const list2 = new ListSymbol([dict]);
 
-      list1.extendImpl(list2);
+      list1.extend(list2);
 
-      expect(list1.elements[0]).not.toBe(list2.elements[0]);
+      expect(list1.value[0]).not.toBe(list2.value[0]);
 
-      dict.setImpl(new StringSymbol("key"), new StringSymbol("modified"));
+      dict.set(new StringSymbol("key"), new StringSymbol("modified"));
 
-      expect((list1.elements[0] as DictionarySymbol).getImpl(new StringSymbol("key")).value).toBe("original");
+      expect((list1.value[0] as DictionarySymbol).get(new StringSymbol("key")).value).toBe("original");
     });
 
     it("should deep copy individual items", () => {
       const list = new ListSymbol([]);
       const dict = new DictionarySymbol(new Map([["key", new StringSymbol("test")]]));
 
-      list.extendImpl(dict);
+      list.extend(dict);
 
-      expect(list.elements[0]).not.toBe(dict);
-      expect((list.elements[0] as DictionarySymbol).getImpl(new StringSymbol("key")).value).toBe("test");
+      expect(list.value[0]).not.toBe(dict);
+      expect((list.value[0] as DictionarySymbol).get(new StringSymbol("key")).value).toBe("test");
     });
   });
 
-  describe("insertImpl", () => {
+  describe("insert", () => {
     it("should deep copy inserted items", () => {
       const list = new ListSymbol([new NumberSymbol(1), new NumberSymbol(3)]);
       const dict = new DictionarySymbol(new Map([["key", new StringSymbol("inserted")]]));
 
-      list.insertImpl(new NumberSymbol(1), dict);
+      list.insert(new NumberSymbol(1), dict);
 
-      expect(list.elements[1]).not.toBe(dict);
-      expect((list.elements[1] as DictionarySymbol).getImpl(new StringSymbol("key")).value).toBe("inserted");
+      expect(list.value[1]).not.toBe(dict);
+      expect((list.value[1] as DictionarySymbol).get(new StringSymbol("key")).value).toBe("inserted");
     });
   });
 
-  describe("updateImpl", () => {
+  describe("update", () => {
     it("should deep copy updated items", () => {
       const list = new ListSymbol([new NumberSymbol(1), new NumberSymbol(2)]);
       const dict = new DictionarySymbol(new Map([["key", new StringSymbol("updated")]]));
 
-      list.updateImpl(new NumberSymbol(0), dict);
+      list.update(new NumberSymbol(0), dict);
 
-      expect(list.elements[0]).not.toBe(dict);
-      expect((list.elements[0] as DictionarySymbol).getImpl(new StringSymbol("key")).value).toBe("updated");
+      expect(list.value[0]).not.toBe(dict);
+      expect((list.value[0] as DictionarySymbol).get(new StringSymbol("key")).value).toBe("updated");
     });
   });
 
   describe("other methods", () => {
     it("should delete items correctly", () => {
       const list = new ListSymbol([new NumberSymbol(1), new NumberSymbol(2), new NumberSymbol(3)]);
-      list.deleteImpl(new NumberSymbol(1));
-      expect(list.elements.length).toBe(2);
-      expect(list.elements[1].value).toBe(3);
+      list.delete(new NumberSymbol(1));
+      expect(list.value.length).toBe(2);
+      expect(list.value[1].value).toBe(3);
     });
 
     it("should get items correctly", () => {
       const list = new ListSymbol([new NumberSymbol(1), new StringSymbol("test")]);
-      const item = list.getImpl(new NumberSymbol(1));
+      const item = list.get(new NumberSymbol(1));
       expect(item.value).toBe("test");
     });
 
@@ -155,7 +155,7 @@ describe("ListSymbol - Unit Tests", () => {
 
     it("should join elements correctly", () => {
       const list = new ListSymbol([new StringSymbol("a"), new StringSymbol("b"), new StringSymbol("c")]);
-      const result = list.joinImpl(new StringSymbol(", "));
+      const result = list.join(new StringSymbol(", "));
       expect(result.value).toBe("a, b, c");
     });
   });
@@ -180,9 +180,9 @@ describe("Lists - Creation and Basic Operations", () => {
     `;
     const result = interpretAndGetVariable(text, "x");
     expect(result).toBeDefined();
-    expect(result?.elements).toBeDefined();
-    expect(result?.elements.length).toBe(3);
-    expect(result?.elements.map((e) => e.value)).toEqual([1, 2, 3]);
+    expect(result?.value).toBeDefined();
+    expect(result?.value.length).toBe(3);
+    expect(result?.value.map((e) => e.value)).toEqual([1, 2, 3]);
   });
 
   it("should handle list with mixed types", () => {
@@ -191,11 +191,11 @@ describe("Lists - Creation and Basic Operations", () => {
     `;
     const result = interpretAndGetVariable(text, "x");
     expect(result).toBeDefined();
-    expect(result?.elements).toBeDefined();
-    expect(result?.elements.length).toBe(3);
-    expect(result?.elements[0].value).toBe(1);
-    expect(result?.elements[1].toString()).toBe("hello");
-    expect(result?.elements[2].value).toBe(true);
+    expect(result?.value).toBeDefined();
+    expect(result?.value.length).toBe(3);
+    expect(result?.value[0].value).toBe(1);
+    expect(result?.value[1].toString()).toBe("hello");
+    expect(result?.value[2].value).toBe(true);
   });
 });
 
@@ -206,7 +206,7 @@ describe("Lists - Methods", () => {
     x.append(3);
     `;
     const result = interpretAndGetVariable(text, "x");
-    expect(result?.elements.map((e) => e.value)).toEqual([1, 2, 3]);
+    expect(result?.value.map((e) => e.value)).toEqual([1, 2, 3]);
   });
 
   it("should handle list extend", () => {
@@ -216,7 +216,7 @@ describe("Lists - Methods", () => {
     x.extend(y);
     `;
     const result = interpretAndGetVariable(text, "x");
-    expect(result?.elements.map((e) => e.value)).toEqual([1, 2, 3, 4]);
+    expect(result?.value.map((e) => e.value)).toEqual([1, 2, 3, 4]);
   });
 
   it("should handle list insert", () => {
@@ -225,7 +225,7 @@ describe("Lists - Methods", () => {
     x.insert(2, 3);
     `;
     const result = interpretAndGetVariable(text, "x");
-    expect(result?.elements.map((e) => e.value)).toEqual([1, 2, 3, 4]);
+    expect(result?.value.map((e) => e.value)).toEqual([1, 2, 3, 4]);
   });
 
   it("should handle list delete", () => {
@@ -234,7 +234,7 @@ describe("Lists - Methods", () => {
     x.delete(2);
     `;
     const result = interpretAndGetVariable(text, "x");
-    expect(result?.elements.map((e) => e.value)).toEqual([1, 2, 4]);
+    expect(result?.value.map((e) => e.value)).toEqual([1, 2, 4]);
   });
 
   it("should handle list length", () => {
@@ -279,7 +279,7 @@ describe("Lists - Methods", () => {
     x.update(2, 99);
     `;
     const result = interpretAndGetVariable(text, "x");
-    expect(result?.elements.map((e) => e.value)).toEqual([1, 2, 99, 4]);
+    expect(result?.value.map((e) => e.value)).toEqual([1, 2, 99, 4]);
   });
 
   it("should handle list index method", () => {
@@ -306,7 +306,7 @@ describe("Lists - Methods", () => {
     const item = interpretAndGetVariable(text, "item");
     const len = interpretAndGetVariable(text, "len");
 
-    expect(numbers?.elements.map((e) => e.value)).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(numbers?.value.map((e) => e.value)).toEqual([1, 2, 3, 4, 5, 6]);
     expect(item?.value).toBe(5);
     expect(len?.value).toBe(6);
   });
@@ -319,7 +319,7 @@ describe("Lists - Method Chaining", () => {
     x.append(3).append(4);
     `;
     const result = interpretAndGetVariable(text, "x");
-    expect(result?.elements.map((e) => e.value)).toEqual([1, 2, 3, 4]);
+    expect(result?.value.map((e) => e.value)).toEqual([1, 2, 3, 4]);
   });
 });
 

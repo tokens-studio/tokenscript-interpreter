@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## UNRELEASED - 2025-11-19
+
+### Added 
+
+- Structured tokens resolving and handling (one nesting level)
+- [ObjectParsers](src/processor/parsers/README.md) for converting structured data to `TokenSymbol`
+- `TokenSymbol` for handling structured data
+  - Objects via `Dictionary` interface
+  - Arrays via `List` interface
+- `TokenData` type for encapsulating `{"$type": string, "$value": unknown}` during processing
+- `processor-node` export for Node.js-specific file operations
+- Direct method calls on token references (e.g., `{token}.get("key")`)
+
+### Fixed
+
+- Builder always returns tokens map in `.tokens` regardless of output format
+
+### Changed
+
+- ListSymbol now uses `.value` instead of `.entries` for data storage
+- Symbol methods no longer have `impl` suffix
+
+### Removed
+
+- `serializeInterpreterResult` and `stringifyInterpreterResult` from public exports
+- `collectJsonFiles`, `normalizeJsonFiles`, `processTokensFromFiles` from main processor export (moved to `processor-node`)
+
 ## [0.8.0] - 2025-11-11
 
 ### Added
