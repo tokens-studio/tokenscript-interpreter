@@ -105,9 +105,6 @@ class PrefixResolver {
     );
   }
 
-  /**
-   * Parse a string value and handle errors
-   */
   private parseStringValue(tokenName: RefPath, tokenValue: string): ParseExpressionResult | Error {
     try {
       return parseExpression(tokenValue);
@@ -121,9 +118,6 @@ class PrefixResolver {
     }
   }
 
-  /**
-   * Process parsed AST and register dependencies
-   */
   private processParsedToken(tokenName: RefPath, ast: ASTNode, dependencies: Set<RefPath>): void {
     this.tokenInterpreter.setTokenAST(tokenName, ast);
 
