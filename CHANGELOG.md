@@ -9,15 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added 
 
-- Adds [ObjectParsers](src/processor/parsers/README.md) to turn structured data into `TokenSymbol`
-- Adds `TokenSymbol` to handle structured data in tokenscript
-  - Handles Objects with `Dictionary` interface
-  - Handles Arrays with `List` interface
-- Adss `TokenData` type which encapsulates `{"$type": string, "$value": unknown}` instead of just dealing with strings during processing to aid the ObjectParser in determining the parser by the `$type`
+- Structured tokens resolving and handling (one nesting level)
+- [ObjectParsers](src/processor/parsers/README.md) for converting structured data to `TokenSymbol`
+- `TokenSymbol` for handling structured data
+  - Objects via `Dictionary` interface
+  - Arrays via `List` interface
+- `TokenData` type for encapsulating `{"$type": string, "$value": unknown}` during processing
+- `processor-node` export for Node.js-specific file operations
+- Direct method calls on token references (e.g., `{token}.get("key")`)
 
-### Fixes
+### Fixed
 
-- Builder now always returns tokens map in `.tokens` regardless of build output format in `.build`
+- Builder always returns tokens map in `.tokens` regardless of output format
+
+### Changed
+
+- ListSymbol now uses `.value` instead of `.entries` for data storage
+- Symbol methods no longer have `impl` suffix
+
+### Removed
+
+- `serializeInterpreterResult` and `stringifyInterpreterResult` from public exports
+- `collectJsonFiles`, `normalizeJsonFiles`, `processTokensFromFiles` from main processor export (moved to `processor-node`)
 
 ## [0.8.0] - 2025-11-11
 
