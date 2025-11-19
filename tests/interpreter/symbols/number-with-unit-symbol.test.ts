@@ -95,17 +95,17 @@ describe("NumberWithUnitSymbol", () => {
     });
   });
 
-  describe("toStringImpl", () => {
+  describe("toStringSymbol", () => {
     it("should convert to StringSymbol", () => {
       const numUnit = new NumberWithUnitSymbol(42, SupportedFormats.PX);
-      const result = numUnit.toStringImpl();
+      const result = numUnit.toStringSymbol();
       expect(result).toBeInstanceOf(StringSymbol);
       expect(result.value).toBe("42px");
     });
 
     it("should throw error for null value", () => {
       const numUnit = new NumberWithUnitSymbol(null, SupportedFormats.PX);
-      expect(() => numUnit.toStringImpl()).toThrow(InterpreterError);
+      expect(() => numUnit.toStringSymbol()).toThrow(InterpreterError);
     });
   });
 

@@ -26,11 +26,11 @@ describe("Reference Sharing Fix", () => {
 
       for (const iteration of iterations) {
         // Set values on the same dictionary instance
-        step_dict.setImpl(new StringSymbol("name"), new StringSymbol(iteration.name));
-        step_dict.setImpl(new StringSymbol("value"), new StringSymbol(iteration.value));
+        step_dict.set(new StringSymbol("name"), new StringSymbol(iteration.name));
+        step_dict.set(new StringSymbol("value"), new StringSymbol(iteration.value));
 
         // Append the dictionary to the list
-        scale.appendImpl(step_dict);
+        scale.append(step_dict);
       }
 
       // Verify that each dictionary in the list has different values
@@ -46,18 +46,18 @@ describe("Reference Sharing Fix", () => {
       expect(dict0).not.toBe(step_dict);
 
       // Each should have the correct values from when it was appended
-      expect(dict0.getImpl(new StringSymbol("name")).value).toBe("100");
-      expect(dict0.getImpl(new StringSymbol("value")).value).toBe("2px");
+      expect(dict0.get(new StringSymbol("name")).value).toBe("100");
+      expect(dict0.get(new StringSymbol("value")).value).toBe("2px");
 
-      expect(dict1.getImpl(new StringSymbol("name")).value).toBe("200");
-      expect(dict1.getImpl(new StringSymbol("value")).value).toBe("4px");
+      expect(dict1.get(new StringSymbol("name")).value).toBe("200");
+      expect(dict1.get(new StringSymbol("value")).value).toBe("4px");
 
-      expect(dict2.getImpl(new StringSymbol("name")).value).toBe("300");
-      expect(dict2.getImpl(new StringSymbol("value")).value).toBe("8px");
+      expect(dict2.get(new StringSymbol("name")).value).toBe("300");
+      expect(dict2.get(new StringSymbol("value")).value).toBe("8px");
 
       // The original dictionary should still have the last values
-      expect(step_dict.getImpl(new StringSymbol("name")).value).toBe("300");
-      expect(step_dict.getImpl(new StringSymbol("value")).value).toBe("8px");
+      expect(step_dict.get(new StringSymbol("name")).value).toBe("300");
+      expect(step_dict.get(new StringSymbol("value")).value).toBe("8px");
     });
 
     it("should handle nested mutable objects correctly", () => {
@@ -66,11 +66,11 @@ describe("Reference Sharing Fix", () => {
       const mainDict = new DictionarySymbol(new Map([["nested_dict", nestedDict]]));
 
       // Append the main dictionary twice
-      list.appendImpl(mainDict);
-      list.appendImpl(mainDict);
+      list.append(mainDict);
+      list.append(mainDict);
 
       // Modify the original nested dictionary
-      nestedDict.setImpl(new StringSymbol("nested"), new StringSymbol("modified"));
+      nestedDict.set(new StringSymbol("nested"), new StringSymbol("modified"));
 
       // Both appended dictionaries should be unaffected
       const first = list.value[0] as DictionarySymbol;
@@ -79,99 +79,99 @@ describe("Reference Sharing Fix", () => {
       expect(first).not.toBe(second);
       expect(first).not.toBe(mainDict);
 
-      const firstNested = first.getImpl(new StringSymbol("nested_dict")) as DictionarySymbol;
-      const secondNested = second.getImpl(new StringSymbol("nested_dict")) as DictionarySymbol;
+      const firstNested = first.get(new StringSymbol("nested_dict")) as DictionarySymbol;
+      const secondNested = second.get(new StringSymbol("nested_dict")) as DictionarySymbol;
 
       expect(firstNested).not.toBe(secondNested);
       expect(firstNested).not.toBe(nestedDict);
 
-      expect(firstNested.getImpl(new StringSymbol("nested")).value).toBe("original");
-      expect(secondNested.getImpl(new StringSymbol("nested")).value).toBe("original");
+      expect(firstNested.get(new StringSymbol("nested")).value).toBe("original");
+      expect(secondNested.get(new StringSymbol("nested")).value).toBe("original");
     });
   });
 
   describe("all list mutation methods", () => {
-    it("should deep copy in appendImpl", () => {
+    it("should deep copy in append", () => {
       const list = new ListSymbol([]);
       const dict = new DictionarySymbol(new Map([["key", new StringSymbol("value")]]));
 
-      list.appendImpl(dict);
+      list.append(dict);
 
       // Modify original
-      dict.setImpl(new StringSymbol("key"), new StringSymbol("modified"));
+      dict.set(new StringSymbol("key"), new StringSymbol("modified"));
 
       // List should be unaffected
-      expect((list.value[0] as DictionarySymbol).getImpl(new StringSymbol("key")).value).toBe("value");
+      expect((list.value[0] as DictionarySymbol).get(new StringSymbol("key")).value).toBe("value");
     });
 
-    it("should deep copy in insertImpl", () => {
+    it("should deep copy in insert", () => {
       const list = new ListSymbol([new NumberSymbol(1)]);
       const dict = new DictionarySymbol(new Map([["key", new StringSymbol("inserted")]]));
 
-      list.insertImpl(new NumberSymbol(0), dict);
+      list.insert(new NumberSymbol(0), dict);
 
       // Modify original
-      dict.setImpl(new StringSymbol("key"), new StringSymbol("modified"));
+      dict.set(new StringSymbol("key"), new StringSymbol("modified"));
 
       // List should be unaffected
-      expect((list.value[0] as DictionarySymbol).getImpl(new StringSymbol("key")).value).toBe("inserted");
+      expect((list.value[0] as DictionarySymbol).get(new StringSymbol("key")).value).toBe("inserted");
     });
 
-    it("should deep copy in updateImpl", () => {
+    it("should deep copy in update", () => {
       const list = new ListSymbol([new NumberSymbol(1)]);
       const dict = new DictionarySymbol(new Map([["key", new StringSymbol("updated")]]));
 
-      list.updateImpl(new NumberSymbol(0), dict);
+      list.update(new NumberSymbol(0), dict);
 
       // Modify original
-      dict.setImpl(new StringSymbol("key"), new StringSymbol("modified"));
+      dict.set(new StringSymbol("key"), new StringSymbol("modified"));
 
       // List should be unaffected
-      expect((list.value[0] as DictionarySymbol).getImpl(new StringSymbol("key")).value).toBe("updated");
+      expect((list.value[0] as DictionarySymbol).get(new StringSymbol("key")).value).toBe("updated");
     });
 
-    it("should deep copy in extendImpl with individual items", () => {
+    it("should deep copy in extend with individual items", () => {
       const list = new ListSymbol([]);
       const dict = new DictionarySymbol(new Map([["key", new StringSymbol("extended")]]));
 
-      list.extendImpl(dict);
+      list.extend(dict);
 
       // Modify original
-      dict.setImpl(new StringSymbol("key"), new StringSymbol("modified"));
+      dict.set(new StringSymbol("key"), new StringSymbol("modified"));
 
       // List should be unaffected
-      expect((list.value[0] as DictionarySymbol).getImpl(new StringSymbol("key")).value).toBe("extended");
+      expect((list.value[0] as DictionarySymbol).get(new StringSymbol("key")).value).toBe("extended");
     });
 
-    it("should deep copy in extendImpl with list argument", () => {
+    it("should deep copy in extend with list argument", () => {
       const list1 = new ListSymbol([]);
       const dict = new DictionarySymbol(new Map([["key", new StringSymbol("from_list")]]));
       const list2 = new ListSymbol([dict]);
 
-      list1.extendImpl(list2);
+      list1.extend(list2);
 
       // Modify original
-      dict.setImpl(new StringSymbol("key"), new StringSymbol("modified"));
+      dict.set(new StringSymbol("key"), new StringSymbol("modified"));
 
       // Extended list should be unaffected
-      expect((list1.value[0] as DictionarySymbol).getImpl(new StringSymbol("key")).value).toBe("from_list");
+      expect((list1.value[0] as DictionarySymbol).get(new StringSymbol("key")).value).toBe("from_list");
     });
   });
 
   describe("dictionary mutation methods", () => {
-    it("should deep copy in setImpl", () => {
+    it("should deep copy in set", () => {
       const dict = new DictionarySymbol(new Map());
       const nestedDict = new DictionarySymbol(new Map([["inner", new StringSymbol("value")]]));
 
-      dict.setImpl(new StringSymbol("nested"), nestedDict);
+      dict.set(new StringSymbol("nested"), nestedDict);
 
       // Modify original
-      nestedDict.setImpl(new StringSymbol("inner"), new StringSymbol("modified"));
+      nestedDict.set(new StringSymbol("inner"), new StringSymbol("modified"));
 
       // Dictionary should be unaffected
-      const stored = dict.getImpl(new StringSymbol("nested")) as DictionarySymbol;
+      const stored = dict.get(new StringSymbol("nested")) as DictionarySymbol;
       expect(stored).not.toBe(nestedDict);
-      expect(stored.getImpl(new StringSymbol("inner")).value).toBe("value");
+      expect(stored.get(new StringSymbol("inner")).value).toBe("value");
     });
   });
 
@@ -183,9 +183,9 @@ describe("Reference Sharing Fix", () => {
       const num = new NumberSymbol(42);
       const str = new StringSymbol("test");
 
-      list.appendImpl(num);
-      list.appendImpl(str);
-      list.appendImpl(num);
+      list.append(num);
+      list.append(str);
+      list.append(num);
 
       expect(list.value.length).toBe(3);
       expect(list.value[0].value).toBe(42);

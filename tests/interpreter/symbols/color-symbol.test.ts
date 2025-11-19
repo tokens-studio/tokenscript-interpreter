@@ -81,10 +81,10 @@ describe("ColorSymbol", () => {
     });
   });
 
-  describe("toStringImpl", () => {
+  describe("toStringSymbol", () => {
     it("should convert hex color to string", () => {
       const color = new ColorSymbol("#ff0000");
-      const result = color.toStringImpl();
+      const result = color.toStringSymbol();
       expect(result).toBeInstanceOf(StringSymbol);
       expect(result.value).toBe("#ff0000");
     });
@@ -95,13 +95,13 @@ describe("ColorSymbol", () => {
         green: new StringSymbol("128"),
       };
       const color = new ColorSymbol(colorValue, "rgb");
-      const result = color.toStringImpl();
+      const result = color.toStringSymbol();
       expect(result.value).toBe("{red: 255, green: 128}");
     });
 
     it("should convert null color to empty string", () => {
       const color = new ColorSymbol(null);
-      const result = color.toStringImpl();
+      const result = color.toStringSymbol();
       expect(result.value).toBe("");
     });
 
@@ -111,7 +111,7 @@ describe("ColorSymbol", () => {
         const config = new Config({ colorManager });
         const color = new ColorSymbol("#ff0000", "Hex", config);
 
-        const result = color.toStringImpl();
+        const result = color.toStringSymbol();
         expect(result.value).toBe("#ff0000");
       });
 
@@ -148,7 +148,7 @@ describe("ColorSymbol", () => {
           config,
         );
 
-        const result = rgbColor.toStringImpl();
+        const result = rgbColor.toStringSymbol();
         expect(result.value).toBe("rgb(255, 128, 64)");
       });
 
@@ -162,7 +162,7 @@ describe("ColorSymbol", () => {
         };
         const color = new ColorSymbol(colorValue, "UnknownType", config);
 
-        const result = color.toStringImpl();
+        const result = color.toStringSymbol();
         expect(result.value).toBe(""); // formatColorMethod returns empty string for unknown types
       });
     });

@@ -96,7 +96,7 @@ describe("TokenSymbol", () => {
         const copy = original.deepCopy();
 
         expect((copy.value as any[])[0]).not.toBe((original.value as any[])[0]);
-        expect(((copy.value as any[])[0] as DictionarySymbol).getImpl(new StringSymbol("key")).value).toBe("value");
+        expect(((copy.value as any[])[0] as DictionarySymbol).get(new StringSymbol("key")).value).toBe("value");
       });
     });
   });
@@ -115,7 +115,7 @@ describe("TokenSymbol", () => {
         expect(fonts1).not.toBe(fonts2);
         expect(fonts1).not.toBe(list);
 
-        list.appendImpl(new StringSymbol("modified"));
+        list.append(new StringSymbol("modified"));
 
         expect((fonts1 as ListSymbol).value.length).toBe(1);
         expect((fonts2 as ListSymbol).value.length).toBe(1);
@@ -446,8 +446,8 @@ describe("TokenSymbol", () => {
 
         expect(token.getTypeName()).toBe("Token.Color");
         const value = token.get(new StringSymbol("value")) as DictionarySymbol;
-        expect(value.getImpl(new StringSymbol("hex")).value).toBe("#ff0000");
-        expect(value.getImpl(new StringSymbol("colorSpace")).value).toBe("srgb");
+        expect(value.get(new StringSymbol("hex")).value).toBe("#ff0000");
+        expect(value.get(new StringSymbol("colorSpace")).value).toBe("srgb");
       });
     });
 
@@ -482,11 +482,11 @@ describe("TokenSymbol", () => {
         expect(values.value.length).toBe(1);
 
         const firstShadow = values.value[0] as DictionarySymbol;
-        expect(firstShadow.getImpl(new StringSymbol("offsetX")).toString()).toBe("0.5rem");
+        expect(firstShadow.get(new StringSymbol("offsetX")).toString()).toBe("0.5rem");
 
-        const color = firstShadow.getImpl(new StringSymbol("color")) as DictionarySymbol;
-        expect(color.getImpl(new StringSymbol("hex")).value).toBe("#000000");
-        expect(color.getImpl(new StringSymbol("alpha")).value).toBe(0.5);
+        const color = firstShadow.get(new StringSymbol("color")) as DictionarySymbol;
+        expect(color.get(new StringSymbol("hex")).value).toBe("#000000");
+        expect(color.get(new StringSymbol("alpha")).value).toBe(0.5);
       });
 
       it("should handle multiple shadow layers", () => {
@@ -539,14 +539,14 @@ describe("TokenSymbol", () => {
         const firstShadow = values.value[0] as DictionarySymbol;
         const secondShadow = values.value[1] as DictionarySymbol;
 
-        expect(firstShadow.getImpl(new StringSymbol("blur")).toString()).toBe("8px");
-        expect(secondShadow.getImpl(new StringSymbol("blur")).toString()).toBe("16px");
+        expect(firstShadow.get(new StringSymbol("blur")).toString()).toBe("8px");
+        expect(secondShadow.get(new StringSymbol("blur")).toString()).toBe("16px");
 
-        const color1 = firstShadow.getImpl(new StringSymbol("color")) as DictionarySymbol;
-        const color2 = secondShadow.getImpl(new StringSymbol("color")) as DictionarySymbol;
+        const color1 = firstShadow.get(new StringSymbol("color")) as DictionarySymbol;
+        const color2 = secondShadow.get(new StringSymbol("color")) as DictionarySymbol;
 
-        expect(color1.getImpl(new StringSymbol("hex")).value).toBe("#000000");
-        expect(color2.getImpl(new StringSymbol("hex")).value).toBe("#ff0000");
+        expect(color1.get(new StringSymbol("hex")).value).toBe("#000000");
+        expect(color2.get(new StringSymbol("hex")).value).toBe("#ff0000");
       });
 
       it("should handle border token with list structure", () => {
@@ -576,11 +576,11 @@ describe("TokenSymbol", () => {
         const values = token.values();
         const border = values.value[0] as DictionarySymbol;
 
-        expect(border.getImpl(new StringSymbol("width")).toString()).toBe("2px");
-        expect(border.getImpl(new StringSymbol("style")).value).toBe("solid");
+        expect(border.get(new StringSymbol("width")).toString()).toBe("2px");
+        expect(border.get(new StringSymbol("style")).value).toBe("solid");
 
-        const color = border.getImpl(new StringSymbol("color")) as DictionarySymbol;
-        expect(color.getImpl(new StringSymbol("hex")).value).toBe("#ff0000");
+        const color = border.get(new StringSymbol("color")) as DictionarySymbol;
+        expect(color.get(new StringSymbol("hex")).value).toBe("#ff0000");
       });
     });
   });

@@ -44,78 +44,78 @@ describe("StringSymbol - Unit Tests", () => {
     });
   });
 
-  describe("upperImpl", () => {
+  describe("upper", () => {
     it("should convert to uppercase", () => {
       const str = new StringSymbol("hello world");
-      const result = str.upperImpl();
+      const result = str.upper();
       expect(result).toBeInstanceOf(StringSymbol);
       expect(result.value).toBe("HELLO WORLD");
     });
 
     it("should throw error for null value", () => {
       const str = new StringSymbol(null);
-      expect(() => str.upperImpl()).toThrow(InterpreterError);
+      expect(() => str.upper()).toThrow(InterpreterError);
     });
   });
 
-  describe("lowerImpl", () => {
+  describe("lower", () => {
     it("should convert to lowercase", () => {
       const str = new StringSymbol("HELLO WORLD");
-      const result = str.lowerImpl();
+      const result = str.lower();
       expect(result).toBeInstanceOf(StringSymbol);
       expect(result.value).toBe("hello world");
     });
 
     it("should throw error for null value", () => {
       const str = new StringSymbol(null);
-      expect(() => str.lowerImpl()).toThrow(InterpreterError);
+      expect(() => str.lower()).toThrow(InterpreterError);
     });
   });
 
-  describe("lengthImpl", () => {
+  describe("length", () => {
     it("should return string length", () => {
       const str = new StringSymbol("hello");
-      const result = str.lengthImpl();
+      const result = str.length();
       expect(result).toBeInstanceOf(NumberSymbol);
       expect(result.value).toBe(5);
     });
 
     it("should return 0 for empty string", () => {
       const str = new StringSymbol("");
-      const result = str.lengthImpl();
+      const result = str.length();
       expect(result.value).toBe(0);
     });
 
     it("should throw error for null value", () => {
       const str = new StringSymbol(null);
-      expect(() => str.lengthImpl()).toThrow(InterpreterError);
+      expect(() => str.length()).toThrow(InterpreterError);
     });
   });
 
-  describe("concatImpl", () => {
+  describe("concat", () => {
     it("should concatenate with another StringSymbol", () => {
       const str1 = new StringSymbol("hello");
       const str2 = new StringSymbol(" world");
-      const result = str1.concatImpl(str2);
+      const result = str1.concat(str2);
       expect(result).toBeInstanceOf(StringSymbol);
       expect(result.value).toBe("hello world");
     });
 
     it("should throw error for non-string types", () => {
       const str = new StringSymbol("hello");
-      expect(() => str.concatImpl(42 as any)).toThrow(InterpreterError);
+      expect(() => str.concat(42 as any)).toThrow(InterpreterError);
     });
 
     it("should throw error for null value", () => {
       const str = new StringSymbol(null);
-      expect(() => str.concatImpl(new StringSymbol("test"))).toThrow(InterpreterError);
+      expect(() => str.concat(new StringSymbol("test"))).toThrow(InterpreterError);
     });
   });
 
-  describe("splitImpl", () => {
+  describe("split", () => {
     it("should split by delimiter", () => {
       const str = new StringSymbol("a,b,c");
-      const result = str.splitImpl(new StringSymbol(","));
+      const result = str.split(new StringSymbol(","));
       expect(result).toBeInstanceOf(ListSymbol);
       expect(result.value.length).toBe(3);
       expect(result.value.map((e) => e.value)).toEqual(["a", "b", "c"]);
@@ -123,33 +123,33 @@ describe("StringSymbol - Unit Tests", () => {
 
     it("should split by string delimiter", () => {
       const str = new StringSymbol("a,b,c");
-      const result = str.splitImpl(",");
+      const result = str.split(",");
       expect(result.value.length).toBe(3);
       expect(result.value.map((e) => e.value)).toEqual(["a", "b", "c"]);
     });
 
     it("should split into characters when no delimiter", () => {
       const str = new StringSymbol("abc");
-      const result = str.splitImpl();
+      const result = str.split();
       expect(result.value.length).toBe(3);
       expect(result.value.map((e) => e.value)).toEqual(["a", "b", "c"]);
     });
 
     it("should split into characters when delimiter is null", () => {
       const str = new StringSymbol("abc");
-      const result = str.splitImpl(null);
+      const result = str.split(null);
       expect(result.value.length).toBe(3);
       expect(result.value.map((e) => e.value)).toEqual(["a", "b", "c"]);
     });
 
     it("should throw error for invalid delimiter type", () => {
       const str = new StringSymbol("abc");
-      expect(() => str.splitImpl(42 as any)).toThrow(InterpreterError);
+      expect(() => str.split(42 as any)).toThrow(InterpreterError);
     });
 
     it("should throw error for null value", () => {
       const str = new StringSymbol(null);
-      expect(() => str.splitImpl()).toThrow(InterpreterError);
+      expect(() => str.split()).toThrow(InterpreterError);
     });
   });
 

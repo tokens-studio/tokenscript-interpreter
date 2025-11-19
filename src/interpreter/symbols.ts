@@ -94,13 +94,13 @@ export const DictionaryImpl = {
     return new NullSymbol(config);
   },
 
-  set(value: Map<string, ISymbolType>, key: ISymbolType, val: ISymbolType): void {
-    const keyStr = ensureKeyIsString(key);
+  set(value: Map<string, ISymbolType>, key: StringSymbol | string, val: ISymbolType): void {
+    const keyStr = expectStringKey(key);
     value.set(keyStr, val.cloneIfMutable());
   },
 
-  deleteKey(value: Map<string, ISymbolType>, key: ISymbolType): void {
-    const keyStr = ensureKeyIsString(key);
+  deleteKey(value: Map<string, ISymbolType>, key: StringSymbol | string): void {
+    const keyStr = expectStringKey(key);
     value.delete(keyStr);
   },
 
@@ -114,8 +114,12 @@ export const DictionaryImpl = {
     return new ListSymbol(values, false, config);
   },
 
-  keyExists(value: Map<string, ISymbolType>, key: ISymbolType, config?: Config): BooleanSymbol {
-    const keyStr = ensureKeyIsString(key);
+  keyExists(
+    value: Map<string, ISymbolType>,
+    key: StringSymbol | string,
+    config?: Config,
+  ): BooleanSymbol {
+    const keyStr = expectStringKey(key);
     return new BooleanSymbol(value.has(keyStr), config);
   },
 
@@ -402,7 +406,7 @@ export class NumberSymbol extends BaseSymbolType {
     to_string: {
       name: "to_string",
       function: function (this: NumberSymbol, radix?: NumberSymbol) {
-        return this.toStringImpl(radix);
+        return this.toStringSymbol(radix);
       },
       args: [
         {
@@ -470,7 +474,7 @@ export class NumberSymbol extends BaseSymbolType {
   }
 
   // Direct translation of to_string method from token_interpreter/symbols.py
-  toStringImpl(radix?: NumberSymbol): StringSymbol {
+  toStringSymbol(radix?: NumberSymbol): StringSymbol {
     this.expectSafeValue(this.value);
 
     if (radix) {
@@ -519,35 +523,35 @@ export class StringSymbol extends BaseSymbolType {
   static _SUPPORTED_METHODS = {
     upper: {
       function: function (this: StringSymbol) {
-        return this.upperImpl();
+        return this.upper();
       },
       args: [],
       returnType: "String",
     },
     lower: {
       function: function (this: StringSymbol) {
-        return this.lowerImpl();
+        return this.lower();
       },
       args: [],
       returnType: "String",
     },
     length: {
       function: function (this: StringSymbol) {
-        return this.lengthImpl();
+        return this.length();
       },
       args: [],
       returnType: "Number",
     },
     concat: {
       function: function (this: StringSymbol, other: StringSymbol) {
-        return this.concatImpl(other);
+        return this.concat(other);
       },
       args: [{ name: "other", type: "String" }],
       returnType: "String",
     },
     split: {
       function: function (this: StringSymbol, delimiter?: StringSymbol) {
-        return this.splitImpl(delimiter);
+        return this.split(delimiter);
       },
       args: [{ name: "delimiter", type: "String", optional: true }],
       returnType: "List",
@@ -581,7 +585,7 @@ export class StringSymbol extends BaseSymbolType {
     }
   }
 
-  upperImpl(): StringSymbol {
+  upper(): StringSymbol {
     this.expectSafeValue(this.value);
     return new StringSymbol(this.value.toUpperCase(), this.config);
   }
@@ -598,17 +602,17 @@ export class StringSymbol extends BaseSymbolType {
     return new StringSymbol(null);
   }
 
-  lowerImpl(): StringSymbol {
+  lower(): StringSymbol {
     this.expectSafeValue(this.value);
     return new StringSymbol(this.value.toLowerCase(), this.config);
   }
 
-  lengthImpl(): NumberSymbol {
+  length(): NumberSymbol {
     this.expectSafeValue(this.value);
     return new NumberSymbol(this.value.length, this.config);
   }
 
-  concatImpl(other: StringSymbol): StringSymbol {
+  concat(other: StringSymbol): StringSymbol {
     this.expectSafeValue(this.value);
     if (other instanceof StringSymbol) {
       other.expectSafeValue(other.value);
@@ -617,7 +621,7 @@ export class StringSymbol extends BaseSymbolType {
     throw new InterpreterError(`Cannot concatenate String ${typeof other} to String.`);
   }
 
-  splitImpl(delimiter?: StringSymbol): ListSymbol {
+  split(delimiter?: StringSymbol): ListSymbol {
     this.expectSafeValue(this.value);
     const strValue = this.value;
 
@@ -667,6 +671,7 @@ export class BooleanSymbol extends BaseSymbolType {
     super(safeValue, config);
     this.value = safeValue;
   }
+
   validValue(val: any): boolean {
     return typeof val === "boolean" || val instanceof BooleanSymbol;
   }
@@ -696,21 +701,21 @@ export class ListSymbol extends BaseSymbolType {
   static _SUPPORTED_METHODS = {
     append: {
       function: function (this: ListSymbol, item: ISymbolType) {
-        return this.appendImpl(item);
+        return this.append(item);
       },
       args: [{ name: "item", type: "any" }],
       returnType: "List",
     },
     extend: {
       function: function (this: ListSymbol, ...items: ISymbolType[]) {
-        return this.extendImpl(...items);
+        return this.extend(...items);
       },
       args: [],
       returnType: "List",
     },
     insert: {
       function: function (this: ListSymbol, index: NumberSymbol, item: ISymbolType) {
-        return this.insertImpl(index, item);
+        return this.insert(index, item);
       },
       args: [
         { name: "index", type: "Number" },
@@ -720,7 +725,7 @@ export class ListSymbol extends BaseSymbolType {
     },
     delete: {
       function: function (this: ListSymbol, index: NumberSymbol) {
-        return this.deleteImpl(index);
+        return this.delete(index);
       },
       args: [{ name: "index", type: "Number" }],
       returnType: "List",
@@ -734,21 +739,21 @@ export class ListSymbol extends BaseSymbolType {
     },
     index: {
       function: function (this: ListSymbol, item: ISymbolType) {
-        return this.indexImpl(item);
+        return this.index(item);
       },
       args: [{ name: "item", type: "any" }],
       returnType: "Number",
     },
     get: {
       function: function (this: ListSymbol, index: NumberSymbol) {
-        return this.getImpl(index);
+        return this.get(index);
       },
       args: [{ name: "index", type: "Number" }],
       returnType: "any",
     },
     update: {
       function: function (this: ListSymbol, index: NumberSymbol, item: ISymbolType) {
-        return this.updateImpl(index, item);
+        return this.update(index, item);
       },
       args: [
         { name: "index", type: "Number" },
@@ -758,7 +763,7 @@ export class ListSymbol extends BaseSymbolType {
     },
     join: {
       function: function (this: ListSymbol, separator?: StringSymbol) {
-        return this.joinImpl(separator);
+        return this.join(separator);
       },
       args: [{ name: "separator", type: "String", optional: true }],
       returnType: "String",
@@ -783,22 +788,22 @@ export class ListSymbol extends BaseSymbolType {
     return ListImpl.toString(this.value, this.isImplicit);
   }
 
-  appendImpl(item: ISymbolType): ListSymbol {
+  append(item: ISymbolType): ListSymbol {
     ListImpl.append(this.value, item);
     return this;
   }
 
-  extendImpl(...items: ISymbolType[]): ListSymbol {
+  extend(...items: ISymbolType[]): ListSymbol {
     ListImpl.extend(this.value, ...items);
     return this;
   }
 
-  insertImpl(indexSymbol: NumberSymbol, item: ISymbolType): ListSymbol {
+  insert(indexSymbol: NumberSymbol, item: ISymbolType): ListSymbol {
     ListImpl.insert(this.value, indexSymbol, item);
     return this;
   }
 
-  deleteImpl(indexSymbol: NumberSymbol): ListSymbol {
+  delete(indexSymbol: NumberSymbol): ListSymbol {
     ListImpl.deleteAt(this.value, indexSymbol);
     return this;
   }
@@ -807,20 +812,20 @@ export class ListSymbol extends BaseSymbolType {
     return ListImpl.length(this.value, this.config);
   }
 
-  indexImpl(item: ISymbolType): NumberSymbol {
+  index(item: ISymbolType): NumberSymbol {
     return ListImpl.indexOf(this.value, item, this.config);
   }
 
-  getImpl(indexSymbol: NumberSymbol): ISymbolType {
+  get(indexSymbol: NumberSymbol): ISymbolType {
     return ListImpl.get(this.value, indexSymbol);
   }
 
-  updateImpl(indexSymbol: NumberSymbol, item: ISymbolType): ListSymbol {
+  update(indexSymbol: NumberSymbol, item: ISymbolType): ListSymbol {
     ListImpl.update(this.value, indexSymbol, item);
     return this;
   }
 
-  joinImpl(separator?: StringSymbol): StringSymbol {
+  join(separator?: StringSymbol): StringSymbol {
     return ListImpl.join(this.value, separator, this.config);
   }
 
@@ -849,7 +854,7 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
     to_string: {
       name: "to_string",
       function: function (this: NumberWithUnitSymbol) {
-        return this.toStringImpl();
+        return this.toStringSymbol();
       },
       args: [
         {
@@ -926,7 +931,7 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
     }
   }
 
-  toStringImpl(): StringSymbol {
+  toStringSymbol(): StringSymbol {
     this.expectSafeValue(this.value);
     return new StringSymbol(`${this.value}${this.unit}`, this.config);
   }
@@ -978,14 +983,14 @@ export class DictionarySymbol extends BaseSymbolType {
   static _SUPPORTED_METHODS = {
     get: {
       function: function (this: DictionarySymbol, key: StringSymbol) {
-        return this.getImpl(key);
+        return this.get(key);
       },
       args: [{ name: "key", type: "String", optional: false }],
       returnType: "any",
     },
     set: {
       function: function (this: DictionarySymbol, key: StringSymbol, value: ISymbolType) {
-        return this.setImpl(key, value);
+        return this.set(key, value);
       },
       args: [
         { name: "key", type: "String", optional: false },
@@ -995,42 +1000,42 @@ export class DictionarySymbol extends BaseSymbolType {
     },
     delete: {
       function: function (this: DictionarySymbol, key: StringSymbol) {
-        return this.deleteImpl(key);
+        return this.delete(key);
       },
       args: [{ name: "key", type: "String", optional: false }],
       returnType: "Dictionary",
     },
     keys: {
       function: function (this: DictionarySymbol) {
-        return this.keysImpl();
+        return this.keys();
       },
       args: [],
       returnType: "List",
     },
     values: {
       function: function (this: DictionarySymbol) {
-        return this.valuesImpl();
+        return this.values();
       },
       args: [],
       returnType: "List",
     },
     key_exists: {
       function: function (this: DictionarySymbol, key: StringSymbol) {
-        return this.keyExistsImpl(key);
+        return this.keyExists(key);
       },
       args: [{ name: "key", type: "String", optional: false }],
       returnType: "Boolean",
     },
     length: {
       function: function (this: DictionarySymbol) {
-        return this.lengthImpl();
+        return this.length();
       },
       args: [],
       returnType: "Number",
     },
     clear: {
       function: function (this: DictionarySymbol) {
-        return this.clearImpl();
+        return this.clear();
       },
       args: [],
       returnType: "Dictionary",
@@ -1067,37 +1072,37 @@ export class DictionarySymbol extends BaseSymbolType {
     return DictionaryImpl.toString(this.value);
   }
 
-  getImpl(key: StringSymbol): ISymbolType {
+  get(key: StringSymbol): ISymbolType {
     return DictionaryImpl.get(this.value, key, this.config);
   }
 
-  setImpl(key: StringSymbol, value: ISymbolType): DictionarySymbol {
+  set(key: StringSymbol, value: ISymbolType): DictionarySymbol {
     DictionaryImpl.set(this.value, key, value);
     return this;
   }
 
-  deleteImpl(key: StringSymbol): DictionarySymbol {
+  delete(key: StringSymbol): DictionarySymbol {
     DictionaryImpl.deleteKey(this.value, key);
     return this;
   }
 
-  keysImpl(): ListSymbol {
+  keys(): ListSymbol {
     return DictionaryImpl.keys(this.value, this.config);
   }
 
-  valuesImpl(): ListSymbol {
+  values(): ListSymbol {
     return DictionaryImpl.values(this.value, this.config);
   }
 
-  keyExistsImpl(key: StringSymbol): BooleanSymbol {
+  keyExists(key: StringSymbol): BooleanSymbol {
     return DictionaryImpl.keyExists(this.value, key, this.config);
   }
 
-  lengthImpl(): NumberSymbol {
+  length(): NumberSymbol {
     return DictionaryImpl.length(this.value, this.config);
   }
 
-  clearImpl(): DictionarySymbol {
+  clear(): DictionarySymbol {
     DictionaryImpl.clear(this.value);
     return this;
   }
@@ -1414,7 +1419,7 @@ export class ColorSymbol extends BaseSymbolType {
     to_string: {
       name: "to_string",
       function: function (this: ColorSymbol) {
-        return this.toStringImpl();
+        return this.toStringSymbol();
       },
       args: [],
       returnType: "String",
@@ -1451,7 +1456,7 @@ export class ColorSymbol extends BaseSymbolType {
     this.subType = isHex ? "Hex" : subType || null;
   }
 
-  toStringImpl(): StringSymbol {
+  toStringSymbol(): StringSymbol {
     if (this.config?.colorManager) {
       const formatted = this.config.colorManager.formatColorMethod(this);
       return new StringSymbol(formatted, this.config);
@@ -1466,7 +1471,7 @@ export class ColorSymbol extends BaseSymbolType {
   }
 
   toString(): string {
-    return this.toStringImpl().toString();
+    return this.toStringSymbol().toString();
   }
 
   typeEquals(other: ISymbolType): boolean {
