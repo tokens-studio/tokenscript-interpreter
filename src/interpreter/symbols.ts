@@ -1271,17 +1271,21 @@ export class TokenSymbol extends BaseSymbolType {
     return ListImpl.toString(this.value);
   }
 
-  get(keyOrIndex: StringSymbol | NumberSymbol): ISymbolType {
+  get(keyOrIndex: StringSymbol | NumberSymbol | string | number): ISymbolType {
     if (isArray(this.value)) {
-      if (!(keyOrIndex instanceof NumberSymbol)) {
+      const indexSymbol =
+        typeof keyOrIndex === "number" ? new NumberSymbol(keyOrIndex, this.config) : keyOrIndex;
+      if (!(indexSymbol instanceof NumberSymbol)) {
         throw new InterpreterError("List get requires a Number index.");
       }
-      return ListImpl.get(this.value, keyOrIndex);
+      return ListImpl.get(this.value, indexSymbol);
     }
-    if (!(keyOrIndex instanceof StringSymbol)) {
+    const keySymbol =
+      typeof keyOrIndex === "string" ? new StringSymbol(keyOrIndex, this.config) : keyOrIndex;
+    if (!(keySymbol instanceof StringSymbol)) {
       throw new InterpreterError("Dictionary get requires a String key.");
     }
-    return DictionaryImpl.get(this.value, keyOrIndex, this.config);
+    return DictionaryImpl.get(this.value, keySymbol, this.config);
   }
 
   set(key: StringSymbol, value: ISymbolType): TokenSymbol {

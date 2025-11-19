@@ -1,4 +1,3 @@
-import type { InterpreterResult } from "@interpreter/interpreter";
 import { isArray, isObject, isString } from "@interpreter/utils/type";
 
 /**
@@ -37,55 +36,4 @@ export function extractStringFields(value: unknown, parentPath: string): Map<str
   }
 
   return result;
-}
-
-/**
- * Assemble a structured token from resolved sub-fields.
- * Replaces string values with their resolved counterparts.
- *
- * @param tokenName - The parent token name
- * @param resolvedFields - Map of field paths to resolved values
- * @param originalValue - The original structured value
- * @returns The assembled structure with resolved values
- *
- * @example
- * assembleStructuredToken(
- *   "shadow",
- *   Map { "shadow.offsetX" => NumberSymbol(2) },
- *   { offsetX: "{base}", offsetY: 4 }
- * )
- * => { offsetX: NumberSymbol(2), offsetY: 4 }
- */
-export function assembleStructuredToken(
-  tokenName: string,
-  resolvedFields: Map<string, InterpreterResult>,
-  originalValue: unknown,
-): unknown {
-  if (isObject(originalValue)) {
-    const result: Record<string, unknown> = {};
-    for (const [key, val] of Object.entries(originalValue)) {
-      const path = `${tokenName}.${key}`;
-      if (resolvedFields.has(path)) {
-        result[key] = resolvedFields.get(path);
-      } else {
-        result[key] = val;
-      }
-    }
-    return result;
-  }
-
-  if (isArray(originalValue)) {
-    const result: unknown[] = [];
-    for (let i = 0; i < originalValue.length; i++) {
-      const path = `${tokenName}[${i}]`;
-      if (resolvedFields.has(path)) {
-        result.push(resolvedFields.get(path));
-      } else {
-        result.push(originalValue[i]);
-      }
-    }
-    return result;
-  }
-
-  return originalValue;
 }

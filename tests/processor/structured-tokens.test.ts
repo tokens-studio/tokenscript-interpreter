@@ -193,11 +193,16 @@ describe("Structured Tokens - End-to-End Resolution", () => {
     expect(shadowCard).toBeDefined();
     expect(shadowCard).not.toBeInstanceOf(Error);
 
-    const shadowValue = getValue(shadowCard) as any;
-    expect(shadowValue.offsetX).toBe(0);
-    expect(getValue(shadowValue.offsetY)).toBe(8);
-    expect(shadowValue.blur).toBe(16);
-    expect(getValue(shadowValue.color)).toBe("#FF0000");
+    // shadowCard is a TokenSymbol, use .get() to access properties
+    const offsetX = (shadowCard as any).get("offsetX");
+    const offsetY = (shadowCard as any).get("offsetY");
+    const blur = (shadowCard as any).get("blur");
+    const color = (shadowCard as any).get("color");
+
+    expect(getValue(offsetX)).toBe(0);
+    expect(getValue(offsetY)).toBe(8);
+    expect(getValue(blur)).toBe(16);
+    expect(getValue(color)).toBe("#FF0000");
   });
 
   it("should handle structured tokens with only primitive values", () => {
@@ -217,10 +222,14 @@ describe("Structured Tokens - End-to-End Resolution", () => {
     const shadow = result.tokens.get("shadow");
     expect(shadow).toBeDefined();
 
-    const shadowValue = getValue(shadow) as any;
-    expect(shadowValue.offsetX).toBe(2);
-    expect(shadowValue.offsetY).toBe(4);
-    expect(shadowValue.blur).toBe(8);
+    // shadow is a TokenSymbol, use .get() to access properties
+    const offsetX = (shadow as any).get("offsetX");
+    const offsetY = (shadow as any).get("offsetY");
+    const blur = (shadow as any).get("blur");
+
+    expect(getValue(offsetX)).toBe(2);
+    expect(getValue(offsetY)).toBe(4);
+    expect(getValue(blur)).toBe(8);
   });
 
   it("should handle structured tokens with chained references", () => {
@@ -240,9 +249,12 @@ describe("Structured Tokens - End-to-End Resolution", () => {
     const shadow = result.tokens.get("shadow");
     expect(shadow).toBeDefined();
 
-    const shadowValue = getValue(shadow) as any;
-    expect(shadowValue.offsetX).toBe(0);
-    expect(getValue(shadowValue.offsetY)).toBe(8);
+    // shadow is a TokenSymbol, use .get() to access properties
+    const offsetX = (shadow as any).get("offsetX");
+    const offsetY = (shadow as any).get("offsetY");
+
+    expect(getValue(offsetX)).toBe(0);
+    expect(getValue(offsetY)).toBe(8);
   });
 
   it("should not include sub-field paths in output", () => {
@@ -314,14 +326,17 @@ describe("Structured Tokens - End-to-End Resolution", () => {
     expect(smallShadow).toBeDefined();
     expect(largeShadow).toBeDefined();
 
-    const smallValue = getValue(smallShadow) as any;
-    const largeValue = getValue(largeShadow) as any;
+    // Use .get() to access properties from TokenSymbol
+    const smallOffsetY = (smallShadow as any).get("offsetY");
+    const smallColor = (smallShadow as any).get("color");
+    const largeOffsetY = (largeShadow as any).get("offsetY");
+    const largeColor = (largeShadow as any).get("color");
 
-    expect(getValue(smallValue.offsetY)).toBe(4);
-    expect(getValue(smallValue.color)).toBe("#FF0000");
+    expect(getValue(smallOffsetY)).toBe(4);
+    expect(getValue(smallColor)).toBe("#FF0000");
 
-    expect(getValue(largeValue.offsetY)).toBe(16);
-    expect(getValue(largeValue.color)).toBe("#0000FF");
+    expect(getValue(largeOffsetY)).toBe(16);
+    expect(getValue(largeColor)).toBe("#0000FF");
   });
 
   it("should handle non-string primitives in structured values", () => {
@@ -340,10 +355,14 @@ describe("Structured Tokens - End-to-End Resolution", () => {
     const config = result.tokens.get("config");
     expect(config).toBeDefined();
 
-    const configValue = getValue(config) as any;
-    expect(configValue.enabled).toBe(true);
-    expect(configValue.count).toBe(42);
-    expect(configValue.ratio).toBe(1.5);
+    // Use .get() to access properties from TokenSymbol
+    const enabled = (config as any).get("enabled");
+    const count = (config as any).get("count");
+    const ratio = (config as any).get("ratio");
+
+    expect(getValue(enabled)).toBe(true);
+    expect(getValue(count)).toBe(42);
+    expect(getValue(ratio)).toBe(1.5);
   });
 
   it("should handle nested structure references with key access", () => {
@@ -364,10 +383,11 @@ describe("Structured Tokens - End-to-End Resolution", () => {
     expect(someShadow).toBeDefined();
     expect(testAccess).toBeDefined();
 
-    const someShadowValue = getValue(someShadow) as any;
+    // Use .get() to access properties from TokenSymbol
+    const offsetX = (someShadow as any).get("offsetX");
 
     // shadow should have offsetX = 0
-    expect(someShadowValue.offsetX).toBe(0);
+    expect(getValue(offsetX)).toBe(0);
 
     // shadow-offsetX should be able to access the offsetX key from the referenced structure using .get()
     expect(getValue(testAccess)).toBe(0);

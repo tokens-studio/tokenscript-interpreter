@@ -6,9 +6,13 @@ import { BooleanSymbol, NullSymbol, NumberSymbol, StringSymbol } from "@interpre
 import { isArray, isBoolean, isNull, isNumber, isObject, isString } from "@interpreter/utils/type";
 import { UNINTERPRETED_KEYWORDS } from "@src/types";
 import { DependencyError } from "../errors";
-import { createTokenSymbol, type ObjectParser } from "../object-parsers";
+import {
+  createTokenSymbol,
+  createTokenSymbolFromResolvedFields,
+  type ObjectParser,
+} from "../object-parsers";
 import { DependencyGraph } from "../utils/DependencyGraph";
-import { assembleStructuredToken, extractStringFields } from "../utils/structured-tokens";
+import { extractStringFields } from "../utils/structured-tokens";
 import { getTokenValue, setTokenValue, type TokenData } from "../utils/tokens";
 import {
   DependencyTracker,
@@ -238,14 +242,13 @@ class PrefixResolver {
 
     if (stringFields.size === 0) {
       // No string fields to resolve, token is ready
-      this.resolved.set(tokenName, tokenValue as TokenResult);
-
-      // Wrap in TokenSymbol for reference cache so other tokens can call .get() on it
+      // Create TokenSymbol and store it in both resolved and reference cache
       const tokenType = tokenData.$type || "unknown";
       const tokenSymbol = createTokenSymbol(tokenValue, tokenType, this.config, this.objectParsers);
+      this.resolved.set(tokenName, tokenSymbol);
       this.referenceCache.set(tokenName, tokenSymbol);
 
-      this.callbacks?.onResolve?.(tokenName, tokenValue as InterpreterResult);
+      this.callbacks?.onResolve?.(tokenName, tokenSymbol);
       this.graph.addNode(tokenName, []);
       this.earlyResolved.push(tokenName);
       return;
@@ -463,16 +466,20 @@ class PrefixResolver {
     }
 
     if (!hasError) {
-      // Assemble the structured token with resolved values
-      const assembled = assembleStructuredToken(tokenName, resolvedFields, originalValue);
-      this.resolved.set(tokenName, assembled as TokenResult);
-
-      // Wrap in TokenSymbol for reference cache so other tokens can call .get() on it
+      // Create TokenSymbol directly from resolved fields and original value
       const tokenType = tokenData.$type || "unknown";
-      const tokenSymbol = createTokenSymbol(assembled, tokenType, this.config, this.objectParsers);
+      const tokenSymbol = createTokenSymbolFromResolvedFields(
+        tokenName,
+        resolvedFields,
+        originalValue,
+        tokenType,
+        this.config,
+        this.objectParsers,
+      );
+      this.resolved.set(tokenName, tokenSymbol);
       this.referenceCache.set(tokenName, tokenSymbol);
 
-      this.callbacks?.onResolve?.(tokenName, assembled as InterpreterResult);
+      this.callbacks?.onResolve?.(tokenName, tokenSymbol);
     }
 
     this.unresolved.delete(tokenName);
