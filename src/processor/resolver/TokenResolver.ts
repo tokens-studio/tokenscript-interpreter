@@ -3,7 +3,7 @@ import type { Config } from "@interpreter/config";
 import type { InterpreterResult } from "@interpreter/interpreter";
 import { type ParseExpressionResult, parseExpression } from "@interpreter/parser";
 import { StringSymbol } from "@interpreter/symbols";
-import { isString } from "@interpreter/utils/type";
+import { isArray, isBoolean, isNull, isNumber, isObject, isString } from "@interpreter/utils/type";
 import { UNINTERPRETED_KEYWORDS } from "@src/types";
 import { DependencyError } from "../errors";
 import type { ObjectParser } from "../object-parsers";
@@ -11,7 +11,6 @@ import { DependencyGraph } from "../utils/DependencyGraph";
 import {
   assembleStructuredToken,
   extractStringFields,
-  isPrimitive,
   primitiveToSymbol,
   wrapStructuredTokenAsSymbol,
 } from "../utils/structured-tokens";
@@ -113,6 +112,14 @@ class PrefixResolver {
     return error;
   }
 
+  private earlyResolvePrimitiveToken(tokenName: RefPath, value: InterpreterResult): void {
+    this.resolved.set(tokenName, value);
+    this.referenceCache.set(tokenName, value);
+    this.callbacks?.onResolve?.(tokenName, value);
+    this.graph.addNode(tokenName, []);
+    this.earlyResolved.push(tokenName);
+  }
+
   private tryParseExpression(refPath: RefPath, value: string): ParseExpressionResult | Error {
     try {
       return parseExpression(value);
@@ -186,27 +193,17 @@ class PrefixResolver {
       // Handle uninterpreted keywords
       if (isString(tokenValue) && UNINTERPRETED_KEYWORDS.includes(tokenValue)) {
         const symbol = new StringSymbol(tokenValue, this.config);
-        this.resolved.set(tokenName, symbol);
-        this.referenceCache.set(tokenName, symbol);
-        this.callbacks?.onResolve?.(tokenName, symbol);
-        this.graph.addNode(tokenName, []);
-        this.earlyResolved.push(tokenName);
+        this.earlyResolvePrimitiveToken(tokenName, symbol);
         continue;
       }
 
-      // Handle primitive non-string values (numbers, booleans, null)
-      if (isPrimitive(tokenValue) && !isString(tokenValue)) {
+      if (isNumber(tokenValue) || isBoolean(tokenValue) || isNull(tokenValue)) {
         const symbol = primitiveToSymbol(tokenValue, this.config);
-        this.resolved.set(tokenName, symbol);
-        this.referenceCache.set(tokenName, symbol);
-        this.callbacks?.onResolve?.(tokenName, symbol);
-        this.graph.addNode(tokenName, []);
-        this.earlyResolved.push(tokenName);
+        this.earlyResolvePrimitiveToken(tokenName, symbol);
         continue;
       }
 
-      // Handle structured tokens (objects/arrays)
-      if (!isPrimitive(tokenValue)) {
+      if (isObject(tokenValue) || isArray(tokenValue)) {
         this.handleStructuredToken(tokenName, setTokenValue(tokenData));
         continue;
       }
@@ -220,11 +217,7 @@ class PrefixResolver {
 
       const { ast, parser } = parseResult;
       if (!ast) {
-        this.resolved.set(tokenName, "");
-        this.referenceCache.set(tokenName, "");
-        this.callbacks?.onResolve?.(tokenName, "");
-        this.graph.addNode(tokenName, []);
-        this.earlyResolved.push(tokenName);
+        this.earlyResolvePrimitiveToken(tokenName, "");
         continue;
       }
 
@@ -276,10 +269,7 @@ class PrefixResolver {
 
       const { ast, parser } = parseResult;
       if (!ast) {
-        this.resolved.set(fieldPath, "");
-        this.referenceCache.set(fieldPath, "");
-        this.graph.addNode(fieldPath, []);
-        this.earlyResolved.push(fieldPath);
+        this.earlyResolvePrimitiveToken(fieldPath, "");
         continue;
       }
 
