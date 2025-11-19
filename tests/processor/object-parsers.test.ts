@@ -1,6 +1,5 @@
 import { NumberSymbol, StringSymbol, TokenSymbol } from "@interpreter/symbols";
-import { defaultObjectParsers, numberWithUnitParser, type ObjectParser } from "@src/processor/object-parsers";
-import { wrapStructuredTokenAsSymbol } from "@src/processor/utils/structured-tokens";
+import { createTokenSymbol, defaultObjectParsers, numberWithUnitParser, type ObjectParser } from "@src/processor/object-parsers";
 import type { ISymbolType } from "@src/types";
 import { describe, expect, it } from "vitest";
 
@@ -37,9 +36,9 @@ describe("Object Parsers", () => {
     });
   });
 
-  describe("wrapStructuredTokenAsSymbol with object parsers", () => {
+  describe("createTokenSymbol with object parsers", () => {
     it("should parse NumberWithUnit objects in structured tokens", () => {
-      const token = wrapStructuredTokenAsSymbol(
+      const token = createTokenSymbol(
         {
           offsetX: { value: 8, unit: "px" },
           offsetY: { value: 2, unit: "rem" },
@@ -87,7 +86,7 @@ describe("Object Parsers", () => {
         },
       };
 
-      const token = wrapStructuredTokenAsSymbol(
+      const token = createTokenSymbol(
         {
           primary: { r: 255, g: 0, b: 0 },
           secondary: { r: 0, g: 255, b: 0 },
@@ -114,7 +113,7 @@ describe("Object Parsers", () => {
         toSymbol: () => new StringSymbol("always-matched"),
       };
 
-      const token = wrapStructuredTokenAsSymbol(
+      const token = createTokenSymbol(
         {
           spacing: { value: 8, unit: "px" },
         },
@@ -134,7 +133,7 @@ describe("Object Parsers", () => {
         toSymbol: () => new StringSymbol("never-used"),
       };
 
-      const token = wrapStructuredTokenAsSymbol(
+      const token = createTokenSymbol(
         {
           text: "hello",
           count: 42,

@@ -6,13 +6,9 @@ import { BooleanSymbol, NullSymbol, NumberSymbol, StringSymbol } from "@interpre
 import { isArray, isBoolean, isNull, isNumber, isObject, isString } from "@interpreter/utils/type";
 import { UNINTERPRETED_KEYWORDS } from "@src/types";
 import { DependencyError } from "../errors";
-import type { ObjectParser } from "../object-parsers";
+import { createTokenSymbol, type ObjectParser } from "../object-parsers";
 import { DependencyGraph } from "../utils/DependencyGraph";
-import {
-  assembleStructuredToken,
-  extractStringFields,
-  wrapStructuredTokenAsSymbol,
-} from "../utils/structured-tokens";
+import { assembleStructuredToken, extractStringFields } from "../utils/structured-tokens";
 import { getTokenValue, setTokenValue, type TokenData } from "../utils/tokens";
 import {
   DependencyTracker,
@@ -246,12 +242,7 @@ class PrefixResolver {
 
       // Wrap in TokenSymbol for reference cache so other tokens can call .get() on it
       const tokenType = tokenData.$type || "unknown";
-      const tokenSymbol = wrapStructuredTokenAsSymbol(
-        tokenValue,
-        tokenType,
-        this.config,
-        this.objectParsers,
-      );
+      const tokenSymbol = createTokenSymbol(tokenValue, tokenType, this.config, this.objectParsers);
       this.referenceCache.set(tokenName, tokenSymbol);
 
       this.callbacks?.onResolve?.(tokenName, tokenValue as InterpreterResult);
@@ -478,12 +469,7 @@ class PrefixResolver {
 
       // Wrap in TokenSymbol for reference cache so other tokens can call .get() on it
       const tokenType = tokenData.$type || "unknown";
-      const tokenSymbol = wrapStructuredTokenAsSymbol(
-        assembled,
-        tokenType,
-        this.config,
-        this.objectParsers,
-      );
+      const tokenSymbol = createTokenSymbol(assembled, tokenType, this.config, this.objectParsers);
       this.referenceCache.set(tokenName, tokenSymbol);
 
       this.callbacks?.onResolve?.(tokenName, assembled as InterpreterResult);

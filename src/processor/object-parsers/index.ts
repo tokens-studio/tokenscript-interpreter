@@ -33,3 +33,4 @@ export type ObjectParser = {
  */
 export { defaultObjectParsers } from "./default-object-parsers";
 export { numberWithUnitParser } from "./parsers/number-with-unit";
+export { createTokenSymbol, parseValueToSymbol } from "./symbol-conversion";
