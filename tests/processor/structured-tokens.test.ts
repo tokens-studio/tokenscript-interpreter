@@ -1,7 +1,7 @@
 import type { BaseSymbol } from "@interpreter/symbols";
+import { processTokens } from "@src/processor/process";
+import { flattenTokensObject } from "@src/processor/utils/tokens";
 import { describe, expect, it } from "vitest";
-import { processTokens } from "../../src/processor/process";
-import { flattenTokensObject } from "../../src/processor/utils/tokens";
 
 describe("Structured Tokens - Phase 1: Flattening", () => {
   it("should preserve object $value", () => {
