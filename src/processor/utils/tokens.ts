@@ -1,4 +1,4 @@
-import { getKeyAlt, isObject } from "@/src/interpreter/utils/type";
+import { getKeyAlt, isObject, isString } from "@/src/interpreter/utils/type";
 
 /**
  * Structured token data containing value and optional type information
@@ -6,6 +6,14 @@ import { getKeyAlt, isObject } from "@/src/interpreter/utils/type";
 export interface TokenData {
   $value: unknown;
   $type?: string;
+}
+
+export function getTokenValue(data: string | TokenData): unknown {
+  return isString(data) ? data : data.$value;
+}
+
+export function setTokenValue(value: string | TokenData): TokenData {
+  return isString(value) ? { $value: value } : value;
 }
 
 /**

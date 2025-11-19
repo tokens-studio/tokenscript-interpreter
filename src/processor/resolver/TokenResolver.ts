@@ -14,7 +14,7 @@ import {
   primitiveToSymbol,
   wrapStructuredTokenAsSymbol,
 } from "../utils/structured-tokens";
-import type { TokenData } from "../utils/tokens";
+import { getTokenValue, setTokenValue, type TokenData } from "../utils/tokens";
 import {
   DependencyTracker,
   PrefixExtractor,
@@ -105,20 +105,6 @@ class PrefixResolver {
   }
 
   /**
-   * Extract value from either string or TokenData structure
-   */
-  private getTokenValue(data: string | TokenData): unknown {
-    return isString(data) ? data : data.$value;
-  }
-
-  /**
-   * Normalize to TokenData structure
-   */
-  private setTokenValue(value: string | TokenData): TokenData {
-    return isString(value) ? { $value: value } : value;
-  }
-
-  /**
    * Parse a string value and handle errors
    */
   private parseStringValue(tokenName: RefPath, tokenValue: string): ParseExpressionResult | Error {
@@ -199,7 +185,7 @@ class PrefixResolver {
     this.earlyResolved = [];
 
     for (const [tokenName, tokenData] of this.tokens.entries()) {
-      const tokenValue = this.getTokenValue(tokenData);
+      const tokenValue = getTokenValue(tokenData);
 
       // Handle uninterpreted keywords
       if (isString(tokenValue) && UNINTERPRETED_KEYWORDS.includes(tokenValue)) {
@@ -225,7 +211,7 @@ class PrefixResolver {
 
       // Handle structured tokens (objects/arrays)
       if (!isPrimitive(tokenValue)) {
-        this.handleStructuredToken(tokenName, this.setTokenValue(tokenData));
+        this.handleStructuredToken(tokenName, setTokenValue(tokenData));
         continue;
       }
 
@@ -425,7 +411,7 @@ class PrefixResolver {
     if (originalValue === undefined) return;
 
     // For string/primitive tokens
-    const tokenValueStr: string = String(this.getTokenValue(originalValue));
+    const tokenValueStr: string = String(getTokenValue(originalValue));
 
     const unresolved = this.unresolved.get(tokenName);
     const dependencyError = unresolved
@@ -568,7 +554,7 @@ class PrefixResolver {
       const originalValue = this.tokens.get(tokenName);
       if (originalValue === undefined || this.resolved.has(tokenName)) continue;
 
-      const tokenValueStr: string = String(this.getTokenValue(originalValue));
+      const tokenValueStr: string = String(getTokenValue(originalValue));
 
       // Check for dependency errors
       const unresolved = this.unresolved.get(tokenName);
