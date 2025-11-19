@@ -2,7 +2,7 @@ import type { Config } from "@interpreter/config";
 import type { InterpreterResult } from "@interpreter/interpreter";
 import { isTokenscriptSymbol, symbolTypeToJsValue } from "@interpreter/symbols";
 import { isNull, isString } from "@interpreter/utils/type";
-import type { ObjectParser } from "../parsers/object-parsers";
+import type { ObjectParser } from "../object-parsers";
 import { type ProcessorOutput, TokenResolver } from "../resolver/TokenResolver";
 import type { TokenData } from "../utils/tokens";
 import { MapBuilder } from "./MapBuilder";

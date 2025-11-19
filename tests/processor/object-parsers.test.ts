@@ -1,5 +1,5 @@
 import { NumberSymbol, StringSymbol, TokenSymbol } from "@interpreter/symbols";
-import { defaultObjectParsers, numberWithUnitParser, type ObjectParser } from "@src/processor/parsers/object-parsers";
+import { defaultObjectParsers, numberWithUnitParser, type ObjectParser } from "@src/processor/object-parsers";
 import { wrapStructuredTokenAsSymbol } from "@src/processor/utils/structured-tokens";
 import type { ISymbolType } from "@src/types";
 import { describe, expect, it } from "vitest";

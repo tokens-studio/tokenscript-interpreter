@@ -1,7 +1,7 @@
 import type { Config } from "@interpreter/config";
 import type { InterpreterResult } from "../interpreter/interpreter";
 import type { OutputFormat, TokenBuilder } from "./builders/types";
-import type { ObjectParser } from "./parsers/object-parsers";
+import type { ObjectParser } from "./object-parsers";
 import type { ProcessorOutput } from "./resolver/TokenResolver";
 
 export interface ProcessOptions {

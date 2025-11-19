@@ -5,7 +5,7 @@ import { StringSymbol } from "@interpreter/symbols";
 import { isString } from "@interpreter/utils/type";
 import { UNINTERPRETED_KEYWORDS } from "@src/types";
 import { DependencyError } from "../errors";
-import type { ObjectParser } from "../parsers/object-parsers";
+import type { ObjectParser } from "../object-parsers";
 import { DependencyGraph } from "../utils/DependencyGraph";
 import {
   assembleStructuredToken,

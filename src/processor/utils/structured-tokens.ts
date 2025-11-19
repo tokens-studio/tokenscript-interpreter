@@ -8,7 +8,7 @@ import {
 } from "@interpreter/symbols";
 import { isArray, isBoolean, isNumber, isObject, isString } from "@interpreter/utils/type";
 import type { ISymbolType } from "@src/types";
-import { defaultObjectParsers, type ObjectParser } from "../parsers/object-parsers";
+import { defaultObjectParsers, type ObjectParser } from "../object-parsers";
 
 /**
  * Check if a value is a primitive (string, number, boolean, null, undefined)

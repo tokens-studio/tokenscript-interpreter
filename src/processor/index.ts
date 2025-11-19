@@ -15,7 +15,7 @@ export {
   defaultObjectParsers,
   numberWithUnitParser,
   type ObjectParser,
-} from "./parsers/object-parsers";
+} from "./object-parsers";
 export { processTokenSets, processTokens } from "./process";
 export type { ProcessorOutput, ProcessorResult } from "./resolver/TokenResolver";
 export { TokenResolver } from "./resolver/TokenResolver";
