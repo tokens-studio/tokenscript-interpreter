@@ -62,7 +62,7 @@ export const hasProperty = <K extends string>(obj: unknown, key: K): obj is Reco
   return isObject(obj) && key in obj;
 };
 
-export const getFirstKey = <K extends string, T>(
+export const getKeyAlt = <K extends string, T>(
   keys: readonly K[],
   record: Partial<Record<K, T>>,
 ): T | undefined => {

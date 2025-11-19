@@ -1,4 +1,4 @@
-import { getFirstKey, isObject } from "@/src/interpreter/utils/type";
+import { getKeyAlt, isObject } from "@/src/interpreter/utils/type";
 
 /**
  * Structured token data containing value and optional type information
@@ -39,7 +39,7 @@ export function flattenTokensObject(
 
     if (isObject(value)) {
       const objValue = value as Record<string, unknown>;
-      const tokenValue = getFirstKey(["$value", "value"], objValue);
+      const tokenValue = getKeyAlt(["$value", "value"], objValue);
 
       if (tokenValue !== undefined) {
         // Capture $type if present
