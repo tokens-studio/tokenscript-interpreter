@@ -1,3 +1,4 @@
+import type { ASTNode } from "@interpreter/ast";
 import type { Config } from "@interpreter/config";
 import type { InterpreterResult } from "@interpreter/interpreter";
 import { type ParseExpressionResult, parseExpression } from "@interpreter/parser";
@@ -123,7 +124,7 @@ class PrefixResolver {
   /**
    * Process parsed AST and register dependencies
    */
-  private processParsedToken(tokenName: RefPath, ast: any, dependencies: Set<RefPath>): void {
+  private processParsedToken(tokenName: RefPath, ast: ASTNode, dependencies: Set<RefPath>): void {
     this.tokenInterpreter.setTokenAST(tokenName, ast);
 
     if (dependencies.size > 0) {
