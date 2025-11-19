@@ -105,16 +105,20 @@ class PrefixResolver {
     );
   }
 
-  private parseStringValue(tokenName: RefPath, tokenValue: string): ParseExpressionResult | Error {
+  private resolveError(refPath: RefPath, error: Error, value: string): Error {
+    this.resolved.set(refPath, error);
+    this.callbacks?.onError?.(refPath, error, value);
+    this.graph.addNode(refPath, []);
+    this.earlyResolved.push(refPath);
+    return error;
+  }
+
+  private tryParseExpression(refPath: RefPath, value: string): ParseExpressionResult | Error {
     try {
-      return parseExpression(tokenValue);
+      return parseExpression(value);
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
-      this.resolved.set(tokenName, err);
-      this.callbacks?.onError?.(tokenName, err, tokenValue);
-      this.graph.addNode(tokenName, []);
-      this.earlyResolved.push(tokenName);
-      return err;
+      return this.resolveError(refPath, err, value);
     }
   }
 
@@ -146,10 +150,7 @@ class PrefixResolver {
 
       if (!this.referenceCache.has(dep)) {
         const error = new Error(`Token '${dep}' not found`);
-        this.resolved.set(dep, error);
-        this.callbacks?.onError?.(dep, error, "");
-        this.graph.addNode(dep, []);
-        this.earlyResolved.push(dep);
+        this.resolveError(dep, error, "");
       }
     }
   }
@@ -212,7 +213,7 @@ class PrefixResolver {
 
       // Handle string values (may contain references)
       const tokenValueStr = String(tokenValue);
-      const parseResult = this.parseStringValue(tokenName, tokenValueStr);
+      const parseResult = this.tryParseExpression(tokenName, tokenValueStr);
       if (parseResult instanceof Error) {
         continue;
       }
@@ -268,7 +269,7 @@ class PrefixResolver {
     for (const [fieldPath, fieldValue] of stringFields) {
       this.subFieldPaths.add(fieldPath);
 
-      const parseResult = this.parseStringValue(fieldPath, fieldValue);
+      const parseResult = this.tryParseExpression(fieldPath, fieldValue);
       if (parseResult instanceof Error) {
         continue;
       }
