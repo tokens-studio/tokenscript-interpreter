@@ -17,7 +17,6 @@ import {
 import { getTokenValue, setTokenValue, type TokenData } from "../utils/tokens";
 import {
   DependencyTracker,
-  PrefixExtractor,
   PrefixManager,
   ReadinessTracker,
   type RefPath,
@@ -65,7 +64,6 @@ class PrefixResolver {
 
   // Phase 3: Optimization components
   private readonly notifier: ResolutionNotifier;
-  private readonly prefixExtractor: PrefixExtractor;
   private readonly readinessTracker: ReadinessTracker;
 
   // Structured tokens tracking
@@ -91,7 +89,6 @@ class PrefixResolver {
     this.tokenInterpreter = new TokenInterpreter(this.referenceCache, config);
 
     // Initialize Phase 3 optimization components
-    this.prefixExtractor = new PrefixExtractor();
     this.readinessTracker = new ReadinessTracker();
     this.notifier = new ResolutionNotifier(
       this.dependencyTracker,
