@@ -1,4 +1,3 @@
-// Builders
 export {
   type BuilderFormat,
   FlatObjectBuilder,
@@ -18,8 +17,6 @@ export {
   type ObjectParser,
 } from "./parsers/object-parsers";
 export { processTokenSets, processTokens } from "./process";
-// Note: collectJsonFiles, normalizeJsonFiles, and processTokensFromFiles are Node.js-only
-// and should be imported from "@tokens-studio/tokenscript-interpreter/processor-node"
 export type { ProcessorOutput, ProcessorResult } from "./resolver/TokenResolver";
 export { TokenResolver } from "./resolver/TokenResolver";
 export type {

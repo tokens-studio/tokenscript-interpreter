@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adds `TokenSymbol` to handle structured data in tokenscript
   - Handles Objects with `Dictionary` interface
   - Handles Arrays with `List` interface
+- Adss `TokenData` type which encapsulates `{"$type": string, "$value": unknown}` instead of just dealing with strings during processing to aid the ObjectParser in determining the parser by the `$type`
 
 ### Fixes
 

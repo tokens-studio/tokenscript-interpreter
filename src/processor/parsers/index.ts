@@ -3,7 +3,6 @@ import type { ISymbolType } from "@src/types";
 
 /**
  * ObjectParser allows custom transformation of structured values into interpreter symbols.
- * This is useful for parsing complex nested structures like { value: 1, unit: "rem" } into NumberWithUnitSymbol.
  *
  * @example
  * const numberWithUnitParser: ObjectParser = {
@@ -12,13 +11,6 @@ import type { ISymbolType } from "@src/types";
  * }
  */
 export type ObjectParser = {
-  /**
-   * Check if this parser should handle the given value
-   */
   predicate: (value: unknown) => boolean;
-
-  /**
-   * Convert the matched value to an interpreter symbol
-   */
   toSymbol: (value: any, config?: Config) => ISymbolType;
 };

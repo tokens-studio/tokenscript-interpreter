@@ -5,7 +5,6 @@ import type { ISymbolType } from "@src/types";
 import type { ObjectParser } from ".";
 
 /**
- * Default object parser for NumberWithUnit structures.
  * Matches objects with { value: number, unit: string } shape.
  *
  * @example
