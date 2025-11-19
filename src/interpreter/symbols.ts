@@ -780,80 +780,52 @@ export class ListSymbol extends BaseSymbolType {
   }
 
   toString(): string {
-    const delimiter = this.isImplicit ? " " : ", ";
-    return this.value.map((x) => (x.value === null ? "null" : x.toString())).join(delimiter);
+    return ListImpl.toString(this.value, this.isImplicit);
   }
 
   appendImpl(item: ISymbolType): ListSymbol {
-    const itemToAdd = item.cloneIfMutable();
-    this.value.push(itemToAdd);
+    ListImpl.append(this.value, item);
     return this;
   }
 
   extendImpl(...items: ISymbolType[]): ListSymbol {
-    // Handle both individual arguments and ListSymbol arguments
-    for (const item of items) {
-      if (item instanceof ListSymbol) {
-        this.value.push(...item.value.map((element) => element.cloneIfMutable()));
-      } else {
-        this.value.push(item.cloneIfMutable());
-      }
-    }
+    ListImpl.extend(this.value, ...items);
     return this;
   }
 
   insertImpl(indexSymbol: NumberSymbol, item: ISymbolType): ListSymbol {
-    const index = indexSymbol.value as number;
-    if (isOutOfBoundsInclusive(this.value, index))
-      throw new InterpreterError("Index out of range for insert.");
-    this.value.splice(index, 0, item.cloneIfMutable());
+    ListImpl.insert(this.value, indexSymbol, item);
     return this;
   }
 
   deleteImpl(indexSymbol: NumberSymbol): ListSymbol {
-    const index = indexSymbol.value as number;
-    if (isOutOfBounds(this.value, index))
-      throw new InterpreterError("Index out of range for deletion.");
-    this.value.splice(index, 1);
+    ListImpl.deleteAt(this.value, indexSymbol);
     return this;
   }
 
   length(): NumberSymbol {
-    return new NumberSymbol(this.value.length, this.config);
+    return ListImpl.length(this.value, this.config);
   }
 
   indexImpl(item: ISymbolType): NumberSymbol {
-    const idx = this.value.findIndex((el) => el.equals(item));
-    return new NumberSymbol(idx, this.config);
+    return ListImpl.indexOf(this.value, item, this.config);
   }
 
   getImpl(indexSymbol: NumberSymbol): ISymbolType {
-    const index = indexSymbol.value as number;
-    if (isOutOfBounds(this.value, index)) throw new InterpreterError("Index out of range for get.");
-    return this.value[index];
+    return ListImpl.get(this.value, indexSymbol);
   }
 
   updateImpl(indexSymbol: NumberSymbol, item: ISymbolType): ListSymbol {
-    const index = indexSymbol.value as number;
-    if (isOutOfBounds(this.value, index))
-      throw new InterpreterError("Index out of range for update.");
-    this.value[index] = item.cloneIfMutable();
+    ListImpl.update(this.value, indexSymbol, item);
     return this;
   }
 
   joinImpl(separator?: StringSymbol): StringSymbol {
-    const sep = separator?.value || "";
-    const stringElements = this.value.map((element) => {
-      if (element.value === null) {
-        return "null";
-      }
-      return element.toString();
-    });
-    return new StringSymbol(stringElements.join(sep), this.config);
+    return ListImpl.join(this.value, separator, this.config);
   }
 
   deepCopy(): ListSymbol {
-    const copiedElements = this.value.map((element) => element.deepCopy());
+    const copiedElements = ListImpl.deepCopy(this.value);
     return new ListSymbol(copiedElements, this.isImplicit, this.config);
   }
 
@@ -1092,65 +1064,46 @@ export class DictionarySymbol extends BaseSymbolType {
   }
 
   toString(): string {
-    return formatObjectEntries(this.value);
-  }
-
-  private ensureKeyIsString(key: ISymbolType): string {
-    if (key instanceof StringSymbol && key.value !== null) {
-      return key.value;
-    }
-    if (typeof key === "string") {
-      return key;
-    }
-    throw new InterpreterError(`Key must be a string, got ${typeof key}.`);
+    return DictionaryImpl.toString(this.value);
   }
 
   getImpl(key: StringSymbol): ISymbolType {
-    const keyStr = this.ensureKeyIsString(key);
-    return this.value.get(keyStr) || new NullSymbol(this.config);
+    return DictionaryImpl.get(this.value, key, this.config);
   }
 
   setImpl(key: StringSymbol, value: ISymbolType): DictionarySymbol {
-    const keyStr = this.ensureKeyIsString(key);
-    this.value.set(keyStr, value.cloneIfMutable());
+    DictionaryImpl.set(this.value, key, value);
     return this;
   }
 
   deleteImpl(key: StringSymbol): DictionarySymbol {
-    const keyStr = this.ensureKeyIsString(key);
-    this.value.delete(keyStr);
+    DictionaryImpl.deleteKey(this.value, key);
     return this;
   }
 
   keysImpl(): ListSymbol {
-    const keys = Array.from(this.value.keys()).map((key) => new StringSymbol(key, this.config));
-    return new ListSymbol(keys, false, this.config);
+    return DictionaryImpl.keys(this.value, this.config);
   }
 
   valuesImpl(): ListSymbol {
-    const values = Array.from(this.value.values());
-    return new ListSymbol(values, false, this.config);
+    return DictionaryImpl.values(this.value, this.config);
   }
 
   keyExistsImpl(key: StringSymbol): BooleanSymbol {
-    const keyStr = this.ensureKeyIsString(key);
-    return new BooleanSymbol(this.value.has(keyStr), this.config);
+    return DictionaryImpl.keyExists(this.value, key, this.config);
   }
 
   lengthImpl(): NumberSymbol {
-    return new NumberSymbol(this.value.size, this.config);
+    return DictionaryImpl.length(this.value, this.config);
   }
 
   clearImpl(): DictionarySymbol {
-    this.value.clear();
+    DictionaryImpl.clear(this.value);
     return this;
   }
 
   deepCopy(): DictionarySymbol {
-    const copiedMap = new Map<string, ISymbolType>();
-    for (const [key, value] of this.value.entries()) {
-      copiedMap.set(key, value.deepCopy());
-    }
+    const copiedMap = DictionaryImpl.deepCopy(this.value);
     return new DictionarySymbol(copiedMap, this.config);
   }
 
@@ -1163,15 +1116,11 @@ export class DictionarySymbol extends BaseSymbolType {
   }
 
   hasAttribute(attributeName: string): boolean {
-    return this.value.has(attributeName);
+    return DictionaryImpl.hasAttribute(this.value, attributeName);
   }
 
   getAttribute(attributeName: string): ISymbolType | null {
-    const value = this.value.get(attributeName);
-    if (value === undefined) {
-      return null;
-    }
-    return value;
+    return DictionaryImpl.getAttribute(this.value, attributeName);
   }
 }
 
