@@ -1,16 +1,7 @@
 import type { BaseSymbol } from "@interpreter/symbols";
 import { TokenResolver } from "@src/processor";
-import type { TokenData } from "@src/processor/utils/tokens";
 import { describe, expect, it } from "vitest";
-
-// Helper to convert string maps to TokenData maps for testing
-function toTokenData(tokens: Map<string, string>): Map<string, TokenData> {
-  const result = new Map<string, TokenData>();
-  for (const [key, value] of tokens) {
-    result.set(key, { $value: value });
-  }
-  return result;
-}
+import { toTokenData } from "./test-helpers";
 
 function getValue(v: unknown): unknown {
   return v && typeof v === "object" && "value" in v ? (v as BaseSymbol).value : v;

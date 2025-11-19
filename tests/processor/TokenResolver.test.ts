@@ -1,16 +1,7 @@
 import { DictionarySymbol } from "@interpreter/symbols";
 import { DependencyError, TokenResolver } from "@src/processor";
-import type { TokenData } from "@src/processor/utils/tokens";
 import { describe, expect, it } from "vitest";
-
-// Helper to convert string maps to TokenData maps for testing
-function toTokenData(tokens: Map<string, string>): Map<string, TokenData> {
-  const result = new Map<string, TokenData>();
-  for (const [key, value] of tokens) {
-    result.set(key, { $value: value });
-  }
-  return result;
-}
+import { toTokenData } from "./test-helpers";
 
 describe("TokenResolver", () => {
   describe("processTokens", () => {
