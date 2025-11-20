@@ -174,15 +174,16 @@ const extractUnit = (value: string): string | null => {
 function JsonOutput({ value, visualMode = false }: { value: any; visualMode?: boolean }) {
   const { theme } = useTheme();
   const currentTheme = getTheme(theme);
-  
+
   // Convert ProcessorOutput with Maps to plain object for display
   let displayValue = value;
   if (value && typeof value === "object" && "tokens" in value && value.tokens instanceof Map) {
     // This is a ProcessorOutput - convert tokens Map to plain object
     displayValue = Object.fromEntries(value.tokens);
   }
-  
-  const jsonString = typeof displayValue === "string" ? displayValue : JSON.stringify(displayValue, null, 2);
+
+  const jsonString =
+    typeof displayValue === "string" ? displayValue : JSON.stringify(displayValue, null, 2);
   const themeColors = theme === "light" ? tokenscriptLightThemeColors : tokenscriptThemeColors;
 
   useEffect(() => {
@@ -198,7 +199,12 @@ function JsonOutput({ value, visualMode = false }: { value: any; visualMode?: bo
     Prism.highlightAll();
   }, [themeColors, jsonString]);
 
-  if (visualMode && typeof displayValue === "object" && displayValue !== null && !Array.isArray(displayValue)) {
+  if (
+    visualMode &&
+    typeof displayValue === "object" &&
+    displayValue !== null &&
+    !Array.isArray(displayValue)
+  ) {
     const entries = Object.entries(displayValue).sort(([keyA], [keyB]) => keyA.localeCompare(keyB));
     return (
       <div data-testid="json-output-visual">
@@ -381,7 +387,7 @@ const ListOutput = ({
   const { theme } = useTheme();
   const currentTheme = getTheme(theme);
 
-  if (list.elements.length === 0) {
+  if (list.value.length === 0) {
     if (compact) {
       return (
         <div
@@ -431,7 +437,7 @@ const ListOutput = ({
         data-testid="list-output-compact"
       >
         <div className="space-y-1">
-          {list.elements.map((element, index) => (
+          {list.value.map((element, index) => (
             <SymbolOutput
               key={index}
               symbol={element}
@@ -450,7 +456,7 @@ const ListOutput = ({
       className=""
       data-testid="list-output"
     >
-      {list.elements.map((element, index) => (
+      {list.value.map((element, index) => (
         <SymbolOutput
           key={index}
           symbol={element}
