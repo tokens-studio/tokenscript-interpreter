@@ -51,7 +51,7 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
     objectParsers,
   } = options ?? {};
 
-  const processor = new TokenResolver();
+  const resolver = new TokenResolver();
   const errors: Map<string, Error> = new Map();
 
   // Always create a MapBuilder for the tokens map output
@@ -74,7 +74,7 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
     },
   };
 
-  const result = processor.processTokens(tokens, callbacks, config, objectParsers);
+  const result = resolver.processTokens(tokens, callbacks, config, objectParsers);
 
   let tokensMap = tokensMapBuilder.getResult();
   const builderOutput = builder.getResult();
