@@ -38,6 +38,7 @@ export {
   NumberSymbol,
   NumberWithUnitSymbol,
   StringSymbol,
+  TokenSymbol,
 } from "@interpreter/symbols";
 // Type definitions
 export * from "@src/types";
