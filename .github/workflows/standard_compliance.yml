@@ -40,11 +40,7 @@ jobs:
           failed=$(jq -r '.failed' compliance-report.json)
           echo "✅ Passed: $passed"
           echo "❌ Failed: $failed"
-
-      - name: Report compliance results
-        run: node .github/scripts/report-compliance.cjs
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
-
+          if [ "$failed" -gt 0 ]; then
+            echo "🚫 Compliance suite failures detected."
+            exit 1
+          fi
