@@ -78,6 +78,49 @@ jobs:
           !dist/**/*.map
         retention-days: 7
 
+  e2e-web-repl:
+    name: E2E Tests - Web REPL
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        
+    - name: Install root dependencies
+      run: npm ci
+      
+    - name: Build library
+      run: npm run build:lib
+      
+    - name: Install web-repl dependencies
+      working-directory: examples/web-repl
+      run: npm ci
+      
+    - name: Install Playwright browsers
+      working-directory: examples/web-repl
+      run: npx playwright install --with-deps chromium
+      
+    - name: Run E2E tests
+      working-directory: examples/web-repl
+      run: npm run test:e2e
+      env:
+        CI: true
+        
+    - name: Upload Playwright report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: playwright-report
+        path: examples/web-repl/playwright-report/
+        retention-days: 7
+
   security:
     name: Security Audit
     runs-on: ubuntu-latest
