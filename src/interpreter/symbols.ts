@@ -1479,6 +1479,13 @@ export class ColorSymbol extends BaseSymbolType {
     return this.toStringSymbol().toString();
   }
 
+  to(targetType: string): ColorSymbol {
+    if (!this.config?.colorManager) {
+      throw new InterpreterError("ColorManager not available");
+    }
+    return this.config.colorManager.convertToByType(this, targetType);
+  }
+
   typeEquals(other: ISymbolType): boolean {
     if (!typeEquals(this.type, other.type)) return false;
     const otherColor = other as ColorSymbol;
