@@ -248,7 +248,7 @@ function App() {
     [setAppState],
   );
 
-  const loadDependencies = useCallback(
+  const _loadDependencies = useCallback(
     async (dependencies: string[]) => {
       const loaded = await loadDependenciesForPreset(
         dependencies,
@@ -272,32 +272,34 @@ function App() {
 
   const handlePresetSelect = useCallback(
     async (preset: Preset) => {
+      let newColorSchemas = appState.colorSchemas;
+      let newFunctionSchemas = appState.functionSchemas;
+
       if (preset.clearDependencies) {
-        setAppState((prev) => ({
-          ...prev,
-          colorSchemas: new Map(),
-          functionSchemas: new Map(),
-        }));
+        newColorSchemas = new Map();
+        newFunctionSchemas = new Map();
       }
 
-      if (isEmpty(preset.dependencies)) return;
-
-      const { colorSchemas, functionSchemas } = await loadDependenciesForPreset(
-        preset.dependencies,
-        appState.colorSchemas,
-        appState.functionSchemas,
-      );
+      if (!isEmpty(preset.dependencies)) {
+        const { colorSchemas, functionSchemas } = await loadDependenciesForPreset(
+          preset.dependencies,
+          newColorSchemas,
+          newFunctionSchemas,
+        );
+        newColorSchemas = new Map([...newColorSchemas, ...colorSchemas]);
+        newFunctionSchemas = new Map([...newFunctionSchemas, ...functionSchemas]);
+      }
 
       setAppState((prev) => ({
         ...prev,
         inputMode: preset.type === "code" ? "tokenscript" : "json",
         code: preset.code,
         currentPresetName: preset.name,
-        colorSchemas: new Map([...appState.colorSchemas, ...colorSchemas]),
-        functionSchemas: new Map([...appState.functionSchemas, ...functionSchemas]),
+        colorSchemas: newColorSchemas,
+        functionSchemas: newFunctionSchemas,
       }));
     },
-    [loadDependencies, setAppState],
+    [appState.colorSchemas, appState.functionSchemas, setAppState],
   );
 
   const handleShare = useCallback(() => {
