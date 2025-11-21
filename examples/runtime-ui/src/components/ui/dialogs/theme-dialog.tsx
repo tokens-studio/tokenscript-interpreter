@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react"
+import { useEffect, useState, type FormEvent } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -24,7 +24,7 @@ interface ThemeDialogProps {
 
 export function ThemeDialog({ open, onOpenChange, editingTheme, onResetEditing }: ThemeDialogProps) {
   const { appState, addTheme, updateTheme } = useAppState()
-  const availableSetNames = useMemo(() => Array.from(appState.sets.keys()), [appState.sets])
+  const availableSetNames = Array.from(appState.sets.keys())
   const [themeName, setThemeName] = useState("")
   const [selectedSets, setSelectedSets] = useState<Set<string>>(new Set())
 

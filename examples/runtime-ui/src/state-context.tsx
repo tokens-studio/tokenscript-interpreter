@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react"
+import { createContext, useContext, useState, type ReactNode } from "react"
 
 import {
   INITIAL_STATE,
@@ -25,7 +25,7 @@ interface AppStateContextValue extends UIState {
   groupedTokens: Map<string, string[]>
   filteredOutput: [string, unknown][]
   mergedTokens: TokensMap
-  processorOutput: Map<string, unknown>
+  processorOutput: ReturnType<typeof processTokens>
   setOrder: string[]
   toggleGroup: (group: TokenGroup) => void
   toggleTheme: (themeName: string) => void
@@ -346,29 +346,16 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     })
   }
 
-  const setOrder = useMemo(() => Array.from(state.appState.sets.keys()), [state.appState.sets])
-
-  const mergedTokens = useMemo(
-    () => mergeActiveSets(state.appState.sets, state.appState.activeSets, setOrder),
-    [state.appState.sets, state.appState.activeSets, setOrder]
-  )
-
-  const processorOutput = useMemo(
-    () => processTokens<Map<string, unknown>>(mergedTokens),
-    [mergedTokens]
-  )
-  const groupedTokens = useMemo(() => groupTokensByType(mergedTokens), [mergedTokens])
-  const outputEntries = useMemo(() => Array.from(processorOutput.tokens.entries()), [processorOutput])
-
-  const filteredOutput = useMemo(
-    () =>
-      state.searchQuery
-        ? outputEntries.filter(([path]) =>
-            path.toLowerCase().includes(state.searchQuery.toLowerCase())
-          )
-        : outputEntries,
-    [outputEntries, state.searchQuery]
-  )
+  const setOrder = Array.from(state.appState.sets.keys())
+  const mergedTokens = mergeActiveSets(state.appState.sets, state.appState.activeSets, setOrder)
+  const processorOutput = processTokens<Map<string, unknown>>(mergedTokens)
+  const groupedTokens = groupTokensByType(mergedTokens)
+  const outputEntries = Array.from(processorOutput.tokens.entries())
+  const filteredOutput = state.searchQuery
+    ? outputEntries.filter(([path]) =>
+        path.toLowerCase().includes(state.searchQuery.toLowerCase())
+      )
+    : outputEntries
 
   const value: AppStateContextValue = {
     ...state,

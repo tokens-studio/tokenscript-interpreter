@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react"
+import { useEffect, useState, type FormEvent } from "react"
 import { processTokens } from "@tokens-studio/tokenscript-interpreter"
 
 import { Button } from "@/components/ui/button"
@@ -45,7 +45,7 @@ export function TokenDialog({
   onResetEditing,
 }: TokenDialogProps) {
   const { appState, setOrder, mergedTokens, addToken, updateToken, deleteToken } = useAppState()
-  const availableSetNames = useMemo(() => Array.from(appState.sets.keys()), [appState.sets])
+  const availableSetNames = Array.from(appState.sets.keys())
   const [tokenSetName, setTokenSetName] = useState("")
   const [tokenName, setTokenName] = useState("")
   const [tokenType, setTokenType] = useState<string>(TOKEN_GROUPS[0])
@@ -94,7 +94,7 @@ export function TokenDialog({
     } else {
       resetForm()
     }
-  }, [appState.sets, availableSetNames, editingToken, editingTokenSet, mergedTokens, open])
+  }, [appState.sets, editingToken, editingTokenSet, mergedTokens, open])
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault()
@@ -121,7 +121,7 @@ export function TokenDialog({
     onOpenChange(nextOpen)
   }
 
-  const previewResolvedValue = useMemo(() => {
+  const previewResolvedValue = (() => {
     const previewName = tokenName.trim() || ""
     const previewTokens = new Map(mergedTokens)
     if (editingToken && editingToken !== previewName) {
@@ -140,7 +140,7 @@ export function TokenDialog({
       })
       return ""
     }
-  }, [editingToken, mergedTokens, tokenName, tokenType, tokenValue])
+  })()
 
   const dialogTitle = editingToken ? "Edit Token" : "Add Token"
   const dialogCta = editingToken ? "Save Token" : "Add Token"
