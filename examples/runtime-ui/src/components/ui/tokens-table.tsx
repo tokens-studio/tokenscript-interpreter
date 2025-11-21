@@ -56,8 +56,7 @@ export function TokensTable() {
                 <TableBody>
                   {filteredOutput.map(([path, value]) => {
                     const tokenData = mergedTokens.get(path)
-                    const displayValue =
-                      typeof value === "object" ? JSON.stringify(value) : String(value)
+                    const displayValue = value?.toString ? value.toString() : String(value)
                     const tokenType = tokenData?.$type || "Unknown"
                     const showColorSwatch = tokenType === "Color" && isColorValue(displayValue)
                     const rowClass = selectedToken === path ? "bg-primary/10" : "hover:bg-muted/50"

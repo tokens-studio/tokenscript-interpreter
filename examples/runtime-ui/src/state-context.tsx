@@ -1,9 +1,8 @@
-import { createContext, useContext, useMemo, useState } from "react"
+import { createContext, useContext, useMemo, useState, type ReactNode } from "react"
 
 import {
   INITIAL_STATE,
   TOKEN_GROUPS,
-  getProcessorOutput,
   mergeActiveSets,
   toggleSet,
   toggleTheme,
@@ -11,6 +10,8 @@ import {
   type TokenGroup,
   type TokensMap,
 } from "./state"
+import { processTokens } from "@tokens-studio/tokenscript-interpreter"
+
 
 interface UIState {
   appState: AppState
@@ -23,6 +24,7 @@ interface AppStateContextValue extends UIState {
   groupedTokens: Map<string, string[]>
   filteredOutput: [string, unknown][]
   mergedTokens: TokensMap
+  processorOutput: Map<string, unknown>
   setOrder: string[]
   toggleGroup: (group: TokenGroup) => void
   toggleTheme: (themeName: string) => void
@@ -48,7 +50,7 @@ function groupTokensByType(tokens: TokensMap) {
 
 const AppStateContext = createContext<AppStateContextValue | null>(null)
 
-export function AppStateProvider({ children }: { children: React.ReactNode }) {
+export function AppStateProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<UIState>(() => ({
     appState: INITIAL_STATE,
     openGroups: new Set(TOKEN_GROUPS),
@@ -91,9 +93,12 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     [state.appState.sets, state.appState.activeSets, setOrder]
   )
 
-  const processorOutput = useMemo(() => getProcessorOutput(mergedTokens), [mergedTokens])
+  const processorOutput = useMemo(
+    () => processTokens<Map<string, unknown>>(mergedTokens),
+    [mergedTokens]
+  )
   const groupedTokens = useMemo(() => groupTokensByType(mergedTokens), [mergedTokens])
-  const outputEntries = useMemo(() => Array.from(processorOutput.entries()), [processorOutput])
+  const outputEntries = useMemo(() => Array.from(processorOutput.tokens.entries()), [processorOutput])
 
   const filteredOutput = useMemo(
     () =>
@@ -110,6 +115,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     groupedTokens,
     filteredOutput,
     mergedTokens,
+    processorOutput,
     setOrder,
     toggleGroup,
     toggleTheme: handleThemeToggle,

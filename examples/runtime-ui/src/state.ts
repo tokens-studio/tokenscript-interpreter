@@ -40,7 +40,7 @@ const CORE_TOKENS: TokensMap = new Map([
   ["spacing.md", { $value: "1rem", $type: "Spacing" }],
   ["spacing.lg", { $value: "1.5rem", $type: "Spacing" }],
   ["borderRadius.sm", { $value: "4px", $type: "Border Radius" }],
-  ["borderRadius.md", { $value: "8px", $type: "Border Radius" }],
+  ["borderRadius.md", { $value: "{borderRadius.sm} * 2", $type: "Border Radius" }],
   ["borderRadius.lg", { $value: "12px", $type: "Border Radius" }],
   ["fontFamily.sans", { $value: "Inter, sans-serif", $type: "Font Family" }],
   ["fontFamily.mono", { $value: "Fira Code, monospace", $type: "Font Family" }],
