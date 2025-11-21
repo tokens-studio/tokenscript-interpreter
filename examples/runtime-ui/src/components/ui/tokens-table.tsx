@@ -16,6 +16,19 @@ function isColorValue(value: string): boolean {
   return /^#[0-9a-fA-F]{3,8}$/.test(value) || /^rgb/.test(value) || /^hsl/.test(value)
 }
 
+function formatValue(value: unknown): string {
+  if (value === null || value === undefined) return String(value)
+  if (typeof value === "object") {
+    try {
+      return JSON.stringify(value)
+    } catch (error) {
+      console.log("formatValue: failed to stringify token value", { value, error })
+      return String(value)
+    }
+  }
+  return String(value)
+}
+
 export function TokensTable() {
   const { filteredOutput, mergedTokens, selectedToken, selectToken } = useAppState()
 
@@ -42,13 +55,16 @@ export function TokensTable() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
-                    <TableHead className="font-semibold text-left" style={{ width: "35%" }}>
+                    <TableHead className="font-semibold text-left" style={{ width: "30%" }}>
                       Name
                     </TableHead>
-                    <TableHead className="font-semibold text-left" style={{ width: "30%" }}>
+                    <TableHead className="font-semibold text-left" style={{ width: "18%" }}>
                       Type
                     </TableHead>
-                    <TableHead className="font-semibold text-left" style={{ width: "35%" }}>
+                    <TableHead className="font-semibold text-left" style={{ width: "26%" }}>
+                      Original Value
+                    </TableHead>
+                    <TableHead className="font-semibold text-left" style={{ width: "26%" }}>
                       Resolved Value
                     </TableHead>
                   </TableRow>
@@ -56,7 +72,8 @@ export function TokensTable() {
                 <TableBody>
                   {filteredOutput.map(([path, value]) => {
                     const tokenData = mergedTokens.get(path)
-                    const displayValue = value?.toString ? value.toString() : String(value)
+                    const originalValue = formatValue(tokenData?.$value)
+                    const displayValue = formatValue(value)
                     const tokenType = tokenData?.$type || "Unknown"
                     const showColorSwatch = tokenType === "Color" && isColorValue(displayValue)
                     const rowClass = selectedToken === path ? "bg-primary/10" : "hover:bg-muted/50"
@@ -70,6 +87,7 @@ export function TokensTable() {
                       >
                         <TableCell className="font-mono text-sm text-left">{path}</TableCell>
                         <TableCell className="text-sm text-left">{tokenType}</TableCell>
+                        <TableCell className="font-mono text-sm text-left">{originalValue}</TableCell>
                         <TableCell className="font-mono text-sm text-left">
                           <div className="flex items-center gap-2">
                             {showColorSwatch && (
