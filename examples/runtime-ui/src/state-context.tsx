@@ -6,6 +6,7 @@ import {
   mergeActiveSets,
   toggleSet,
   toggleTheme,
+  findMatchingTheme,
   type AppState,
   type TokenGroup,
   type TokensMap,
@@ -34,6 +35,18 @@ interface AppStateContextValue extends UIState {
   addTheme: (name: string, sets: string[]) => void
   addSet: (name: string) => void
   addToken: (setName: string, tokenName: string, tokenType: string, tokenValue: string) => void
+  updateTheme: (themeName: string, newName: string, sets: string[]) => void
+  deleteTheme: (themeName: string) => void
+  updateSet: (setName: string, newName: string) => void
+  deleteSet: (setName: string) => void
+  updateToken: (
+    setName: string,
+    tokenName: string,
+    newTokenName: string,
+    tokenType: string,
+    tokenValue: string
+  ) => void
+  deleteToken: (setName: string, tokenName: string) => void
 }
 
 function groupTokensByType(tokens: TokensMap) {
@@ -154,6 +167,185 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     })
   }
 
+  const handleUpdateTheme = (themeName: string, newName: string, sets: string[]) => {
+    setState((prev) => {
+      const trimmedNewName = newName.trim()
+      const existing = prev.appState.themes.get(themeName)
+      if (!existing || !trimmedNewName) {
+        console.log("handleUpdateTheme: invalid theme update", { themeName, newName })
+        return prev
+      }
+      if (themeName !== trimmedNewName && prev.appState.themes.has(trimmedNewName)) {
+        console.log("handleUpdateTheme: target name already exists", { themeName, newName })
+        return prev
+      }
+      const themes = new Map(prev.appState.themes)
+      themes.delete(themeName)
+      themes.set(trimmedNewName, sets)
+      const activeTheme =
+        prev.appState.activeTheme === themeName ? trimmedNewName : prev.appState.activeTheme
+      const activeSets =
+        prev.appState.activeTheme === themeName ? new Set(sets) : new Set(prev.appState.activeSets)
+      console.log("handleUpdateTheme: updated theme", { themeName, newName: trimmedNewName, sets })
+      return {
+        ...prev,
+        appState: {
+          ...prev.appState,
+          themes,
+          activeTheme,
+          activeSets,
+        },
+      }
+    })
+  }
+
+  const handleDeleteTheme = (themeName: string) => {
+    setState((prev) => {
+      if (!prev.appState.themes.has(themeName)) {
+        console.log("handleDeleteTheme: theme not found", { themeName })
+        return prev
+      }
+      const themes = new Map(prev.appState.themes)
+      themes.delete(themeName)
+      const isActive = prev.appState.activeTheme === themeName
+      console.log("handleDeleteTheme: deleted theme", { themeName })
+      return {
+        ...prev,
+        appState: {
+          ...prev.appState,
+          themes,
+          activeTheme: isActive ? null : prev.appState.activeTheme,
+          activeSets: isActive ? new Set<string>() : new Set(prev.appState.activeSets),
+        },
+      }
+    })
+  }
+
+  const handleUpdateSet = (setName: string, newName: string) => {
+    setState((prev) => {
+      const trimmedNewName = newName.trim()
+      const setData = prev.appState.sets.get(setName)
+      if (!setData || !trimmedNewName) {
+        console.log("handleUpdateSet: invalid set update", { setName, newName })
+        return prev
+      }
+      if (setName !== trimmedNewName && prev.appState.sets.has(trimmedNewName)) {
+        console.log("handleUpdateSet: target name exists", { setName, newName })
+        return prev
+      }
+      const sets = new Map(prev.appState.sets)
+      sets.delete(setName)
+      sets.set(trimmedNewName, setData)
+      const themes = new Map(prev.appState.themes)
+      for (const [theme, themeSets] of themes) {
+        themes.set(
+          theme,
+          themeSets.map((name) => (name === setName ? trimmedNewName : name))
+        )
+      }
+      const activeSets = new Set(
+        Array.from(prev.appState.activeSets).map((name) =>
+          name === setName ? trimmedNewName : name
+        )
+      )
+      const activeTheme = findMatchingTheme(themes, activeSets)
+      console.log("handleUpdateSet: updated set", { setName, newName: trimmedNewName })
+      return {
+        ...prev,
+        appState: {
+          ...prev.appState,
+          sets,
+          themes,
+          activeSets,
+          activeTheme,
+        },
+      }
+    })
+  }
+
+  const handleDeleteSet = (setName: string) => {
+    setState((prev) => {
+      if (!prev.appState.sets.has(setName)) {
+        console.log("handleDeleteSet: set not found", { setName })
+        return prev
+      }
+      const sets = new Map(prev.appState.sets)
+      sets.delete(setName)
+      const themes = new Map(prev.appState.themes)
+      for (const [theme, themeSets] of themes) {
+        themes.set(
+          theme,
+          themeSets.filter((name) => name !== setName)
+        )
+      }
+      const activeSets = new Set(
+        Array.from(prev.appState.activeSets).filter((name) => name !== setName)
+      )
+      const activeTheme = findMatchingTheme(themes, activeSets)
+      console.log("handleDeleteSet: deleted set", { setName })
+      return {
+        ...prev,
+        appState: {
+          ...prev.appState,
+          sets,
+          themes,
+          activeSets,
+          activeTheme,
+        },
+      }
+    })
+  }
+
+  const handleUpdateToken = (
+    setName: string,
+    tokenName: string,
+    newTokenName: string,
+    tokenType: string,
+    tokenValue: string
+  ) => {
+    setState((prev) => {
+      const setData = prev.appState.sets.get(setName)
+      if (!setData) {
+        console.log("handleUpdateToken: set not found", { setName, tokenName })
+        return prev
+      }
+      const trimmedName = newTokenName.trim()
+      if (!trimmedName) {
+        console.log("handleUpdateToken: missing token name", { setName, tokenName })
+        return prev
+      }
+      const updatedSet = new Map(setData)
+      updatedSet.delete(tokenName)
+      updatedSet.set(trimmedName, { $value: tokenValue, $type: tokenType })
+      const sets = new Map(prev.appState.sets)
+      sets.set(setName, updatedSet)
+      console.log("handleUpdateToken: updated token", {
+        setName,
+        tokenName,
+        newTokenName: trimmedName,
+        tokenType,
+        tokenValue,
+      })
+      return { ...prev, appState: { ...prev.appState, sets } }
+    })
+  }
+
+  const handleDeleteToken = (setName: string, tokenName: string) => {
+    setState((prev) => {
+      const setData = prev.appState.sets.get(setName)
+      if (!setData || !setData.has(tokenName)) {
+        console.log("handleDeleteToken: token not found", { setName, tokenName })
+        return prev
+      }
+      const updatedSet = new Map(setData)
+      updatedSet.delete(tokenName)
+      const sets = new Map(prev.appState.sets)
+      sets.set(setName, updatedSet)
+      console.log("handleDeleteToken: deleted token", { setName, tokenName })
+      return { ...prev, appState: { ...prev.appState, sets } }
+    })
+  }
+
   const setOrder = useMemo(() => Array.from(state.appState.sets.keys()), [state.appState.sets])
 
   const mergedTokens = useMemo(
@@ -193,6 +385,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     addTheme: handleAddTheme,
     addSet: handleAddSet,
     addToken: handleAddToken,
+    updateTheme: handleUpdateTheme,
+    deleteTheme: handleDeleteTheme,
+    updateSet: handleUpdateSet,
+    deleteSet: handleDeleteSet,
+    updateToken: handleUpdateToken,
+    deleteToken: handleDeleteToken,
   }
 
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>

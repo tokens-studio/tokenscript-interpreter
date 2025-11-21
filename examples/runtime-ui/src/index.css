@@ -128,9 +128,17 @@ body {
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring/50 select-none;
   }
   body {
     @apply bg-background text-foreground;
+  }
+  table,
+  table * {
+    @apply select-text;
+  }
+  input,
+  textarea {
+    @apply select-text;
   }
 }
