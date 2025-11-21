@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { ChevronDown, ChevronRight, Palette, Plus } from "lucide-react"
+import { ChevronDown, ChevronRight, Plus } from "lucide-react"
 
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
@@ -15,16 +15,21 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable"
 import { useAppState } from "@/state-context"
 import { TOKEN_GROUPS, type TokenGroup } from "@/state"
 import { ThemeDialog } from "@/components/ui/dialogs/theme-dialog"
 import { SetDialog } from "@/components/ui/dialogs/set-dialog"
 import { TokenDialog } from "@/components/ui/dialogs/token-dialog"
+import { useUIContext } from "@/ui-context"
 
 interface CollapsibleGroupProps {
   label: TokenGroup
@@ -108,6 +113,7 @@ export function TokensSidebar() {
     deleteToken,
     setOrder,
   } = useAppState()
+  const { sidebarSectionsLayout, setSidebarSectionsLayout } = useUIContext()
   const [themeDialogOpen, setThemeDialogOpen] = useState(false)
   const [editingTheme, setEditingTheme] = useState<string | null>(null)
   const [setDialogOpen, setSetDialogOpen] = useState(false)
@@ -175,132 +181,162 @@ export function TokensSidebar() {
 
   return (
     <Sidebar className="border-r">
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel className="flex items-center justify-between">
-            <span>Themes</span>
-            <Button
-              size="icon-sm"
-              variant="ghost"
-              aria-label="Add theme"
-              onClick={startAddTheme}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {Array.from(appState.themes.entries()).map(([themeName, themeSets]) => (
-                <ContextMenu key={themeName}>
-                  <ContextMenuTrigger asChild>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild isActive={appState.activeTheme === themeName}>
-                        <label className="flex w-full cursor-pointer items-center gap-2">
-                          <Checkbox
-                            checked={appState.activeTheme === themeName}
-                            onChange={() => toggleTheme(themeName)}
-                          />
-                          <div className="flex flex-col truncate">
-                            <span className="truncate">{themeName}</span>
-                            <span className="truncate text-xs text-muted-foreground">
-                              {themeSets.join(", ")}
-                            </span>
-                          </div>
-                        </label>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  </ContextMenuTrigger>
-                  <ContextMenuContent className="w-40">
-                    <ContextMenuItem inset onSelect={() => startEditTheme(themeName)}>
-                      Edit
-                    </ContextMenuItem>
-                    <ContextMenuItem
-                      inset
-                      variant="destructive"
-                      onSelect={() => deleteTheme(themeName)}
-                    >
-                      Delete
-                    </ContextMenuItem>
-                  </ContextMenuContent>
-                </ContextMenu>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+      <SidebarContent className="gap-0 overflow-hidden p-0">
+        <ResizablePanelGroup
+          direction="vertical"
+          className="h-full"
+          layout={sidebarSectionsLayout}
+          onLayout={setSidebarSectionsLayout}
+        >
+          <ResizablePanel defaultSize={sidebarSectionsLayout[0]} minSize={18}>
+            <div className="flex h-full flex-col overflow-hidden">
+              <SidebarGroup className="flex h-full flex-col">
+                <SidebarGroupLabel className="flex items-center justify-between">
+                  <span>Themes</span>
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    aria-label="Add theme"
+                    onClick={startAddTheme}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </SidebarGroupLabel>
+                <SidebarGroupContent className="flex-1 overflow-auto">
+                  <SidebarMenu>
+                    {Array.from(appState.themes.entries()).map(([themeName, themeSets]) => (
+                      <ContextMenu key={themeName}>
+                        <ContextMenuTrigger asChild>
+                          <SidebarMenuItem>
+                            <SidebarMenuButton asChild isActive={appState.activeTheme === themeName}>
+                              <label className="flex w-full cursor-pointer items-center gap-2">
+                                <Checkbox
+                                  checked={appState.activeTheme === themeName}
+                                  onChange={() => toggleTheme(themeName)}
+                                />
+                                <div className="flex flex-col truncate">
+                                  <span className="truncate">{themeName}</span>
+                                  <span className="truncate text-xs text-muted-foreground">
+                                    {themeSets.join(", ")}
+                                  </span>
+                                </div>
+                              </label>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        </ContextMenuTrigger>
+                        <ContextMenuContent className="w-40">
+                          <ContextMenuItem inset onSelect={() => startEditTheme(themeName)}>
+                            Edit
+                          </ContextMenuItem>
+                          <ContextMenuItem
+                            inset
+                            variant="destructive"
+                            onSelect={() => deleteTheme(themeName)}
+                          >
+                            Delete
+                          </ContextMenuItem>
+                        </ContextMenuContent>
+                      </ContextMenu>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            </div>
+          </ResizablePanel>
 
-        <SidebarGroup>
-          <SidebarGroupLabel className="flex items-center justify-between">
-            <span>Sets</span>
-            <Button size="icon-sm" variant="ghost" aria-label="Add set" onClick={startAddSet}>
-              <Plus className="h-4 w-4" />
-            </Button>
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {Array.from(appState.sets.entries()).map(([setName, tokens]) => (
-                <ContextMenu key={setName}>
-                  <ContextMenuTrigger asChild>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild isActive={appState.activeSets.has(setName)}>
-                        <label className="flex w-full cursor-pointer items-center gap-2">
-                          <Checkbox
-                            checked={appState.activeSets.has(setName)}
-                            onChange={() => toggleSet(setName)}
-                          />
-                          <div className="flex items-center gap-2 truncate">
-                            <span className="truncate">{setName}</span>
-                            <span className="text-[11px] text-muted-foreground">({tokens.size})</span>
-                          </div>
-                        </label>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  </ContextMenuTrigger>
-                  <ContextMenuContent className="w-40">
-                    <ContextMenuItem inset onSelect={() => startEditSet(setName)}>
-                      Edit
-                    </ContextMenuItem>
-                    <ContextMenuItem
-                      inset
-                      variant="destructive"
-                      onSelect={() => deleteSet(setName)}
-                    >
-                      Delete
-                    </ContextMenuItem>
-                  </ContextMenuContent>
-                </ContextMenu>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+          <ResizableHandle withHandle />
 
-        <SidebarGroup>
-          <SidebarGroupLabel className="flex items-center justify-between">
-            <span>Tokens</span>
-            <Button
-              size="icon-sm"
-              variant="ghost"
-              aria-label="Add token"
-              onClick={startAddToken}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            {TOKEN_GROUPS.map((group) => (
-              <CollapsibleGroup
-                key={group}
-                label={group}
-                tokens={groupedTokens.get(group) || []}
-                isOpen={openGroups.has(group)}
-                onToggle={() => toggleGroup(group)}
-                onTokenClick={selectToken}
-                selectedToken={selectedToken}
-                onEditToken={startEditToken}
-                onDeleteToken={handleDeleteTokenByPath}
-              />
-            ))}
-          </SidebarGroupContent>
-        </SidebarGroup>
+          <ResizablePanel defaultSize={sidebarSectionsLayout[1]} minSize={16}>
+            <div className="flex h-full flex-col overflow-hidden">
+              <SidebarGroup className="flex h-full flex-col">
+                <SidebarGroupLabel className="flex items-center justify-between">
+                  <span>Sets</span>
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    aria-label="Add set"
+                    onClick={startAddSet}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </SidebarGroupLabel>
+                <SidebarGroupContent className="flex-1 overflow-auto">
+                  <SidebarMenu>
+                    {Array.from(appState.sets.entries()).map(([setName, tokens]) => (
+                      <ContextMenu key={setName}>
+                        <ContextMenuTrigger asChild>
+                          <SidebarMenuItem>
+                            <SidebarMenuButton asChild isActive={appState.activeSets.has(setName)}>
+                              <label className="flex w-full cursor-pointer items-center gap-2">
+                                <Checkbox
+                                  checked={appState.activeSets.has(setName)}
+                                  onChange={() => toggleSet(setName)}
+                                />
+                                <div className="flex items-center gap-2 truncate">
+                                  <span className="truncate">{setName}</span>
+                                  <span className="text-[11px] text-muted-foreground">
+                                    ({tokens.size})
+                                  </span>
+                                </div>
+                              </label>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        </ContextMenuTrigger>
+                        <ContextMenuContent className="w-40">
+                          <ContextMenuItem inset onSelect={() => startEditSet(setName)}>
+                            Edit
+                          </ContextMenuItem>
+                          <ContextMenuItem
+                            inset
+                            variant="destructive"
+                            onSelect={() => deleteSet(setName)}
+                          >
+                            Delete
+                          </ContextMenuItem>
+                        </ContextMenuContent>
+                      </ContextMenu>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            </div>
+          </ResizablePanel>
+
+          <ResizableHandle withHandle />
+
+          <ResizablePanel defaultSize={sidebarSectionsLayout[2]} minSize={24}>
+            <div className="flex h-full flex-col overflow-hidden">
+              <SidebarGroup className="flex h-full flex-col">
+                <SidebarGroupLabel className="flex items-center justify-between">
+                  <span>Tokens</span>
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    aria-label="Add token"
+                    onClick={startAddToken}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </SidebarGroupLabel>
+                <SidebarGroupContent className="flex-1 overflow-auto">
+                  {TOKEN_GROUPS.map((group) => (
+                    <CollapsibleGroup
+                      key={group}
+                      label={group}
+                      tokens={groupedTokens.get(group) || []}
+                      isOpen={openGroups.has(group)}
+                      onToggle={() => toggleGroup(group)}
+                      onTokenClick={selectToken}
+                      selectedToken={selectedToken}
+                      onEditToken={startEditToken}
+                      onDeleteToken={handleDeleteTokenByPath}
+                    />
+                  ))}
+                </SidebarGroupContent>
+              </SidebarGroup>
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </SidebarContent>
       {themeDialogOpen ? (
         <ThemeDialog
