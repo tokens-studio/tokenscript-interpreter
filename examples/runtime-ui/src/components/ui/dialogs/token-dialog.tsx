@@ -13,8 +13,8 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useAppState } from "@/state-context"
 import { TOKEN_GROUPS } from "@/state"
+import { useTokensState } from "@/state/tokens-context"
 
 interface TokenDialogProps {
   open: boolean
@@ -44,7 +44,8 @@ export function TokenDialog({
   editingTokenSet,
   onResetEditing,
 }: TokenDialogProps) {
-  const { appState, setOrder, mergedTokens, addToken, updateToken, deleteToken } = useAppState()
+  const { appState, setOrder, mergedTokens, addToken, updateToken, deleteToken } =
+    useTokensState()
   const availableSetNames = Array.from(appState.sets.keys())
   const [tokenSetName, setTokenSetName] = useState("")
   const [tokenName, setTokenName] = useState("")

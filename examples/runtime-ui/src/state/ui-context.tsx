@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
 
+import { TOKEN_GROUPS, type TokenGroup } from "./index"
+
 const UI_STATE_KEY = "ui-state"
 const DEFAULT_SIDEBAR_LAYOUT = [28, 72]
 const DEFAULT_SECTION_LAYOUT = [32, 28, 40]
@@ -11,6 +13,12 @@ interface UIContextValue {
   setSidebarLayout: (layout: number[]) => void
   sidebarSectionsLayout: number[]
   setSidebarSectionsLayout: (layout: number[]) => void
+  openGroups: Set<TokenGroup>
+  toggleGroup: (group: TokenGroup) => void
+  selectedToken: string | null
+  selectToken: (path: string) => void
+  searchQuery: string
+  setSearchQuery: (value: string) => void
 }
 
 function isNumberArray(value: unknown, length: number) {
@@ -48,6 +56,9 @@ export function UIProvider({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [sidebarLayout, setSidebarLayout] = useState(DEFAULT_SIDEBAR_LAYOUT)
   const [sidebarSectionsLayout, setSidebarSectionsLayout] = useState(DEFAULT_SECTION_LAYOUT)
+  const [openGroups, setOpenGroups] = useState<Set<TokenGroup>>(new Set(TOKEN_GROUPS))
+  const [selectedToken, setSelectedToken] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
 
   useEffect(() => {
     const stored = loadStoredState()
@@ -94,6 +105,24 @@ export function UIProvider({ children }: { children: ReactNode }) {
     console.log("UIContext: sidebar sections layout updated", { layout })
   }
 
+  const toggleGroup = (group: TokenGroup) => {
+    setOpenGroups((prev) => {
+      const next = new Set(prev)
+      if (next.has(group)) {
+        next.delete(group)
+      } else {
+        next.add(group)
+      }
+      console.log("UIContext: toggled token group", { group, openGroups: Array.from(next) })
+      return next
+    })
+  }
+
+  const selectToken = (path: string) => {
+    setSelectedToken(path)
+    console.log("UIContext: selected token", { path })
+  }
+
   const value: UIContextValue = {
     sidebarOpen,
     setSidebarOpen: updateSidebarOpen,
@@ -101,6 +130,12 @@ export function UIProvider({ children }: { children: ReactNode }) {
     setSidebarLayout: updateSidebarLayout,
     sidebarSectionsLayout,
     setSidebarSectionsLayout: updateSidebarSectionsLayout,
+    openGroups,
+    toggleGroup,
+    selectedToken,
+    selectToken,
+    searchQuery,
+    setSearchQuery,
   }
 
   return <UIContext.Provider value={value}>{children}</UIContext.Provider>

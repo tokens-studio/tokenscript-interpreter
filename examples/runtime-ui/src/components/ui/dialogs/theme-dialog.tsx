@@ -13,7 +13,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { useAppState } from "@/state-context"
+import { useTokensState } from "@/state/tokens-context"
 
 interface ThemeDialogProps {
   open: boolean
@@ -23,7 +23,7 @@ interface ThemeDialogProps {
 }
 
 export function ThemeDialog({ open, onOpenChange, editingTheme, onResetEditing }: ThemeDialogProps) {
-  const { appState, addTheme, updateTheme } = useAppState()
+  const { appState, addTheme, updateTheme } = useTokensState()
   const availableSetNames = Array.from(appState.sets.keys())
   const [themeName, setThemeName] = useState("")
   const [selectedSets, setSelectedSets] = useState<Set<string>>(new Set())

@@ -4,8 +4,8 @@ import { SidebarProvider } from "./components/ui/sidebar"
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "./components/ui/resizable"
 import { TokensSidebar } from "./components/ui/tokens-sidebar"
 import { TokensTable } from "./components/ui/tokens-table"
-import { AppStateProvider } from "./state-context"
-import { UIProvider, useUIContext } from "./ui-context"
+import { TokensProvider } from "./state/tokens-context"
+import { UIProvider, useUIContext } from "./state/ui-context"
 
 function AppLayout() {
   const { sidebarOpen, setSidebarOpen, sidebarLayout, setSidebarLayout } = useUIContext()
@@ -13,7 +13,7 @@ function AppLayout() {
   const panelLayout = sidebarOpen ? sidebarLayout : [0, 100]
 
   return (
-    <AppStateProvider>
+    <TokensProvider>
       <SidebarProvider
         open={sidebarOpen}
         onOpenChange={setSidebarOpen}
@@ -42,7 +42,7 @@ function AppLayout() {
           </ResizablePanel>
         </ResizablePanelGroup>
       </SidebarProvider>
-    </AppStateProvider>
+    </TokensProvider>
   )
 }
 

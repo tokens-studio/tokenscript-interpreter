@@ -11,7 +11,8 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { Input } from "@/components/ui/input"
-import { useAppState } from "@/state-context"
+import { useTokensState } from "@/state/tokens-context"
+import { useUIContext } from "@/state/ui-context"
 
 function isColorValue(value: string): boolean {
   return /^#[0-9a-fA-F]{3,8}$/.test(value) || /^rgb/.test(value) || /^hsl/.test(value)
@@ -32,13 +33,14 @@ function formatValue(value: unknown): string {
 
 export function TokensTable() {
   const {
-    filteredOutput,
     mergedTokens,
-    selectedToken,
-    selectToken,
-    searchQuery,
-    setSearchQuery,
-  } = useAppState()
+    processorOutput,
+  } = useTokensState()
+  const { selectedToken, selectToken, searchQuery, setSearchQuery } = useUIContext()
+  const outputEntries = Array.from(processorOutput.tokens.entries())
+  const filteredOutput = searchQuery
+    ? outputEntries.filter(([path]) => path.toLowerCase().includes(searchQuery.toLowerCase()))
+    : outputEntries
 
   return (
     <SidebarInset>

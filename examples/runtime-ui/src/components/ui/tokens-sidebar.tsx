@@ -24,12 +24,12 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
-import { useAppState } from "@/state-context"
 import { TOKEN_GROUPS, type TokenGroup } from "@/state"
 import { ThemeDialog } from "@/components/ui/dialogs/theme-dialog"
 import { SetDialog } from "@/components/ui/dialogs/set-dialog"
 import { TokenDialog } from "@/components/ui/dialogs/token-dialog"
-import { useUIContext } from "@/ui-context"
+import { groupTokensByType, useTokensState } from "@/state/tokens-context"
+import { useUIContext } from "@/state/ui-context"
 
 interface CollapsibleGroupProps {
   label: TokenGroup
@@ -101,19 +101,23 @@ function CollapsibleGroup({
 export function TokensSidebar() {
   const {
     appState,
-    groupedTokens,
-    openGroups,
-    selectedToken,
-    toggleGroup,
+    mergedTokens,
     toggleTheme,
     toggleSet,
-    selectToken,
     deleteTheme,
     deleteSet,
     deleteToken,
     setOrder,
-  } = useAppState()
-  const { sidebarSectionsLayout, setSidebarSectionsLayout } = useUIContext()
+  } = useTokensState()
+  const {
+    openGroups,
+    selectedToken,
+    toggleGroup,
+    selectToken,
+    sidebarSectionsLayout,
+    setSidebarSectionsLayout,
+  } = useUIContext()
+  const groupedTokens = groupTokensByType(mergedTokens)
   const [themeDialogOpen, setThemeDialogOpen] = useState(false)
   const [editingTheme, setEditingTheme] = useState<string | null>(null)
   const [setDialogOpen, setSetDialogOpen] = useState(false)

@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useAppState } from "@/state-context"
+import { useTokensState } from "@/state/tokens-context"
 
 interface SetDialogProps {
   open: boolean
@@ -22,7 +22,7 @@ interface SetDialogProps {
 }
 
 export function SetDialog({ open, onOpenChange, editingSet, onResetEditing }: SetDialogProps) {
-  const { addSet, updateSet } = useAppState()
+  const { addSet, updateSet } = useTokensState()
   const [setName, setSetName] = useState("")
 
   const resetForm = () => {
