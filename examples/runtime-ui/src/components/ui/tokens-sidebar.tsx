@@ -175,12 +175,6 @@ export function TokensSidebar() {
 
   return (
     <Sidebar className="border-r">
-      <SidebarHeader className="border-b">
-        <div className="flex items-center gap-2 px-2 py-1">
-          <Palette className="h-5 w-5 text-primary" />
-          <h2 className="text-lg font-semibold">Design Tokens</h2>
-        </div>
-      </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="flex items-center justify-between">
