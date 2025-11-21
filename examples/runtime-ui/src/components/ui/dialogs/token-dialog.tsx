@@ -122,22 +122,19 @@ export function TokenDialog({
   }
 
   const previewResolvedValue = useMemo(() => {
-    const trimmedName = tokenName.trim()
-    if (!trimmedName) {
-      return ""
-    }
+    const previewName = tokenName.trim() || ""
     const previewTokens = new Map(mergedTokens)
-    if (editingToken && editingToken !== trimmedName) {
+    if (editingToken && editingToken !== previewName) {
       previewTokens.delete(editingToken)
     }
-    previewTokens.set(trimmedName, { $value: tokenValue, $type: tokenType })
+    previewTokens.set(previewName, { $value: tokenValue, $type: tokenType })
     try {
       const previewOutput = processTokens<Map<string, unknown>>(previewTokens)
-      return formatPreviewValue(previewOutput.tokens.get(trimmedName))
+      return formatPreviewValue(previewOutput.tokens.get(previewName))
     } catch (error) {
       console.log("previewResolvedValue: failed to process token preview", {
         error,
-        tokenName: trimmedName,
+        tokenName: previewName,
         tokenType,
         tokenValue,
       })
@@ -208,7 +205,7 @@ export function TokenDialog({
               required
             />
             <p className="text-xs text-muted-foreground">
-              Resolved value: {previewResolvedValue || "Enter a name and value to preview"}
+              Resolved value: {previewResolvedValue}
             </p>
           </div>
           <DialogFooter>
