@@ -31,6 +31,9 @@ interface AppStateContextValue extends UIState {
   toggleSet: (setName: string) => void
   selectToken: (path: string) => void
   setSearchQuery: (value: string) => void
+  addTheme: (name: string, sets: string[]) => void
+  addSet: (name: string) => void
+  addToken: (setName: string, tokenName: string, tokenType: string, tokenValue: string) => void
 }
 
 function groupTokensByType(tokens: TokensMap) {
@@ -86,6 +89,71 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, appState: toggleSet(prev.appState, setName) }))
   }
 
+  const handleAddTheme = (name: string, sets: string[]) => {
+    setState((prev) => {
+      const trimmedName = name.trim()
+      if (!trimmedName || prev.appState.themes.has(trimmedName)) {
+        console.log("handleAddTheme: skip invalid or existing theme", { name })
+        return prev
+      }
+      const themes = new Map(prev.appState.themes)
+      themes.set(trimmedName, sets)
+      console.log("handleAddTheme: added theme", { name: trimmedName, sets })
+      return { ...prev, appState: { ...prev.appState, themes } }
+    })
+  }
+
+  const handleAddSet = (name: string) => {
+    setState((prev) => {
+      const trimmedName = name.trim()
+      if (!trimmedName || prev.appState.sets.has(trimmedName)) {
+        console.log("handleAddSet: skip invalid or existing set", { name })
+        return prev
+      }
+      const sets = new Map(prev.appState.sets)
+      sets.set(trimmedName, new Map())
+      console.log("handleAddSet: added set", { name: trimmedName })
+      return { ...prev, appState: { ...prev.appState, sets } }
+    })
+  }
+
+  const handleAddToken = (
+    setName: string,
+    tokenName: string,
+    tokenType: string,
+    tokenValue: string
+  ) => {
+    setState((prev) => {
+      const trimmedSetName = setName.trim()
+      const trimmedTokenName = tokenName.trim()
+      if (!trimmedSetName || !trimmedTokenName) {
+        console.log("handleAddToken: missing required fields", {
+          setName,
+          tokenName,
+          tokenType,
+          tokenValue,
+        })
+        return prev
+      }
+      const existingSet = prev.appState.sets.get(trimmedSetName)
+      if (!existingSet) {
+        console.log("handleAddToken: set not found", { setName: trimmedSetName })
+        return prev
+      }
+      const updatedSet = new Map(existingSet)
+      updatedSet.set(trimmedTokenName, { $value: tokenValue, $type: tokenType })
+      const sets = new Map(prev.appState.sets)
+      sets.set(trimmedSetName, updatedSet)
+      console.log("handleAddToken: added token", {
+        setName: trimmedSetName,
+        tokenName: trimmedTokenName,
+        tokenType,
+        tokenValue,
+      })
+      return { ...prev, appState: { ...prev.appState, sets } }
+    })
+  }
+
   const setOrder = useMemo(() => Array.from(state.appState.sets.keys()), [state.appState.sets])
 
   const mergedTokens = useMemo(
@@ -122,6 +190,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     toggleSet: handleSetToggle,
     selectToken,
     setSearchQuery,
+    addTheme: handleAddTheme,
+    addSet: handleAddSet,
+    addToken: handleAddToken,
   }
 
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>
