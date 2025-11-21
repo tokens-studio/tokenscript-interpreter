@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, Palette, Search } from "lucide-react"
+import { ChevronDown, ChevronRight, Palette } from "lucide-react"
 
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -8,7 +8,6 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
-  SidebarInput,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -68,9 +67,7 @@ export function TokensSidebar() {
     appState,
     groupedTokens,
     openGroups,
-    searchQuery,
     selectedToken,
-    setSearchQuery,
     toggleGroup,
     toggleTheme,
     toggleSet,
@@ -83,15 +80,6 @@ export function TokensSidebar() {
         <div className="flex items-center gap-2 px-2 py-1">
           <Palette className="h-5 w-5 text-primary" />
           <h2 className="text-lg font-semibold">Design Tokens</h2>
-        </div>
-        <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <SidebarInput
-            placeholder="Search tokens..."
-            className="pl-8"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
         </div>
       </SidebarHeader>
       <SidebarContent>

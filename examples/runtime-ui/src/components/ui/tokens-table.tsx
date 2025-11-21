@@ -1,4 +1,4 @@
-import { SlidersHorizontal } from "lucide-react"
+import { Search, SlidersHorizontal } from "lucide-react"
 
 import {
   Table,
@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/table"
 import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
+import { Input } from "@/components/ui/input"
 import { useAppState } from "@/state-context"
 
 function isColorValue(value: string): boolean {
@@ -30,7 +31,14 @@ function formatValue(value: unknown): string {
 }
 
 export function TokensTable() {
-  const { filteredOutput, mergedTokens, selectedToken, selectToken } = useAppState()
+  const {
+    filteredOutput,
+    mergedTokens,
+    selectedToken,
+    selectToken,
+    searchQuery,
+    setSearchQuery,
+  } = useAppState()
 
   return (
     <SidebarInset>
@@ -44,7 +52,16 @@ export function TokensTable() {
             <SlidersHorizontal className="h-5 w-5 text-muted-foreground" />
             <h1 className="text-lg font-semibold">Processor Output</h1>
           </div>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-3">
+            <div className="relative w-64">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search tokens..."
+                className="pl-8"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+              />
+            </div>
             <span className="text-sm text-muted-foreground">{filteredOutput.length} tokens</span>
           </div>
         </header>
