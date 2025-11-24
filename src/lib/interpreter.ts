@@ -32,12 +32,14 @@ export {
   ColorSymbol,
   DictionarySymbol,
   getResultTypeName,
+  type JsValue,
   jsValueToSymbolType,
   ListSymbol,
   NullSymbol,
   NumberSymbol,
   NumberWithUnitSymbol,
   StringSymbol,
+  symbolTypeToJsValue,
   TokenSymbol,
 } from "@interpreter/symbols";
 // Type definitions
