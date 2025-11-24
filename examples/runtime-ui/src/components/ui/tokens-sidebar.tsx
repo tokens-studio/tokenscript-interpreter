@@ -189,7 +189,6 @@ export function TokensSidebar() {
         <ResizablePanelGroup
           direction="vertical"
           className="h-full"
-          layout={sidebarSectionsLayout}
           onLayout={setSidebarSectionsLayout}
         >
           <ResizablePanel defaultSize={sidebarSectionsLayout[0]} minSize={18}>

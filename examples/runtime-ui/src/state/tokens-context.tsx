@@ -9,7 +9,6 @@ import {
   toggleSet,
   toggleTheme,
   type AppState,
-  type TokenGroup,
   type TokensMap,
 } from "./index"
 

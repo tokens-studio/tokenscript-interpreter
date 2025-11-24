@@ -17,12 +17,11 @@ function AppLayout() {
       <SidebarProvider
         open={sidebarOpen}
         onOpenChange={setSidebarOpen}
-        style={{ "--sidebar-width": `${sidebarWidth}%` }}
+        style={{ "--sidebar-width": `${sidebarWidth}%` } as React.CSSProperties}
       >
         <ResizablePanelGroup
           direction="horizontal"
           className="h-svh min-h-0 overflow-hidden"
-          layout={panelLayout}
           onLayout={(nextLayout) => {
             if (!sidebarOpen) return
             setSidebarLayout(nextLayout)
