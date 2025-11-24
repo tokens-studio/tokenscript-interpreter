@@ -14,6 +14,11 @@ With Tokenscript you can write custom functions and ship logic directly with you
 - [Interactive playground][playground]
 - [Community slack][slack]
 
+## Examples
+
+- [Web REPL](examples/web-repl) - Interactive browser-based playground
+- [Runtime UI](examples/runtime-ui) - Token management interface
+
 ## Talks
 
 - [Talk about tokenscript at Penpot Fest 2025](https://youtu.be/H82szrnX4ws?t=3938)
