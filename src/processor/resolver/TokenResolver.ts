@@ -1,5 +1,6 @@
 import type { ASTNode } from "@interpreter/ast";
 import type { Config } from "@interpreter/config";
+import { isLanguageError, ProcessorError, ProcessorErrorCode } from "@interpreter/errors";
 import type { InterpreterResult } from "@interpreter/interpreter";
 import { type ParseExpressionResult, parseExpression } from "@interpreter/parser";
 import { BooleanSymbol, NullSymbol, NumberSymbol, StringSymbol } from "@interpreter/symbols";
@@ -120,8 +121,14 @@ class PrefixResolver {
     try {
       return parseExpression(value);
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      return this.resolveError(refPath, err, value);
+      if (isLanguageError(error)) {
+        return this.resolveError(refPath, error, value);
+      }
+      return this.resolveError(
+        refPath,
+        new Error("Unknown parsing error", { cause: error }),
+        value,
+      );
     }
   }
 
@@ -152,7 +159,9 @@ class PrefixResolver {
       }
 
       if (!this.referenceCache.has(dep)) {
-        const error = new Error(`Token '${dep}' not found`);
+        const error = new ProcessorError(ProcessorErrorCode.TOKEN_NOT_FOUND, {
+          data: { tokenName: dep },
+        });
         this.resolveError(dep, error, "");
       }
     }
@@ -449,7 +458,9 @@ class PrefixResolver {
       const fieldValue = this.resolved.get(fieldPath);
       if (fieldValue === undefined) {
         // Sub-field not resolved yet (shouldn't happen if dependencies are correct)
-        const error = new Error(`Sub-field '${fieldPath}' not resolved`);
+        const error = new ProcessorError(ProcessorErrorCode.SUB_FIELD_NOT_RESOLVED, {
+          data: { fieldPath },
+        });
         this.resolved.set(tokenName, error);
         this.callbacks?.onError?.(tokenName, error, String(originalValue));
         hasError = true;
@@ -501,7 +512,9 @@ class PrefixResolver {
       const error =
         parentValue instanceof Error
           ? new DependencyError(child, parent, parentValue)
-          : new Error(`Token '${child}' not found`);
+          : new ProcessorError(ProcessorErrorCode.TOKEN_NOT_FOUND, {
+              data: { tokenName: child },
+            });
 
       this.resolved.set(child, error);
       this.callbacks?.onError?.(child, error, "");
@@ -559,9 +572,9 @@ class PrefixResolver {
     }
 
     if (unresolvedTokens.length > 0) {
-      throw new Error(
-        `Detected circular dependency or unresolved prefixes: ${unresolvedTokens.join(", ")}`,
-      );
+      throw new ProcessorError(ProcessorErrorCode.CIRCULAR_DEPENDENCY, {
+        data: { tokens: unresolvedTokens },
+      });
     }
   }
 }

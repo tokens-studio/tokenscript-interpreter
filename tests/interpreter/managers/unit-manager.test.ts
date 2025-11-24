@@ -1,4 +1,5 @@
 import { UnitManager } from "@interpreter/config/managers/unit/manager";
+import { InterpreterError } from "@interpreter/errors";
 import { createInterpreter, interpret } from "@tests/interpreter/test-helpers";
 import { describe, expect, it } from "vitest";
 
@@ -108,17 +109,24 @@ describe("Unit Manager", () => {
 
   describe("Error Handling", () => {
     it("should throw error for multiple relative units in sum", () => {
-      expect(() => {
-        const interpreter = createInterpreter("sum(10px, 10%, 1rem)");
+      const interpreter = createInterpreter("sum(10px, 10%, 1rem)");
+      expect(() => interpreter.interpret()).toThrow(InterpreterError);
+
+      try {
         interpreter.interpret();
-      }).toThrow("Cannot convert multiple relative units");
+      } catch (error) {
+        expect(error).toBeInstanceOf(InterpreterError);
+        // The error is thrown from unit conversion, which should use UnitErrorCode
+        // but may propagate through FunctionsErrorCode
+        expect((error as InterpreterError).message).toMatch(/multiple relative units/i);
+      }
     });
 
     it("should throw error for unsupported unit combinations", () => {
       expect(() => {
         const interpreter = createInterpreter("10s + 10px");
         interpreter.interpret();
-      }).toThrow();
+      }).toThrow(InterpreterError);
     });
   });
 

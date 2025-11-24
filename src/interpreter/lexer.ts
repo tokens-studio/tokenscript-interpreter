@@ -1,5 +1,5 @@
 import { Operations, ReservedKeyword, SupportedFormats, type Token, TokenType } from "@src/types";
-import { LexerError } from "./errors";
+import { LexerError, LexerErrorCode } from "./errors";
 import { CodePoint, isAlpha, isAlphaNumeric, isNumber, isSpace } from "./utils/string";
 
 const SUPPORTED_FORMAT_STRINGS: Record<string, SupportedFormats> = {};
@@ -24,14 +24,11 @@ export class Lexer {
     this.currentChar = this.text[this.pos];
   }
 
-  private error(description?: string): never {
-    const char = this.currentChar === null ? "end of input" : this.currentChar;
-
-    throw new LexerError(
-      `Invalid character '${char}' at position ${this.pos}.${description ? ` ${description}` : ""}`,
-      this.line,
-      { type: TokenType.EOF, value: this.currentChar, line: this.line },
-    );
+  private error(code: LexerErrorCode, data?: Record<string, unknown>): never {
+    throw new LexerError(code, {
+      line: this.line,
+      data,
+    });
   }
 
   private advance(): void {
@@ -48,7 +45,10 @@ export class Lexer {
     if (this.currentChar === char) {
       this.advance();
     } else {
-      this.error(`Expected character ${char} got ${this.currentChar}`);
+      this.error(LexerErrorCode.EXPECTED_CHARACTER, {
+        expected: char,
+        got: this.currentChar,
+      });
     }
   }
 
@@ -161,7 +161,7 @@ export class Lexer {
     let result = "";
     while (this.currentChar !== null && this.currentChar !== "}") {
       if (this.currentChar === "{") {
-        this.error("Expected '}' to close variable.");
+        this.error(LexerErrorCode.UNTERMINATED_REFERENCE, {});
       }
       if (isSpace(this.currentChar)) {
         this.advance();
@@ -172,11 +172,11 @@ export class Lexer {
     }
 
     if (this.currentChar === null) {
-      this.error("Unterminated reference, missing '}'.");
+      this.error(LexerErrorCode.UNTERMINATED_REFERENCE, {});
     }
 
     if (result === "") {
-      this.error("Empty variable name.");
+      this.error(LexerErrorCode.EMPTY_VARIABLE_NAME, {});
     }
 
     this.eat("}");
@@ -193,7 +193,7 @@ export class Lexer {
     }
 
     if (this.currentChar === null) {
-      this.error(`Unterminated string, missing '${quoteType}'.`);
+      this.error(LexerErrorCode.UNTERMINATED_STRING, { quoteType });
     }
 
     this.eat(quoteType);
@@ -208,7 +208,10 @@ export class Lexer {
       this.advance();
     }
     if (result.length !== 4 && result.length !== 7) {
-      this.error(`Invalid hex color format: ${result}. Length should be #RGB or #RRGGBB.`);
+      this.error(LexerErrorCode.INVALID_HEX_COLOR_FORMAT, {
+        value: result,
+        expectedLength: "#RGB or #RRGGBB",
+      });
     }
     return { type: TokenType.HEX_COLOR, value: result, line: this.line };
   }
@@ -384,7 +387,11 @@ export class Lexer {
       }
 
       // If we reach here, the character is not valid
-      this.error();
+      const char = this.currentChar === null ? "end of input" : this.currentChar;
+      this.error(LexerErrorCode.INVALID_CHARACTER, {
+        char,
+        position: this.pos,
+      });
     }
     return { type: TokenType.EOF, value: null, line: this.line };
   }

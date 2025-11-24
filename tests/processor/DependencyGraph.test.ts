@@ -1,3 +1,4 @@
+import { ProcessorError, ProcessorErrorCode } from "@interpreter/errors";
 import { DependencyGraph } from "@src/processor/utils/DependencyGraph";
 import { describe, expect, it } from "vitest";
 
@@ -174,7 +175,15 @@ describe("DependencyGraph", () => {
       graph.addNode("a", ["b"]);
       graph.addNode("b", ["a"]);
 
-      expect(() => graph.topologicalSort()).toThrow("Circular dependency detected");
+      expect(() => graph.topologicalSort()).toThrow(ProcessorError);
+
+      let error: ProcessorError | undefined;
+      try {
+        graph.topologicalSort();
+      } catch (e) {
+        error = e as ProcessorError;
+      }
+      expect(error?.code).toBe(ProcessorErrorCode.CIRCULAR_DEPENDENCY);
     });
 
     it("should detect simple cycle and show chain", () => {
@@ -182,21 +191,43 @@ describe("DependencyGraph", () => {
       graph.addNode("a", ["b"]);
       graph.addNode("b", ["a"]);
 
-      expect(() => graph.topologicalSort()).toThrow(/a → b → a|b → a → b/);
+      let error: ProcessorError | undefined;
+      try {
+        graph.topologicalSort();
+      } catch (e) {
+        error = e as ProcessorError;
+      }
+      expect(error?.code).toBe(ProcessorErrorCode.CIRCULAR_DEPENDENCY);
+      expect(error?.data.tokens).toMatch(/a → b → a|b → a → b/);
     });
 
     it("should detect self-referencing cycle", () => {
       const graph = new DependencyGraph();
       graph.addNode("a", ["a"]);
 
-      expect(() => graph.topologicalSort()).toThrow("Circular dependency detected");
+      expect(() => graph.topologicalSort()).toThrow(ProcessorError);
+
+      let error: ProcessorError | undefined;
+      try {
+        graph.topologicalSort();
+      } catch (e) {
+        error = e as ProcessorError;
+      }
+      expect(error?.code).toBe(ProcessorErrorCode.CIRCULAR_DEPENDENCY);
     });
 
     it("should detect self-referencing cycle and show chain", () => {
       const graph = new DependencyGraph();
       graph.addNode("a", ["a"]);
 
-      expect(() => graph.topologicalSort()).toThrow("a → a");
+      let error: ProcessorError | undefined;
+      try {
+        graph.topologicalSort();
+      } catch (e) {
+        error = e as ProcessorError;
+      }
+      expect(error?.code).toBe(ProcessorErrorCode.CIRCULAR_DEPENDENCY);
+      expect(error?.data.tokens).toContain("a → a");
     });
 
     it("should detect cycle in longer chain", () => {
@@ -205,7 +236,15 @@ describe("DependencyGraph", () => {
       graph.addNode("b", ["c"]);
       graph.addNode("c", ["a"]);
 
-      expect(() => graph.topologicalSort()).toThrow("Circular dependency detected");
+      expect(() => graph.topologicalSort()).toThrow(ProcessorError);
+
+      let error: ProcessorError | undefined;
+      try {
+        graph.topologicalSort();
+      } catch (e) {
+        error = e as ProcessorError;
+      }
+      expect(error?.code).toBe(ProcessorErrorCode.CIRCULAR_DEPENDENCY);
     });
 
     it("should detect cycle in longer chain and show full path", () => {
@@ -214,7 +253,14 @@ describe("DependencyGraph", () => {
       graph.addNode("b", ["c"]);
       graph.addNode("c", ["a"]);
 
-      expect(() => graph.topologicalSort()).toThrow(/a → b → c → a|b → c → a → b|c → a → b → c/);
+      let error: ProcessorError | undefined;
+      try {
+        graph.topologicalSort();
+      } catch (e) {
+        error = e as ProcessorError;
+      }
+      expect(error?.code).toBe(ProcessorErrorCode.CIRCULAR_DEPENDENCY);
+      expect(error?.data.tokens).toMatch(/a → b → c → a|b → c → a → b|c → a → b → c/);
     });
 
     it("should detect cycle in complex graph with diamond pattern", () => {
@@ -225,7 +271,15 @@ describe("DependencyGraph", () => {
       graph.addNode("d", ["e"]);
       graph.addNode("e", ["a"]);
 
-      expect(() => graph.topologicalSort()).toThrow("Circular dependency detected");
+      expect(() => graph.topologicalSort()).toThrow(ProcessorError);
+
+      let error: ProcessorError | undefined;
+      try {
+        graph.topologicalSort();
+      } catch (e) {
+        error = e as ProcessorError;
+      }
+      expect(error?.code).toBe(ProcessorErrorCode.CIRCULAR_DEPENDENCY);
     });
 
     it("should detect cycle in complex graph and show chain", () => {
@@ -236,17 +290,15 @@ describe("DependencyGraph", () => {
       graph.addNode("d", ["e"]);
       graph.addNode("e", ["a"]);
 
-      const error = (() => {
-        try {
-          graph.topologicalSort();
-        } catch (e) {
-          return e as Error;
-        }
-      })();
-
-      expect(error).toBeDefined();
+      let error: ProcessorError | undefined;
+      try {
+        graph.topologicalSort();
+      } catch (e) {
+        error = e as ProcessorError;
+      }
+      expect(error?.code).toBe(ProcessorErrorCode.CIRCULAR_DEPENDENCY);
       expect(error?.message).toContain("Circular dependency detected");
-      expect(error?.message).toMatch(/a.*b.*e.*a|a.*b.*c.*e.*a|a.*b.*d.*e.*a/);
+      expect(error?.data.tokens).toMatch(/a.*b.*e.*a|a.*b.*c.*e.*a|a.*b.*d.*e.*a/);
     });
 
     it("should not detect cycle in valid graph", () => {

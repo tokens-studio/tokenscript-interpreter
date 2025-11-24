@@ -1,3 +1,4 @@
+import { ProcessorError, ProcessorErrorCode } from "@interpreter/errors";
 import { DictionarySymbol } from "@interpreter/symbols";
 import { DependencyError, TokenResolver } from "@src/processor";
 import { describe, expect, it } from "vitest";
@@ -78,7 +79,15 @@ describe("TokenResolver", () => {
         ]),
       );
 
-      expect(() => processor.processTokens(tokens)).toThrow(/circular dependency/i);
+      expect(() => processor.processTokens(tokens)).toThrow(ProcessorError);
+
+      let error: ProcessorError | undefined;
+      try {
+        processor.processTokens(tokens);
+      } catch (e) {
+        error = e as ProcessorError;
+      }
+      expect(error?.code).toBe(ProcessorErrorCode.CIRCULAR_DEPENDENCY);
     });
 
     it("should handle mix of simple values and expressions", () => {
@@ -257,7 +266,15 @@ describe("TokenResolver", () => {
       );
 
       // This should detect the circular dependency and throw an error
-      expect(() => processor.processTokens(tokens)).toThrow(/circular dependency/i);
+      expect(() => processor.processTokens(tokens)).toThrow(ProcessorError);
+
+      let error: ProcessorError | undefined;
+      try {
+        processor.processTokens(tokens);
+      } catch (e) {
+        error = e as ProcessorError;
+      }
+      expect(error?.code).toBe(ProcessorErrorCode.CIRCULAR_DEPENDENCY);
     });
 
     it("should detect circular dependencies through prefix references", () => {
@@ -269,7 +286,15 @@ describe("TokenResolver", () => {
         ]),
       );
 
-      expect(() => processor.processTokens(tokens)).toThrow(/circular dependency|unresolved/i);
+      expect(() => processor.processTokens(tokens)).toThrow(ProcessorError);
+
+      let error: ProcessorError | undefined;
+      try {
+        processor.processTokens(tokens);
+      } catch (e) {
+        error = e as ProcessorError;
+      }
+      expect(error?.code).toBe(ProcessorErrorCode.CIRCULAR_DEPENDENCY);
     });
 
     it("should handle prefix with only failed token children", () => {

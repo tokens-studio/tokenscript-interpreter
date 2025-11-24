@@ -1,4 +1,9 @@
-import { InterpreterError } from "@interpreter/errors";
+import {
+  InterpreterError,
+  isLanguageError,
+  serializeError,
+  UnitErrorCode,
+} from "@interpreter/errors";
 import { parseExpression } from "@interpreter/parser";
 import { NumberSymbol, NumberWithUnitSymbol } from "@interpreter/symbols";
 import { Interpreter } from "@src/lib";
@@ -128,12 +133,9 @@ export class UnitManager extends BaseManager<
         const config = this.createInterpreterConfig({ input: unit });
         const result = new Interpreter(ast, config).interpret();
         if (!(result instanceof NumberWithUnitSymbol)) {
-          throw new InterpreterError(
-            "Unit conversion function must return a NumberWithUnitSymbol",
-            undefined,
-            undefined,
-            { result },
-          );
+          throw new InterpreterError(UnitErrorCode.CONVERSION_CRASHED, {
+            data: { error: "Unit conversion function must return a NumberWithUnitSymbol" },
+          });
         }
         return result as NumberWithUnitSymbol;
       };
@@ -183,13 +185,19 @@ export class UnitManager extends BaseManager<
   public convertTo(unit: NumberWithUnitSymbol, targetUri: uriType): NumberWithUnitSymbol {
     const sourceUri = this.getUriByKeyword(unit.unit);
     if (!sourceUri) {
-      throw new InterpreterError(`No source URI found for unit '${unit.unit}'`);
+      throw new InterpreterError(UnitErrorCode.SOURCE_URI_NOT_FOUND, {
+        data: { unit: unit.unit },
+      });
     }
 
     try {
       return this.convertThroughPath(unit, sourceUri, targetUri);
-    } catch (error: any) {
-      throw new InterpreterError(error.message);
+    } catch (error) {
+      throw new InterpreterError(UnitErrorCode.CONVERSION_CRASHED, {
+        data: {
+          error: isLanguageError(error) ? error : serializeError(error),
+        },
+      });
     }
   }
 
@@ -210,7 +218,7 @@ export class UnitManager extends BaseManager<
     numbers: Array<NumberSymbol | NumberWithUnitSymbol>,
   ): Array<NumberSymbol | NumberWithUnitSymbol> {
     if (numbers.length !== 2) {
-      throw new InterpreterError("Relative conversion requires exactly 2 numbers");
+      throw new InterpreterError(UnitErrorCode.RELATIVE_REQUIRES_TWO_NUMBERS);
     }
 
     let relativeNum: NumberWithUnitSymbol | null = null;
@@ -242,9 +250,9 @@ export class UnitManager extends BaseManager<
 
     const spec = this.getSpecByKeyword(relativeNum.unit);
     if (!spec?.to_absolute) {
-      throw new InterpreterError(
-        `No to_absolute script found for relative unit '${relativeNum.unit}'`,
-      );
+      throw new InterpreterError(UnitErrorCode.NO_TO_ABSOLUTE_SCRIPT, {
+        data: { unit: relativeNum.unit },
+      });
     }
 
     const { ast } = parseExpression(spec.to_absolute.script);
@@ -263,7 +271,7 @@ export class UnitManager extends BaseManager<
     } else if (typeof result === "number") {
       convertedValue = result;
     } else {
-      throw new InterpreterError("to_absolute script must return a number");
+      throw new InterpreterError(UnitErrorCode.TO_ABSOLUTE_MUST_RETURN_NUMBER);
     }
 
     // Convert to int if it's a whole number
@@ -301,7 +309,7 @@ export class UnitManager extends BaseManager<
     const isRelative = this.isOneNumberRelative(inputs);
     if (isRelative) {
       if (inputs.length > 2) {
-        throw new InterpreterError("Cannot convert multiple relative units to a common format.");
+        throw new InterpreterError(UnitErrorCode.CANNOT_CONVERT_MULTIPLE_RELATIVE);
       }
       return this.convertRelative(inputs);
     }
@@ -360,7 +368,7 @@ export class UnitManager extends BaseManager<
     }
 
     if (Object.keys(maxPerUri).length === 0) {
-      throw new InterpreterError("No valid conversion paths found for the provided inputs.");
+      throw new InterpreterError(UnitErrorCode.NO_VALID_CONVERSION_PATH);
     }
 
     const commonUnitUri = Object.keys(maxPerUri).reduce((a, b) =>

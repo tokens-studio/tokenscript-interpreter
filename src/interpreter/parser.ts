@@ -24,7 +24,7 @@ import {
   UnaryOpNode,
   WhileNode,
 } from "./ast";
-import { ParserError } from "./errors";
+import { ParserError, ParserErrorCode } from "./errors";
 import { Lexer } from "./lexer";
 
 export class Parser {
@@ -91,9 +91,15 @@ export class Parser {
     return this.lexer.peekTokens(n);
   }
 
-  private error(message = "Invalid syntax"): never {
-    const formattedMessage = this.formatError(message);
-    throw new ParserError(formattedMessage, this.currentToken?.line, this.currentToken);
+  private error(code: ParserErrorCode, data?: Record<string, unknown>): never {
+    const message = data?.message ? String(data.message) : undefined;
+    const formattedMessage = this.formatError(
+      message || (code === ParserErrorCode.INVALID_SYNTAX ? "Invalid syntax" : code),
+    );
+    throw new ParserError(code, {
+      token: this.currentToken,
+      data: { ...data, message: formattedMessage },
+    });
   }
 
   private eat(tokenType: TokenType): Token {
@@ -101,7 +107,10 @@ export class Parser {
     if (this.currentToken.type === tokenType) {
       this.currentToken = this.lexer.nextToken();
     } else {
-      this.error(`Expected token type ${tokenType} but got ${this.currentToken.type}`);
+      this.error(ParserErrorCode.EXPECTED_TOKEN_TYPE, {
+        expected: tokenType,
+        got: this.currentToken.type,
+      });
     }
     return token;
   }
@@ -251,11 +260,9 @@ export class Parser {
     if (this.currentToken.type === TokenType.STRING) {
       const nextToken = this.lexer.peekToken();
       if (nextToken && nextToken.type === TokenType.ASSIGN) {
-        throw new ParserError(
-          "If/elif condition must be a boolean",
-          this.currentToken.line,
-          this.currentToken,
-        );
+        throw new ParserError(ParserErrorCode.CONDITION_MUST_BE_BOOLEAN, {
+          token: this.currentToken,
+        });
       }
     }
 
@@ -512,7 +519,7 @@ export class Parser {
       node = this.attributeAccess(node); // For string methods like "hello".length()
       return node;
     }
-    this.error(`Unexpected token: ${String(token.value)}`);
+    this.error(ParserErrorCode.UNEXPECTED_TOKEN, { token: String(token.value) });
   }
 
   private attributeAccess(leftNode: ASTNode): ASTNode {
@@ -561,7 +568,9 @@ export class Parser {
 
     const node = this.statementsList();
     if ((this.currentToken.type as TokenType) !== TokenType.EOF) {
-      this.error("Unexpected token at the end of input.");
+      this.error(ParserErrorCode.INVALID_SYNTAX, {
+        message: "Unexpected token at the end of input.",
+      });
     }
     return node;
   }

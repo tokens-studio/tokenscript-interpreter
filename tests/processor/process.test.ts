@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { ProcessorError, ProcessorErrorCode } from "@interpreter/errors";
 import { processTokensFromFiles } from "@src/processor/processFiles";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
@@ -184,7 +185,19 @@ describe("processTokensFromFiles", () => {
         path: tokensFile,
         activeTheme: "nonexistent",
       }),
-    ).rejects.toThrow('Theme "nonexistent" not found');
+    ).rejects.toThrow(ProcessorError);
+
+    let error: ProcessorError | undefined;
+    try {
+      await processTokensFromFiles({
+        path: tokensFile,
+        activeTheme: "nonexistent",
+      });
+    } catch (e) {
+      error = e as ProcessorError;
+    }
+    expect(error?.code).toBe(ProcessorErrorCode.THEME_NOT_FOUND);
+    expect(error?.data.themeName).toBe("nonexistent");
   });
 
   it("should throw error when set not found", async () => {
@@ -203,7 +216,19 @@ describe("processTokensFromFiles", () => {
         path: tokensFile,
         activeSets: ["nonexistent"],
       }),
-    ).rejects.toThrow('Token set "nonexistent" not found');
+    ).rejects.toThrow(ProcessorError);
+
+    let error: ProcessorError | undefined;
+    try {
+      await processTokensFromFiles({
+        path: tokensFile,
+        activeSets: ["nonexistent"],
+      });
+    } catch (e) {
+      error = e as ProcessorError;
+    }
+    expect(error?.code).toBe(ProcessorErrorCode.TOKEN_SET_NOT_FOUND);
+    expect(error?.data.setName).toBe("nonexistent");
   });
 
   it("should interpret tokens with references", async () => {

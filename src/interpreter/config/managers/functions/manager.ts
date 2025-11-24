@@ -1,4 +1,9 @@
-import { InterpreterError } from "@interpreter/errors";
+import {
+  FunctionsErrorCode,
+  InterpreterError,
+  isLanguageError,
+  serializeError,
+} from "@interpreter/errors";
 import { Interpreter } from "@interpreter/interpreter";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
@@ -71,7 +76,9 @@ export class FunctionsManager extends BaseManager<
         if (arg instanceof NumberSymbol) return arg.value as number;
         if (arg instanceof NumberWithUnitSymbol) return arg.value as number;
         if (typeof arg.value === "number") return arg.value as number;
-        throw new InterpreterError("min() expects number arguments.");
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_NUMBER_ARGUMENTS, {
+          data: { functionName: "min" },
+        });
       });
       return new NumberSymbol(Math.min(...nums));
     });
@@ -81,13 +88,18 @@ export class FunctionsManager extends BaseManager<
         if (arg instanceof NumberSymbol) return arg.value as number;
         if (arg instanceof NumberWithUnitSymbol) return arg.value as number;
         if (typeof arg.value === "number") return arg.value as number;
-        throw new InterpreterError("max() expects number arguments.");
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_NUMBER_ARGUMENTS, {
+          data: { functionName: "max" },
+        });
       });
       return new NumberSymbol(Math.max(...nums));
     });
 
     this.registerFunction("sum", (...args: ISymbolType[]): ISymbolType => {
-      if (args.length < 2) throw new InterpreterError("sum() requires at least two arguments.");
+      if (args.length < 2)
+        throw new InterpreterError(FunctionsErrorCode.REQUIRES_MIN_ARGUMENTS, {
+          data: { functionName: "sum", minArgs: 2 },
+        });
 
       // Check if any arguments are NumberWithUnitSymbol
       const hasUnits = args.some((arg) => arg instanceof NumberWithUnitSymbol);
@@ -97,7 +109,9 @@ export class FunctionsManager extends BaseManager<
         const sum = args.reduce((acc, arg) => {
           if (arg instanceof NumberSymbol) return acc + (arg.value as number);
           if (typeof arg.value === "number") return acc + (arg.value as number);
-          throw new InterpreterError("sum() expects number arguments.");
+          throw new InterpreterError(FunctionsErrorCode.EXPECTS_NUMBER_ARGUMENTS, {
+            data: { functionName: "sum" },
+          });
         }, 0);
         return new NumberSymbol(sum);
       }
@@ -108,7 +122,13 @@ export class FunctionsManager extends BaseManager<
       ) as Array<NumberSymbol | NumberWithUnitSymbol>;
 
       if (numericArgs.length !== args.length) {
-        throw new InterpreterError("sum() expects number or NumberWithUnit arguments.");
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+          data: {
+            functionName: "sum",
+            expectedType: "number or NumberWithUnit",
+            argumentPosition: "all",
+          },
+        });
       }
 
       if (this.parentConfig?.unitManager) {
@@ -129,9 +149,12 @@ export class FunctionsManager extends BaseManager<
 
           return new NumberSymbol(sum);
         } catch (error) {
-          throw new InterpreterError(
-            `sum() unit conversion failed: ${error instanceof Error ? error.message : String(error)}`,
-          );
+          throw new InterpreterError(FunctionsErrorCode.UNIT_CONVERSION_FAILED, {
+            data: {
+              functionName: "sum",
+              error: isLanguageError(error) ? error : serializeError(error),
+            },
+          });
         }
       }
 
@@ -144,7 +167,9 @@ export class FunctionsManager extends BaseManager<
         if (arg instanceof NumberSymbol) return acc + (arg.value as number);
         if (arg instanceof NumberWithUnitSymbol) return acc + (arg.value as number);
         if (typeof arg.value === "number") return acc + (arg.value as number);
-        throw new InterpreterError("sum() expects number arguments.");
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_NUMBER_ARGUMENTS, {
+          data: { functionName: "sum" },
+        });
       }, 0);
 
       if (firstUnitArg) {
@@ -160,24 +185,37 @@ export class FunctionsManager extends BaseManager<
       if (a instanceof NumberSymbol) aVal = a.value as number;
       else if (a instanceof NumberWithUnitSymbol) aVal = a.value as number;
       else if (typeof a.value === "number") aVal = a.value as number;
-      else throw new InterpreterError("mod() expects number arguments.");
+      else
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_NUMBER_ARGUMENTS, {
+          data: { functionName: "mod" },
+        });
 
       if (b instanceof NumberSymbol) bVal = b.value as number;
       else if (b instanceof NumberWithUnitSymbol) bVal = b.value as number;
       else if (typeof b.value === "number") bVal = b.value as number;
-      else throw new InterpreterError("mod() expects number arguments.");
+      else
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_NUMBER_ARGUMENTS, {
+          data: { functionName: "mod" },
+        });
 
-      if (bVal === 0) throw new InterpreterError("mod() division by zero.");
+      if (bVal === 0)
+        throw new InterpreterError(FunctionsErrorCode.DIVISION_BY_ZERO, {
+          data: { functionName: "mod" },
+        });
 
       return new NumberSymbol(((aVal % bVal) + bVal) % bVal);
     });
 
     this.registerFunction("average", (...args: ISymbolType[]): NumberSymbol => {
       if (args.length === 0)
-        throw new InterpreterError("average() requires at least one argument.");
+        throw new InterpreterError(FunctionsErrorCode.REQUIRES_MIN_ARGUMENTS, {
+          data: { functionName: "average", minArgs: 1 },
+        });
       const sum = args.reduce((acc, arg) => {
         if (!(arg instanceof NumberSymbol))
-          throw new InterpreterError("average() expects number arguments.");
+          throw new InterpreterError(FunctionsErrorCode.EXPECTS_NUMBER_ARGUMENTS, {
+            data: { functionName: "average" },
+          });
         return acc + (arg.value as number);
       }, 0);
       return new NumberSymbol(sum / args.length);
@@ -185,7 +223,9 @@ export class FunctionsManager extends BaseManager<
 
     this.registerFunction("round", (arg: ISymbolType): NumberSymbol => {
       if (!(arg instanceof NumberSymbol))
-        throw new InterpreterError("round() expects a number argument.");
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+          data: { functionName: "round", expectedType: "number", argumentPosition: "first" },
+        });
       const value = arg.value as number;
 
       // Implement banker's rounding (round to nearest even) for .5 cases
@@ -201,19 +241,25 @@ export class FunctionsManager extends BaseManager<
 
     this.registerFunction("abs", (arg: ISymbolType): NumberSymbol => {
       if (!(arg instanceof NumberSymbol))
-        throw new InterpreterError("abs() expects a number argument.");
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+          data: { functionName: "abs", expectedType: "number", argumentPosition: "first" },
+        });
       return new NumberSymbol(Math.abs(arg.value as number));
     });
 
     this.registerFunction("sqrt", (arg: ISymbolType): NumberSymbol => {
       if (!(arg instanceof NumberSymbol))
-        throw new InterpreterError("sqrt() expects a number argument.");
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+          data: { functionName: "sqrt", expectedType: "number", argumentPosition: "first" },
+        });
       return new NumberSymbol(Math.sqrt(arg.value as number));
     });
 
     this.registerFunction("pow", (base: ISymbolType, exp: ISymbolType): NumberSymbol => {
       if (!(base instanceof NumberSymbol) || !(exp instanceof NumberSymbol))
-        throw new InterpreterError("pow() expects two number arguments.");
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_NUMBER_ARGUMENTS, {
+          data: { functionName: "pow" },
+        });
       return new NumberSymbol((base.value as number) ** (exp.value as number));
     });
 
@@ -221,13 +267,15 @@ export class FunctionsManager extends BaseManager<
       "parse_int",
       (strSymbol: ISymbolType, baseSymbol?: ISymbolType): NumberSymbol => {
         if (!(strSymbol instanceof StringSymbol))
-          throw new InterpreterError("parse_int() first argument must be a string.");
+          throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+            data: { functionName: "parse_int", expectedType: "string", argumentPosition: "first" },
+          });
         const base = baseSymbol instanceof NumberSymbol ? (baseSymbol.value as number) : 10;
         const parsed = Number.parseInt(strSymbol.value as string, base);
         if (Number.isNaN(parsed))
-          throw new InterpreterError(
-            `Invalid string for parse_int: "${strSymbol.value}" with base ${base}.`,
-          );
+          throw new InterpreterError(FunctionsErrorCode.PARSE_ERROR, {
+            data: { functionName: "parse_int", value: String(strSymbol.value), base },
+          });
         return new NumberSymbol(parsed);
       },
     );
@@ -235,82 +283,113 @@ export class FunctionsManager extends BaseManager<
     // Trigonometric functions
     this.registerFunction("sin", (arg: ISymbolType): NumberSymbol => {
       if (!(arg instanceof NumberSymbol))
-        throw new InterpreterError("sin() expects a number argument.");
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+          data: { functionName: "sin", expectedType: "number", argumentPosition: "first" },
+        });
       return new NumberSymbol(Math.sin(arg.value as number));
     });
 
     this.registerFunction("cos", (arg: ISymbolType): NumberSymbol => {
       if (!(arg instanceof NumberSymbol))
-        throw new InterpreterError("cos() expects a number argument.");
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+          data: { functionName: "cos", expectedType: "number", argumentPosition: "first" },
+        });
       return new NumberSymbol(Math.cos(arg.value as number));
     });
 
     this.registerFunction("tan", (arg: ISymbolType): NumberSymbol => {
       if (!(arg instanceof NumberSymbol))
-        throw new InterpreterError("tan() expects a number argument.");
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+          data: { functionName: "tan", expectedType: "number", argumentPosition: "first" },
+        });
       return new NumberSymbol(Math.tan(arg.value as number));
     });
 
     // Inverse trigonometric functions
     this.registerFunction("asin", (arg: ISymbolType): NumberSymbol => {
       if (!(arg instanceof NumberSymbol))
-        throw new InterpreterError("asin() expects a number argument.");
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+          data: { functionName: "asin", expectedType: "number", argumentPosition: "first" },
+        });
       const value = arg.value as number;
       if (value < -1 || value > 1)
-        throw new InterpreterError("asin() argument must be between -1 and 1.");
+        throw new InterpreterError(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE, {
+          data: { functionName: "asin", constraint: "between -1 and 1" },
+        });
       return new NumberSymbol(Math.asin(value));
     });
 
     this.registerFunction("acos", (arg: ISymbolType): NumberSymbol => {
       if (!(arg instanceof NumberSymbol))
-        throw new InterpreterError("acos() expects a number argument.");
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+          data: { functionName: "acos", expectedType: "number", argumentPosition: "first" },
+        });
       const value = arg.value as number;
       if (value < -1 || value > 1)
-        throw new InterpreterError("acos() argument must be between -1 and 1.");
+        throw new InterpreterError(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE, {
+          data: { functionName: "acos", constraint: "between -1 and 1" },
+        });
       return new NumberSymbol(Math.acos(value));
     });
 
     this.registerFunction("atan", (arg: ISymbolType): NumberSymbol => {
       if (!(arg instanceof NumberSymbol))
-        throw new InterpreterError("atan() expects a number argument.");
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+          data: { functionName: "atan", expectedType: "number", argumentPosition: "first" },
+        });
       return new NumberSymbol(Math.atan(arg.value as number));
     });
 
     this.registerFunction("atan2", (y: ISymbolType, x: ISymbolType): NumberSymbol => {
       if (!(y instanceof NumberSymbol) || !(x instanceof NumberSymbol))
-        throw new InterpreterError("atan2() expects two number arguments.");
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_NUMBER_ARGUMENTS, {
+          data: { functionName: "atan2" },
+        });
       return new NumberSymbol(Math.atan2(y.value as number, x.value as number));
     });
 
     // Logarithmic functions
     this.registerFunction("log", (arg: ISymbolType, base?: ISymbolType): NumberSymbol => {
       if (!(arg instanceof NumberSymbol))
-        throw new InterpreterError("log() expects a number argument.");
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+          data: { functionName: "log", expectedType: "number", argumentPosition: "first" },
+        });
       const value = arg.value as number;
-      if (value <= 0) throw new InterpreterError("log() argument must be positive.");
+      if (value <= 0)
+        throw new InterpreterError(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE, {
+          data: { functionName: "log", constraint: "positive" },
+        });
 
       if (base === undefined) {
         return new NumberSymbol(Math.log(value));
       }
 
       if (!(base instanceof NumberSymbol))
-        throw new InterpreterError("log() base must be a number.");
+        throw new InterpreterError(FunctionsErrorCode.INVALID_BASE, {
+          data: { functionName: "log", constraint: "a number" },
+        });
       const baseValue = base.value as number;
       if (baseValue <= 0 || baseValue === 1)
-        throw new InterpreterError("log() base must be positive and not equal to 1.");
+        throw new InterpreterError(FunctionsErrorCode.INVALID_BASE, {
+          data: { functionName: "log", constraint: "positive and not equal to 1" },
+        });
 
       return new NumberSymbol(Math.log(value) / Math.log(baseValue));
     });
 
     this.registerFunction("floor", (arg: ISymbolType): NumberSymbol => {
       if (!(arg instanceof NumberSymbol))
-        throw new InterpreterError("floor() expects a number argument.");
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+          data: { functionName: "floor", expectedType: "number", argumentPosition: "first" },
+        });
       return new NumberSymbol(Math.floor(arg.value as number));
     });
 
     this.registerFunction("ceil", (arg: ISymbolType): NumberSymbol => {
       if (!(arg instanceof NumberSymbol))
-        throw new InterpreterError("ceil() expects a number argument.");
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+          data: { functionName: "ceil", expectedType: "number", argumentPosition: "first" },
+        });
       return new NumberSymbol(Math.ceil(arg.value as number));
     });
 
@@ -318,12 +397,20 @@ export class FunctionsManager extends BaseManager<
       "round_to",
       (value: ISymbolType, precision?: ISymbolType): NumberSymbol => {
         if (!(value instanceof NumberSymbol))
-          throw new InterpreterError("round_to() expects a number as first argument.");
+          throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+            data: { functionName: "round_to", expectedType: "number", argumentPosition: "first" },
+          });
 
         let precisionValue = 0;
         if (precision !== undefined) {
           if (!(precision instanceof NumberSymbol))
-            throw new InterpreterError("round_to() expects a number as second argument.");
+            throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+              data: {
+                functionName: "round_to",
+                expectedType: "number",
+                argumentPosition: "second",
+              },
+            });
           precisionValue = precision.value as number;
         }
 
@@ -394,7 +481,9 @@ export class FunctionsManager extends BaseManager<
         // Create a config instance for the dynamic function execution
         const config = this.parentConfig?.clone();
         if (!config) {
-          throw new InterpreterError(`No config available for dynamic function '${functionName}'`);
+          throw new InterpreterError(FunctionsErrorCode.NO_CONFIG_AVAILABLE, {
+            data: { functionName },
+          });
         }
 
         // Parse and execute the script
@@ -407,7 +496,9 @@ export class FunctionsManager extends BaseManager<
 
         const result = interpreter.interpret();
         if (result === null) {
-          throw new InterpreterError(`Dynamic function '${functionName}' returned null`);
+          throw new InterpreterError(FunctionsErrorCode.FUNCTION_RETURNED_NULL, {
+            data: { functionName },
+          });
         }
 
         // Handle string results by converting them to StringSymbol
@@ -417,9 +508,12 @@ export class FunctionsManager extends BaseManager<
 
         return result;
       } catch (error) {
-        throw new InterpreterError(
-          `Error executing dynamic function '${functionName}': ${error instanceof Error ? error.message : String(error)}`,
-        );
+        throw new InterpreterError(FunctionsErrorCode.EXECUTION_ERROR, {
+          data: {
+            functionName,
+            error: isLanguageError(error) ? error : serializeError(error),
+          },
+        });
       }
     };
 

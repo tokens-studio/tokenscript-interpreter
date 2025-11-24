@@ -1,3 +1,5 @@
+import { ProcessorError, ProcessorErrorCode } from "@interpreter/errors";
+
 export class DependencyGraph<N = string> {
   private nodes = new Map<N, Set<N>>();
 
@@ -111,9 +113,10 @@ export class DependencyGraph<N = string> {
         }
       }
       const cycle = this.findCycle(remainingNodes);
-      throw new Error(
-        `Circular dependency detected: ${cycle.map((n) => String(n)).join(" → ")} → ${String(cycle[0])}`,
-      );
+      const tokens = `${cycle.map((n) => String(n)).join(" → ")} → ${String(cycle[0])}`;
+      throw new ProcessorError(ProcessorErrorCode.CIRCULAR_DEPENDENCY, {
+        data: { tokens },
+      });
     }
 
     return result;

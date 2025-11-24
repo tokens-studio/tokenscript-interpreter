@@ -1,3 +1,4 @@
+import { ProcessorError, ProcessorErrorCode } from "@interpreter/errors";
 import { Interpreter } from "@interpreter/interpreter";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
@@ -193,7 +194,15 @@ describe("CLI Functionality", () => {
         circular: "{circular}",
       };
 
-      expect(() => processTokens(tokens, { output: "symbols" })).toThrow(/circular dependency/i);
+      expect(() => processTokens(tokens, { output: "symbols" })).toThrow(ProcessorError);
+
+      let error: ProcessorError | undefined;
+      try {
+        processTokens(tokens, { output: "symbols" });
+      } catch (e) {
+        error = e as ProcessorError;
+      }
+      expect(error?.code).toBe(ProcessorErrorCode.CIRCULAR_DEPENDENCY);
     });
 
     it("should detect two-token circular dependency", () => {
@@ -202,7 +211,15 @@ describe("CLI Functionality", () => {
         b: "{a}",
       };
 
-      expect(() => processTokens(tokens, { output: "symbols" })).toThrow(/circular dependency/i);
+      expect(() => processTokens(tokens, { output: "symbols" })).toThrow(ProcessorError);
+
+      let error: ProcessorError | undefined;
+      try {
+        processTokens(tokens, { output: "symbols" });
+      } catch (e) {
+        error = e as ProcessorError;
+      }
+      expect(error?.code).toBe(ProcessorErrorCode.CIRCULAR_DEPENDENCY);
     });
 
     it("should detect multi-token circular dependency chain", () => {
@@ -213,7 +230,15 @@ describe("CLI Functionality", () => {
         d: "{a}",
       };
 
-      expect(() => processTokens(tokens, { output: "symbols" })).toThrow(/circular dependency/i);
+      expect(() => processTokens(tokens, { output: "symbols" })).toThrow(ProcessorError);
+
+      let error: ProcessorError | undefined;
+      try {
+        processTokens(tokens, { output: "symbols" });
+      } catch (e) {
+        error = e as ProcessorError;
+      }
+      expect(error?.code).toBe(ProcessorErrorCode.CIRCULAR_DEPENDENCY);
     });
 
     it("should not throw for valid dependency chains", () => {
@@ -238,7 +263,15 @@ describe("CLI Functionality", () => {
         circular2: "{circular1}",
       };
 
-      expect(() => processTokens(tokens, { output: "symbols" })).toThrow(/circular dependency/i);
+      expect(() => processTokens(tokens, { output: "symbols" })).toThrow(ProcessorError);
+
+      let error: ProcessorError | undefined;
+      try {
+        processTokens(tokens, { output: "symbols" });
+      } catch (e) {
+        error = e as ProcessorError;
+      }
+      expect(error?.code).toBe(ProcessorErrorCode.CIRCULAR_DEPENDENCY);
     });
   });
 

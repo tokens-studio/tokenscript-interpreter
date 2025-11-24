@@ -28,7 +28,7 @@ import {
   type WhileNode,
 } from "./ast";
 import { Config } from "./config/config";
-import { InterpreterError } from "./errors";
+import { InterpreterError, InterpreterErrorCode } from "./errors";
 import * as operations from "./operations";
 import { Parser } from "./parser";
 
@@ -129,11 +129,10 @@ export class Interpreter {
       return (this as any)[visitorMethodName](node);
     }
 
-    throw new InterpreterError(
-      `No visit method for AST node type: ${node.nodeType}`,
-      node.token?.line,
-      node.token,
-    );
+    throw new InterpreterError(InterpreterErrorCode.UNKNOWN_NODE_TYPE, {
+      token: node.token,
+      data: { nodeType: node.nodeType },
+    });
   }
 
   private visitBinOpNode(node: BinOpNode): ISymbolType {
@@ -156,11 +155,10 @@ export class Interpreter {
           (right instanceof NumberSymbol || right instanceof NumberWithUnitSymbol)
         )
       ) {
-        throw new InterpreterError(
-          `Arithmetic operator ${opVal} requires Number or NumberWithUnit operands, got ${left.type} and ${right.type}.`,
-          node.opToken.line,
-          node.opToken,
-        );
+        throw new InterpreterError(InterpreterErrorCode.ARITHMETIC_REQUIRES_NUMBER, {
+          token: node.opToken,
+          data: { operator: opVal, leftType: left.type, rightType: right.type },
+        });
       }
 
       return mathImpl(left, right, this.config);
@@ -171,11 +169,10 @@ export class Interpreter {
       return comparisonImpl(left, right);
     }
 
-    throw new InterpreterError(
-      `Unknown binary operator: ${opVal} or type ${opType}`,
-      node.opToken.line,
-      node.opToken,
-    );
+    throw new InterpreterError(InterpreterErrorCode.UNKNOWN_BINARY_OPERATOR, {
+      token: node.opToken,
+      data: { operator: opVal, tokenType: opType },
+    });
   }
 
   private visitNumNode(node: NumNode): NumberSymbol {
@@ -204,31 +201,28 @@ export class Interpreter {
     if (node.op === Operations.SUBTRACT) {
       if (result instanceof NumberSymbol) {
         if (result.value === null) {
-          throw new InterpreterError(
-            `Cannot apply unary '-' to a null NumberSymbol.`,
-            node.opToken.line,
-            node.opToken,
-          );
+          throw new InterpreterError(InterpreterErrorCode.UNARY_MINUS_NULL, {
+            token: node.opToken,
+            data: { symbolType: "NumberSymbol" },
+          });
         }
         return new NumberSymbol(-result.value, this.config);
       }
 
       if (result instanceof NumberWithUnitSymbol) {
         if (result.value === null) {
-          throw new InterpreterError(
-            `Cannot apply unary '-' to a null NumberWithUnitSymbol.`,
-            node.opToken.line,
-            node.opToken,
-          );
+          throw new InterpreterError(InterpreterErrorCode.UNARY_MINUS_NULL, {
+            token: node.opToken,
+            data: { symbolType: "NumberWithUnitSymbol" },
+          });
         }
         return new NumberWithUnitSymbol(-result.value, result.unit, this.config);
       }
 
-      throw new InterpreterError(
-        `Cannot apply unary '-' to non-number value: ${result.value}`,
-        node.opToken.line,
-        node.opToken,
-      );
+      throw new InterpreterError(InterpreterErrorCode.UNARY_PLUS_NON_NUMBER, {
+        token: node.opToken,
+        data: { value: String(result.value) },
+      });
     }
 
     if (node.op === Operations.ADD) {
@@ -236,11 +230,10 @@ export class Interpreter {
         return result;
       }
 
-      throw new InterpreterError(
-        `Cannot apply unary '+' to non-number value: ${result.value}`,
-        node.opToken.line,
-        node.opToken,
-      );
+      throw new InterpreterError(InterpreterErrorCode.UNARY_PLUS_NON_NUMBER, {
+        token: node.opToken,
+        data: { value: String(result.value) },
+      });
     }
 
     if (node.op === Operations.LOGIC_NOT) {
@@ -248,18 +241,16 @@ export class Interpreter {
         return new BooleanSymbol(!result.value, this.config);
       }
 
-      throw new InterpreterError(
-        `Cannot apply NOT to non-boolean value: ${result.value}.`,
-        node.opToken.line,
-        node.opToken,
-      );
+      throw new InterpreterError(InterpreterErrorCode.UNARY_NOT_NON_BOOLEAN, {
+        token: node.opToken,
+        data: { value: String(result.value) },
+      });
     }
 
-    throw new InterpreterError(
-      `Unknown unary operator type: ${node.op}`,
-      node.opToken.line,
-      node.opToken,
-    );
+    throw new InterpreterError(InterpreterErrorCode.UNKNOWN_UNARY_OPERATOR, {
+      token: node.opToken,
+      data: { operator: node.op },
+    });
   }
 
   private visitListNode(node: ListNode): ListSymbol {
@@ -278,7 +269,10 @@ export class Interpreter {
     const value = this.getReference(node.value);
 
     if (!value) {
-      throw new InterpreterError(`Unknown reference: ${node.value}`, node.token.line, node.token);
+      throw new InterpreterError(InterpreterErrorCode.UNKNOWN_REFERENCE, {
+        token: node.token,
+        data: { reference: node.value },
+      });
     }
 
     return value as ISymbolType;
@@ -321,7 +315,10 @@ export class Interpreter {
       return new StringSymbol(`${fnName}(${argStrings.join(", ")})`, this.config);
     }
 
-    throw new InterpreterError(`Unknown function: '${node.name}'`, node.token?.line, node.token);
+    throw new InterpreterError(InterpreterErrorCode.UNKNOWN_FUNCTION, {
+      token: node.token,
+      data: { functionName: node.name },
+    });
   }
 
   private visitAssignNode(node: AssignNode): void {
@@ -329,31 +326,30 @@ export class Interpreter {
 
     // Variable name validation
     if ([".", "[", "-"].some((c) => name.includes(c))) {
-      throw new InterpreterError(
-        `Invalid variable name '${name}'. Use a simple name (and underscores) without '.', '-', '['.`,
-        node.varName.token.line,
-        node.varName.token,
-      );
+      throw new InterpreterError(InterpreterErrorCode.INVALID_VARIABLE_NAME, {
+        token: node.varName.token,
+        data: { name },
+      });
     }
 
     if (this.symbolTable.isDefined(name)) {
-      throw new InterpreterError(
-        `Variable '${name}' already defined. Use a different name.`,
-        node.varName.token.line,
-        node.varName.token,
-      );
+      throw new InterpreterError(InterpreterErrorCode.VARIABLE_ALREADY_DEFINED, {
+        token: node.varName.token,
+        data: { name },
+      });
     }
 
     const baseType = node.typeDecl.baseType.name;
     const subType = node.typeDecl.subTypes[0]?.name;
 
     if (!this.config.isTypeDefined(baseType, subType)) {
-      throw new InterpreterError(
-        `Invalid variable type '${typeName(baseType, subType)}'. Use a valid type. (${Object.keys(basicSymbolTypes).join(", ")})`,
-        node.varName.token.line,
-        node.varName.token,
-        { baseType, subType, config: this.config },
-      );
+      throw new InterpreterError(InterpreterErrorCode.INVALID_VARIABLE_TYPE, {
+        token: node.varName.token,
+        data: {
+          typeName: typeName(baseType, subType),
+          validTypes: Object.keys(basicSymbolTypes).join(", "),
+        },
+      });
     }
 
     const constructorSymbol = this.config.getType(baseType, subType);
@@ -364,12 +360,10 @@ export class Interpreter {
 
     const coercedValueSymbol = this.coerceValue(constructorSymbol, valueSymbol);
     if (!coercedValueSymbol) {
-      throw new InterpreterError(
-        `Invalid value '${valueSymbol.value}' ('${baseType}') for variable '${name}'. Use a valid value.`,
-        node.varName.token.line,
-        node.varName.token,
-        { constructorSymbol, valueSymbol, node },
-      );
+      throw new InterpreterError(InterpreterErrorCode.INVALID_VALUE_FOR_VARIABLE, {
+        token: node.varName.token,
+        data: { value: String(valueSymbol.value), type: baseType, name },
+      });
     }
 
     this.symbolTable.set(name, coercedValueSymbol);
@@ -380,20 +374,19 @@ export class Interpreter {
 
     const existingVar = this.symbolTable.get(baseIdentifier.name);
     if (existingVar === null) {
-      throw new InterpreterError(
-        `Variable '${baseIdentifier.name}' not found.`,
-        baseIdentifier.token.line,
-        baseIdentifier.token,
-      );
+      throw new InterpreterError(InterpreterErrorCode.VARIABLE_NOT_FOUND, {
+        token: baseIdentifier.token,
+        data: { name: baseIdentifier.name },
+      });
     }
 
     const value = this.visit(node.value);
 
     if (value === null) {
-      throw new InterpreterError(
-        `Assignment value for '${node.identifierToString()}' is null.`,
-        (node.value as any).token?.line,
-      );
+      throw new InterpreterError(InterpreterErrorCode.ASSIGNMENT_VALUE_NULL, {
+        token: (node.value as any).token,
+        data: { identifier: node.identifierToString() },
+      });
     }
 
     if (node.isAttributeAssignment()) {
@@ -404,18 +397,26 @@ export class Interpreter {
       if (typeEquals(value.type, "list")) {
         // TODO Implement list type-checking
       } else if (!typeEquals(existingVar.type, value.type)) {
-        throw new InterpreterError(
-          `Invalid value '${value}' (Found '${value.type}', expected '${existingVar.type}') for variable '${node.identifierToString()}'. Use a valid value.`,
-          baseIdentifier.token.line,
-          baseIdentifier.token,
-        );
+        throw new InterpreterError(InterpreterErrorCode.TYPE_MISMATCH, {
+          token: baseIdentifier.token,
+          data: {
+            value: String(value),
+            foundType: value.type,
+            expectedType: existingVar.type,
+            identifier: node.identifierToString(),
+          },
+        });
       }
 
       if (!existingVar.validValue(value)) {
-        throw new InterpreterError(
-          `Cannot assign ${value.type} to variable '${node.identifierToString()}' of type ${existingVar.type}.`,
-          (node.value as any).token?.line,
-        );
+        throw new InterpreterError(InterpreterErrorCode.CANNOT_ASSIGN_TYPE, {
+          token: (node.value as any).token,
+          data: {
+            valueType: value.type,
+            identifier: node.identifierToString(),
+            variableType: existingVar.type,
+          },
+        });
       }
 
       this.symbolTable.set(baseIdentifier.name, value);
@@ -433,47 +434,45 @@ export class Interpreter {
         if (left.hasMethod(right.name, args)) {
           const result = left.callMethod?.(right.name, args);
           if (result === null || result === undefined) {
-            throw new InterpreterError(
-              `Method '${right.name}' returned null or undefined`,
-              node.token?.line,
-              node.token,
-            );
+            throw new InterpreterError(InterpreterErrorCode.METHOD_RETURNED_NULL, {
+              token: node.token,
+              data: { methodName: right.name },
+            });
           }
           return result;
         }
-        throw new InterpreterError(
-          `Method '${right.name}' not found on '${left}' (${left.type})`,
-          node.token?.line,
-          node.token,
-        );
+        throw new InterpreterError(InterpreterErrorCode.METHOD_NOT_FOUND, {
+          token: node.token,
+          data: { methodName: right.name, value: String(left), type: left.type },
+        });
       }
       if (right instanceof IdentifierNode) {
         // Handle property access (e.g., str.length, color.to)
         if (left.hasAttribute(right.name)) {
           const result = left.getAttribute?.(right.name);
           if (result === null || result === undefined) {
-            throw new InterpreterError(
-              `Attribute '${right.name}' returned null or undefined`,
-              node.token?.line,
-              node.token,
-            );
+            throw new InterpreterError(InterpreterErrorCode.ATTRIBUTE_RETURNED_NULL, {
+              token: node.token,
+              data: { attributeName: right.name },
+            });
           }
           return result;
         }
-        let errMsg = `Attribute '${right.name}' not found on '${left}' (${left.type})`;
-        // Force exactly "on Color" string for ColorSymbols (for test compatibility)
-        if (left instanceof ColorSymbol) {
-          errMsg = `Attribute '${right.name}' not found on Color.`;
-        }
-        throw new InterpreterError(errMsg, node.token?.line, node.token);
+        throw new InterpreterError(InterpreterErrorCode.ATTRIBUTE_NOT_FOUND, {
+          token: node.token,
+          data: {
+            attributeName: right.name,
+            value: left instanceof ColorSymbol ? "Color" : String(left),
+            type: left.type,
+          },
+        });
       }
     }
 
-    throw new InterpreterError(
-      `Cannot access attributes on ${left.type}`,
-      node.token?.line,
-      node.token,
-    );
+    throw new InterpreterError(InterpreterErrorCode.CANNOT_ACCESS_ATTRIBUTES, {
+      token: node.token,
+      data: { type: left.type },
+    });
   }
 
   private visitStatementListNode(node: StatementListNode): ISymbolType | null {
@@ -498,19 +497,15 @@ export class Interpreter {
     while (true) {
       iterations++;
       if (iterations > this.config.languageOptions.MAX_ITERATIONS) {
-        throw new InterpreterError(
-          "Max iterations exceeded in while loop.",
-          node.token?.line,
-          node.token,
-        );
+        throw new InterpreterError(InterpreterErrorCode.MAX_ITERATIONS_EXCEEDED, {
+          token: node.token,
+        });
       }
       const conditionNode = this.visit(node.condition);
       if (!(conditionNode instanceof BooleanSymbol)) {
-        throw new InterpreterError(
-          "While loop condition must be a boolean.",
-          node.condition.token?.line,
-          node.condition?.token,
-        );
+        throw new InterpreterError(InterpreterErrorCode.WHILE_CONDITION_NOT_BOOLEAN, {
+          token: node.condition?.token,
+        });
       }
       if (!conditionNode.value) break;
 
@@ -523,11 +518,9 @@ export class Interpreter {
     for (const conditionNode of node.conditions) {
       const condition = this.visit(conditionNode.condition);
       if (!(condition instanceof BooleanSymbol)) {
-        throw new InterpreterError(
-          "If/elif condition must be a boolean.",
-          (conditionNode.condition as any).token?.line,
-          (conditionNode.condition as any).token,
-        );
+        throw new InterpreterError(InterpreterErrorCode.IF_CONDITION_NOT_BOOLEAN, {
+          token: (conditionNode.condition as any).token,
+        });
       }
 
       if (condition.value) {
@@ -556,7 +549,7 @@ export class Interpreter {
       } else if (e instanceof Error) {
         throw e;
       } else {
-        throw new InterpreterError("An unknown error occurred during interpretation.");
+        throw new InterpreterError(InterpreterErrorCode.UNKNOWN_ERROR);
       }
     }
 

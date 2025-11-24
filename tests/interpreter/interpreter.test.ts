@@ -1,4 +1,4 @@
-import { InterpreterError } from "@interpreter/errors";
+import { InterpreterError, InterpreterErrorCode } from "@interpreter/errors";
 import { Interpreter } from "@interpreter/interpreter";
 import { createInterpreter, interpret, interpretAndGetVariables, interpretExpectError } from "@tests/interpreter/test-helpers";
 import { describe, expect, it } from "vitest";
@@ -90,6 +90,14 @@ describe("Interpreter - Functions", () => {
 
   it("should throw error for unknown function", () => {
     expect(() => interpretExpectError("unknown_function(1, 2, 3)")).toThrow(InterpreterError);
+
+    try {
+      interpretExpectError("unknown_function(1, 2, 3)");
+    } catch (error) {
+      expect(error).toBeInstanceOf(InterpreterError);
+      expect((error as InterpreterError).code).toBe(InterpreterErrorCode.UNKNOWN_FUNCTION);
+      expect((error as InterpreterError).data.functionName).toBe("unknown_function");
+    }
   });
 
   it("should handle fake function (uninterpreted)", () => {
@@ -161,7 +169,14 @@ describe("Interpreter - Variable Name Validation", () => {
     };
     const interpreter = new Interpreter(mockAssignNode as any, { references: {} });
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
-    expect(() => interpreter.interpret()).toThrow("Invalid variable name 'my.var'. Use a simple name (and underscores) without '.', '-', '['.");
+
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      expect(error).toBeInstanceOf(InterpreterError);
+      expect((error as InterpreterError).code).toBe(InterpreterErrorCode.INVALID_VARIABLE_NAME);
+      expect((error as InterpreterError).data.name).toBe("my.var");
+    }
   });
 
   it("should throw error for variable name containing bracket", () => {
@@ -183,7 +198,14 @@ describe("Interpreter - Variable Name Validation", () => {
     };
     const interpreter = new Interpreter(mockAssignNode as any, { references: {} });
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
-    expect(() => interpreter.interpret()).toThrow("Invalid variable name 'my[var'. Use a simple name (and underscores) without '.', '-', '['.");
+
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      expect(error).toBeInstanceOf(InterpreterError);
+      expect((error as InterpreterError).code).toBe(InterpreterErrorCode.INVALID_VARIABLE_NAME);
+      expect((error as InterpreterError).data.name).toBe("my[var");
+    }
   });
 
   it("should throw error for variable name containing dash", () => {
@@ -205,7 +227,14 @@ describe("Interpreter - Variable Name Validation", () => {
     };
     const interpreter = new Interpreter(mockAssignNode as any, { references: {} });
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
-    expect(() => interpreter.interpret()).toThrow("Invalid variable name 'my-var'. Use a simple name (and underscores) without '.', '-', '['.");
+
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      expect(error).toBeInstanceOf(InterpreterError);
+      expect((error as InterpreterError).code).toBe(InterpreterErrorCode.INVALID_VARIABLE_NAME);
+      expect((error as InterpreterError).data.name).toBe("my-var");
+    }
   });
 
   it("should allow valid variable names with underscores", () => {
@@ -235,7 +264,14 @@ describe("Interpreter - Variable Name Validation", () => {
     };
     const interpreter = new Interpreter(mockAssignNode as any, { references: {} });
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
-    expect(() => interpreter.interpret()).toThrow("Invalid variable name 'my-var.test[0'. Use a simple name (and underscores) without '.', '-', '['.");
+
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      expect(error).toBeInstanceOf(InterpreterError);
+      expect((error as InterpreterError).code).toBe(InterpreterErrorCode.INVALID_VARIABLE_NAME);
+      expect((error as InterpreterError).data.name).toBe("my-var.test[0");
+    }
   });
 });
 
