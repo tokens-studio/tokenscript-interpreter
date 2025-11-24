@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED - 2025-11-24
 
+### Added
+
+- **Token Linting System**: Extensible validation framework for token values
+  - `LintRunner` orchestrates linting rules and aggregates results
+  - `TypeBasedRule` allows registering validators by token type
+  - [Linting Documentation](src/processor/linter/README.md)
+  - Returns `lint` property in process results with errors, warnings, and issue details
+  - Zero overhead when linter is not provided
+  - Validators can access AST, config, and resolved tokens for context-aware validation
+  - Comprehensive test coverage for core linting functionality and processor integration
+
 ### Changed
 
 - **Error System Refactoring**: Migrated all errors to use typed error codes

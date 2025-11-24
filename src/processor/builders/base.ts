@@ -2,6 +2,7 @@ import type { Config } from "@interpreter/config";
 import type { InterpreterResult } from "@interpreter/interpreter";
 import { isTokenscriptSymbol, symbolTypeToJsValue } from "@interpreter/symbols";
 import { isNull, isString } from "@interpreter/utils/type";
+import type { LintResult, LintRunner } from "../linter";
 import type { ObjectParser } from "../object-parsers";
 import { type ProcessorOutput, TokenResolver } from "../resolver/TokenResolver";
 import type { TokenData } from "../utils/tokens";
@@ -36,6 +37,7 @@ export interface BuildTokensOptions<T> {
   config?: Config;
   output?: OutputFormat;
   objectParsers?: ObjectParser[];
+  linter?: LintRunner;
 }
 
 export function buildTokens<T = Map<string, InterpreterResult>>(
@@ -43,12 +45,14 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
   options?: BuildTokensOptions<T>,
 ): ProcessorOutput & {
   output: T;
+  lint?: LintResult;
 } {
   const {
     config,
     output = "string",
     builder = new MapBuilder(output),
     objectParsers,
+    linter,
   } = options ?? {};
 
   const resolver = new TokenResolver();
@@ -74,7 +78,7 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
     },
   };
 
-  const result = resolver.processTokens(tokens, callbacks, config, objectParsers);
+  const result = resolver.processTokens(tokens, callbacks, config, objectParsers, linter);
 
   let tokensMap = tokensMapBuilder.getResult();
   const builderOutput = builder.getResult();
@@ -88,10 +92,13 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
     }
   }
 
+  const lint = result.lintIssues ? linter.aggregateResults(result.lintIssues) : undefined;
+
   return {
     ...result,
     tokens: tokensMap,
     output: builderOutput as T,
     errors,
+    lint,
   };
 }
