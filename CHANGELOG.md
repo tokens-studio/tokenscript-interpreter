@@ -29,8 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added type guard functions: `isLanguageError`, `isLexerError`, `isParserError`, `isInterpreterError`, `isProcessorError`
   - Tests now assert on error codes instead of message strings
 
-## UNRELEASED - 2025-11-19
-
 ### Added 
 
 - Structured tokens resolving and handling (one nesting level)
