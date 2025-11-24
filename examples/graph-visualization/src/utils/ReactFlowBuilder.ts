@@ -1,5 +1,5 @@
 import type { Node, Edge } from "@xyflow/react";
-import type { GraphData, GraphNode, GraphEdge } from "./GraphBuilder";
+import type { GraphData, GraphNode } from "./GraphBuilder";
 
 /**
  * Builds ReactFlow-specific nodes and edges from GraphData

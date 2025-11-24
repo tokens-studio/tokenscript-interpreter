@@ -1,6 +1,6 @@
-import type { GraphNode } from "@tokens-studio/tokenscript-interpreter";
 import { memo } from "react";
 import { Handle, Position } from "@xyflow/react";
+import type { GraphNode } from "../utils/GraphBuilder";
 
 interface TokenNodeProps {
   data: GraphNode;
