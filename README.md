@@ -16,7 +16,7 @@ With Tokenscript you can write custom functions and ship logic directly with you
 
 ## Examples
 
-<video src="https://github.com/tokens-studio/tokenscript-interpreter/raw/7d4da6a3d34932a4dcd73990770b0798dd0df1c7/data/assets/demo.mp4" controls></video>
+https://github.com/user-attachments/assets/demo.mp4
 
 - [Web REPL](examples/web-repl) - Interactive browser-based playground
 - [Runtime UI](examples/runtime-ui) - Token management interface
