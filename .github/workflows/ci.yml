@@ -86,7 +86,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        example: [web-repl, runtime-ui]
+        example: [web-repl, runtime-ui, graph-visualization]
     
     steps:
     - name: Checkout code

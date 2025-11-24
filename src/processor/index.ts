@@ -4,7 +4,6 @@ export {
   type FlattenCallback,
   flattenChildrenMap,
   flattenChildrenObject,
-  type JsValue,
   MapBuilder,
   NestedObjectBuilder,
   type OutputFormat,
