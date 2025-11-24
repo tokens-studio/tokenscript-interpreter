@@ -7,6 +7,7 @@ import { BooleanSymbol, NullSymbol, NumberSymbol, StringSymbol } from "@interpre
 import { isArray, isBoolean, isNull, isNumber, isObject, isString } from "@interpreter/utils/type";
 import { UNINTERPRETED_KEYWORDS } from "@src/types";
 import { DependencyError } from "../errors";
+import type { LintIssue, LintRunner } from "../linter";
 import {
   createTokenSymbol,
   createTokenSymbolFromResolvedFields,
@@ -34,6 +35,7 @@ export type ProcessorResult = {
   resolved: ResolvedTokens;
   unresolved: UnresolvedTokens;
   subFieldPaths?: Set<RefPath>;
+  lintIssues?: LintIssue[];
 };
 
 export type ProcessorCallbacks = {
@@ -50,6 +52,7 @@ class PrefixResolver {
   private readonly callbacks?: ProcessorCallbacks;
   private readonly config?: Config;
   private readonly objectParsers?: ObjectParser[];
+  private readonly linter?: LintRunner;
   private readonly graph = new DependencyGraph<RefPath>();
   private readonly resolved: ResolvedTokens = new Map();
   private readonly unresolved: UnresolvedTokens = new Map();
@@ -70,6 +73,9 @@ class PrefixResolver {
   private readonly subFieldPaths: Set<RefPath> = new Set();
   private readonly structuredTokens: Map<RefPath, TokenData> = new Map();
 
+  // Lint issues collection
+  private readonly lintIssues: LintIssue[] = [];
+
   // Phase state
   private earlyResolved: RefPath[] = [];
 
@@ -78,10 +84,12 @@ class PrefixResolver {
     callbacks?: ProcessorCallbacks,
     config?: Config,
     objectParsers?: ObjectParser[],
+    linter?: LintRunner,
   ) {
     this.callbacks = callbacks;
     this.config = config;
     this.objectParsers = objectParsers;
+    this.linter = linter;
 
     // Initialize components
     this.dependencyTracker = new DependencyTracker();
@@ -109,10 +117,43 @@ class PrefixResolver {
     return error;
   }
 
+  private lintTokenResult(tokenName: RefPath, value: InterpreterResult): void {
+    if (!this.linter) return;
+
+    // Skip linting sub-fields (internal tokens for structured token resolution)
+    if (this.subFieldPaths.has(tokenName)) return;
+
+    const tokenData = this.tokens.get(tokenName);
+    const tokenType =
+      tokenData && typeof tokenData === "object" && "$type" in tokenData
+        ? tokenData.$type
+        : undefined;
+
+    const ast = this.tokenInterpreter.getTokenAST(tokenName);
+
+    try {
+      const issues = this.linter.lintResult({
+        tokenName,
+        tokenType,
+        result: value,
+        allTokens: this.tokens as Map<string, TokenData>,
+        resolvedTokens: this.referenceCache,
+        config: this.config,
+        ast,
+      });
+
+      this.lintIssues.push(...issues);
+    } catch (error) {
+      // If a validator throws, log the error but don't crash the resolution process
+      console.error(`Linting failed for token '${tokenName}':`, error);
+    }
+  }
+
   private earlyResolvePrimitiveToken(tokenName: RefPath, value: InterpreterResult): void {
     this.resolved.set(tokenName, value);
     this.referenceCache.set(tokenName, value);
     this.callbacks?.onResolve?.(tokenName, value);
+    this.lintTokenResult(tokenName, value);
     this.graph.addNode(tokenName, []);
     this.earlyResolved.push(tokenName);
   }
@@ -178,6 +219,7 @@ class PrefixResolver {
       resolved: this.resolved,
       unresolved: this.unresolved,
       subFieldPaths: this.subFieldPaths,
+      lintIssues: this.linter ? this.lintIssues : undefined,
     };
   }
 
@@ -258,6 +300,7 @@ class PrefixResolver {
       this.referenceCache.set(tokenName, tokenSymbol);
 
       this.callbacks?.onResolve?.(tokenName, tokenSymbol);
+      this.lintTokenResult(tokenName, tokenSymbol);
       this.graph.addNode(tokenName, []);
       this.earlyResolved.push(tokenName);
       return;
@@ -386,6 +429,7 @@ class PrefixResolver {
             this.callbacks?.onError?.(tokenName, tokenValue, "");
           } else {
             this.callbacks?.onResolve?.(tokenName, tokenValue);
+            this.lintTokenResult(tokenName, tokenValue);
             this.tokenInterpreter.updateReferenceCache(tokenName, tokenValue);
           }
         }
@@ -427,6 +471,7 @@ class PrefixResolver {
         this.callbacks?.onError?.(tokenName, tokenValue, tokenValueStr);
       } else {
         this.callbacks?.onResolve?.(tokenName, tokenValue);
+        this.lintTokenResult(tokenName, tokenValue);
         this.tokenInterpreter.updateReferenceCache(tokenName, tokenValue);
       }
     }
@@ -491,6 +536,7 @@ class PrefixResolver {
       this.referenceCache.set(tokenName, tokenSymbol);
 
       this.callbacks?.onResolve?.(tokenName, tokenSymbol);
+      this.lintTokenResult(tokenName, tokenSymbol);
     }
 
     this.unresolved.delete(tokenName);
@@ -596,8 +642,9 @@ export class TokenResolver {
     callbacks?: ProcessorCallbacks,
     config?: Config,
     objectParsers?: ObjectParser[],
+    linter?: LintRunner,
   ): ProcessorResult {
-    const resolver = new PrefixResolver(tokens, callbacks, config, objectParsers);
+    const resolver = new PrefixResolver(tokens, callbacks, config, objectParsers, linter);
     return resolver.resolve();
   }
 
