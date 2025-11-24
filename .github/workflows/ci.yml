@@ -78,10 +78,15 @@ jobs:
           !dist/**/*.map
         retention-days: 7
 
-  e2e-web-repl:
-    name: E2E Tests - Web REPL
+  e2e:
+    name: E2E Tests - ${{ matrix.example }}
     runs-on: ubuntu-latest
     needs: build
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        example: [web-repl, runtime-ui]
     
     steps:
     - name: Checkout code
@@ -99,16 +104,33 @@ jobs:
     - name: Build library
       run: npm run build:lib
       
-    - name: Install web-repl dependencies
-      working-directory: examples/web-repl
+    - name: Install example dependencies
+      working-directory: examples/${{ matrix.example }}
       run: npm ci
       
+    - name: Get Playwright version
+      id: playwright-version
+      working-directory: examples/${{ matrix.example }}
+      run: echo "version=$(npm ls @playwright/test --json | jq -r '.dependencies["@playwright/test"].version // .devDependencies["@playwright/test"].version')" >> $GITHUB_OUTPUT
+      
+    - name: Cache Playwright browsers
+      uses: actions/cache@v4
+      id: playwright-cache
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+        
     - name: Install Playwright browsers
-      working-directory: examples/web-repl
+      if: steps.playwright-cache.outputs.cache-hit != 'true'
+      working-directory: examples/${{ matrix.example }}
       run: npx playwright install --with-deps chromium
       
+    - name: Install Playwright system dependencies
+      if: steps.playwright-cache.outputs.cache-hit == 'true'
+      run: npx playwright install-deps chromium
+      
     - name: Run E2E tests
-      working-directory: examples/web-repl
+      working-directory: examples/${{ matrix.example }}
       run: npm run test:e2e
       env:
         CI: true
@@ -117,8 +139,8 @@ jobs:
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: playwright-report
-        path: examples/web-repl/playwright-report/
+        name: playwright-report-${{ matrix.example }}
+        path: examples/${{ matrix.example }}/playwright-report/
         retention-days: 7
 
   security:
