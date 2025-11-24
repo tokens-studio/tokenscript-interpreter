@@ -1,3 +1,4 @@
+import { LexerError, LexerErrorCode } from "@interpreter/errors";
 import { Interpreter } from "@interpreter/interpreter";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
@@ -120,7 +121,15 @@ describe("Complex Expressions - Variable References", () => {
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
 
-    expect(() => parser.parse(true)).toThrow("Invalid character '´'");
+    expect(() => parser.parse(true)).toThrow(LexerError);
+
+    try {
+      parser.parse(true);
+    } catch (error) {
+      expect(error).toBeInstanceOf(LexerError);
+      expect((error as LexerError).code).toBe(LexerErrorCode.INVALID_CHARACTER);
+      expect((error as LexerError).data.char).toBe("´");
+    }
   });
 
   it("should handle variable references in function calls", () => {

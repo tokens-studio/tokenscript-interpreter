@@ -1,5 +1,6 @@
 import type { ASTNode } from "@interpreter/ast";
 import type { Config } from "@interpreter/config";
+import { isLanguageError } from "@interpreter/errors";
 import { Interpreter } from "@interpreter/interpreter";
 import { DictionarySymbol } from "@interpreter/symbols";
 import type { ISymbolType } from "@src/types";
@@ -48,7 +49,10 @@ export class TokenInterpreter {
       this.interpreter.setAst(ast);
       return this.interpreter.interpret();
     } catch (error) {
-      return error instanceof Error ? error : new Error(String(error));
+      if (isLanguageError(error)) {
+        return error;
+      }
+      return new Error("Unknown error during token interpretation", { cause: error });
     }
   }
 

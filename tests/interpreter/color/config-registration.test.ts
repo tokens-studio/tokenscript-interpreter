@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Config } from "@interpreter/config/config";
 import { ColorManager } from "@interpreter/config/managers/color/manager";
-import { InterpreterError } from "@interpreter/errors";
+import { ConfigErrorCode, InterpreterError } from "@interpreter/errors";
 import { ColorSymbol } from "@interpreter/symbols";
 import { createInterpreter } from "@tests/interpreter/test-helpers";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -126,9 +126,11 @@ describe("Config and ColorManager - Color Registration", () => {
         conversions: [],
       };
 
+      // Note: register() currently throws regular Error, not InterpreterError
+      // This will be migrated in a future phase
       expect(() => {
         colorManager.register("test://invalid", invalidSpec as any);
-      }).toThrow("Invalid color specification");
+      }).toThrow(/Invalid color specification/i);
     });
   });
 
@@ -172,9 +174,15 @@ describe("Config and ColorManager - Color Registration", () => {
     });
 
     it("should throw error when creating symbol for unregistered type", () => {
-      expect(() => {
+      expect(() => config.getType("Color", "Missing")).toThrow(InterpreterError);
+
+      try {
         config.getType("Color", "Missing");
-      }).toThrow("No spec found for Missing");
+      } catch (error) {
+        expect(error).toBeInstanceOf(InterpreterError);
+        expect((error as InterpreterError).code).toBe(ConfigErrorCode.NO_SPEC_FOUND);
+        expect((error as InterpreterError).data.specName).toBe("Missing");
+      }
     });
 
     it("should create error with specific message for missing spec", () => {
@@ -259,10 +267,8 @@ describe("Config and ColorManager - Color Registration", () => {
 
       expect(error).toBeInstanceOf(InterpreterError);
       expect(error?.message).toContain("Invalid variable type 'Color.Missing'");
-      expect(error?.meta).toBeDefined();
-      expect(error?.meta?.baseType).toBe("Color");
-      expect(error?.meta?.subType).toBe("Missing");
-      expect(error?.meta?.config).toBe(config);
+      expect(error?.data).toBeDefined();
+      expect(error?.data?.typeName).toBe("Color.Missing");
     });
 
     it("should handle multiple registered color types", () => {
@@ -318,10 +324,8 @@ describe("Config and ColorManager - Color Registration", () => {
 
       expect(error).toBeInstanceOf(InterpreterError);
       expect(error?.message).toContain("Invalid variable type 'Color.Nonexistent'");
-      expect(error?.meta).toBeDefined();
-      expect(error?.meta?.baseType).toBe("Color");
-      expect(error?.meta?.subType).toBe("NonExistent");
-      expect(error?.meta?.config).toBeInstanceOf(Config);
+      expect(error?.data).toBeDefined();
+      expect(error?.data?.typeName).toBe("Color.Nonexistent");
     });
   });
 

@@ -1,3 +1,4 @@
+import { FunctionsErrorCode, InterpreterError } from "@interpreter/errors";
 import { Interpreter } from "@interpreter/interpreter";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
@@ -414,7 +415,15 @@ describe("Math Functions - Inverse Trigonometric", () => {
     const parser = new Parser(lexer);
     const interpreter = new Interpreter(parser);
 
-    expect(() => interpreter.interpret()).toThrow("asin() argument must be between -1 and 1");
+    expect(() => interpreter.interpret()).toThrow(InterpreterError);
+
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      expect(error).toBeInstanceOf(InterpreterError);
+      expect((error as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
+      expect((error as InterpreterError).data.functionName).toBe("asin");
+    }
   });
 });
 
@@ -456,26 +465,44 @@ describe("Math Functions - Logarithmic", () => {
     const text2 = `variable invalid: Number = log(-1);`;
     const text3 = `variable invalid: Number = log(10, 1);`;
 
-    expect(() => {
-      const lexer = new Lexer(text1);
-      const parser = new Parser(lexer);
-      const interpreter = new Interpreter(parser);
-      interpreter.interpret();
-    }).toThrow("log() argument must be positive");
+    const lexer1 = new Lexer(text1);
+    const parser1 = new Parser(lexer1);
+    const interpreter1 = new Interpreter(parser1);
+    expect(() => interpreter1.interpret()).toThrow(InterpreterError);
 
-    expect(() => {
-      const lexer = new Lexer(text2);
-      const parser = new Parser(lexer);
-      const interpreter = new Interpreter(parser);
-      interpreter.interpret();
-    }).toThrow("log() argument must be positive");
+    try {
+      interpreter1.interpret();
+    } catch (error) {
+      expect(error).toBeInstanceOf(InterpreterError);
+      expect((error as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
+      expect((error as InterpreterError).data.functionName).toBe("log");
+    }
 
-    expect(() => {
-      const lexer = new Lexer(text3);
-      const parser = new Parser(lexer);
-      const interpreter = new Interpreter(parser);
-      interpreter.interpret();
-    }).toThrow("log() base must be positive and not equal to 1");
+    const lexer2 = new Lexer(text2);
+    const parser2 = new Parser(lexer2);
+    const interpreter2 = new Interpreter(parser2);
+    expect(() => interpreter2.interpret()).toThrow(InterpreterError);
+
+    try {
+      interpreter2.interpret();
+    } catch (error) {
+      expect(error).toBeInstanceOf(InterpreterError);
+      expect((error as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
+      expect((error as InterpreterError).data.functionName).toBe("log");
+    }
+
+    const lexer3 = new Lexer(text3);
+    const parser3 = new Parser(lexer3);
+    const interpreter3 = new Interpreter(parser3);
+    expect(() => interpreter3.interpret()).toThrow(InterpreterError);
+
+    try {
+      interpreter3.interpret();
+    } catch (error) {
+      expect(error).toBeInstanceOf(InterpreterError);
+      expect((error as InterpreterError).code).toBe(FunctionsErrorCode.INVALID_BASE);
+      expect((error as InterpreterError).data.functionName).toBe("log");
+    }
   });
 });
 

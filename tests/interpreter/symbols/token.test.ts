@@ -165,7 +165,7 @@ describe("TokenSymbol", () => {
     describe("list", () => {
       it("should throw error when setting on list value", () => {
         const token = new TokenSymbol("shadow", [new NumberSymbol(1)]);
-        expect(() => token.set(new StringSymbol("key"), new NumberSymbol(2))).toThrow("Cannot set key on Token with List value");
+        expect(() => token.set(new StringSymbol("key"), new NumberSymbol(2))).toThrow(/Cannot set key.*Token.*List/);
       });
     });
   });
@@ -190,7 +190,7 @@ describe("TokenSymbol", () => {
     describe("list", () => {
       it("should throw error when getting key from list value", () => {
         const token = new TokenSymbol("shadow", [new NumberSymbol(1)]);
-        expect(() => token.get(new StringSymbol("key"))).toThrow("List get requires a Number index");
+        expect(() => token.get(new StringSymbol("key"))).toThrow(/List get/);
       });
     });
   });
@@ -211,7 +211,7 @@ describe("TokenSymbol", () => {
     describe("list", () => {
       it("should throw error when getting keys from list value", () => {
         const token = new TokenSymbol("shadow", [new NumberSymbol(1)]);
-        expect(() => token.keys()).toThrow("Cannot get keys from Token with List value");
+        expect(() => token.keys()).toThrow(/get keys/);
       });
     });
   });

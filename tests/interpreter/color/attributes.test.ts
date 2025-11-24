@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Config } from "@interpreter/config/config";
+import { InterpreterError, InterpreterErrorCode } from "@interpreter/errors";
 import { createInterpreter } from "@tests/interpreter/test-helpers";
 import { beforeEach, describe, expect, it } from "vitest";
 
@@ -79,7 +80,15 @@ describe("Color Attributes - RGB Color Type", () => {
       color.nonexistent;
     `;
     const interpreter = createInterpreter(text, {}, config);
-    expect(() => interpreter.interpret()).toThrow("Attribute 'nonexistent' not found on Color");
+    expect(() => interpreter.interpret()).toThrow(InterpreterError);
+
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      expect(error).toBeInstanceOf(InterpreterError);
+      expect((error as InterpreterError).code).toBe(InterpreterErrorCode.ATTRIBUTE_NOT_FOUND);
+      expect((error as InterpreterError).data.attributeName).toBe("nonexistent");
+    }
   });
 
   it("should throw error when accessing attribute on hex color", () => {
@@ -88,7 +97,15 @@ describe("Color Attributes - RGB Color Type", () => {
       color.r;
     `;
     const interpreter = createInterpreter(text, {}, config);
-    expect(() => interpreter.interpret()).toThrow("Attribute 'r' not found on Color");
+    expect(() => interpreter.interpret()).toThrow(InterpreterError);
+
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      expect(error).toBeInstanceOf(InterpreterError);
+      expect((error as InterpreterError).code).toBe(InterpreterErrorCode.ATTRIBUTE_NOT_FOUND);
+      expect((error as InterpreterError).data.attributeName).toBe("r");
+    }
   });
 
   it("should throw error when accessing attribute on null color", () => {
@@ -97,7 +114,15 @@ describe("Color Attributes - RGB Color Type", () => {
       color.r;
     `;
     const interpreter = createInterpreter(text, {}, config);
-    expect(() => interpreter.interpret()).toThrow("Attribute 'r' not found on Color");
+    expect(() => interpreter.interpret()).toThrow(InterpreterError);
+
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      expect(error).toBeInstanceOf(InterpreterError);
+      expect((error as InterpreterError).code).toBe(InterpreterErrorCode.ATTRIBUTE_NOT_FOUND);
+      expect((error as InterpreterError).data.attributeName).toBe("r");
+    }
   });
 
   it("should allow attribute access in expressions", () => {

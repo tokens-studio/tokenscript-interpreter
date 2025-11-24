@@ -1,9 +1,8 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { IdentifierNode, ReassignNode } from "@interpreter/ast";
-import { ColorManagerError } from "@interpreter/config/managers/color/errors";
 import { ColorManager } from "@interpreter/config/managers/color/manager";
-import { InterpreterError } from "@interpreter/errors";
+import { ColorErrorCode, InterpreterError } from "@interpreter/errors";
 import { ColorSymbol, NumberSymbol, StringSymbol } from "@interpreter/symbols";
 import { beforeEach, describe, expect, it } from "vitest";
 
@@ -76,7 +75,7 @@ describe("ColorManager", () => {
       }
 
       expect(error).toBeInstanceOf(InterpreterError);
-      expect(error?.type).toBe(ColorManagerError.STRING_VALUE_ASSIGNMENT);
+      expect(error?.code).toBe(ColorErrorCode.STRING_VALUE_ASSIGNMENT);
       expect(error?.message).toContain("Cannot set attributes 'r' for variable myColor");
     });
 
@@ -98,7 +97,7 @@ describe("ColorManager", () => {
       }
 
       expect(error).toBeInstanceOf(InterpreterError);
-      expect(error?.type).toBe(ColorManagerError.ATTRIBUTE_CHAIN_TOO_LONG);
+      expect(error?.code).toBe(ColorErrorCode.ATTRIBUTE_CHAIN_TOO_LONG);
       expect(error?.message).toContain("Attributes chain 'r.value' for variable myColor");
     });
 
@@ -115,7 +114,7 @@ describe("ColorManager", () => {
       }
 
       expect(error).toBeInstanceOf(InterpreterError);
-      expect(error?.type).toBe(ColorManagerError.MISSING_SPEC);
+      expect(error?.code).toBe(ColorErrorCode.MISSING_SPEC);
       expect(error?.message).toContain("No spec UNKNOWN_TYPE defined for variable myColor");
     });
 
@@ -132,7 +131,7 @@ describe("ColorManager", () => {
       }
 
       expect(error).toBeInstanceOf(InterpreterError);
-      expect(error?.type).toBe(ColorManagerError.MISSING_SCHEMA);
+      expect(error?.code).toBe(ColorErrorCode.MISSING_ATTRIBUTE_SCHEMA);
       expect(error?.message).toContain("No schema found for key invalidAttribute for variable myColor");
     });
 
@@ -149,7 +148,7 @@ describe("ColorManager", () => {
       }
 
       expect(error).toBeInstanceOf(InterpreterError);
-      expect(error?.type).toBe(ColorManagerError.INVALID_ATTRIBUTE_TYPE);
+      expect(error?.code).toBe(ColorErrorCode.INVALID_ATTRIBUTE_TYPE);
       expect(error?.message).toContain("Invalid attribute type 'String'. Use a valid type.");
     });
 

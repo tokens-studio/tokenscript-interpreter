@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## UNRELEASED - 2025-11-24
+
+### Changed
+
+- **Error System Refactoring**: Migrated all errors to use typed error codes
+  - Added error code enums for all error types (`LexerErrorCode`, `ParserErrorCode`, `InterpreterErrorCode`, `ProcessorErrorCode`, etc.)
+  - [Error System Documentation](src/interpreter/errors/README.md)
+  - Error messages are now template-based and translation-ready
+  - All errors include structured `data` property for type-safe error context
+  - Added `serializeError` utility for wrapping caught errors
+  - Added type guard functions: `isLanguageError`, `isLexerError`, `isParserError`, `isInterpreterError`, `isProcessorError`
+  - Tests now assert on error codes instead of message strings
+
 ## UNRELEASED - 2025-11-19
 
 ### Added 

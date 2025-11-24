@@ -1,5 +1,5 @@
 import type { ISymbolType } from "@src/types";
-import { InterpreterError } from "../errors";
+import { ConfigErrorCode, InterpreterError } from "../errors";
 import { basicSymbolTypes, ColorSymbol } from "../symbols";
 import { ColorManager } from "./managers/color/manager";
 import type { ColorSpecification } from "./managers/color/schema";
@@ -56,7 +56,9 @@ export class Config {
     if (lowerBaseType === "color") {
       if (subType) {
         if (!this.colorManager.getSpecByType(subType)) {
-          throw new InterpreterError(`No spec found for ${subType}`);
+          throw new InterpreterError(ConfigErrorCode.NO_SPEC_FOUND, {
+            data: { specName: subType },
+          });
         }
         return new ColorSymbol(null, subType, this);
       }
@@ -65,7 +67,9 @@ export class Config {
 
     const basicSymbolConstructor = basicSymbolTypes[baseType.toLowerCase()];
     if (!basicSymbolConstructor) {
-      throw new InterpreterError(`No type found for ${baseType}`);
+      throw new InterpreterError(ConfigErrorCode.NO_TYPE_FOUND, {
+        data: { typeName: baseType },
+      });
     }
 
     return basicSymbolConstructor.empty();

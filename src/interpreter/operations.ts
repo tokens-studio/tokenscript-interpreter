@@ -1,6 +1,6 @@
 import { type ISymbolType, Operations, type SupportedFormats } from "@src/types";
 import type { Config } from "./config/config";
-import { InterpreterError } from "./errors";
+import { InterpreterError, OperationsErrorCode } from "./errors";
 import {
   type BaseSymbolType,
   BooleanSymbol,
@@ -25,9 +25,9 @@ function decomposeUnit(operand: MathOperand): {
   if (operand instanceof NumberSymbol) {
     return { value: operand.value as number, unit: null };
   }
-  throw new InterpreterError(
-    `Unsupported operand type for unit decomposition: ${(operand as BaseSymbolType).type}`,
-  );
+  throw new InterpreterError(OperationsErrorCode.UNSUPPORTED_OPERAND_TYPE, {
+    data: { type: (operand as BaseSymbolType).type },
+  });
 }
 
 function recomposeUnit(
@@ -40,7 +40,9 @@ function recomposeUnit(
     return new NumberSymbol(value);
   }
   if (new Set(validUnits).size > 1) {
-    throw new InterpreterError(`Cannot mix units: ${validUnits.join(", ")}`);
+    throw new InterpreterError(OperationsErrorCode.CANNOT_MIX_UNITS, {
+      data: { units: validUnits },
+    });
   }
   return new NumberWithUnitSymbol(value, validUnits[0]);
 }
@@ -82,19 +84,25 @@ function equalityComparisonWrapper(fn: (a: any, b: any) => boolean): BooleanOper
       const isNumericA = a instanceof NumberSymbol || a instanceof NumberWithUnitSymbol;
       const isNumericB = b instanceof NumberSymbol || b instanceof NumberWithUnitSymbol;
       if (isNumericA && !isNumericB) {
-        throw new InterpreterError(`Cannot compare ${a.type} with ${b.type}. Incompatible types.`);
+        throw new InterpreterError(OperationsErrorCode.INCOMPATIBLE_TYPES, {
+          data: { typeA: a.type, typeB: b.type },
+        });
       }
 
       const isStringA = a instanceof StringSymbol;
       const isStringB = b instanceof StringSymbol;
       if (isStringA && !isStringB) {
-        throw new InterpreterError(`Cannot compare ${a.type} with ${b.type}. Incompatible types.`);
+        throw new InterpreterError(OperationsErrorCode.INCOMPATIBLE_TYPES, {
+          data: { typeA: a.type, typeB: b.type },
+        });
       }
 
       const isBooleanA = a instanceof BooleanSymbol;
       const isBooleanB = b instanceof BooleanSymbol;
       if (isBooleanA && !isBooleanB) {
-        throw new InterpreterError(`Cannot compare ${a.type} with ${b.type}. Incompatible types.`);
+        throw new InterpreterError(OperationsErrorCode.INCOMPATIBLE_TYPES, {
+          data: { typeA: a.type, typeB: b.type },
+        });
       }
 
       if (
@@ -102,9 +110,9 @@ function equalityComparisonWrapper(fn: (a: any, b: any) => boolean): BooleanOper
         b instanceof NumberWithUnitSymbol &&
         a.unit !== b.unit
       ) {
-        throw new InterpreterError(
-          `Cannot compare NumberWithUnit of different units: ${a.unit} and ${b.unit}`,
-        );
+        throw new InterpreterError(OperationsErrorCode.CANNOT_COMPARE_UNITS, {
+          data: { unitA: a.unit, unitB: b.unit },
+        });
       }
     }
 
@@ -115,25 +123,31 @@ function equalityComparisonWrapper(fn: (a: any, b: any) => boolean): BooleanOper
 function orderingComparisonWrapper(fn: (a: any, b: any) => boolean): BooleanOperationFunction {
   return (a: ISymbolType, b: ISymbolType): BooleanSymbol => {
     if (a instanceof NullSymbol || b instanceof NullSymbol || isNull(a.value) || isNull(b.value)) {
-      throw new InterpreterError(`Cannot perform ordering comparison with null values.`);
+      throw new InterpreterError(OperationsErrorCode.ORDERING_WITH_NULL);
     }
 
     const isNumericA = a instanceof NumberSymbol || a instanceof NumberWithUnitSymbol;
     const isNumericB = b instanceof NumberSymbol || b instanceof NumberWithUnitSymbol;
     if (isNumericA && !isNumericB) {
-      throw new InterpreterError(`Cannot compare ${a.type} with ${b.type}. Incompatible types.`);
+      throw new InterpreterError(OperationsErrorCode.INCOMPATIBLE_TYPES, {
+        data: { typeA: a.type, typeB: b.type },
+      });
     }
 
     const isStringA = a instanceof StringSymbol;
     const isStringB = b instanceof StringSymbol;
     if (isStringA && !isStringB) {
-      throw new InterpreterError(`Cannot compare ${a.type} with ${b.type}. Incompatible types.`);
+      throw new InterpreterError(OperationsErrorCode.INCOMPATIBLE_TYPES, {
+        data: { typeA: a.type, typeB: b.type },
+      });
     }
 
     const isBooleanA = a instanceof BooleanSymbol;
     const isBooleanB = b instanceof BooleanSymbol;
     if (isBooleanA && !isBooleanB) {
-      throw new InterpreterError(`Cannot compare ${a.type} with ${b.type}. Incompatible types.`);
+      throw new InterpreterError(OperationsErrorCode.INCOMPATIBLE_TYPES, {
+        data: { typeA: a.type, typeB: b.type },
+      });
     }
 
     if (
@@ -141,9 +155,9 @@ function orderingComparisonWrapper(fn: (a: any, b: any) => boolean): BooleanOper
       b instanceof NumberWithUnitSymbol &&
       a.unit !== b.unit
     ) {
-      throw new InterpreterError(
-        `Cannot compare NumberWithUnit of different units: ${a.unit} and ${b.unit}`,
-      );
+      throw new InterpreterError(OperationsErrorCode.CANNOT_COMPARE_UNITS, {
+        data: { unitA: a.unit, unitB: b.unit },
+      });
     }
 
     return new BooleanSymbol(fn(a.value, b.value));
@@ -153,12 +167,16 @@ function orderingComparisonWrapper(fn: (a: any, b: any) => boolean): BooleanOper
 export const LOGICAL_BOOLEAN_IMPLEMENTATIONS: Record<string, BooleanOperationFunction> = {
   [Operations.LOGIC_AND]: (a: ISymbolType, b: ISymbolType) => {
     if (!(a instanceof BooleanSymbol) || !(b instanceof BooleanSymbol))
-      throw new InterpreterError("&& operator requires boolean operands.");
+      throw new InterpreterError(OperationsErrorCode.LOGICAL_REQUIRES_BOOLEAN, {
+        data: { operator: "&&" },
+      });
     return new BooleanSymbol(a.value && b.value);
   },
   [Operations.LOGIC_OR]: (a: ISymbolType, b: ISymbolType) => {
     if (!(a instanceof BooleanSymbol) || !(b instanceof BooleanSymbol))
-      throw new InterpreterError("|| operator requires boolean operands.");
+      throw new InterpreterError(OperationsErrorCode.LOGICAL_REQUIRES_BOOLEAN, {
+        data: { operator: "||" },
+      });
     return new BooleanSymbol(a.value || b.value);
   },
 };
@@ -171,9 +189,9 @@ function powerWrapper(func: (a: number, b: number) => number): OperationFunction
 
     // Reject if both operands have units
     if (opA.unit && opB.unit) {
-      throw new InterpreterError(
-        `Cannot raise ${opA.unit} to the power of ${opB.unit}. Unit exponents are not supported.`,
-      );
+      throw new InterpreterError(OperationsErrorCode.UNIT_EXPONENT_NOT_SUPPORTED, {
+        data: { unitA: opA.unit, unitB: opB.unit },
+      });
     }
 
     const resultValue = func(opA.value, opB.value);
@@ -218,7 +236,7 @@ export const MATH_IMPLEMENTATIONS: Record<string, OperationFunction> = {
   [Operations.SUBTRACT]: mathWrapper((a, b) => a - b),
   [Operations.MULTIPLY]: multiplyDivideWrapper((a, b) => a * b),
   [Operations.DIVIDE]: multiplyDivideWrapper((a, b) => {
-    if (b === 0) throw new InterpreterError("Division by zero.");
+    if (b === 0) throw new InterpreterError(OperationsErrorCode.DIVISION_BY_ZERO);
     return a / b;
   }),
   [Operations.POWER]: powerWrapper((a, b) => a ** b),

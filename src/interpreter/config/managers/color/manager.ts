@@ -1,5 +1,10 @@
 import { attributesToString, type ReassignNode } from "@interpreter/ast";
-import { InterpreterError } from "@interpreter/errors";
+import {
+  ColorErrorCode,
+  InterpreterError,
+  isLanguageError,
+  serializeError,
+} from "@interpreter/errors";
 import { parseExpression } from "@interpreter/parser";
 import { ColorSymbol, type dynamicColorValue, typeEquals } from "@interpreter/symbols";
 import { Interpreter } from "@src/lib";
@@ -7,7 +12,6 @@ import type { ISymbolType } from "@src/types";
 import { buildSchemaUri, parseVersionString } from "@src/utils/schema-uri";
 import { type } from "arktype";
 import { BaseManager } from "../base-manager";
-import { ColorManagerError } from "./errors";
 import {
   type ColorSpecification,
   ColorSpecificationSchema,
@@ -97,18 +101,17 @@ export class ColorManager extends BaseManager<ColorSpecification, ColorSymbol, C
           const config = this.createInterpreterConfig({ input: args });
           const result = new Interpreter(ast, config).interpret();
           if (!(result instanceof ColorSymbol)) {
-            throw new InterpreterError("Initializer crashed!");
+            throw new InterpreterError(ColorErrorCode.INITIALIZER_CRASHED);
           }
           return result as ColorSymbol;
         };
         this.initializers.set(spec.keyword.toLowerCase(), fn);
-      } catch (error: any) {
-        throw new InterpreterError(
-          "Could not construct initializer from schema",
-          undefined,
-          undefined,
-          { error, spec, script: spec.script.script },
-        );
+      } catch (error) {
+        throw new InterpreterError(ColorErrorCode.INITIALIZER_CONSTRUCT_FAILED, {
+          data: {
+            error: isLanguageError(error) ? error : serializeError(error),
+          },
+        });
       }
     });
   }
@@ -127,12 +130,9 @@ export class ColorManager extends BaseManager<ColorSpecification, ColorSymbol, C
           // If the result is not a ColorSymbol, wrap it in one with the target type
           const targetSpec = this.getSpec(targetUri);
           if (!targetSpec) {
-            throw new InterpreterError(
-              `Conversion function crashed! No target spec found for ${targetUri}`,
-              undefined,
-              undefined,
-              { result },
-            );
+            throw new InterpreterError(ColorErrorCode.CONVERSION_TARGET_NOT_FOUND, {
+              data: { targetUri },
+            });
           }
           const value = typeof result === "string" ? result : (result?.value ?? null);
           return new ColorSymbol(value, targetSpec.name, this.parentConfig);
@@ -197,7 +197,9 @@ ${spec}`,
   public executeInitializer(keyword: string, args: Array<ISymbolType>): ColorSymbol {
     const initFn = this.initializers.get(keyword.toLowerCase());
     if (!initFn) {
-      throw new InterpreterError(`No initializer found for keyword '${keyword}'`);
+      throw new InterpreterError(ColorErrorCode.INITIALIZER_NOT_FOUND, {
+        data: { keyword },
+      });
     }
     return initFn(args);
   }
@@ -217,13 +219,19 @@ ${spec}`,
     const sourceUri = this.specTypes.get(color.subType?.toLowerCase() || "");
 
     if (!sourceUri) {
-      throw new InterpreterError(`No source URI found for color type '${color.subType}'`);
+      throw new InterpreterError(ColorErrorCode.SOURCE_URI_NOT_FOUND, {
+        data: { colorType: color.subType || "unknown" },
+      });
     }
 
     try {
       return this.convertThroughPath(color, sourceUri, targetUri);
-    } catch (error: any) {
-      throw new InterpreterError(error.message);
+    } catch (error) {
+      throw new InterpreterError(ColorErrorCode.CONVERSION_ERROR, {
+        data: {
+          error: isLanguageError(error) ? error : serializeError(error),
+        },
+      });
     }
   }
 
@@ -236,7 +244,9 @@ ${spec}`,
     const targetUri = this.specTypes.get(targetType.toLowerCase());
 
     if (!targetUri) {
-      throw new InterpreterError(`No target URI found for color type '${targetType}'`);
+      throw new InterpreterError(ColorErrorCode.TARGET_URI_NOT_FOUND, {
+        data: { colorType: targetType },
+      });
     }
 
     return this.convertTo(color, targetUri);
@@ -246,66 +256,66 @@ ${spec}`,
     const attributes = node.attributesStringChain();
 
     if (typeof color.value === "string") {
-      throw new InterpreterError(
-        `Cannot set attributes '${attributesToString(attributes)}' for variable ${node.identifierToString()} on Color type ${color.subType}.`,
-        node.token?.line,
-        node.token,
-        this,
-        ColorManagerError.STRING_VALUE_ASSIGNMENT,
-      );
+      throw new InterpreterError(ColorErrorCode.STRING_VALUE_ASSIGNMENT, {
+        token: node.token,
+        data: {
+          attributes: attributesToString(attributes),
+          identifier: node.identifierToString(),
+          colorType: color.subType || "unknown",
+        },
+      });
     }
 
     if (attributes.length !== 1) {
-      throw new InterpreterError(
-        `Attributes chain '${attributesToString(attributes)}' for variable ${node.identifierToString()} on Color type ${color.subType} may not exceed one element.`,
-        node.token?.line,
-        node.token,
-        this,
-        ColorManagerError.ATTRIBUTE_CHAIN_TOO_LONG,
-      );
+      throw new InterpreterError(ColorErrorCode.ATTRIBUTE_CHAIN_TOO_LONG, {
+        token: node.token,
+        data: {
+          attributes: attributesToString(attributes),
+          identifier: node.identifierToString(),
+          colorType: color.subType || "unknown",
+        },
+      });
     }
     const attr = attributes[0];
 
     const spec = this.getSpecFromColor(color);
     if (!spec) {
-      throw new InterpreterError(
-        `No spec ${color.subType} defined for variable ${node.identifierToString()} on Color type ${color.subType}.`,
-        node.token?.line,
-        node.token,
-        this,
-        ColorManagerError.MISSING_SPEC,
-      );
+      throw new InterpreterError(ColorErrorCode.MISSING_SPEC, {
+        token: node.token,
+        data: {
+          identifier: node.identifierToString(),
+          colorType: color.subType || "unknown",
+        },
+      });
     }
 
     if (!spec.schema) {
-      throw new InterpreterError(
-        `No schema defined for Color type ${color.subType}.`,
-        node.token?.line,
-        node.token,
-        this,
-        ColorManagerError.MISSING_SCHEMA,
-      );
+      throw new InterpreterError(ColorErrorCode.MISSING_SCHEMA, {
+        token: node.token,
+        data: { colorType: color.subType || "unknown" },
+      });
     }
 
     const attrSchema = spec.schema.properties[attr];
     if (!attrSchema) {
-      throw new InterpreterError(
-        `No schema found for key ${attr} for variable ${node.identifierToString()} on Color type ${color.subType}.`,
-        node.token?.line,
-        node.token,
-        this,
-        ColorManagerError.MISSING_SCHEMA,
-      );
+      throw new InterpreterError(ColorErrorCode.MISSING_ATTRIBUTE_SCHEMA, {
+        token: node.token,
+        data: {
+          attribute: attr,
+          identifier: node.identifierToString(),
+          colorType: color.subType || "unknown",
+        },
+      });
     }
 
     if (!typeEquals(attrSchema.type, attributeValue.type)) {
-      throw new InterpreterError(
-        `Invalid attribute type '${attributeValue.type}'. Use a valid type. (${validSchemaTypes.join(", ")})`,
-        node.token?.line,
-        node.token,
-        this,
-        ColorManagerError.INVALID_ATTRIBUTE_TYPE,
-      );
+      throw new InterpreterError(ColorErrorCode.INVALID_ATTRIBUTE_TYPE, {
+        token: node.token,
+        data: {
+          attributeType: attributeValue.type,
+          validTypes: validSchemaTypes.join(", "),
+        },
+      });
     }
 
     // Update the value by mutation

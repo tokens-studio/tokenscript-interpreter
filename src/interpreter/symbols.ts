@@ -1,6 +1,6 @@
 import { type ISymbolType, SupportedFormats } from "@src/types";
 import type { Config } from "./config/config";
-import { InterpreterError } from "./errors";
+import { InterpreterError, SymbolsErrorCode } from "./errors";
 import { isValidHex } from "./utils/color";
 import { capitalize } from "./utils/string";
 import {
@@ -82,7 +82,9 @@ const expectStringKey = (key: StringSymbol | string): string => {
   if (key instanceof StringSymbol && isSome(key.value)) {
     return key.value;
   }
-  throw new InterpreterError(`Key must be a StringSymbol or string, got ${typeof key}.`);
+  throw new InterpreterError(SymbolsErrorCode.KEY_MUST_BE_STRING, {
+    data: { type: typeof key },
+  });
 };
 
 export const DictionaryImpl = {
@@ -172,7 +174,9 @@ export const ListImpl = {
   insert(value: ISymbolType[], indexSymbol: ISymbolType, item: ISymbolType): void {
     const index = indexSymbol.value as number;
     if (isOutOfBoundsInclusive(value, index)) {
-      throw new InterpreterError("Index out of range for insert.");
+      throw new InterpreterError(SymbolsErrorCode.INDEX_OUT_OF_RANGE, {
+        data: { operation: "insert" },
+      });
     }
     value.splice(index, 0, item.cloneIfMutable());
   },
@@ -180,7 +184,9 @@ export const ListImpl = {
   deleteAt(value: ISymbolType[], indexSymbol: ISymbolType): void {
     const index = indexSymbol.value as number;
     if (isOutOfBounds(value, index)) {
-      throw new InterpreterError("Index out of range for deletion.");
+      throw new InterpreterError(SymbolsErrorCode.INDEX_OUT_OF_RANGE, {
+        data: { operation: "deletion" },
+      });
     }
     value.splice(index, 1);
   },
@@ -197,7 +203,9 @@ export const ListImpl = {
   get(value: ISymbolType[], indexSymbol: ISymbolType): ISymbolType {
     const index = indexSymbol.value as number;
     if (isOutOfBounds(value, index)) {
-      throw new InterpreterError("Index out of range for get.");
+      throw new InterpreterError(SymbolsErrorCode.INDEX_OUT_OF_RANGE, {
+        data: { operation: "get" },
+      });
     }
     return value[index];
   },
@@ -205,7 +213,9 @@ export const ListImpl = {
   update(value: ISymbolType[], indexSymbol: ISymbolType, item: ISymbolType): void {
     const index = indexSymbol.value as number;
     if (isOutOfBounds(value, index)) {
-      throw new InterpreterError("Index out of range for update.");
+      throw new InterpreterError(SymbolsErrorCode.INDEX_OUT_OF_RANGE, {
+        data: { operation: "update" },
+      });
     }
     value[index] = item.cloneIfMutable();
   },
@@ -321,9 +331,9 @@ export abstract class BaseSymbolType implements ISymbolType {
       methodName.toLowerCase()
     ];
     if (!methodDefinition || !this.hasMethod?.(methodName, args)) {
-      throw new InterpreterError(
-        `Method '${methodName}' not found or invalid arguments on type '${this.type}'.`,
-      );
+      throw new InterpreterError(SymbolsErrorCode.METHOD_NOT_FOUND, {
+        data: { methodName, type: this.type },
+      });
     }
 
     if (methodDefinition.args.length === 0) {
@@ -336,9 +346,9 @@ export abstract class BaseSymbolType implements ISymbolType {
       if (args[index] !== undefined) {
         processedArgs.push(args[index]);
       } else if (!argDef.optional) {
-        throw new InterpreterError(
-          `Missing required argument '${argDef.name}' for method '${methodName}'.`,
-        );
+        throw new InterpreterError(SymbolsErrorCode.MISSING_REQUIRED_ARGUMENT, {
+          data: { argumentName: argDef.name, methodName },
+        });
       }
     });
 
@@ -350,11 +360,15 @@ export abstract class BaseSymbolType implements ISymbolType {
   }
 
   getAttribute?(attributeName: string): ISymbolType | null {
-    throw new InterpreterError(`Attribute '${attributeName}' not found on type '${this.type}'.`);
+    throw new InterpreterError(SymbolsErrorCode.ATTRIBUTE_NOT_FOUND, {
+      data: { attributeName, type: this.type },
+    });
   }
 
   setAttribute?(attributeName: string, _value: ISymbolType): void {
-    throw new InterpreterError(`Cannot set attribute '${attributeName}' on type '${this.type}'.`);
+    throw new InterpreterError(SymbolsErrorCode.CANNOT_SET_ATTRIBUTE, {
+      data: { attributeName, type: this.type },
+    });
   }
 }
 
@@ -431,7 +445,9 @@ export class NumberSymbol extends BaseSymbolType {
     } else if (isNull(value)) {
       safeValue = null;
     } else {
-      throw new InterpreterError(`Value must be int or float, got ${typeof value}.`);
+      throw new InterpreterError(SymbolsErrorCode.VALUE_MUST_BE_TYPE, {
+        data: { expectedType: "int or float", actualType: typeof value },
+      });
     }
     super(safeValue, config);
     this.value = safeValue;
@@ -443,7 +459,9 @@ export class NumberSymbol extends BaseSymbolType {
 
   expectSafeValue(val: any): asserts val is number {
     if (isNone(val)) {
-      throw new InterpreterError("Value must be int or float, got null.");
+      throw new InterpreterError(SymbolsErrorCode.VALUE_IS_NULL, {
+        data: { expectedType: "int or float" },
+      });
     }
   }
 
@@ -471,7 +489,9 @@ export class NumberSymbol extends BaseSymbolType {
     if (attributeName === "value") {
       return new NumberSymbol(this.value, this.config);
     }
-    throw new InterpreterError(`Attribute '${attributeName}' not found on Number.`);
+    throw new InterpreterError(SymbolsErrorCode.ATTRIBUTE_NOT_FOUND, {
+      data: { attributeName, type: "Number" },
+    });
   }
 
   // Direct translation of to_string method from token_interpreter/symbols.py
@@ -486,7 +506,9 @@ export class NumberSymbol extends BaseSymbolType {
 
     const base = radix.value;
     if (!Number.isInteger(base) || base < 2 || base > 36) {
-      throw new InterpreterError(`Invalid radix: ${base}. Must be between 2 and 36.`);
+      throw new InterpreterError(SymbolsErrorCode.INVALID_RADIX, {
+        data: { radix: base },
+      });
     }
 
     let numValue: number;
@@ -513,7 +535,9 @@ export class NumberSymbol extends BaseSymbolType {
         return new StringSymbol(String(this.value), this.config);
       }
     } catch (e) {
-      throw new InterpreterError(`Error converting to base ${base}: ${String(e)}.`);
+      throw new InterpreterError(SymbolsErrorCode.RADIX_CONVERSION_ERROR, {
+        data: { base, error: String(e) },
+      });
     }
   }
 }
@@ -570,7 +594,9 @@ export class StringSymbol extends BaseSymbolType {
     } else if (value === null) {
       safeValue = null;
     } else {
-      throw new InterpreterError(`Value must be string, got ${typeof value}.`);
+      throw new InterpreterError(SymbolsErrorCode.VALUE_MUST_BE_TYPE, {
+        data: { expectedType: "string", actualType: typeof value },
+      });
     }
     super(safeValue, config);
     this.value = safeValue;
@@ -582,7 +608,9 @@ export class StringSymbol extends BaseSymbolType {
 
   expectSafeValue(val: any): asserts val is string {
     if (val === null || val === undefined) {
-      throw new InterpreterError("Value must be a string, got null.");
+      throw new InterpreterError(SymbolsErrorCode.VALUE_IS_NULL, {
+        data: { expectedType: "string" },
+      });
     }
   }
 
@@ -619,7 +647,9 @@ export class StringSymbol extends BaseSymbolType {
       other.expectSafeValue(other.value);
       return new StringSymbol(this.value + other.value, this.config);
     }
-    throw new InterpreterError(`Cannot concatenate String ${typeof other} to String.`);
+    throw new InterpreterError(SymbolsErrorCode.CANNOT_CONCATENATE, {
+      data: { type: `String ${typeof other}` },
+    });
   }
 
   split(delimiter?: StringSymbol): ListSymbol {
@@ -649,7 +679,9 @@ export class StringSymbol extends BaseSymbolType {
       );
     }
 
-    throw new InterpreterError(`Cannot split String by ${typeof delimiter}.`);
+    throw new InterpreterError(SymbolsErrorCode.CANNOT_SPLIT, {
+      data: { type: typeof delimiter },
+    });
   }
 }
 
@@ -667,7 +699,9 @@ export class BooleanSymbol extends BaseSymbolType {
     } else if (value === null) {
       safeValue = null;
     } else {
-      throw new InterpreterError(`Value must be boolean, got ${typeof value}.`);
+      throw new InterpreterError(SymbolsErrorCode.VALUE_MUST_BE_TYPE, {
+        data: { expectedType: "boolean", actualType: typeof value },
+      });
     }
     super(safeValue, config);
     this.value = safeValue;
@@ -679,7 +713,9 @@ export class BooleanSymbol extends BaseSymbolType {
 
   expectSafeValue(val: any): asserts val is boolean {
     if (val === null || val === undefined) {
-      throw new InterpreterError("Value must be a boolean, got null.");
+      throw new InterpreterError(SymbolsErrorCode.VALUE_IS_NULL, {
+        data: { expectedType: "boolean" },
+      });
     }
   }
 
@@ -891,13 +927,17 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
     } else if (value === null) {
       safeValue = null;
     } else {
-      throw new InterpreterError(`Value must be number or NumberSymbol, got ${typeof value}.`);
+      throw new InterpreterError(SymbolsErrorCode.VALUE_MUST_BE_TYPE, {
+        data: { expectedType: "number or NumberSymbol", actualType: typeof value },
+      });
     }
     super(safeValue, config);
     this.value = safeValue;
 
     if (typeof unit === "string" && !(Object.values(SupportedFormats) as string[]).includes(unit)) {
-      throw new InterpreterError(`Invalid unit: ${unit}`);
+      throw new InterpreterError(SymbolsErrorCode.ATTRIBUTE_NOT_FOUND, {
+        data: { attributeName: unit, type: "Unit" },
+      });
     }
     this.unit = typeof unit === "string" ? (unit as SupportedFormats) : unit;
   }
@@ -928,7 +968,9 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
 
   expectSafeValue(val: any): asserts val is number {
     if (val === null || val === undefined) {
-      throw new InterpreterError("Value must be a number, got null.");
+      throw new InterpreterError(SymbolsErrorCode.VALUE_IS_NULL, {
+        data: { expectedType: "number" },
+      });
     }
   }
 
@@ -970,7 +1012,9 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
     if (attributeName === "value") {
       return new NumberSymbol(this.value, this.config);
     }
-    throw new InterpreterError(`Attribute '${attributeName}' not found on NumberWithUnit.`);
+    throw new InterpreterError(SymbolsErrorCode.ATTRIBUTE_NOT_FOUND, {
+      data: { attributeName, type: "NumberWithUnit" },
+    });
   }
 
   getTypeName(): string {
@@ -1059,7 +1103,9 @@ export class DictionarySymbol extends BaseSymbolType {
     } else if (isObject(value)) {
       safeValue = new Map(Object.entries(value));
     } else {
-      throw new InterpreterError(`Value must be dict, got ${typeof value}.`);
+      throw new InterpreterError(SymbolsErrorCode.VALUE_MUST_BE_TYPE, {
+        data: { expectedType: "dict", actualType: typeof value },
+      });
     }
     super(safeValue, config);
     this.value = safeValue;
@@ -1252,7 +1298,9 @@ export class TokenSymbol extends BaseSymbolType {
     } else if (isNull(value)) {
       safeValue = new Map();
     } else {
-      throw new InterpreterError(`Token value must be a Record or List, got ${typeof value}.`);
+      throw new InterpreterError(SymbolsErrorCode.VALUE_MUST_BE_TYPE, {
+        data: { expectedType: "Record or List", actualType: typeof value },
+      });
     }
 
     super(safeValue, config);
@@ -1276,21 +1324,27 @@ export class TokenSymbol extends BaseSymbolType {
       const indexSymbol =
         typeof keyOrIndex === "number" ? new NumberSymbol(keyOrIndex, this.config) : keyOrIndex;
       if (!(indexSymbol instanceof NumberSymbol)) {
-        throw new InterpreterError("List get requires a Number index.");
+        throw new InterpreterError(SymbolsErrorCode.CANNOT_OPERATION_ON_TOKEN_TYPE, {
+          data: { operation: "List get", valueType: "non-Number index" },
+        });
       }
       return ListImpl.get(this.value, indexSymbol);
     }
     const keySymbol =
       typeof keyOrIndex === "string" ? new StringSymbol(keyOrIndex, this.config) : keyOrIndex;
     if (!(keySymbol instanceof StringSymbol)) {
-      throw new InterpreterError("Dictionary get requires a String key.");
+      throw new InterpreterError(SymbolsErrorCode.CANNOT_OPERATION_ON_TOKEN_TYPE, {
+        data: { operation: "Dictionary get", valueType: "non-String key" },
+      });
     }
     return DictionaryImpl.get(this.value, keySymbol, this.config);
   }
 
   set(key: StringSymbol, value: ISymbolType): TokenSymbol {
     if (isArray(this.value)) {
-      throw new InterpreterError("Cannot set key on Token with List value.");
+      throw new InterpreterError(SymbolsErrorCode.CANNOT_OPERATION_ON_TOKEN_TYPE, {
+        data: { operation: "set key", valueType: "List" },
+      });
     }
     DictionaryImpl.set(this.value, key, value);
     return this;
@@ -1298,7 +1352,9 @@ export class TokenSymbol extends BaseSymbolType {
 
   keys(): ListSymbol {
     if (isArray(this.value)) {
-      throw new InterpreterError("Cannot get keys from Token with List value.");
+      throw new InterpreterError(SymbolsErrorCode.CANNOT_OPERATION_ON_TOKEN_TYPE, {
+        data: { operation: "get keys", valueType: "List" },
+      });
     }
     return DictionaryImpl.keys(this.value, this.config);
   }
@@ -1320,7 +1376,9 @@ export class TokenSymbol extends BaseSymbolType {
   // List-specific methods
   append(item: ISymbolType): TokenSymbol {
     if (isMap(this.value)) {
-      throw new InterpreterError("Cannot append to Token with Dictionary value.");
+      throw new InterpreterError(SymbolsErrorCode.CANNOT_OPERATION_ON_TOKEN_TYPE, {
+        data: { operation: "append", valueType: "Dictionary" },
+      });
     }
     ListImpl.append(this.value, item);
     return this;
@@ -1328,7 +1386,9 @@ export class TokenSymbol extends BaseSymbolType {
 
   extend(...items: ISymbolType[]): TokenSymbol {
     if (isMap(this.value)) {
-      throw new InterpreterError("Cannot extend Token with Dictionary value.");
+      throw new InterpreterError(SymbolsErrorCode.CANNOT_OPERATION_ON_TOKEN_TYPE, {
+        data: { operation: "extend", valueType: "Dictionary" },
+      });
     }
     ListImpl.extend(this.value, ...items);
     return this;
@@ -1336,7 +1396,9 @@ export class TokenSymbol extends BaseSymbolType {
 
   insert(indexSymbol: NumberSymbol, item: ISymbolType): TokenSymbol {
     if (isMap(this.value)) {
-      throw new InterpreterError("Cannot insert into Token with Dictionary value.");
+      throw new InterpreterError(SymbolsErrorCode.CANNOT_OPERATION_ON_TOKEN_TYPE, {
+        data: { operation: "insert", valueType: "Dictionary" },
+      });
     }
     ListImpl.insert(this.value, indexSymbol, item);
     return this;
@@ -1344,7 +1406,9 @@ export class TokenSymbol extends BaseSymbolType {
 
   delete(indexSymbol: NumberSymbol): TokenSymbol {
     if (isMap(this.value)) {
-      throw new InterpreterError("Cannot delete from Token with Dictionary value.");
+      throw new InterpreterError(SymbolsErrorCode.CANNOT_OPERATION_ON_TOKEN_TYPE, {
+        data: { operation: "delete", valueType: "Dictionary" },
+      });
     }
     ListImpl.deleteAt(this.value, indexSymbol);
     return this;
@@ -1352,14 +1416,18 @@ export class TokenSymbol extends BaseSymbolType {
 
   index(item: ISymbolType): NumberSymbol {
     if (isMap(this.value)) {
-      throw new InterpreterError("Cannot get index from Token with Dictionary value.");
+      throw new InterpreterError(SymbolsErrorCode.CANNOT_OPERATION_ON_TOKEN_TYPE, {
+        data: { operation: "get index", valueType: "Dictionary" },
+      });
     }
     return ListImpl.indexOf(this.value, item, this.config);
   }
 
   update(indexSymbol: NumberSymbol, item: ISymbolType): TokenSymbol {
     if (isMap(this.value)) {
-      throw new InterpreterError("Cannot update Token with Dictionary value.");
+      throw new InterpreterError(SymbolsErrorCode.CANNOT_OPERATION_ON_TOKEN_TYPE, {
+        data: { operation: "update", valueType: "Dictionary" },
+      });
     }
     ListImpl.update(this.value, indexSymbol, item);
     return this;
@@ -1367,7 +1435,9 @@ export class TokenSymbol extends BaseSymbolType {
 
   join(separator?: StringSymbol): StringSymbol {
     if (isMap(this.value)) {
-      throw new InterpreterError("Cannot join Token with Dictionary value.");
+      throw new InterpreterError(SymbolsErrorCode.CANNOT_OPERATION_ON_TOKEN_TYPE, {
+        data: { operation: "join", valueType: "Dictionary" },
+      });
     }
     return ListImpl.join(this.value, separator, this.config);
   }
@@ -1444,14 +1514,16 @@ export class ColorSymbol extends BaseSymbolType {
     const isValid = isNull(value) || isHex || isDynamic;
 
     if (!isValid) {
-      throw new InterpreterError(
-        `Value ${value} must be string, attributes record, or null, got ${typeof value}.`,
-      );
+      throw new InterpreterError(SymbolsErrorCode.INVALID_COLOR_VALUE, {
+        data: { value: String(value), type: typeof value },
+      });
     }
 
     if (isHex) {
       if (!isValidHex(value)) {
-        throw new InterpreterError(`Invalid hex color format: ${value}`);
+        throw new InterpreterError(SymbolsErrorCode.INVALID_HEX_COLOR, {
+          data: { value: String(value) },
+        });
       }
     }
 
@@ -1481,7 +1553,7 @@ export class ColorSymbol extends BaseSymbolType {
 
   to(targetType: string): ColorSymbol {
     if (!this.config?.colorManager) {
-      throw new InterpreterError("ColorManager not available");
+      throw new InterpreterError(SymbolsErrorCode.COLOR_MANAGER_NOT_AVAILABLE);
     }
     return this.config.colorManager.convertToByType(this, targetType);
   }
@@ -1550,7 +1622,9 @@ export class ColorSymbol extends BaseSymbolType {
       }
     }
 
-    throw new InterpreterError(`Attribute '${attributeName}' not found on Color.`);
+    throw new InterpreterError(SymbolsErrorCode.ATTRIBUTE_NOT_FOUND, {
+      data: { attributeName, type: "Color" },
+    });
   }
 
   hasMethod(methodName: string, args: ISymbolType[]): boolean {
@@ -1581,7 +1655,9 @@ export class ColorSymbol extends BaseSymbolType {
       return this.config.colorManager.convertToByType(this, methodName);
     }
 
-    throw new InterpreterError(`Method '${methodName}' not found on type '${this.type}'.`);
+    throw new InterpreterError(SymbolsErrorCode.METHOD_NOT_FOUND, {
+      data: { methodName, type: this.type },
+    });
   }
 
   getTypeName(): string {
@@ -1619,7 +1695,9 @@ export const jsValueToSymbolType = (value: any, config?: Config): ISymbolType =>
     return new DictionarySymbol(dict, config);
   }
 
-  throw new InterpreterError(`Invalid value type: ${typeof value}`);
+  throw new InterpreterError(SymbolsErrorCode.VALUE_MUST_BE_TYPE, {
+    data: { expectedType: "valid TokenScript type", actualType: typeof value },
+  });
 };
 
 export const nullableSymbolTypes = {

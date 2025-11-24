@@ -1,3 +1,4 @@
+import { ProcessorError, ProcessorErrorCode } from "@interpreter/errors";
 import { isObject } from "../../interpreter/utils/type";
 import { extractSetNames, resolveThemes, selectTheme } from "./theme-resolver";
 import type { TokenData } from "./tokens";
@@ -13,15 +14,21 @@ export function determineSets(
   if (activeTheme) {
     const resolved = resolveThemes(jsonFiles);
     if (!resolved) {
-      throw new Error(`No themes found for theme "${activeTheme}"`);
+      throw new ProcessorError(ProcessorErrorCode.NO_THEMES_FOUND, {
+        data: { themeName: activeTheme },
+      });
     }
 
     const [, themes] = resolved;
     const theme = selectTheme(themes, activeTheme);
 
     if (!theme) {
-      const available = themes.map((t) => t.name).join(", ");
-      throw new Error(`Theme "${activeTheme}" not found. Available: ${available}`);
+      throw new ProcessorError(ProcessorErrorCode.THEME_NOT_FOUND, {
+        data: {
+          themeName: activeTheme,
+          availableThemes: themes.map((t) => t.name),
+        },
+      });
     }
 
     return extractSetNames(theme.selectedTokenSets);
@@ -35,10 +42,12 @@ export function determineSets(
 
   // If normalized to multiple entries but no selection made, we can't proceed
   if (keys.length > 1) {
-    throw new Error(`Multiple sets found (${keys.join(", ")}) - specify activeSets or activeTheme`);
+    throw new ProcessorError(ProcessorErrorCode.MULTIPLE_SETS_NO_SELECTION, {
+      data: { setNames: keys },
+    });
   }
 
-  throw new Error("No sets to process");
+  throw new ProcessorError(ProcessorErrorCode.NO_SETS_TO_PROCESS);
 }
 
 export function flattenToTokens(
@@ -51,11 +60,15 @@ export function flattenToTokens(
     const setData = sets[setName];
 
     if (!setData) {
-      throw new Error(`Token set "${setName}" not found`);
+      throw new ProcessorError(ProcessorErrorCode.TOKEN_SET_NOT_FOUND, {
+        data: { setName },
+      });
     }
 
     if (!isObject(setData)) {
-      throw new Error(`Token set "${setName}" is not an object`);
+      throw new ProcessorError(ProcessorErrorCode.TOKEN_SET_INVALID, {
+        data: { setName },
+      });
     }
 
     const setTokens = isNested(setData) ? flattenTokensObject(setData, "") : recordToMap(setData);
