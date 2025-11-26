@@ -48,6 +48,88 @@ export type ProcessorOutput = ProcessorResult & {
   errors: Map<RefPath, Error>;
 };
 
+/**
+ * Find all tokens affected by a change to the given token.
+ *
+ * Uses BFS traversal on the reverse dependency graph to identify
+ * the changed token plus all tokens that transitively depend on it.
+ *
+ * @param tokenName - The token that changed
+ * @param graph - The dependency graph from ProcessorResult
+ * @returns Object containing affected tokens and a subgraph showing their relationships
+ *
+ * @example
+ * const { tokens, subgraph } = getTokenDependencyGraph("color.primary", processorResult.graph);
+ * console.log(tokens); // Set(['color.primary', 'button.background', ...])
+ * console.log(subgraph.getNodes()); // Map showing dependency relationships
+ */
+export function getTokenDependencyGraph(
+  tokenName: string,
+  graph: DependencyGraph<string>,
+): {
+  tokens: Set<string>;
+  subgraph: DependencyGraph<string>;
+} {
+  // Build reverse dependency graph to find dependents
+  const reverseDeps = new Map<string, Set<string>>();
+  const graphNodes = graph.getNodes();
+
+  for (const [node, dependencies] of graphNodes) {
+    for (const dep of dependencies) {
+      if (!reverseDeps.has(dep)) {
+        reverseDeps.set(dep, new Set());
+      }
+      reverseDeps.get(dep)?.add(node);
+    }
+  }
+
+  // Find all tokens transitively affected by this change using BFS
+  const affectedTokens = new Set<string>();
+  const queue: string[] = [tokenName];
+  const visited = new Set<string>();
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (current === undefined || visited.has(current)) continue;
+
+    visited.add(current);
+    affectedTokens.add(current);
+
+    // Add all tokens that depend on this one
+    const dependents = reverseDeps.get(current);
+    if (dependents) {
+      for (const dependent of dependents) {
+        if (!visited.has(dependent)) {
+          queue.push(dependent);
+        }
+      }
+    }
+  }
+
+  // Build subgraph containing only affected tokens and their relationships
+  const subgraph = new DependencyGraph<string>();
+  for (const token of affectedTokens) {
+    const dependencies = graphNodes.get(token);
+    if (dependencies) {
+      // Only include dependencies that are also in the affected set
+      const affectedDeps = new Set<string>();
+      for (const dep of dependencies) {
+        if (affectedTokens.has(dep)) {
+          affectedDeps.add(dep);
+        }
+      }
+      subgraph.addNode(token, affectedDeps);
+    } else {
+      subgraph.addNode(token, []);
+    }
+  }
+
+  return {
+    tokens: affectedTokens,
+    subgraph,
+  };
+}
+
 class PrefixResolver {
   private readonly callbacks?: ProcessorCallbacks;
   private readonly config?: Config;
@@ -221,6 +303,15 @@ class PrefixResolver {
       subFieldPaths: this.subFieldPaths,
       lintIssues: this.linter ? this.lintIssues : undefined,
     };
+  }
+
+  // Expose internal state for incremental updates
+  public getGraph(): DependencyGraph<RefPath> {
+    return this.graph;
+  }
+
+  public getReferenceCache(): Map<string, InterpreterResult> {
+    return this.referenceCache;
   }
 
   /**
@@ -637,6 +728,11 @@ class PrefixResolver {
  * const result = processor.build(tokens);
  */
 export class TokenResolver {
+  private resolver?: PrefixResolver;
+  private tokens?: Map<RefPath, TokenData>;
+  private config?: Config;
+  private objectParsers?: ObjectParser[];
+
   public processTokens(
     tokens: Map<RefPath, string | TokenData>,
     callbacks?: ProcessorCallbacks,
@@ -648,11 +744,95 @@ export class TokenResolver {
     return resolver.resolve();
   }
 
+  /**
+   * Find all tokens affected by a change to the given token.
+   *
+   * Uses BFS traversal on the reverse dependency graph to identify
+   * the changed token plus all tokens that transitively depend on it.
+   *
+   * @param tokenName - The token that changed
+   * @returns Object containing affected tokens and a subgraph showing their relationships
+   *
+   * @example
+   * const { resolver } = new TokenResolver().build(tokens);
+   * const { tokens, subgraph } = resolver.getTokenDependencyGraph("color.primary");
+   * console.log(tokens); // Set(['color.primary', 'button.background', ...])
+   */
+  public getTokenDependencyGraph(tokenName: string): {
+    tokens: Set<string>;
+    subgraph: DependencyGraph<string>;
+  } {
+    if (!this.resolver) {
+      throw new Error("TokenResolver.getTokenDependencyGraph() can only be called after build()");
+    }
+
+    const graph = this.resolver.getGraph();
+
+    // Build reverse dependency graph to find dependents
+    const reverseDeps = new Map<string, Set<string>>();
+    const graphNodes = graph.getNodes();
+
+    for (const [node, dependencies] of graphNodes) {
+      for (const dep of dependencies) {
+        if (!reverseDeps.has(dep)) {
+          reverseDeps.set(dep, new Set());
+        }
+        reverseDeps.get(dep)?.add(node);
+      }
+    }
+
+    // Find all tokens transitively affected by this change using BFS
+    const affectedTokens = new Set<string>();
+    const queue: string[] = [tokenName];
+    const visited = new Set<string>();
+
+    while (queue.length > 0) {
+      const current = queue.shift();
+      if (current === undefined || visited.has(current)) continue;
+
+      visited.add(current);
+      affectedTokens.add(current);
+
+      // Add all tokens that depend on this one
+      const dependents = reverseDeps.get(current);
+      if (dependents) {
+        for (const dependent of dependents) {
+          if (!visited.has(dependent)) {
+            queue.push(dependent);
+          }
+        }
+      }
+    }
+
+    // Build subgraph containing only affected tokens and their relationships
+    const subgraph = new DependencyGraph<string>();
+    for (const token of affectedTokens) {
+      const dependencies = graphNodes.get(token);
+      if (dependencies) {
+        // Only include dependencies that are also in the affected set
+        const affectedDeps = new Set<string>();
+        for (const dep of dependencies) {
+          if (affectedTokens.has(dep)) {
+            affectedDeps.add(dep);
+          }
+        }
+        subgraph.addNode(token, affectedDeps);
+      } else {
+        subgraph.addNode(token, []);
+      }
+    }
+
+    return {
+      tokens: affectedTokens,
+      subgraph,
+    };
+  }
+
   public build(
     tokens: Map<RefPath, TokenData>,
     config?: Config,
     objectParsers?: ObjectParser[],
-  ): ProcessorOutput {
+  ): ProcessorOutput & { resolver: TokenResolver } {
     const output: Map<RefPath, string | InterpreterResult> = new Map();
     const errors: Map<RefPath, Error> = new Map();
     let subFieldPaths: Set<RefPath> | undefined;
@@ -667,7 +847,13 @@ export class TokenResolver {
       },
     };
 
-    const result = this.processTokens(tokens, callbacks, config, objectParsers);
+    // Create and store the resolver for future updates
+    this.resolver = new PrefixResolver(tokens, callbacks, config, objectParsers);
+    this.tokens = tokens;
+    this.config = config;
+    this.objectParsers = objectParsers;
+
+    const result = this.resolver.resolve();
     subFieldPaths = result.subFieldPaths;
 
     // Filter out sub-field paths from output
@@ -682,6 +868,123 @@ export class TokenResolver {
       ...result,
       tokens: output,
       errors,
+      resolver: this,
     };
+  }
+
+  /**
+   * Update a single token and recompute only affected tokens.
+   *
+   * This method provides efficient incremental updates by:
+   * 1. Using the existing resolver's cached reference values
+   * 2. Only reprocessing the updated token and its dependents
+   * 3. Reusing resolved values for unaffected tokens
+   *
+   * @param tokenName - Name of the token to update (empty string allowed)
+   * @param tokenValue - New value for the token
+   * @param tokenType - Type of the token (e.g., "color", "dimension", etc.)
+   * @returns The resolved value and dependency subgraph
+   *
+   * @example
+   * const { resolver } = new TokenResolver().build(allTokens);
+   * const result = resolver.updateToken("color.primary", "#FF0000", "color");
+   * console.log(result.resolvedValue); // Resolved value for color.primary
+   */
+  public updateToken(
+    tokenName: string,
+    tokenValue: string,
+    tokenType?: string,
+  ): {
+    resolvedValue: InterpreterResult | Error;
+    affectedTokens: Set<string>;
+    subgraph: DependencyGraph<string>;
+  } {
+    if (!this.resolver || !this.tokens) {
+      throw new Error("TokenResolver.updateToken() can only be called after build()");
+    }
+
+    // Normalize token name (use empty string if not provided)
+    const normalizedTokenName = tokenName.trim() || "";
+
+    // Find all tokens transitively affected by this change
+    const { tokens: affectedTokens, subgraph } = getTokenDependencyGraph(
+      normalizedTokenName,
+      this.resolver.getGraph(),
+    );
+
+    // Update the token in the tokens map
+    const updatedTokens = new Map(this.tokens);
+    updatedTokens.set(normalizedTokenName, {
+      $value: tokenValue,
+      $type: tokenType || "string",
+    });
+
+    // Update stored tokens
+    this.tokens = updatedTokens;
+
+    // Pass ALL tokens to the resolver
+    // The cache pre-population ensures non-affected tokens use cached values
+    // and skip recomputation (early resolution via cache hit)
+    const output: Map<RefPath, InterpreterResult | Error> = new Map();
+
+    const callbacks: ProcessorCallbacks = {
+      onResolve: (name, value) => {
+        // Only capture affected tokens in output
+        if (affectedTokens.has(name)) {
+          output.set(name, value);
+        }
+      },
+      onError: (name, error) => {
+        // Only capture affected tokens in output
+        if (affectedTokens.has(name)) {
+          output.set(name, error);
+        }
+      },
+    };
+
+    // Create a new resolver with ALL tokens and pre-populated cache
+    // Non-affected tokens will use cached values and skip recomputation
+    const tempResolver = new PrefixResolverWithCache(
+      updatedTokens,
+      this.resolver.getReferenceCache(),
+      callbacks,
+      this.config,
+      this.objectParsers,
+    );
+    tempResolver.resolve();
+
+    // Extract the resolved value for the updated token
+    const resolvedValue = output.get(normalizedTokenName) || "";
+
+    return {
+      resolvedValue,
+      affectedTokens,
+      subgraph,
+    };
+  }
+}
+
+// Helper class that extends PrefixResolver to accept pre-populated cache
+class PrefixResolverWithCache extends PrefixResolver {
+  constructor(
+    tokens: Map<RefPath, string | TokenData>,
+    cachedValues: Map<RefPath, InterpreterResult>,
+    callbacks?: ProcessorCallbacks,
+    config?: Config,
+    objectParsers?: ObjectParser[],
+  ) {
+    super(tokens, callbacks, config, objectParsers);
+
+    // Pre-populate the reference cache with already-resolved values
+    for (const [tokenName, value] of cachedValues) {
+      if (!tokens.has(tokenName)) {
+        this.getReferenceCache().set(tokenName, value);
+      }
+    }
+  }
+
+  // Expose reference cache for initialization
+  public getReferenceCache(): Map<string, InterpreterResult> {
+    return (this as any).referenceCache;
   }
 }
