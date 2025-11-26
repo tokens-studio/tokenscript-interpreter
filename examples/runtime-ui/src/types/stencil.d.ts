@@ -12,9 +12,17 @@ declare global {
             allTokens?: Map<string, TokenData>;
             config?: Config;
             tokenType?: string;
+            submitHandler?: (data: TokenFormData) => void;
+            cancelHandler?: () => void;
           }
         >;
         class?: string;
+        initialData?: TokenFormData;
+        allTokens?: Map<string, TokenData>;
+        config?: Config;
+        tokenType?: string;
+        submitHandler?: (data: TokenFormData) => void;
+        cancelHandler?: () => void;
       };
     }
   }

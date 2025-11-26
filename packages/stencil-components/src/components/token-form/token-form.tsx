@@ -24,8 +24,8 @@ export class TokenForm {
   @Prop() allTokens: Map<string, TokenData> = new Map();
   @Prop() config?: Config;
   @Prop() tokenType: string = "string";
-  @Prop() onFormSubmit?: (data: TokenFormData) => void;
-  @Prop() onFormCancel?: () => void;
+  @Prop() submitHandler?: (data: TokenFormData) => void;
+  @Prop() cancelHandler?: () => void;
 
   @State() formData: TokenFormData = {
     name: "",
@@ -81,15 +81,15 @@ export class TokenForm {
   handleSubmit = (e: Event) => {
     e.preventDefault();
     this.formSubmit.emit({ data: this.formData });
-    if (this.onFormSubmit) {
-      this.onFormSubmit(this.formData);
+    if (this.submitHandler) {
+      this.submitHandler(this.formData);
     }
   };
 
   handleCancel = () => {
     this.formCancel.emit({});
-    if (this.onFormCancel) {
-      this.onFormCancel();
+    if (this.cancelHandler) {
+      this.cancelHandler();
     }
   };
 
