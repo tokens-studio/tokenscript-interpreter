@@ -11,19 +11,22 @@ describe("token-form", () => {
     expect(page.root).toBeTruthy();
   });
 
-  it("initializes with initial data when provided", async () => {
-    const initialData = {
-      name: "primary.color",
-      value: "#3b82f6",
-    };
+  it("initializes with selected token when provided", async () => {
+    const tokens = new Map([["primary.color", { $value: "#3b82f6", $type: "color" }]]);
 
     const page = await newSpecPage({
       components: [TokenForm],
-      template: () => <token-form initialData={initialData} />,
+      template: () => (
+        <token-form
+          tokens={tokens}
+          selectedToken="primary.color"
+        />
+      ),
     });
 
     const component = page.rootInstance as TokenForm;
-    expect(component.formData).toEqual(initialData);
+    expect(component.formData.name).toBe("primary.color");
+    expect(component.formData.value).toBe("#3b82f6");
   });
 
   it("updates form data on input change", async () => {
@@ -64,7 +67,13 @@ describe("token-form", () => {
     expect(submitSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         detail: {
-          data: component.formData,
+          data: {
+            name: "test.token",
+            token: {
+              $value: "#fff",
+              $type: "string",
+            },
+          },
         },
       }),
     );

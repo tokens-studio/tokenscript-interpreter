@@ -46,6 +46,7 @@ export type ProcessorCallbacks = {
 export type ProcessorOutput = ProcessorResult & {
   tokens: Map<RefPath, InterpreterResult>;
   errors: Map<RefPath, Error>;
+  resolver: TokenResolver;
 };
 
 /**
@@ -832,7 +833,7 @@ export class TokenResolver {
     tokens: Map<RefPath, TokenData>,
     config?: Config,
     objectParsers?: ObjectParser[],
-  ): ProcessorOutput & { resolver: TokenResolver } {
+  ): ProcessorOutput {
     const output: Map<RefPath, string | InterpreterResult> = new Map();
     const errors: Map<RefPath, Error> = new Map();
     let subFieldPaths: Set<RefPath> | undefined;

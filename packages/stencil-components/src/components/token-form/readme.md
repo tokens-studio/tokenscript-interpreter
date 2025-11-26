@@ -7,14 +7,13 @@
 
 ## Properties
 
-| Property        | Attribute    | Description | Type                            | Default     |
-| --------------- | ------------ | ----------- | ------------------------------- | ----------- |
-| `allTokens`     | --           |             | `Map<string, TokenData>`        | `new Map()` |
-| `cancelHandler` | --           |             | `() => void`                    | `undefined` |
-| `config`        | --           |             | `Config`                        | `undefined` |
-| `initialData`   | --           |             | `TokenFormData`                 | `undefined` |
-| `submitHandler` | --           |             | `(data: TokenFormData) => void` | `undefined` |
-| `tokenType`     | `token-type` |             | `string`                        | `"string"`  |
+| Property        | Attribute        | Description | Type                                      | Default     |
+| --------------- | ---------------- | ----------- | ----------------------------------------- | ----------- |
+| `cancelHandler` | --               |             | `() => void`                              | `undefined` |
+| `config`        | --               |             | `Config`                                  | `undefined` |
+| `selectedToken` | `selected-token` |             | `string`                                  | `undefined` |
+| `submitHandler` | --               |             | `(data: TokenFormSubmitData) => void`     | `undefined` |
+| `tokens`        | --               |             | `Map<string, TokenData> \| TokenResolver` | `undefined` |
 
 
 ## Events

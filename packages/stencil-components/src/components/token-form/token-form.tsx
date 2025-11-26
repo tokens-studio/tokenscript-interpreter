@@ -1,18 +1,25 @@
-import { Component, type EventEmitter, Event, Prop, State, h } from "@stencil/core";
-import { processTokens, type Config, type TokenData } from "@tokens-studio/tokenscript-interpreter";
+import { Component, Event, type EventEmitter, h, Prop, State, Watch } from "@stencil/core";
+import {
+  type Config,
+  processTokens,
+  type TokenData,
+  TokenResolver,
+} from "@tokens-studio/tokenscript-interpreter";
 
-export interface TokenFormData {
+export interface TokenFormSubmitData {
   name: string;
-  value: string;
+  token: TokenData;
 }
 
 export interface TokenFormSubmitEvent {
-  data: TokenFormData;
+  data: TokenFormSubmitData;
 }
 
 export interface TokenFormCancelEvent {
   reason?: string;
 }
+
+export type TokenSource = Map<string, TokenData> | TokenResolver;
 
 @Component({
   tag: "token-form",
@@ -20,14 +27,21 @@ export interface TokenFormCancelEvent {
   shadow: true,
 })
 export class TokenForm {
-  @Prop() initialData?: TokenFormData;
-  @Prop() allTokens: Map<string, TokenData> = new Map();
+  @Prop() selectedToken?: string;
+  @Prop() tokens?: TokenSource;
   @Prop() config?: Config;
-  @Prop() tokenType: string = "string";
-  @Prop() submitHandler?: (data: TokenFormData) => void;
+  @Prop() submitHandler?: (data: TokenFormSubmitData) => void;
   @Prop() cancelHandler?: () => void;
 
-  @State() formData: TokenFormData = {
+  // Internal resolver instance
+  private resolver?: TokenResolver;
+  // Cache of all tokens (for lookup when we have a TokenResolver)
+  private tokensMap?: Map<string, TokenData>;
+
+  @State() formData: {
+    name: string;
+    value: string;
+  } = {
     name: "",
     value: "",
   };
@@ -38,35 +52,129 @@ export class TokenForm {
   @Event() formCancel: EventEmitter<TokenFormCancelEvent>;
 
   componentWillLoad() {
-    if (this.initialData) {
-      this.formData = { ...this.initialData };
-    }
+    this.initializeResolver();
+    this.loadSelectedToken();
     this.computeResolvedValue();
+  }
+
+  @Watch("tokens")
+  tokensChanged() {
+    this.initializeResolver();
+    this.loadSelectedToken();
+    this.computeResolvedValue();
+  }
+
+  @Watch("selectedToken")
+  selectedTokenChanged() {
+    this.loadSelectedToken();
+    this.computeResolvedValue();
+  }
+
+  private loadSelectedToken(): void {
+    if (!this.selectedToken) {
+      this.formData = {
+        name: "",
+        value: "",
+      };
+      return;
+    }
+
+    if (!this.tokensMap) {
+      // If we have a selected token but no tokens map, clear the form
+      this.formData = {
+        name: "",
+        value: "",
+      };
+      return;
+    }
+
+    const tokenData = this.tokensMap.get(this.selectedToken);
+    if (tokenData) {
+      this.formData = {
+        name: this.selectedToken,
+        value: String(tokenData.$value),
+      };
+    } else {
+      // Token not found in map
+      this.formData = {
+        name: "",
+        value: "",
+      };
+    }
+  }
+
+  private initializeResolver(): void {
+    if (!this.tokens) {
+      this.resolver = undefined;
+      this.tokensMap = undefined;
+      return;
+    }
+
+    if (this.tokens instanceof TokenResolver) {
+      // Use the passed resolver directly
+      this.resolver = this.tokens;
+      // We don't have direct access to the tokens map from TokenResolver
+      // Consumer should pass the original map separately if they need selectedToken functionality
+      this.tokensMap = undefined;
+    } else {
+      // Create a TokenResolver from the Map
+      const tokenResolver = new TokenResolver();
+      tokenResolver.build(this.tokens, this.config);
+      // After build(), the tokenResolver instance has internal state ready for updateToken
+      this.resolver = tokenResolver;
+      this.tokensMap = this.tokens;
+    }
   }
 
   private formatResolvedValue(value: unknown): string {
     if (value === null || value === undefined) return String(value);
-    if (typeof value === "object") {
-      try {
-        return JSON.stringify(value);
-      } catch {
-        return String(value);
+    if (value instanceof Error) return value.message;
+
+    // Call toString() on symbols to get their formatted representation
+    if (typeof value === "object" && "toString" in value && typeof value.toString === "function") {
+      return value.toString();
+    }
+
+    return String(value);
+  }
+
+  private getTokenType(): string {
+    // Try to get type from existing token data
+    if (this.tokensMap && this.formData.name) {
+      const existingToken = this.tokensMap.get(this.formData.name);
+      if (existingToken?.$type) {
+        return existingToken.$type;
       }
     }
-    return String(value);
+    // Default to string if no type found
+    return "string";
   }
 
   private computeResolvedValue = () => {
     const previewName = this.formData.name.trim() || "";
-    const previewTokens = new Map(this.allTokens);
+    const tokenType = this.getTokenType();
 
-    previewTokens.set(previewName, {
-      $value: this.formData.value,
-      $type: this.tokenType,
-    });
+    // If we have a resolver, use updateToken for efficient incremental updates
+    if (this.resolver) {
+      try {
+        const result = this.resolver.updateToken(previewName, this.formData.value, tokenType);
+        this.resolvedValue = this.formatResolvedValue(result.resolvedValue);
+        this.resolveError = result.resolvedValue instanceof Error ? result.resolvedValue : null;
+      } catch (error) {
+        this.resolveError = error as Error;
+        this.resolvedValue = "";
+      }
+      return;
+    }
 
+    // Fallback: no token source, just process the single token
     try {
-      const result = processTokens<Map<string, unknown>>(previewTokens, {
+      const singleToken = new Map<string, TokenData>();
+      singleToken.set(previewName, {
+        $value: this.formData.value,
+        $type: tokenType,
+      });
+      const result = processTokens<Map<string, unknown>>(singleToken, {
         config: this.config,
       });
       const resolved = result.tokens.get(previewName);
@@ -80,9 +188,17 @@ export class TokenForm {
 
   handleSubmit = (e: Event) => {
     e.preventDefault();
-    this.formSubmit.emit({ data: this.formData });
+    const tokenData: TokenData = {
+      $value: this.formData.value,
+      $type: this.getTokenType(),
+    };
+    const submitData: TokenFormSubmitData = {
+      name: this.formData.name,
+      token: tokenData,
+    };
+    this.formSubmit.emit({ data: submitData });
     if (this.submitHandler) {
-      this.submitHandler(this.formData);
+      this.submitHandler(submitData);
     }
   };
 
@@ -93,7 +209,7 @@ export class TokenForm {
     }
   };
 
-  handleInputChange = (field: keyof TokenFormData, value: string) => {
+  handleInputChange = (field: "name" | "value", value: string) => {
     this.formData = {
       ...this.formData,
       [field]: value,
@@ -108,7 +224,10 @@ export class TokenForm {
         part="form"
         onSubmit={this.handleSubmit}
       >
-        <div class="token-form__field" part="field">
+        <div
+          class="token-form__field"
+          part="field"
+        >
           <label
             htmlFor="token-name"
             class="token-form__label"
@@ -127,7 +246,10 @@ export class TokenForm {
           />
         </div>
 
-        <div class="token-form__field" part="field">
+        <div
+          class="token-form__field"
+          part="field"
+        >
           <label
             htmlFor="token-value"
             class="token-form__label"
@@ -144,20 +266,34 @@ export class TokenForm {
             onInput={(e) => this.handleInputChange("value", (e.target as HTMLInputElement).value)}
             required
           />
-          <div class="token-form__resolved" part="resolved">
-            {this.resolveError ? (
-              <span class="token-form__resolved--error" part="resolved-error">
-                Error: {this.resolveError.message}
-              </span>
-            ) : (
-              <span class="token-form__resolved--success" part="resolved-success">
-                Resolved: {this.resolvedValue}
-              </span>
-            )}
-          </div>
+          {this.formData.value && (
+            <div
+              class="token-form__resolved"
+              part="resolved"
+            >
+              {this.resolveError ? (
+                <span
+                  class="token-form__resolved--error"
+                  part="resolved-error"
+                >
+                  Error: {this.resolveError.message}
+                </span>
+              ) : (
+                <span
+                  class="token-form__resolved--success"
+                  part="resolved-success"
+                >
+                  Resolved: {this.resolvedValue}
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
-        <div class="token-form__actions" part="actions">
+        <div
+          class="token-form__actions"
+          part="actions"
+        >
           <button
             type="button"
             class="token-form__button token-form__button--cancel"

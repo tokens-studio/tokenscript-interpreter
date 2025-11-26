@@ -12,9 +12,12 @@ import { Label } from "@/components/ui/label"
 import { TOKEN_GROUPS } from "@/state"
 import { useTokensState } from "@/state/tokens-context"
 
-export interface TokenFormData {
+export interface TokenFormSubmitData {
   name: string
-  value: string
+  token: {
+    $value: unknown
+    $type?: string
+  }
 }
 
 interface TokenDialogProps {
@@ -85,16 +88,19 @@ export function TokenDialog({
     }
   }, [appState.sets, editingToken, editingTokenSet, mergedTokens, open])
 
-  const handleStencilSubmit = (data: TokenFormData) => {
+  const handleStencilSubmit = (data: TokenFormSubmitData) => {
+    const tokenValue = String(data.token.$value)
+    const tokenType = data.token.$type || "string"
+
     if (editingToken && editingTokenSet) {
       if (editingTokenSet !== tokenSetName) {
         deleteToken(editingTokenSet, editingToken)
-        addToken(tokenSetName, data.name, tokenType, data.value)
+        addToken(tokenSetName, data.name, tokenType, tokenValue)
       } else {
-        updateToken(tokenSetName, editingToken, data.name, tokenType, data.value)
+        updateToken(tokenSetName, editingToken, data.name, tokenType, tokenValue)
       }
     } else {
-      addToken(tokenSetName, data.name, tokenType, data.value)
+      addToken(tokenSetName, data.name, tokenType, tokenValue)
     }
     onOpenChange(false)
     onResetEditing()
@@ -150,16 +156,9 @@ export function TokenDialog({
           {tokenSetSelect}
           {/* @ts-expect-error - Stencil web component not recognized by JSX types */}
           <token-form
-            initialData={
-              editingToken
-                ? {
-                    name: tokenName,
-                    value: tokenValue,
-                  }
-                : undefined
-            }
-            allTokens={mergedTokens}
-            tokenType={tokenType}
+            key={editingToken || "new"}
+            selectedToken={editingToken || undefined}
+            tokens={mergedTokens}
             submitHandler={handleStencilSubmit}
             cancelHandler={handleStencilCancel}
             class="token-form-stencil"

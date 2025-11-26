@@ -92,13 +92,9 @@
 
       const tokenForm = document.getElementById('token-form');
 
-      // Pass token data to the form
-      tokenForm.allTokens = exampleTokens;
-      tokenForm.tokenType = 'borderRadius';
-      tokenForm.initialData = {
-        name: 'borderRadius.lg',
-        value: '{borderRadius.md} * 1.5'
-      };
+      // Pass the Map to tokens - component will create a TokenResolver internally
+      tokenForm.tokens = exampleTokens;
+      tokenForm.selectedToken = 'borderRadius.md';
 
       tokenForm.addEventListener('formSubmit', (event) => {
         const output = document.getElementById('form-output');

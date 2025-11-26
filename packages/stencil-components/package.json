@@ -21,7 +21,7 @@
     "generate": "stencil generate"
   },
   "dependencies": {
-    "@tokens-studio/tokenscript-interpreter": "0.9.0"
+    "@tokens-studio/tokenscript-interpreter": "file:../.."
   },
   "devDependencies": {
     "@stencil/core": "^4.27.1",
