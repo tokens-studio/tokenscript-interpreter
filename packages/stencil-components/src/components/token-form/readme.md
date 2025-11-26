@@ -25,6 +25,23 @@
 | `formSubmit` |             | `CustomEvent<TokenFormSubmitEvent>` |
 
 
+## Shadow Parts
+
+| Part                 | Description |
+| -------------------- | ----------- |
+| `"actions"`          |             |
+| `"button"`           |             |
+| `"button-cancel"`    |             |
+| `"button-submit"`    |             |
+| `"field"`            |             |
+| `"form"`             |             |
+| `"input"`            |             |
+| `"label"`            |             |
+| `"resolved"`         |             |
+| `"resolved-error"`   |             |
+| `"resolved-success"` |             |
+
+
 ----------------------------------------------
 
 *Built with [StencilJS](https://stenciljs.com/)*

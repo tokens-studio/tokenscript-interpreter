@@ -105,12 +105,14 @@ export class TokenForm {
     return (
       <form
         class="token-form"
+        part="form"
         onSubmit={this.handleSubmit}
       >
-        <div class="token-form__field">
+        <div class="token-form__field" part="field">
           <label
             htmlFor="token-name"
             class="token-form__label"
+            part="label"
           >
             Name
           </label>
@@ -118,16 +120,18 @@ export class TokenForm {
             id="token-name"
             type="text"
             class="token-form__input"
+            part="input"
             value={this.formData.name}
             onInput={(e) => this.handleInputChange("name", (e.target as HTMLInputElement).value)}
             required
           />
         </div>
 
-        <div class="token-form__field">
+        <div class="token-form__field" part="field">
           <label
             htmlFor="token-value"
             class="token-form__label"
+            part="label"
           >
             Value
           </label>
@@ -135,27 +139,29 @@ export class TokenForm {
             id="token-value"
             type="text"
             class="token-form__input"
+            part="input"
             value={this.formData.value}
             onInput={(e) => this.handleInputChange("value", (e.target as HTMLInputElement).value)}
             required
           />
-          <div class="token-form__resolved">
+          <div class="token-form__resolved" part="resolved">
             {this.resolveError ? (
-              <span class="token-form__resolved--error">
+              <span class="token-form__resolved--error" part="resolved-error">
                 Error: {this.resolveError.message}
               </span>
             ) : (
-              <span class="token-form__resolved--success">
+              <span class="token-form__resolved--success" part="resolved-success">
                 Resolved: {this.resolvedValue}
               </span>
             )}
           </div>
         </div>
 
-        <div class="token-form__actions">
+        <div class="token-form__actions" part="actions">
           <button
             type="button"
             class="token-form__button token-form__button--cancel"
+            part="button button-cancel"
             onClick={this.handleCancel}
           >
             Cancel
@@ -163,6 +169,8 @@ export class TokenForm {
           <button
             type="submit"
             class="token-form__button token-form__button--submit"
+            part="button button-submit"
+            onSubmit={this.handleSubmit}
           >
             Submit
           </button>
