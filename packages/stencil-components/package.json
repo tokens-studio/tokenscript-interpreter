@@ -2,18 +2,12 @@
   "name": "@tokenscript/stencil-components",
   "version": "0.0.1",
   "description": "Stencil Component Starter",
-  "main": "dist/components/index.js",
-  "module": "dist/components/index.js",
-  "types": "dist/components/index.d.ts",
+  "main": "dist/components/token-form.js",
+  "module": "dist/components/token-form.js",
+  "type": "module",
   "exports": {
-    ".": {
-      "import": "./dist/components/index.js",
-      "types": "./dist/components/index.d.ts"
-    },
-    "./token-form": {
-      "import": "./dist/components/token-form.js",
-      "types": "./dist/components/token-form.d.ts"
-    }
+    ".": "./dist/components/token-form.js",
+    "./dist/components/token-form.js": "./dist/components/token-form.js"
   },
   "files": [
     "dist/",
