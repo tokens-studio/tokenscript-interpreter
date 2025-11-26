@@ -1,4 +1,5 @@
 import { Component, type EventEmitter, Event, Prop, State, h } from "@stencil/core";
+import { processTokens, type Config, type TokenData } from "@tokens-studio/tokenscript-interpreter";
 
 export interface TokenFormData {
   name: string;
@@ -20,11 +21,18 @@ export interface TokenFormCancelEvent {
 })
 export class TokenForm {
   @Prop() initialData?: TokenFormData;
+  @Prop() allTokens: Map<string, TokenData> = new Map();
+  @Prop() config?: Config;
+  @Prop() tokenType: string = "string";
+  @Prop() onFormSubmit?: (data: TokenFormData) => void;
+  @Prop() onFormCancel?: () => void;
 
   @State() formData: TokenFormData = {
     name: "",
     value: "",
   };
+  @State() resolvedValue: string = "";
+  @State() resolveError: Error | null = null;
 
   @Event() formSubmit: EventEmitter<TokenFormSubmitEvent>;
   @Event() formCancel: EventEmitter<TokenFormCancelEvent>;
@@ -33,15 +41,56 @@ export class TokenForm {
     if (this.initialData) {
       this.formData = { ...this.initialData };
     }
+    this.computeResolvedValue();
   }
+
+  private formatResolvedValue(value: unknown): string {
+    if (value === null || value === undefined) return String(value);
+    if (typeof value === "object") {
+      try {
+        return JSON.stringify(value);
+      } catch {
+        return String(value);
+      }
+    }
+    return String(value);
+  }
+
+  private computeResolvedValue = () => {
+    const previewName = this.formData.name.trim() || "";
+    const previewTokens = new Map(this.allTokens);
+
+    previewTokens.set(previewName, {
+      $value: this.formData.value,
+      $type: this.tokenType,
+    });
+
+    try {
+      const result = processTokens<Map<string, unknown>>(previewTokens, {
+        config: this.config,
+      });
+      const resolved = result.tokens.get(previewName);
+      this.resolvedValue = this.formatResolvedValue(resolved);
+      this.resolveError = null;
+    } catch (error) {
+      this.resolveError = error as Error;
+      this.resolvedValue = "";
+    }
+  };
 
   handleSubmit = (e: Event) => {
     e.preventDefault();
     this.formSubmit.emit({ data: this.formData });
+    if (this.onFormSubmit) {
+      this.onFormSubmit(this.formData);
+    }
   };
 
   handleCancel = () => {
     this.formCancel.emit({});
+    if (this.onFormCancel) {
+      this.onFormCancel();
+    }
   };
 
   handleInputChange = (field: keyof TokenFormData, value: string) => {
@@ -49,6 +98,7 @@ export class TokenForm {
       ...this.formData,
       [field]: value,
     };
+    this.computeResolvedValue();
   };
 
   render() {
@@ -89,6 +139,17 @@ export class TokenForm {
             onInput={(e) => this.handleInputChange("value", (e.target as HTMLInputElement).value)}
             required
           />
+          <div class="token-form__resolved">
+            {this.resolveError ? (
+              <span class="token-form__resolved--error">
+                Error: {this.resolveError.message}
+              </span>
+            ) : (
+              <span class="token-form__resolved--success">
+                Resolved: {this.resolvedValue}
+              </span>
+            )}
+          </div>
         </div>
 
         <div class="token-form__actions">

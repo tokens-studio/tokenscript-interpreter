@@ -7,10 +7,14 @@
 
 ## Properties
 
-| Property      | Attribute | Description | Type            | Default     |
-| ------------- | --------- | ----------- | --------------- | ----------- |
-| `initialData` | --        |             | `TokenFormData` | `undefined` |
-| `tokenTypes`  | --        |             | `string[]`      | `[]`        |
+| Property       | Attribute    | Description | Type                            | Default     |
+| -------------- | ------------ | ----------- | ------------------------------- | ----------- |
+| `allTokens`    | --           |             | `Map<string, TokenData>`        | `new Map()` |
+| `config`       | --           |             | `Config`                        | `undefined` |
+| `initialData`  | --           |             | `TokenFormData`                 | `undefined` |
+| `onFormCancel` | --           |             | `() => void`                    | `undefined` |
+| `onFormSubmit` | --           |             | `(data: TokenFormData) => void` | `undefined` |
+| `tokenType`    | `token-type` |             | `string`                        | `"string"`  |
 
 
 ## Events

@@ -34,3 +34,17 @@
 .token-form__button {
   cursor: pointer;
 }
+
+.token-form__resolved {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.token-form__resolved--success {
+  color: var(--token-form-resolved-color, #6b7280);
+}
+
+.token-form__resolved--error {
+  color: var(--token-form-error-color, #ef4444);
+}

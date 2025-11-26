@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react"
 import { processTokens } from "@tokens-studio/tokenscript-interpreter"
-import type { TokenFormData } from "@/components/ui/token-form-wrapper"
+import "@tokenscript/stencil-components"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -14,9 +14,13 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { TokenFormWrapper } from "@/components/ui/token-form-wrapper"
 import { TOKEN_GROUPS } from "@/state"
 import { useTokensState } from "@/state/tokens-context"
+
+export interface TokenFormData {
+  name: string
+  value: string
+}
 
 interface TokenDialogProps {
   open: boolean
@@ -214,7 +218,8 @@ export function TokenDialog({
         {useStencilForm ? (
           <div className="grid gap-4">
             {tokenSetSelect}
-            <TokenFormWrapper
+            {/* @ts-expect-error - Stencil web component not recognized by JSX types */}
+            <token-form
               initialData={
                 editingToken
                   ? {
@@ -223,8 +228,11 @@ export function TokenDialog({
                     }
                   : undefined
               }
-              onSubmit={handleStencilSubmit}
-              onCancel={handleStencilCancel}
+              allTokens={mergedTokens}
+              tokenType={tokenType}
+              onFormSubmit={handleStencilSubmit}
+              onFormCancel={handleStencilCancel}
+              class="token-form-stencil"
             />
           </div>
         ) : (

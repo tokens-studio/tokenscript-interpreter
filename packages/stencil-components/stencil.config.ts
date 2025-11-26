@@ -27,5 +27,6 @@ export const config: Config = {
   },
   testing: {
     browserHeadless: "shell",
+    transformIgnorePatterns: ["/node_modules/(?!(@tokens-studio|arktype)/)"],
   },
 };
