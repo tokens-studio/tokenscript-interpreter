@@ -75,19 +75,30 @@
       </div>
     </div>
 
-    <div class="demo-section">
-      <h2>Token Value Input (Autocomplete)</h2>
-      <p>An autocomplete input for selecting token references.</p>
-      <token-value-input id="token-value-input"></token-value-input>
-      <div id="autocomplete-output" class="output" style="display: none;">
-        <strong>Selected Token:</strong>
-        <pre id="autocomplete-data"></pre>
-      </div>
-    </div>
-
     <script>
-      // Setup token form
+      // Setup token form with example tokens that include references
+      const exampleTokens = new Map([
+        ['color.primary.500', { $value: '#3b82f6', $type: 'color' }],
+        ['color.primary.600', { $value: '#2563eb', $type: 'color' }],
+        ['spacing.sm', { $value: '0.5rem', $type: 'spacing' }],
+        ['spacing.md', { $value: '1rem', $type: 'spacing' }],
+        ['spacing.lg', { $value: '{spacing.md} * 1.5', $type: 'spacing' }],
+        ['borderRadius.sm', { $value: '4px', $type: 'borderRadius' }],
+        ['borderRadius.md', { $value: '{borderRadius.sm} * 2', $type: 'borderRadius' }],
+        ['fontSize.base', { $value: '16px', $type: 'fontSize' }],
+        ['fontWeight.normal', { $value: 400, $type: 'fontWeight' }],
+        ['fontWeight.bold', { $value: 700, $type: 'fontWeight' }],
+      ]);
+
       const tokenForm = document.getElementById('token-form');
+
+      // Pass token data to the form
+      tokenForm.allTokens = exampleTokens;
+      tokenForm.tokenType = 'borderRadius';
+      tokenForm.initialData = {
+        name: 'borderRadius.lg',
+        value: '{borderRadius.md} * 1.5'
+      };
 
       tokenForm.addEventListener('formSubmit', (event) => {
         const output = document.getElementById('form-output');
@@ -101,36 +112,6 @@
         const output = document.getElementById('form-output');
         output.style.display = 'none';
         console.log('Form cancelled');
-      });
-
-      // Example tokens for autocomplete
-      const exampleTokens = [
-        { name: 'color.primary.500', type: 'color', value: '#3b82f6', category: 'color' },
-        { name: 'color.primary.600', type: 'color', value: '#2563eb', category: 'color' },
-        { name: 'color.secondary.500', type: 'color', value: '#8b5cf6', category: 'color' },
-        { name: 'color.success.500', type: 'color', value: '#10b981', category: 'color' },
-        { name: 'color.danger.500', type: 'color', value: '#ef4444', category: 'color' },
-        { name: 'spacing.sm', type: 'dimension', value: '8px', category: 'spacing' },
-        { name: 'spacing.md', type: 'dimension', value: '16px', category: 'spacing' },
-        { name: 'spacing.lg', type: 'dimension', value: '24px', category: 'spacing' },
-        { name: 'fontSize.base', type: 'dimension', value: '16px', category: 'typography' },
-        { name: 'fontSize.lg', type: 'dimension', value: '18px', category: 'typography' },
-        { name: 'fontWeight.normal', type: 'number', value: '400', category: 'typography' },
-        { name: 'fontWeight.bold', type: 'number', value: '700', category: 'typography' },
-        { name: 'borderRadius.sm', type: 'dimension', value: '4px', category: 'border' },
-        { name: 'borderRadius.md', type: 'dimension', value: '8px', category: 'border' },
-      ];
-
-      // Setup autocomplete
-      const autocomplete = document.getElementById('token-value-input');
-      autocomplete.tokens = exampleTokens;
-
-      autocomplete.addEventListener('tokenSelect', (event) => {
-        const output = document.getElementById('autocomplete-output');
-        const data = document.getElementById('autocomplete-data');
-        output.style.display = 'block';
-        data.textContent = JSON.stringify(event.detail, null, 2);
-        console.log('Token selected:', event.detail);
       });
     </script>
   </body>
