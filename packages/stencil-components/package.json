@@ -2,27 +2,17 @@
   "name": "@tokenscript/stencil-components",
   "version": "0.0.1",
   "description": "Stencil Component Starter",
-  "main": "dist/index.cjs.js",
-  "module": "dist/index.js",
-  "types": "dist/types/index.d.ts",
-  "collection": "dist/collection/collection-manifest.json",
-  "collection:main": "dist/collection/index.js",
-  "unpkg": "dist/token-input/token-input.esm.js",
+  "main": "dist/components/index.js",
+  "module": "dist/components/index.js",
+  "types": "dist/components/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/token-input/token-input.esm.js",
-      "require": "./dist/token-input/token-input.cjs.js",
-      "types": "./dist/types/index.d.ts"
+      "import": "./dist/components/index.js",
+      "types": "./dist/components/index.d.ts"
     },
-    "./dist/*": "./dist/*",
-    "./token-value-input": {
-      "import": "./dist/components/token-value-input.js",
-      "types": "./dist/components/token-value-input.d.ts"
-    },
-    "./loader": {
-      "import": "./loader/index.js",
-      "require": "./loader/index.cjs",
-      "types": "./loader/index.d.ts"
+    "./token-form": {
+      "import": "./dist/components/token-form.js",
+      "types": "./dist/components/token-form.d.ts"
     }
   },
   "files": [

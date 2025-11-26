@@ -4,10 +4,6 @@ export const config: Config = {
   namespace: "token-input",
   outputTargets: [
     {
-      type: "dist",
-      esmLoaderPath: "../loader",
-    },
-    {
       type: "dist-custom-elements",
       customElementsExportBehavior: "auto-define-custom-elements",
       externalRuntime: false,

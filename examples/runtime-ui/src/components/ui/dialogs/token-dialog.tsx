@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react"
 import { processTokens } from "@tokens-studio/tokenscript-interpreter"
-import "@tokenscript/stencil-components"
+import "@tokenscript/stencil-components/token-form"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -230,8 +230,8 @@ export function TokenDialog({
               }
               allTokens={mergedTokens}
               tokenType={tokenType}
-              onFormSubmit={handleStencilSubmit}
-              onFormCancel={handleStencilCancel}
+              submitHandler={handleStencilSubmit}
+              cancelHandler={handleStencilCancel}
               class="token-form-stencil"
             />
           </div>
