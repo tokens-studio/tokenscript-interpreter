@@ -1,0 +1,51 @@
+{
+  "name": "@tokenscript/stencil-components",
+  "version": "0.0.1",
+  "description": "Stencil Component Starter",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.js",
+  "types": "dist/types/index.d.ts",
+  "collection": "dist/collection/collection-manifest.json",
+  "collection:main": "dist/collection/index.js",
+  "unpkg": "dist/token-input/token-input.esm.js",
+  "exports": {
+    ".": {
+      "import": "./dist/token-input/token-input.esm.js",
+      "require": "./dist/token-input/token-input.cjs.js",
+      "types": "./dist/types/index.d.ts"
+    },
+    "./dist/*": "./dist/*",
+    "./token-value-input": {
+      "import": "./dist/components/token-value-input.js",
+      "types": "./dist/components/token-value-input.d.ts"
+    },
+    "./loader": {
+      "import": "./loader/index.js",
+      "require": "./loader/index.cjs",
+      "types": "./loader/index.d.ts"
+    }
+  },
+  "files": [
+    "dist/",
+    "loader/"
+  ],
+  "scripts": {
+    "build": "stencil build",
+    "start": "stencil build --dev --watch --serve",
+    "test": "stencil test --spec --e2e",
+    "test.watch": "stencil test --spec --e2e --watchAll",
+    "generate": "stencil generate"
+  },
+  "dependencies": {
+    "@tokens-studio/tokenscript-interpreter": "0.9.0"
+  },
+  "devDependencies": {
+    "@stencil/core": "^4.27.1",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.13.5",
+    "jest": "^29.7.0",
+    "jest-cli": "^29.7.0",
+    "puppeteer": "^24.3.0"
+  },
+  "license": "MIT"
+}

@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react"
 import { processTokens } from "@tokens-studio/tokenscript-interpreter"
+import type { TokenFormData } from "@/components/ui/token-form-wrapper"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -13,6 +14,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { TokenFormWrapper } from "@/components/ui/token-form-wrapper"
 import { TOKEN_GROUPS } from "@/state"
 import { useTokensState } from "@/state/tokens-context"
 
@@ -51,6 +53,7 @@ export function TokenDialog({
   const [tokenName, setTokenName] = useState("")
   const [tokenType, setTokenType] = useState<string>(TOKEN_GROUPS[0])
   const [tokenValue, setTokenValue] = useState("")
+  const [useStencilForm, setUseStencilForm] = useState(false)
 
   const findTokenSet = (tokenPath: string): string => {
     for (const setName of setOrder) {
@@ -114,6 +117,28 @@ export function TokenDialog({
     resetForm()
   }
 
+  const handleStencilSubmit = (data: TokenFormData) => {
+    if (editingToken && editingTokenSet) {
+      if (editingTokenSet !== tokenSetName) {
+        deleteToken(editingTokenSet, editingToken)
+        addToken(tokenSetName, data.name, tokenType, data.value)
+      } else {
+        updateToken(tokenSetName, editingToken, data.name, tokenType, data.value)
+      }
+    } else {
+      addToken(tokenSetName, data.name, tokenType, data.value)
+    }
+    onOpenChange(false)
+    onResetEditing()
+    resetForm()
+  }
+
+  const handleStencilCancel = () => {
+    onOpenChange(false)
+    resetForm()
+    onResetEditing()
+  }
+
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
       resetForm()
@@ -146,32 +171,65 @@ export function TokenDialog({
   const dialogTitle = editingToken ? "Edit Token" : "Add Token"
   const dialogCta = editingToken ? "Save Token" : "Add Token"
 
+  const tokenSetSelect = (
+    <div className="grid gap-3">
+      <Label htmlFor="token-set">Set</Label>
+      <select
+        id="token-set"
+        className="border-input dark:bg-input/30 flex h-9 w-full items-center rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+        value={tokenSetName}
+        onChange={(event) => setTokenSetName(event.target.value)}
+        required
+      >
+        {availableSetNames.map((setName) => (
+          <option key={setName} value={setName}>
+            {setName}
+          </option>
+        ))}
+      </select>
+    </div>
+  )
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
-        <form className="grid gap-4" onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>{dialogTitle}</DialogTitle>
-            <DialogDescription>
-              {editingToken ? "Update this token." : "Create a token in a selected set."}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-3">
-            <Label htmlFor="token-set">Set</Label>
-            <select
-              id="token-set"
-              className="border-input dark:bg-input/30 flex h-9 w-full items-center rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-              value={tokenSetName}
-              onChange={(event) => setTokenSetName(event.target.value)}
-              required
-            >
-              {availableSetNames.map((setName) => (
-                <option key={setName} value={setName}>
-                  {setName}
-                </option>
-              ))}
-            </select>
+        <DialogHeader>
+          <DialogTitle>{dialogTitle}</DialogTitle>
+          <DialogDescription>
+            {editingToken ? "Update this token." : "Create a token in a selected set."}
+          </DialogDescription>
+          <div className="flex items-center gap-2 pt-2">
+            <label className="text-sm">
+              <input
+                type="checkbox"
+                checked={useStencilForm}
+                onChange={(e) => setUseStencilForm(e.target.checked)}
+                className="mr-2"
+              />
+              Use Stencil Component
+            </label>
           </div>
+        </DialogHeader>
+
+        {useStencilForm ? (
+          <div className="grid gap-4">
+            {tokenSetSelect}
+            <TokenFormWrapper
+              initialData={
+                editingToken
+                  ? {
+                      name: tokenName,
+                      value: tokenValue,
+                    }
+                  : undefined
+              }
+              onSubmit={handleStencilSubmit}
+              onCancel={handleStencilCancel}
+            />
+          </div>
+        ) : (
+          <form className="grid gap-4" onSubmit={handleSubmit}>
+            {tokenSetSelect}
           <div className="grid gap-3">
             <Label htmlFor="token-name">Name</Label>
             <Input
@@ -209,17 +267,18 @@ export function TokenDialog({
               Resolved value: {previewResolvedValue}
             </p>
           </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button type="button" variant="outline" onClick={resetForm}>
-                Cancel
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="outline" onClick={resetForm}>
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button type="submit" disabled={!tokenSetName}>
+                {dialogCta}
               </Button>
-            </DialogClose>
-            <Button type="submit" disabled={!tokenSetName}>
-              {dialogCta}
-            </Button>
-          </DialogFooter>
-        </form>
+            </DialogFooter>
+          </form>
+        )}
       </DialogContent>
     </Dialog>
   )

@@ -27,6 +27,6 @@ export default defineConfig({
   },
   // Ensure the library is not pre-bundled so changes are picked up immediately
   optimizeDeps: {
-    exclude: ["@tokens-studio/tokenscript-interpreter"],
+    exclude: ["@tokens-studio/tokenscript-interpreter", "@tokenscript/stencil-components"],
   },
 });

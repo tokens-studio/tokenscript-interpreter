@@ -22,6 +22,7 @@
     "@tailwindcss/vite": "^4.1.17",
     "@tanstack/react-table": "^8.21.3",
     "@tokens-studio/tokenscript-interpreter": "file:../../",
+    "@tokenscript/stencil-components": "file:../../packages/stencil-components",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.554.0",

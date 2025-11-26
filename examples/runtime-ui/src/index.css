@@ -142,3 +142,9 @@ body {
     @apply select-text;
   }
 }
+
+/* Stencil Component Styling */
+token-form {
+  display: block;
+  background-color: brown;
+}

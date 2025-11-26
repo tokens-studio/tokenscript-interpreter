@@ -1,0 +1,36 @@
+:host {
+  display: block;
+}
+
+.token-form {
+  display: block;
+}
+
+.token-form__field {
+  display: block;
+}
+
+.token-form__label {
+  display: block;
+}
+
+.token-form__input,
+.token-form__select,
+.token-form__textarea {
+  display: block;
+  width: 100%;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.token-form__textarea {
+  resize: vertical;
+}
+
+.token-form__actions {
+  display: block;
+}
+
+.token-form__button {
+  cursor: pointer;
+}
