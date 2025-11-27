@@ -144,6 +144,10 @@ jobs:
     - name: Build library
       run: npm run build:lib
       
+    - name: Install Stencil components dependencies
+      working-directory: packages/stencil-components
+      run: npm ci
+      
     - name: Build Stencil components
       run: npm run build:components
       
