@@ -9,7 +9,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { TOKEN_GROUPS } from "@/state"
 import { useTokensState } from "@/state/tokens-context"
 
 export interface TokenFormSubmitData {
@@ -39,9 +38,6 @@ export function TokenDialog({
     useTokensState()
   const availableSetNames = Array.from(appState.sets.keys())
   const [tokenSetName, setTokenSetName] = useState("")
-  const [tokenName, setTokenName] = useState("")
-  const [tokenType, setTokenType] = useState<string>(TOKEN_GROUPS[0])
-  const [tokenValue, setTokenValue] = useState("")
 
   const findTokenSet = (tokenPath: string): string => {
     for (const setName of setOrder) {
@@ -58,31 +54,13 @@ export function TokenDialog({
   const resetForm = () => {
     const firstSet = availableSetNames[0] || ""
     setTokenSetName(firstSet)
-    setTokenName("")
-    setTokenType(TOKEN_GROUPS[0])
-    setTokenValue("")
   }
 
   useEffect(() => {
     if (!open) return
     if (editingToken) {
       const foundSet = editingTokenSet || findTokenSet(editingToken)
-      const tokenData =
-        appState.sets.get(foundSet)?.get(editingToken) || mergedTokens.get(editingToken)
       setTokenSetName(foundSet)
-      setTokenName(editingToken)
-      setTokenType(
-        (tokenData &&
-          typeof tokenData === "object" &&
-          (tokenData as { $type?: string }).$type) ||
-          TOKEN_GROUPS[0]
-      )
-      setTokenValue(
-        (tokenData &&
-          typeof tokenData === "object" &&
-          (tokenData as { $value?: unknown }).$value?.toString()) ||
-          ""
-      )
     } else {
       resetForm()
     }
