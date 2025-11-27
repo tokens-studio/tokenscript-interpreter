@@ -153,7 +153,11 @@ jobs:
       
     - name: Install example dependencies
       working-directory: examples/${{ matrix.example }}
-      run: npm ci
+      run: npm install
+      
+    - name: Build example app
+      working-directory: examples/${{ matrix.example }}
+      run: npm run build
       
     - name: Get Playwright version
       id: playwright-version
