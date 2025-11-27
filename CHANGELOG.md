@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### CLI
+
+- **`eval` command**: Evaluate TokenScript expressions and output JSON results
+  - Accepts expressions as arguments or via `--stdin` for piped input
+  - `--refs` option to pass variable references as JSON object
+  - `--schema` option to fetch and register JSON schemas
+  - Returns structured JSON with `success`, `result`, `resultString`, `type`, and `executionTime`
+
 #### Library
 
 - **TokenResolver.updateToken()**: Incremental token update API for efficient real-time resolution

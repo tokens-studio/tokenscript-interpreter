@@ -44,3 +44,11 @@ export {
 } from "@interpreter/symbols";
 // Type definitions
 export * from "@src/types";
+// Eval utilities
+export {
+  type EvalError,
+  type EvalOptions,
+  type EvalResult,
+  type EvalSuccess,
+  evaluateExpression,
+} from "./eval";

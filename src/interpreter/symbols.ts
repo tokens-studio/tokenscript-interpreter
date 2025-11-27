@@ -1781,3 +1781,22 @@ export function symbolTypeToJsValue(symbol: ISymbolType): JsValue {
   }
   return symbol.toString();
 }
+
+/**
+ * Serializes an interpreter result (symbol or primitive) to a plain JavaScript value.
+ */
+export function serializeInterpreterResult(value: ISymbolType | string | null): unknown {
+  if (isString(value)) return value;
+  if (isNull(value)) return null;
+  if (isTokenscriptSymbol(value)) return symbolTypeToJsValue(value);
+  return value;
+}
+
+/**
+ * Converts an interpreter result to a string representation.
+ */
+export function stringifyInterpreterResult(value: ISymbolType | string | null): string {
+  if (isString(value)) return value;
+  if (isTokenscriptSymbol(value)) return value.toString();
+  return String(value);
+}
