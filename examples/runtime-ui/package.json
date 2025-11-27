@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "cd ../.. && npm install && npm run build:lib",
+    "prebuild": "cd ../.. && npm install && npm run build:lib && cd packages/stencil-components && npm install && npm run build",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
