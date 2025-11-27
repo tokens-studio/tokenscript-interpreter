@@ -104,6 +104,9 @@ jobs:
     - name: Build library
       run: npm run build:lib
       
+    - name: Build Stencil components
+      run: npm run build:components
+      
     - name: Install example dependencies
       working-directory: examples/${{ matrix.example }}
       run: npm ci
