@@ -1,3 +1,4 @@
+// biome-ignore lint: 'h' required for jsx
 import { h } from "@stencil/core";
 import { newSpecPage } from "@stencil/core/testing";
 import { TokenForm } from "./token-form";

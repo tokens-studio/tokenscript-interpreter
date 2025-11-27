@@ -1,4 +1,13 @@
-import { Component, Event, type EventEmitter, h, Prop, State, Watch } from "@stencil/core";
+import {
+  Component,
+  Event,
+  type EventEmitter,
+  // biome-ignore lint: 'h' required for jsx
+  h,
+  Prop,
+  State,
+  Watch,
+} from "@stencil/core";
 import {
   type Config,
   processTokens,
