@@ -23,10 +23,16 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@tokens-studio/tokenscript-interpreter": path.resolve(__dirname, "../../dist/lib/index.js"),
     },
   },
   // Ensure the library is not pre-bundled so changes are picked up immediately
   optimizeDeps: {
     exclude: ["@tokens-studio/tokenscript-interpreter", "@tokenscript/stencil-components"],
+  },
+  build: {
+    rollupOptions: {
+      external: [],
+    },
   },
 });
