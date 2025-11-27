@@ -1,6 +1,8 @@
 import * as fs from "node:fs";
 import { Command } from "commander";
 import packageJson from "../package.json" with { type: "json" };
+import { parseReferences } from "./interpreter/utils/references";
+import { evaluateExpression } from "./lib/eval";
 import { FlatObjectBuilder, NestedObjectBuilder } from "./processor/builders";
 import { stringifyAsJson } from "./processor/builders/base";
 import { collectErrors } from "./processor/errors";
@@ -12,6 +14,9 @@ import {
 import type { Theme } from "./processor/utils/theme-resolver";
 import { extractSetNames, resolveThemes } from "./processor/utils/theme-resolver";
 import { startRepl } from "./repl";
+import type { ReferenceRecord } from "./types";
+import { readStdin } from "./utils/io";
+import { fetchAndRegisterSchemas } from "./utils/schema-fetcher";
 
 const program = new Command();
 
@@ -111,6 +116,58 @@ program
 
     console.log(JSON.stringify(output, null, 2));
   });
+
+async function runEval(
+  expression: string | undefined,
+  options: { stdin?: boolean; schema?: string[]; refs?: string },
+) {
+  const code = options.stdin ? await readStdin() : expression;
+
+  if (!code) {
+    return { success: false, error: "No expression provided" } as const;
+  }
+
+  let references: ReferenceRecord = {};
+  if (options.refs) {
+    try {
+      references = parseReferences(options.refs);
+    } catch (parseError) {
+      return {
+        success: false,
+        error: parseError instanceof Error ? parseError.message : String(parseError),
+      } as const;
+    }
+  }
+
+  let config: Awaited<ReturnType<typeof fetchAndRegisterSchemas>>;
+  try {
+    config = await fetchAndRegisterSchemas(options.schema ?? []);
+  } catch (schemaError) {
+    return {
+      success: false,
+      error: schemaError instanceof Error ? schemaError.message : String(schemaError),
+    } as const;
+  }
+
+  return evaluateExpression(code, { references, config, allowStatements: false });
+}
+
+program
+  .command("eval [expression]")
+  .description("Evaluate a TokenScript expression and output JSON result")
+  .option("--stdin", "Read expression from stdin")
+  .option("--schema <uris...>", "Schema URIs to fetch and register")
+  .option("--refs <json>", "JSON object of variable references")
+  .action(
+    async (
+      expression: string | undefined,
+      options: { stdin?: boolean; schema?: string[]; refs?: string },
+    ) => {
+      const result = await runEval(expression, options);
+      console.log(JSON.stringify(result));
+      process.exit(result.success ? 0 : 1);
+    },
+  );
 
 export { program };
 
