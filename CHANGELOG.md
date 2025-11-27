@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## UNRELEASED
+
+### Added
+
+#### Library
+
+- **TokenResolver.updateToken()**: Incremental token update API for efficient real-time resolution
+  - Updates single token and recomputes only affected dependents using cached values
+  - Returns resolved value and dependency subgraph for affected tokens
+  - `getTokenDependencyGraph()` method for finding all tokens transitively affected by a change
+
+#### Components Library
+
+- **@tokenscript/stencil-components**: New package with web components for TokenScript
+  - `<token-form>`: Form component for creating/editing design tokens
+  - Real-time token resolution with preview of resolved values
+  - Shadow DOM with CSS custom properties and `::part()` selectors for styling
+  - Event-based API (`formSubmit`, `formCancel`) and prop-based handlers
+  - TypeScript types for form data and events
+
+#### Examples
+
+- **runtime-ui**: Integrated Stencil components into token dialog
+  - Replaced custom React form with `<token-form>` web component
+  - Demonstrates real-time token resolution with dependencies
+  - Custom styling via CSS parts matching design system
+
 ## [0.10.0] - 2025-11-24
 
 ### Added
