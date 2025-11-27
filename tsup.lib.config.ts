@@ -14,6 +14,7 @@ export default defineConfig({
   clean: true,
   outDir: "dist/lib",
   external: ["node:fs", "node:path", "node:url", "yauzl", "readline-sync"],
+  noExternal: ["arktype"],
   dts: true,
   sourcemap: true,
   treeshake: true,

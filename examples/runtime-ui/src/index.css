@@ -142,3 +142,81 @@ body {
     @apply select-text;
   }
 }
+
+/* Stencil Component Styling */
+token-form {
+  display: block;
+  font-family: inherit;
+  width: 100%;
+}
+
+/* Form structure */
+token-form::part(form) {
+  display: grid;
+  gap: 1rem;
+  font-family: inherit;
+  width: 100%;
+}
+
+token-form::part(field) {
+  display: grid;
+  gap: 0.75rem;
+}
+
+/* Labels matching Label component */
+token-form::part(label) {
+  @apply flex items-center gap-2 text-sm leading-none font-medium select-none;
+  color: oklch(var(--foreground));
+}
+
+/* Inputs matching Input component */
+token-form::part(input) {
+  @apply file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent text-base shadow-xs transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm;
+  padding: 0.25rem 0.75rem;
+  color: oklch(var(--foreground));
+  font-family: inherit;
+}
+
+token-form::part(input):focus-visible {
+  border-color: oklch(var(--ring));
+  box-shadow: 0 0 0 3px oklch(var(--ring) / 0.5);
+}
+
+/* Actions matching DialogFooter layout */
+token-form::part(actions) {
+  @apply flex flex-row justify-end gap-2 mt-2;
+}
+
+/* Buttons matching Button component */
+token-form::part(button) {
+  @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 shrink-0 outline-none h-9 px-4 py-2;
+  font-family: inherit;
+}
+
+token-form::part(button):focus-visible {
+  border-color: oklch(var(--ring));
+  box-shadow: 0 0 0 3px oklch(var(--ring) / 0.5);
+}
+
+/* Cancel button - outline variant */
+token-form::part(button-cancel) {
+  @apply border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50;
+}
+
+/* Submit button - default variant */
+token-form::part(button-submit) {
+  @apply bg-primary text-primary-foreground hover:bg-primary/90;
+}
+
+/* Resolved value display */
+token-form::part(resolved) {
+  @apply mt-2 text-xs;
+}
+
+token-form::part(resolved-success) {
+  @apply text-muted-foreground;
+}
+
+token-form::part(resolved-error) {
+  @apply text-destructive;
+}
