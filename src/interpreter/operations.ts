@@ -33,7 +33,7 @@ function decomposeUnit(operand: MathOperand): {
 function recomposeUnit(
   value: number,
   units: (SupportedFormats | null)[],
-  _config?: Config,
+  config?: Config,
 ): MathOperand {
   const validUnits = units.filter((u) => u !== null) as SupportedFormats[];
   if (validUnits.length === 0) {
@@ -44,7 +44,7 @@ function recomposeUnit(
       data: { units: validUnits },
     });
   }
-  return new NumberWithUnitSymbol(value, validUnits[0]);
+  return new NumberWithUnitSymbol(value, validUnits[0], config);
 }
 
 function mathWrapper(func: (a: number, b: number) => number): OperationFunction {

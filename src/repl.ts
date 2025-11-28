@@ -87,7 +87,7 @@ async function interpretExpression(
   config?: Config,
 ): Promise<string> {
   try {
-    const lexer = new Lexer(code);
+    const lexer = new Lexer(code, config);
     const parser = new Parser(lexer);
     const ast = parser.parse(true);
 

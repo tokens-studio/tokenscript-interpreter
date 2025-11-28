@@ -1,7 +1,5 @@
 import { FunctionsErrorCode, InterpreterError } from "@interpreter/errors";
-import { Interpreter } from "@interpreter/interpreter";
-import { Lexer } from "@interpreter/lexer";
-import { Parser } from "@interpreter/parser";
+import { createInterpreter } from "@tests/interpreter/test-helpers";
 import { describe, expect, it } from "vitest";
 
 describe("Math Functions - Parse Int", () => {
@@ -11,9 +9,7 @@ describe("Math Functions - Parse Int", () => {
     variable j: Number = parse_int("00", 16);
     variable k: Number = parse_int("A0", 16);
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     const i = interpreter.symbolTable.get("i");
@@ -31,9 +27,7 @@ describe("Math Functions - Parse Int", () => {
     variable b: Number = parse_int("0", 10);
     variable c: Number = parse_int("999", 10);
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     const a = interpreter.symbolTable.get("a");
@@ -51,9 +45,7 @@ describe("Math Functions - Parse Int", () => {
     variable binary2: Number = parse_int("1111", 2);
     variable binary3: Number = parse_int("0", 2);
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     const binary1 = interpreter.symbolTable.get("binary1");
@@ -73,9 +65,7 @@ describe("Math Functions - Power Operations", () => {
     variable result2: Number = pow(5, 2);
     variable result3: Number = pow(10, 0);
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     const result1 = interpreter.symbolTable.get("result1");
@@ -92,9 +82,7 @@ describe("Math Functions - Power Operations", () => {
     variable result1: Number = pow(2.5, 2);
     variable result2: Number = pow(4, 0.5);
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     const result1 = interpreter.symbolTable.get("result1");
@@ -112,9 +100,7 @@ describe("Math Functions - Trigonometric", () => {
     variable cos_result: Number = cos(0);
     variable tan_result: Number = tan(0);
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     const sinResult = interpreter.symbolTable.get("sin_result");
@@ -134,9 +120,7 @@ describe("Math Functions - Rounding", () => {
     variable floor_result: Number = floor(3.7);
     variable ceil_result: Number = ceil(3.2);
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     const roundResult = interpreter.symbolTable.get("round_result");
@@ -157,9 +141,7 @@ describe("Math Functions - Rounding", () => {
     variable round_neg_2_5: Number = round(-2.5);
     variable round_neg_3_5: Number = round(-3.5);
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     // Banker's rounding: .5 rounds to nearest even number
@@ -179,9 +161,7 @@ describe("Math Functions - round_to", () => {
     variable result2: Number = round_to(2.71828);
     variable result3: Number = round_to(1.41421);
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     const result1 = interpreter.symbolTable.get("result1");
@@ -199,9 +179,7 @@ describe("Math Functions - round_to", () => {
     variable result2: Number = round_to(2.71828, 3);
     variable result3: Number = round_to(1.41421, 1);
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     const result1 = interpreter.symbolTable.get("result1");
@@ -219,9 +197,7 @@ describe("Math Functions - round_to", () => {
     variable result2: Number = round_to(2.3, 0);
     variable result3: Number = round_to(1.5, 0);
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     const result1 = interpreter.symbolTable.get("result1");
@@ -241,9 +217,7 @@ describe("Math Functions - round_to", () => {
     variable h2: Number = round_to(base * (ratio^4));
     variable h3: Number = round_to(base * (ratio^3));
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     const h1 = interpreter.symbolTable.get("h1");
@@ -264,9 +238,7 @@ describe("Math Functions - round_to", () => {
     variable result2: Number = round_to(-2.3);
     variable result3: Number = round_to(-1.5);
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     const result1 = interpreter.symbolTable.get("result1");
@@ -283,9 +255,7 @@ describe("Math Functions - round_to", () => {
     variable result1: Number = round_to(-3.14159, 2);
     variable result2: Number = round_to(-2.71828, 3);
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     const result1 = interpreter.symbolTable.get("result1");
@@ -302,9 +272,7 @@ describe("Math Functions - Complex Expressions", () => {
     variable complex: Number = sqrt(pow(3, 2) + pow(4, 2));
     variable nested: Number = round(sin(pi() / 2) * 100);
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     const complex = interpreter.symbolTable.get("complex");
@@ -321,9 +289,7 @@ describe("Math Functions - Complex Expressions", () => {
     variable linear: Number = pow((normalized + 0.055) / 1.055, gamma);
     variable rounded: Number = round(linear * 1000) / 1000;
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     const linear = interpreter.symbolTable.get("linear");
@@ -342,9 +308,7 @@ describe("Math Functions - Complex Expressions", () => {
     variable bodyS: Number = round_to(base * (shrinkRatio^-1));
     variable headlineXL: Number = round_to(base * (growthRatio^2));
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     const bodyL = interpreter.symbolTable.get("bodyL");
@@ -367,9 +331,7 @@ describe("Math Functions - Inverse Trigonometric", () => {
     variable asin_half: Number = asin(0.5);
     variable asin_one: Number = asin(1);
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     expect(interpreter.symbolTable.get("asin_0")?.value).toBeCloseTo(0, 5);
@@ -383,9 +345,7 @@ describe("Math Functions - Inverse Trigonometric", () => {
     variable acos_half: Number = acos(0.5);
     variable acos_one: Number = acos(1);
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     expect(interpreter.symbolTable.get("acos_0")?.value).toBeCloseTo(Math.PI / 2, 5);
@@ -399,9 +359,7 @@ describe("Math Functions - Inverse Trigonometric", () => {
     variable atan_1: Number = atan(1);
     variable atan_neg1: Number = atan(-1);
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     expect(interpreter.symbolTable.get("atan_0")?.value).toBeCloseTo(0, 5);
@@ -411,9 +369,7 @@ describe("Math Functions - Inverse Trigonometric", () => {
 
   it("should throw error for asin/acos with invalid range", () => {
     const text = `variable invalid: Number = asin(2);`;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
 
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
 
@@ -434,9 +390,7 @@ describe("Math Functions - Logarithmic", () => {
     variable log_1: Number = log(1);
     variable log_10: Number = log(10);
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     expect(interpreter.symbolTable.get("log_e")?.value).toBeCloseTo(1, 5);
@@ -450,9 +404,7 @@ describe("Math Functions - Logarithmic", () => {
     variable log_base_2: Number = log(8, 2);
     variable log_base_e: Number = log(2.718281828, 2.718281828);
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     expect(interpreter.symbolTable.get("log_base_10")?.value).toBeCloseTo(2, 5);
@@ -465,9 +417,7 @@ describe("Math Functions - Logarithmic", () => {
     const text2 = `variable invalid: Number = log(-1);`;
     const text3 = `variable invalid: Number = log(10, 1);`;
 
-    const lexer1 = new Lexer(text1);
-    const parser1 = new Parser(lexer1);
-    const interpreter1 = new Interpreter(parser1);
+    const interpreter1 = createInterpreter(text1);
     expect(() => interpreter1.interpret()).toThrow(InterpreterError);
 
     try {
@@ -478,9 +428,7 @@ describe("Math Functions - Logarithmic", () => {
       expect((error as InterpreterError).data.functionName).toBe("log");
     }
 
-    const lexer2 = new Lexer(text2);
-    const parser2 = new Parser(lexer2);
-    const interpreter2 = new Interpreter(parser2);
+    const interpreter2 = createInterpreter(text2);
     expect(() => interpreter2.interpret()).toThrow(InterpreterError);
 
     try {
@@ -491,9 +439,7 @@ describe("Math Functions - Logarithmic", () => {
       expect((error as InterpreterError).data.functionName).toBe("log");
     }
 
-    const lexer3 = new Lexer(text3);
-    const parser3 = new Parser(lexer3);
-    const interpreter3 = new Interpreter(parser3);
+    const interpreter3 = createInterpreter(text3);
     expect(() => interpreter3.interpret()).toThrow(InterpreterError);
 
     try {
@@ -515,9 +461,7 @@ describe("Math Functions - String Functions", () => {
     variable alpha: Number = 0.5;
     variable color: String = rgba(red, green, blue, alpha);
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     const color = interpreter.symbolTable.get("color");
@@ -533,9 +477,7 @@ describe("Math Functions - Enhanced round_to with Banker's Rounding", () => {
     variable round_2_45: Number = round_to(2.45, 1);
     variable round_2_55: Number = round_to(2.55, 1);
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     // Banker's rounding: .5 rounds to nearest even number
@@ -552,9 +494,7 @@ describe("Math Functions - Enhanced round_to with Banker's Rounding", () => {
     variable round_14_5: Number = round_to(14.5, 0);
     variable round_15_5: Number = round_to(15.5, 0);
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     // Banker's rounding: .5 rounds to nearest even number

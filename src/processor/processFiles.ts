@@ -1,3 +1,4 @@
+import { Config } from "@interpreter/config";
 import { fetchAndRegisterSchemas } from "@src/utils/schema-fetcher";
 import { processTokenSets } from "./process";
 import type { ProcessFilesOptions, ProcessResult } from "./types";
@@ -24,10 +25,13 @@ export async function processTokensFromFiles<T = any>({
 
   const normalizedFiles = normalizeJsonFiles(jsonFiles);
 
+  const config = new Config();
+
   return processTokenSets<T>(normalizedFiles, {
     activeSets,
     activeTheme,
     output,
     builder,
+    config,
   });
 }

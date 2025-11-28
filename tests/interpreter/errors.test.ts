@@ -1,7 +1,7 @@
 import { InterpreterError } from "@interpreter/errors";
-import { Interpreter } from "@interpreter/interpreter";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
+import { createInterpreter } from "@tests/interpreter/test-helpers";
 import { describe, expect, it } from "vitest";
 
 describe("Error Handling - Lexer Errors", () => {
@@ -97,9 +97,7 @@ describe("Error Handling - Interpreter Errors", () => {
     const text = `
     undefined_var = 5;
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
@@ -107,9 +105,7 @@ describe("Error Handling - Interpreter Errors", () => {
     const text = `
     variable x: Number = "string";
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
@@ -117,9 +113,7 @@ describe("Error Handling - Interpreter Errors", () => {
     const text = `
     variable x: Number = 5 / 0;
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
@@ -129,9 +123,7 @@ describe("Error Handling - Interpreter Errors", () => {
     variable y: String = "world";
     variable z: Number = x + y;
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
@@ -139,9 +131,7 @@ describe("Error Handling - Interpreter Errors", () => {
     const text = `
     variable x: Number = unknown_function(5);
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
@@ -149,9 +139,7 @@ describe("Error Handling - Interpreter Errors", () => {
     const text = `
     variable x: Number = SUM(5);
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
@@ -159,9 +147,7 @@ describe("Error Handling - Interpreter Errors", () => {
     const text = `
     undefined_var = 5;
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
@@ -170,9 +156,7 @@ describe("Error Handling - Interpreter Errors", () => {
     variable x: Number = 5;
     variable x: String = "hello";
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
@@ -181,9 +165,7 @@ describe("Error Handling - Interpreter Errors", () => {
     variable x: List = 1, 2, 3;
     x.get(10);
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     expect(() => interpreter.interpret()).toThrow();
   });
 
@@ -192,9 +174,7 @@ describe("Error Handling - Interpreter Errors", () => {
     variable x: String = "hello";
     x.invalid_method();
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
@@ -204,9 +184,7 @@ describe("Error Handling - Interpreter Errors", () => {
         variable x: Number = 10;
     ];
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
@@ -216,9 +194,7 @@ describe("Error Handling - Interpreter Errors", () => {
         variable x: Number = 10;
     ];
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
@@ -229,9 +205,7 @@ describe("Error Handling - Interpreter Errors", () => {
         i = i + 1;
     ];
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
@@ -239,10 +213,8 @@ describe("Error Handling - Interpreter Errors", () => {
     const text = `
     variable x: Number = {complex_ref};
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
     expect(() => {
-      const interpreter = new Interpreter(parser, { references: { complex_ref: new Date() } });
+      const interpreter = createInterpreter(text, { complex_ref: new Date() });
       interpreter.interpret();
     }).toThrow(InterpreterError);
   });
@@ -251,9 +223,7 @@ describe("Error Handling - Interpreter Errors", () => {
     const text = `
     variable x: NumberWithUnit = 10px^2rem;
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     expect(() => interpreter.interpret()).toThrow();
   });
 
@@ -261,9 +231,7 @@ describe("Error Handling - Interpreter Errors", () => {
     const text = `
     variable x: Boolean = true + false;
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 
@@ -271,9 +239,19 @@ describe("Error Handling - Interpreter Errors", () => {
     const text = `
     variable x: Boolean = "hello" > 5;
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
+    const interpreter = createInterpreter(text);
+    expect(() => interpreter.interpret()).toThrow(InterpreterError);
+  });
+
+  it("should throw error when adding number with unit and string (unrecognized unit)", () => {
+    const text = "1px + 1pot";
+    const interpreter = createInterpreter(text);
+    expect(() => interpreter.interpret()).toThrow(InterpreterError);
+  });
+
+  it("should throw error when multiplying number with unit and string", () => {
+    const text = "5px * abc123";
+    const interpreter = createInterpreter(text);
     expect(() => interpreter.interpret()).toThrow(InterpreterError);
   });
 });

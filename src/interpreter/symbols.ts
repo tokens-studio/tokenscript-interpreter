@@ -934,10 +934,15 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
     super(safeValue, config);
     this.value = safeValue;
 
-    if (typeof unit === "string" && !(Object.values(SupportedFormats) as string[]).includes(unit)) {
-      throw new InterpreterError(SymbolsErrorCode.ATTRIBUTE_NOT_FOUND, {
-        data: { attributeName: unit, type: "Unit" },
-      });
+    if (typeof unit === "string") {
+      const isStaticUnit = (Object.values(SupportedFormats) as string[]).includes(unit);
+      const isDynamicUnit = config?.unitManager?.getSpecByKeyword(unit) !== undefined;
+
+      if (!isStaticUnit && !isDynamicUnit) {
+        throw new InterpreterError(SymbolsErrorCode.ATTRIBUTE_NOT_FOUND, {
+          data: { attributeName: unit, type: "Unit" },
+        });
+      }
     }
     this.unit = typeof unit === "string" ? (unit as SupportedFormats) : unit;
   }

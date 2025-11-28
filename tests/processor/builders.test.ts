@@ -1,8 +1,11 @@
+import { Config } from "@interpreter/config";
 import { NumberSymbol, StringSymbol } from "@interpreter/symbols";
 import { buildTokens } from "@src/processor/builders/base";
 import { MapBuilder } from "@src/processor/builders/MapBuilder";
 import { FlatObjectBuilder, NestedObjectBuilder } from "@src/processor/builders/ObjectBuilder";
 import { describe, expect, it } from "vitest";
+
+const config = new Config();
 
 describe("Token Builders", () => {
   describe("buildTokens integration", () => {
@@ -15,6 +18,7 @@ describe("Token Builders", () => {
 
       const result = buildTokens(tokens, {
         builder: new FlatObjectBuilder(),
+        config,
         output: "string",
       });
 
@@ -41,6 +45,7 @@ describe("Token Builders", () => {
 
       const result = buildTokens(tokens, {
         builder: new NestedObjectBuilder(),
+        config,
         output: "string",
       });
 

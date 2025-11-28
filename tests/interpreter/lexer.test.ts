@@ -1,6 +1,9 @@
+import { Config } from "@interpreter/config";
 import { Lexer } from "@interpreter/lexer";
-import { Operations, ReservedKeyword, SupportedFormats, TokenType } from "@src/types";
+import { Operations, ReservedKeyword, TokenType } from "@src/types";
 import { describe, expect, it } from "vitest";
+
+const config = new Config();
 
 describe("Lexer", () => {
   it("should tokenize a simple number", () => {
@@ -73,11 +76,11 @@ describe("Lexer", () => {
   });
 
   it("should tokenize a format (px)", () => {
-    const lexer = new Lexer("10px");
+    const lexer = new Lexer("10px", config);
     expect(lexer.nextToken()).toEqual({ type: TokenType.NUMBER, value: "10", line: 1 });
     expect(lexer.nextToken()).toEqual({
       type: TokenType.FORMAT,
-      value: SupportedFormats.PX,
+      value: "px",
       line: 1,
     });
   });
@@ -205,7 +208,7 @@ describe("Lexer", () => {
   });
 
   it("should tokenize a sequence of tokens", () => {
-    const lexer = new Lexer("variable size: Number = {baseSize} * 2px;\nreturn size;");
+    const lexer = new Lexer("variable size: Number = {baseSize} * 2px;\nreturn size;", config);
     const tokens = [];
     let token = lexer.nextToken();
     while (token.type !== TokenType.EOF) {
@@ -221,11 +224,57 @@ describe("Lexer", () => {
       { type: TokenType.REFERENCE, value: "baseSize", line: 1 },
       { type: TokenType.OPERATION, value: Operations.MULTIPLY, line: 1 },
       { type: TokenType.NUMBER, value: "2", line: 1 },
-      { type: TokenType.FORMAT, value: SupportedFormats.PX, line: 1 },
+      { type: TokenType.FORMAT, value: "px", line: 1 },
       { type: TokenType.SEMICOLON, value: ";", line: 1 },
       { type: TokenType.RESERVED_KEYWORD, value: ReservedKeyword.RETURN, line: 2 },
       { type: TokenType.STRING, value: "size", line: 2 },
       { type: TokenType.SEMICOLON, value: ";", line: 2 },
     ]);
+  });
+
+  it("should parse number with unrecognized unit as a string", () => {
+    const testConfig = new Config();
+    testConfig.unitManager.register("test://px", {
+      name: "pixel",
+      type: "absolute",
+      keyword: "px",
+      description: "Test pixel unit",
+      conversions: [],
+    });
+
+    const lexer = new Lexer("1pot", testConfig);
+    expect(lexer.nextToken()).toEqual({ type: TokenType.STRING, value: "1pot", line: 1 });
+  });
+
+  it("should parse number with recognized unit correctly", () => {
+    const testConfig = new Config();
+    testConfig.unitManager.register("test://px", {
+      name: "pixel",
+      type: "absolute",
+      keyword: "px",
+      description: "Test pixel unit",
+      conversions: [],
+    });
+
+    const lexer = new Lexer("1px", testConfig);
+    expect(lexer.nextToken()).toEqual({ type: TokenType.NUMBER, value: "1", line: 1 });
+    expect(lexer.nextToken()).toEqual({ type: TokenType.FORMAT, value: "px", line: 1 });
+  });
+
+  it("should parse '1px + 1pot' as number+unit plus string", () => {
+    const testConfig = new Config();
+    testConfig.unitManager.register("test://px", {
+      name: "pixel",
+      type: "absolute",
+      keyword: "px",
+      description: "Test pixel unit",
+      conversions: [],
+    });
+
+    const lexer = new Lexer("1px + 1pot", testConfig);
+    expect(lexer.nextToken()).toEqual({ type: TokenType.NUMBER, value: "1", line: 1 });
+    expect(lexer.nextToken()).toEqual({ type: TokenType.FORMAT, value: "px", line: 1 });
+    expect(lexer.nextToken()).toEqual({ type: TokenType.OPERATION, value: Operations.ADD, line: 1 });
+    expect(lexer.nextToken()).toEqual({ type: TokenType.STRING, value: "1pot", line: 1 });
   });
 });

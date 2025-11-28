@@ -1,3 +1,4 @@
+import type { Config } from "@interpreter/config/config";
 import { type ASTNode, Operations, ReservedKeyword, type Token, TokenType } from "@src/types";
 import {
   AssignNode,
@@ -488,6 +489,10 @@ export class Parser {
       let node = this.reference();
       // Handle attribute access like {ref}.property or {ref}.method()
       node = this.attributeAccess(node);
+      // Handle unit suffix like {ref}px
+      if (this.currentToken.type === TokenType.FORMAT) {
+        return this.format(node);
+      }
       return node;
     }
 
@@ -582,8 +587,8 @@ export interface ParseExpressionResult {
   ast: ASTNode | null;
 }
 
-export function parseExpression(text: string): ParseExpressionResult {
-  const lexer = new Lexer(text);
+export function parseExpression(text: string, config?: Config): ParseExpressionResult {
+  const lexer = new Lexer(text, config);
   const parser = new Parser(lexer);
   const ast = parser.parse();
 

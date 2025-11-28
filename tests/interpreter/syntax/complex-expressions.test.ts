@@ -1,66 +1,43 @@
+import { Config } from "@interpreter/config";
 import { LexerError, LexerErrorCode } from "@interpreter/errors";
-import { Interpreter } from "@interpreter/interpreter";
-import { Lexer } from "@interpreter/lexer";
-import { Parser } from "@interpreter/parser";
+import { createInterpreter, interpret, parse } from "@tests/interpreter/test-helpers";
 import { describe, expect, it } from "vitest";
 import { NumberWithUnitSymbol } from "@/src/lib";
 
+const config = new Config();
+
 describe("Complex Expressions - Nested Operations", () => {
   it("should handle deeply nested parentheses", () => {
-    const text = "((((1 + 2) * 3) - 4) / 2)";
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { references: {} });
-    const result = interpreter.interpret();
-    expect(result).not.toBeNull();
-    expect(result?.toString()).toBe("2.5");
+    const result = interpret("((((1 + 2) * 3) - 4) / 2)");
+    expect(result).toBe("2.5");
   });
 
   it("should handle complex arithmetic with precedence", () => {
-    const text = "1 + 2 * 3 ^ 2 - 4 / 2";
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { references: {} });
-    const result = interpreter.interpret();
-    expect(result).not.toBeNull();
-    expect(result?.toString()).toBe("17");
+    const result = interpret("1 + 2 * 3 ^ 2 - 4 / 2");
+    expect(result).toBe("17");
   });
 
   it("should handle mixed units in complex expressions", () => {
-    const text = "(10px + 5px) * 2 - 5px";
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { references: {} });
+    const interpreter = createInterpreter("(10px + 5px) * 2 - 5px");
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.toString()).toBe("25px");
   });
 
   it("should handle nested function calls", () => {
-    const text = "max(min(10, 20), min(30, 40))";
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { references: {} });
-    const result = interpreter.interpret();
-    expect(result).not.toBeNull();
-    expect(result?.toString()).toBe("30");
+    const result = interpret("max(min(10, 20), min(30, 40))");
+    expect(result).toBe("30");
   });
 
   it("should handle complex boolean expressions", () => {
-    const text = "(true && false) || (true && true) && !(false || false)";
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { references: {} });
+    const interpreter = createInterpreter("(true && false) || (true && true) && !(false || false)");
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.value).toBe(true);
   });
 
   it("should handle mixed comparison operators", () => {
-    const text = "5 > 3 && 10 <= 10 && 7 != 8 && 4 == 4";
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { references: {} });
+    const interpreter = createInterpreter("5 > 3 && 10 <= 10 && 7 != 8 && 4 == 4");
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
     expect(result?.value).toBe(true);
@@ -69,32 +46,20 @@ describe("Complex Expressions - Nested Operations", () => {
 
 describe("Complex Expressions - Variable References", () => {
   it("should handle complex variable references", () => {
-    const text = "{a} * ({b} + {c}) - {d} / {e}";
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {
-      references: {
-        a: 2,
-        b: 3,
-        c: 4,
-        d: 10,
-        e: 2,
-      },
+    const result = interpret("{a} * ({b} + {c}) - {d} / {e}", {
+      a: 2,
+      b: 3,
+      c: 4,
+      d: 10,
+      e: 2,
     });
-    const result = interpreter.interpret();
-    expect(result).not.toBeNull();
-    expect(result?.toString()).toBe("9");
+    expect(result).toBe("9");
   });
 
   it("should handle variable references with units", () => {
-    const text = "{width}px + {height}px * 2";
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {
-      references: {
-        width: 10,
-        height: 5,
-      },
+    const interpreter = createInterpreter("{width}px + {height}px * 2", {
+      width: 10,
+      height: 5,
     });
     const result = interpreter.interpret();
     expect(result).not.toBeNull();
@@ -102,15 +67,9 @@ describe("Complex Expressions - Variable References", () => {
   });
 
   it("should handle variable with unit inline mixed math", () => {
-    const text = "{x} * {x} + {x}rem";
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const ast = parser.parse(true);
-    const interpreter = new Interpreter(ast, {
-      references: {
-        // @ts-expect-error
-        x: new NumberWithUnitSymbol(2, "rem"),
-      },
+    const interpreter = createInterpreter("{x} * {x} + {x}rem", {
+      // @ts-expect-error
+      x: new NumberWithUnitSymbol(2, "rem", config),
     });
     const result = interpreter.interpret();
     expect(result?.toString()).toBe("6rem");
@@ -118,13 +77,11 @@ describe("Complex Expressions - Variable References", () => {
 
   it("should throw error for unsupported inline op", () => {
     const text = "{a} * {a} + {a} \u00b4 2";
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
 
-    expect(() => parser.parse(true)).toThrow(LexerError);
+    expect(() => parse(text, true)).toThrow(LexerError);
 
     try {
-      parser.parse(true);
+      parse(text, true);
     } catch (error) {
       expect(error).toBeInstanceOf(LexerError);
       expect((error as LexerError).code).toBe(LexerErrorCode.INVALID_CHARACTER);
@@ -133,21 +90,14 @@ describe("Complex Expressions - Variable References", () => {
   });
 
   it("should handle variable references in function calls", () => {
-    const text = "max({a}, {b}, {c}) + min({d}, {e})";
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, {
-      references: {
-        a: 10,
-        b: 20,
-        c: 15,
-        d: 5,
-        e: 3,
-      },
+    const result = interpret("max({a}, {b}, {c}) + min({d}, {e})", {
+      a: 10,
+      b: 20,
+      c: 15,
+      d: 5,
+      e: 3,
     });
-    const result = interpreter.interpret();
-    expect(result).not.toBeNull();
-    expect(result?.toString()).toBe("23");
+    expect(result).toBe("23");
   });
 });
 
@@ -158,9 +108,7 @@ describe("Complex Expressions - String Operations", () => {
     variable suffix: String = "World!";
     variable result: List = prefix suffix;
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { references: {} });
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     const result = interpreter.symbolTable.get("result");
@@ -175,9 +123,7 @@ describe("Complex Expressions - String Operations", () => {
     variable last: String = parts.get(2);
     variable result: String = first.concat("-").concat(last);
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { references: {} });
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     const result = interpreter.symbolTable.get("result");
@@ -194,9 +140,7 @@ describe("Complex Expressions - List Operations", () => {
     list1.insert(3, 99);
     list1.delete(0);
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { references: {} });
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     const result = interpreter.symbolTable.get("list1");
@@ -210,9 +154,7 @@ describe("Complex Expressions - List Operations", () => {
     variable list: List = x, y, x + y;
     variable sum: Number = list.get(0) + list.get(1) + list.get(2);
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { references: {} });
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     const sum = interpreter.symbolTable.get("sum");
@@ -241,9 +183,7 @@ describe("Complex Expressions - Control Flow", () => {
         result = "negative";
     ];
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { references: {} });
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     const result = interpreter.symbolTable.get("result");
@@ -261,9 +201,7 @@ describe("Complex Expressions - Control Flow", () => {
         i = i + 1;
     ];
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { references: {} });
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     const i = interpreter.symbolTable.get("i");
@@ -281,9 +219,7 @@ describe("Complex Expressions - Mixed Types", () => {
     variable bool: Boolean = true;
     variable list: List = num, str, bool, num + 8;
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { references: {} });
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     const list = interpreter.symbolTable.get("list");
@@ -300,9 +236,7 @@ describe("Complex Expressions - Mixed Types", () => {
     variable b: String = "px";
     variable result: List = a b "solid" "black";
     `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { references: {} });
+    const interpreter = createInterpreter(text);
     interpreter.interpret();
 
     const result = interpreter.symbolTable.get("result");
@@ -312,32 +246,17 @@ describe("Complex Expressions - Mixed Types", () => {
 
 describe("Complex Expressions - Edge Cases", () => {
   it("should handle very small decimal numbers", () => {
-    const text = "0.000001 * 1000000";
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { references: {} });
-    const result = interpreter.interpret();
-    expect(result).not.toBeNull();
-    expect(result?.toString()).toBe("1");
+    const result = interpret("0.000001 * 1000000");
+    expect(result).toBe("1");
   });
 
   it("should handle negative numbers in complex expressions", () => {
-    const text = "-5 * -3 + -2 / -1";
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { references: {} });
-    const result = interpreter.interpret();
-    expect(result).not.toBeNull();
-    expect(result?.toString()).toBe("17");
+    const result = interpret("-5 * -3 + -2 / -1");
+    expect(result).toBe("17");
   });
 
   it("should handle zero in various operations", () => {
-    const text = "0 + 5 * 0 - 0 / 1 + 0^5";
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser, { references: {} });
-    const result = interpreter.interpret();
-    expect(result).not.toBeNull();
-    expect(result?.toString()).toBe("0");
+    const result = interpret("0 + 5 * 0 - 0 / 1 + 0^5");
+    expect(result).toBe("0");
   });
 });

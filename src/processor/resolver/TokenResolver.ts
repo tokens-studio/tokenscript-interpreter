@@ -243,7 +243,7 @@ class PrefixResolver {
 
   private tryParseExpression(refPath: RefPath, value: string): ParseExpressionResult | Error {
     try {
-      return parseExpression(value);
+      return parseExpression(value, this.config);
     } catch (error) {
       if (isLanguageError(error)) {
         return this.resolveError(refPath, error, value);

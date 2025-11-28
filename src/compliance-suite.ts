@@ -133,10 +133,6 @@ function transformContextToSymbols(obj: any, config: Config): any {
 }
 
 const runTest = (test: TestCase): { interpreter: Interpreter; result: InterpreterResult } => {
-  const lexer = new Lexer(test.input);
-  const parser = new Parser(lexer);
-  const ast = parser.parse(test.inline);
-
   let config: Config;
   if (test.schemas && test.schemas.length > 0) {
     const colorManager = loadSchemas(test.schemas);
@@ -144,6 +140,10 @@ const runTest = (test: TestCase): { interpreter: Interpreter; result: Interprete
   } else {
     config = new Config();
   }
+
+  const lexer = new Lexer(test.input, config);
+  const parser = new Parser(lexer);
+  const ast = parser.parse(test.inline);
 
   const references = test.context ? transformContextToSymbols(test.context, config) : {};
   const interpreter = new Interpreter(ast, { references, config });

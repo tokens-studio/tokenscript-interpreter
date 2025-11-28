@@ -7,6 +7,7 @@ import {
 import { parseExpression } from "@interpreter/parser";
 import { NumberSymbol, NumberWithUnitSymbol } from "@interpreter/symbols";
 import { Interpreter } from "@src/lib";
+import type { ASTNode } from "@src/types";
 import { buildSchemaUri, parseVersionString } from "@src/utils/schema-uri";
 import { type } from "arktype";
 import { BaseManager } from "../base-manager";
@@ -75,6 +76,86 @@ const defaultUnitSpecs: Specs = new Map([
     },
   ],
   [
+    buildSchemaUri({ category: "core", name: "em-unit", version: parseVersionString("0") }),
+    {
+      name: "em",
+      type: "absolute",
+      keyword: "em",
+      description: "An em unit, relative to the parent font size.",
+      conversions: [],
+    },
+  ],
+  [
+    buildSchemaUri({ category: "core", name: "deg-unit", version: parseVersionString("0") }),
+    {
+      name: "degrees",
+      type: "absolute",
+      keyword: "deg",
+      description: "A degree unit for angles.",
+      conversions: [],
+    },
+  ],
+  [
+    buildSchemaUri({ category: "core", name: "vw-unit", version: parseVersionString("0") }),
+    {
+      name: "viewport width",
+      type: "relative",
+      keyword: "vw",
+      description: "A viewport width unit, relative to the viewport width.",
+      conversions: [],
+    },
+  ],
+  [
+    buildSchemaUri({ category: "core", name: "vh-unit", version: parseVersionString("0") }),
+    {
+      name: "viewport height",
+      type: "relative",
+      keyword: "vh",
+      description: "A viewport height unit, relative to the viewport height.",
+      conversions: [],
+    },
+  ],
+  [
+    buildSchemaUri({ category: "core", name: "pt-unit", version: parseVersionString("0") }),
+    {
+      name: "point",
+      type: "absolute",
+      keyword: "pt",
+      description: "A point unit, typically used in print.",
+      conversions: [],
+    },
+  ],
+  [
+    buildSchemaUri({ category: "core", name: "in-unit", version: parseVersionString("0") }),
+    {
+      name: "inch",
+      type: "absolute",
+      keyword: "in",
+      description: "An inch unit.",
+      conversions: [],
+    },
+  ],
+  [
+    buildSchemaUri({ category: "core", name: "cm-unit", version: parseVersionString("0") }),
+    {
+      name: "centimeter",
+      type: "absolute",
+      keyword: "cm",
+      description: "A centimeter unit.",
+      conversions: [],
+    },
+  ],
+  [
+    buildSchemaUri({ category: "core", name: "mm-unit", version: parseVersionString("0") }),
+    {
+      name: "millimeter",
+      type: "absolute",
+      keyword: "mm",
+      description: "A millimeter unit.",
+      conversions: [],
+    },
+  ],
+  [
     "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/percent-unit/0/",
     {
       name: "percent",
@@ -128,10 +209,19 @@ export class UnitManager extends BaseManager<
       const sourceUri = conversion.source === "$self" ? uri : conversion.source;
       const targetUri = conversion.target === "$self" ? uri : conversion.target;
 
-      const { ast } = parseExpression(conversion.script.script);
+      // Delay parsing until the conversion is actually used
+      // This ensures parentConfig is set up before we parse
+      let cachedAst: ASTNode | null = null;
+
       const fn = (unit: NumberWithUnitSymbol): NumberWithUnitSymbol => {
+        // Parse the script on first use when parentConfig is available
+        if (!cachedAst) {
+          const { ast } = parseExpression(conversion.script.script, this.parentConfig);
+          cachedAst = ast;
+        }
+
         const config = this.createInterpreterConfig({ input: unit });
-        const result = new Interpreter(ast, config).interpret();
+        const result = new Interpreter(cachedAst, config).interpret();
         if (!(result instanceof NumberWithUnitSymbol)) {
           throw new InterpreterError(UnitErrorCode.CONVERSION_CRASHED, {
             data: { error: "Unit conversion function must return a NumberWithUnitSymbol" },

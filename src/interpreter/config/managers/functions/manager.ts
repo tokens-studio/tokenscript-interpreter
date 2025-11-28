@@ -487,7 +487,7 @@ export class FunctionsManager extends BaseManager<
         }
 
         // Parse and execute the script
-        const lexer = new Lexer(script);
+        const lexer = new Lexer(script, config);
         const ast = new Parser(lexer).parse();
         const interpreter = new Interpreter(ast, {
           references: { input: args },

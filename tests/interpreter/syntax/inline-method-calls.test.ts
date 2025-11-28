@@ -16,10 +16,10 @@ function setupColorManagerWithRgb(): ColorManager {
 }
 
 function interpretWithColorManager(code: string, colorManager: ColorManager, references?: any, inlineMode = false) {
-  const lexer = new Lexer(code);
+  const config = new Config({ colorManager });
+  const lexer = new Lexer(code, config);
   const parser = new Parser(lexer);
   const ast = parser.parse(inlineMode);
-  const config = new Config({ colorManager });
   const interpreter = new Interpreter(ast, { config, references });
   return interpreter.interpret();
 }

@@ -1,7 +1,5 @@
-import { Interpreter } from "@src/interpreter/interpreter";
-import { Lexer } from "@src/interpreter/lexer";
-import { Parser } from "@src/interpreter/parser";
 import { StringSymbol } from "@src/interpreter/symbols";
+import { createInterpreter } from "@tests/interpreter/test-helpers";
 import { describe, expect, it } from "vitest";
 
 describe("Number Hexadecimal Rounding", () => {
@@ -11,9 +9,7 @@ describe("Number Hexadecimal Rounding", () => {
         variable num: Number = 10.5;
         return num.to_string(16);
       `;
-      const lexer = new Lexer(text);
-      const parser = new Parser(lexer);
-      const interpreter = new Interpreter(parser);
+      const interpreter = createInterpreter(text);
       const result = interpreter.interpret();
 
       expect(result).toBeInstanceOf(StringSymbol);
@@ -25,9 +21,7 @@ describe("Number Hexadecimal Rounding", () => {
         variable num: Number = -10.5;
         return num.to_string(16);
       `;
-      const lexer = new Lexer(text);
-      const parser = new Parser(lexer);
-      const interpreter = new Interpreter(parser);
+      const interpreter = createInterpreter(text);
       const result = interpreter.interpret();
 
       expect(result).toBeInstanceOf(StringSymbol);
@@ -39,9 +33,7 @@ describe("Number Hexadecimal Rounding", () => {
         variable num: Number = 15.3;
         return num.to_string(16);
       `;
-      const lexer = new Lexer(text);
-      const parser = new Parser(lexer);
-      const interpreter = new Interpreter(parser);
+      const interpreter = createInterpreter(text);
       const result = interpreter.interpret();
 
       expect(result).toBeInstanceOf(StringSymbol);
@@ -53,9 +45,7 @@ describe("Number Hexadecimal Rounding", () => {
         variable num: Number = 15.7;
         return num.to_string(16);
       `;
-      const lexer = new Lexer(text);
-      const parser = new Parser(lexer);
-      const interpreter = new Interpreter(parser);
+      const interpreter = createInterpreter(text);
       const result = interpreter.interpret();
 
       expect(result).toBeInstanceOf(StringSymbol);
@@ -67,9 +57,7 @@ describe("Number Hexadecimal Rounding", () => {
         variable num: Number = 10.5;
         return num.to_string(10);
       `;
-      const lexer = new Lexer(text);
-      const parser = new Parser(lexer);
-      const interpreter = new Interpreter(parser);
+      const interpreter = createInterpreter(text);
       const result = interpreter.interpret();
 
       expect(result).toBeInstanceOf(StringSymbol);
@@ -81,9 +69,7 @@ describe("Number Hexadecimal Rounding", () => {
         variable num: Number = 5.5;
         return num.to_string(2);
       `;
-      const lexer = new Lexer(text);
-      const parser = new Parser(lexer);
-      const interpreter = new Interpreter(parser);
+      const interpreter = createInterpreter(text);
       const result = interpreter.interpret();
 
       expect(result).toBeInstanceOf(StringSymbol);
@@ -95,9 +81,7 @@ describe("Number Hexadecimal Rounding", () => {
         variable num: Number = 255;
         return num.to_string(16);
       `;
-      const lexer = new Lexer(text);
-      const parser = new Parser(lexer);
-      const interpreter = new Interpreter(parser);
+      const interpreter = createInterpreter(text);
       const result = interpreter.interpret();
 
       expect(result).toBeInstanceOf(StringSymbol);
@@ -109,9 +93,7 @@ describe("Number Hexadecimal Rounding", () => {
         variable num: Number = 0.5;
         return num.to_string(16);
       `;
-      const lexer = new Lexer(text);
-      const parser = new Parser(lexer);
-      const interpreter = new Interpreter(parser);
+      const interpreter = createInterpreter(text);
       const result = interpreter.interpret();
 
       expect(result).toBeInstanceOf(StringSymbol);
