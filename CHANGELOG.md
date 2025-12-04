@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **Structured tokens now use proper TokenScript-compatible symbol types**
+  - Array elements that are objects are now wrapped in `DictionarySymbol` instead of plain objects
+  - Nested objects within tokens are now wrapped in `DictionarySymbol` for proper type safety
+  - Nested arrays within tokens are now wrapped in `ListSymbol` for proper type safety
+  - This ensures TokenScript can properly understand and manipulate structured token data
+  - **BREAKING**: Array elements must now be accessed via `.get()` method instead of direct property access
+    - Before: `tokenArray[0].blur` 
+    - After: `tokenArray[0].get("blur")`
+  - Added comprehensive test suite in `structured-tokens-type-wrapping.test.ts`
+
 ## [0.11.2] - 2025-12-04
 
 ### Fixed
