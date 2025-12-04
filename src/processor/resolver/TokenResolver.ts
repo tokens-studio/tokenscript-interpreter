@@ -386,7 +386,11 @@ class PrefixResolver {
     this.structuredTokens.set(tokenName, tokenData);
 
     // Extract string fields that may contain references
-    const stringFields = extractStringFields(tokenValue, tokenName);
+    const stringFields = extractStringFields(
+      tokenValue,
+      tokenName,
+      this.objectParsers || undefined,
+    );
 
     if (stringFields.size === 0) {
       // No string fields to resolve, token is ready
@@ -630,7 +634,11 @@ class PrefixResolver {
     const originalValue = tokenData.$value;
 
     // Extract string fields
-    const stringFields = extractStringFields(originalValue, tokenName);
+    const stringFields = extractStringFields(
+      originalValue,
+      tokenName,
+      this.objectParsers || undefined,
+    );
 
     // Check for dependency errors in sub-fields
     const resolvedFields = new Map<string, InterpreterResult>();

@@ -1,4 +1,5 @@
 import type { BaseSymbol } from "@interpreter/symbols";
+import { numberWithUnitParser } from "@src/processor/object-parsers";
 import { processTokens } from "@src/processor/process";
 import { flattenTokensObject } from "@src/processor/utils/tokens";
 import { describe, expect, it } from "vitest";
@@ -395,7 +396,7 @@ describe("Structured Tokens - End-to-End Resolution", () => {
     expect(getValue(offsetXInc)).toBe(1);
   });
 
-  it("should parse NumberWithUnit objects using default object parsers", () => {
+  it("should parse NumberWithUnit objects using object parsers", () => {
     const tokens = {
       spacing: {
         $value: {
@@ -407,7 +408,7 @@ describe("Structured Tokens - End-to-End Resolution", () => {
       "spacing-small": '{spacing}.get("small")',
     };
 
-    const result = processTokens(tokens, { output: "symbols" });
+    const result = processTokens(tokens, { output: "symbols", objectParsers: [numberWithUnitParser] });
 
     const spacing = result.tokens.get("spacing");
     const spacingSmall = result.tokens.get("spacing-small");
@@ -423,7 +424,7 @@ describe("Structured Tokens - End-to-End Resolution", () => {
 
   it("should resolve structured tokens with arrays of objects containing references", () => {
     const tokens = {
-      "spread": "4px",
+      spread: "4px",
       "shadow.card": {
         $type: "shadow",
         $value: [

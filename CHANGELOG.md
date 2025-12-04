@@ -13,9 +13,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Previously, fields in array elements like `[{ blur: "12px", spread: "{spread}" }]` were not being resolved
   - String fields with references inside array objects now properly resolve to their referenced values
   - Primitive values (numbers, booleans) in array objects are now correctly typed instead of being stringified
-  - Refactored `extractStringFields` to recursively extract from nested structures
-  - Updated `createTokenSymbolFromResolvedFields` with nested path resolution for deeply structured tokens
+  - `extractStringFields` now recursively extracts from nested structures while respecting object parser boundaries
+  - `buildValueFromResolvedFields` checks object parsers before recursing, ensuring structures like `{ value: 8, unit: "px" }` are handled atomically
   - Example: Shadow tokens with array values now properly resolve all field references and maintain correct types
+
+### Changed
+
+- **BREAKING: `defaultObjectParsers` is now empty by default**
+  - Previously included `numberWithUnitParser` automatically
+  - Applications must now explicitly pass object parsers via the `objectParsers` option in `processTokens()`
+  - Makes parser behavior explicit and prevents unexpected transformations
+  - Migration: Add `objectParsers: [numberWithUnitParser]` to process options if you need `{ value, unit }` parsing
+  - Example: `processTokens(tokens, { objectParsers: [numberWithUnitParser] })`
 
 ### [0.11.1] - 2025-12-04
 

@@ -74,12 +74,26 @@ function buildValueFromResolvedFields(
     return resolvedFields.get(currentPath) as ISymbolType;
   }
 
-  // Handle objects
+  // Check if this value matches an object parser (e.g., { value: 8, unit: "px" })
+  // before recursively processing it
   if (isObject(originalValue)) {
+    for (const parser of parsers) {
+      if (parser.predicate(originalValue)) {
+        return parser.toSymbol(originalValue, config) as ISymbolType;
+      }
+    }
+
+    // No parser matched, recurse into object fields
     const symbolMap: Record<string, ISymbolType> = {};
     for (const [key, val] of Object.entries(originalValue)) {
       const fieldPath = `${currentPath}.${key}`;
-      symbolMap[key] = buildValueFromResolvedFields(fieldPath, val, resolvedFields, config, parsers);
+      symbolMap[key] = buildValueFromResolvedFields(
+        fieldPath,
+        val,
+        resolvedFields,
+        config,
+        parsers,
+      );
     }
     return symbolMap as unknown as ISymbolType;
   }
@@ -125,7 +139,13 @@ export function createTokenSymbolFromResolvedFields(
     const symbolMap: Record<string, ISymbolType> = {};
     for (const [key, val] of Object.entries(originalValue)) {
       const fieldPath = `${tokenName}.${key}`;
-      symbolMap[key] = buildValueFromResolvedFields(fieldPath, val, resolvedFields, config, parsers);
+      symbolMap[key] = buildValueFromResolvedFields(
+        fieldPath,
+        val,
+        resolvedFields,
+        config,
+        parsers,
+      );
     }
     return new TokenSymbol(tokenType, symbolMap, config);
   }

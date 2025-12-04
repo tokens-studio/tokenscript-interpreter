@@ -31,8 +31,8 @@ describe("Object Parsers", () => {
   });
 
   describe("defaultObjectParsers", () => {
-    it("should include numberWithUnitParser", () => {
-      expect(defaultObjectParsers).toContain(numberWithUnitParser);
+    it("should be empty by default", () => {
+      expect(defaultObjectParsers).toEqual([]);
     });
   });
 
@@ -45,6 +45,8 @@ describe("Object Parsers", () => {
           blur: 16,
         },
         "shadow",
+        undefined,
+        [numberWithUnitParser],
       );
 
       expect(token).toBeInstanceOf(TokenSymbol);
