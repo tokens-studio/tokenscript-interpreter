@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
+### [0.11.1] - 2025-12-04
 
 - **TokenResolver callbacks for structured tokens**: Enhanced error handling for field-level validation
   - `onResolve` callbacks: Only invoked for parent tokens, not sub-fields (no spam from internal resolution)
