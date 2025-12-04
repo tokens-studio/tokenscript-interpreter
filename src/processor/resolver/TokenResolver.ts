@@ -40,7 +40,12 @@ export type ProcessorResult = {
 
 export type ProcessorCallbacks = {
   onResolve?: (tokenName: RefPath, value: InterpreterResult) => void;
-  onError?: (tokenName: RefPath, error: Error, originalValue: string) => void;
+  onError?: (
+    tokenName: RefPath,
+    error: Error,
+    originalValue: string,
+    metadata?: { isSubField: boolean; parentToken?: string; fieldPath?: string },
+  ) => void;
 };
 
 export type ProcessorOutput = ProcessorResult & {
@@ -483,6 +488,35 @@ class PrefixResolver {
     }
   }
 
+  /**
+   * Extract parent token and field path from a sub-field token name.
+   * Example: "shadow.card.offsetY" -> { parentToken: "shadow.card", fieldPath: "offsetY" }
+   */
+  private extractSubFieldMetadata(subFieldPath: RefPath): {
+    parentToken: string;
+    fieldPath: string;
+  } {
+    // Find the parent token by checking which structured token this sub-field belongs to
+    for (const [parentToken] of this.structuredTokens) {
+      if (subFieldPath.startsWith(`${parentToken}.`)) {
+        const fieldPath = subFieldPath.substring(parentToken.length + 1);
+        return { parentToken, fieldPath };
+      }
+    }
+
+    // Fallback: split on last dot
+    const lastDotIndex = subFieldPath.lastIndexOf(".");
+    if (lastDotIndex !== -1) {
+      return {
+        parentToken: subFieldPath.substring(0, lastDotIndex),
+        fieldPath: subFieldPath.substring(lastDotIndex + 1),
+      };
+    }
+
+    // No parent found
+    return { parentToken: "", fieldPath: subFieldPath };
+  }
+
   private resolveSingleToken(tokenName: RefPath): void {
     if (this.resolved.has(tokenName)) return;
 
@@ -512,16 +546,27 @@ class PrefixResolver {
 
         if (dependencyError) {
           this.resolved.set(tokenName, dependencyError);
-          this.callbacks?.onError?.(tokenName, dependencyError, "");
+          // Call onError for sub-field with metadata
+          const { parentToken, fieldPath } = this.extractSubFieldMetadata(tokenName);
+          this.callbacks?.onError?.(tokenName, dependencyError, "", {
+            isSubField: true,
+            parentToken,
+            fieldPath,
+          });
         } else {
           const tokenValue = this.tokenInterpreter.interpretTokenWithAST(tokenName, ast);
           this.resolved.set(tokenName, tokenValue);
 
           if (tokenValue instanceof Error) {
-            this.callbacks?.onError?.(tokenName, tokenValue, "");
+            // Call onError for sub-field with metadata
+            const { parentToken, fieldPath } = this.extractSubFieldMetadata(tokenName);
+            this.callbacks?.onError?.(tokenName, tokenValue, "", {
+              isSubField: true,
+              parentToken,
+              fieldPath,
+            });
           } else {
-            this.callbacks?.onResolve?.(tokenName, tokenValue);
-            this.lintTokenResult(tokenName, tokenValue);
+            // Don't call onResolve for sub-fields
             this.tokenInterpreter.updateReferenceCache(tokenName, tokenValue);
           }
         }
