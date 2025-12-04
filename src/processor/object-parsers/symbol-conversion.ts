@@ -1,6 +1,11 @@
 import type { Config } from "@interpreter/config";
 import type { InterpreterResult } from "@interpreter/interpreter";
-import { jsValueToSymbolType, TokenSymbol } from "@interpreter/symbols";
+import {
+  DictionarySymbol,
+  jsValueToSymbolType,
+  ListSymbol,
+  TokenSymbol,
+} from "@interpreter/symbols";
 import { isArray, isObject } from "@interpreter/utils/type";
 import type { ISymbolType } from "@src/types";
 import { defaultObjectParsers, type ObjectParser } from ".";
@@ -32,7 +37,6 @@ export function createTokenSymbol(
   config?: Config,
   parsers: ObjectParser[] = defaultObjectParsers,
 ): TokenSymbol {
-  // Convert object fields to symbols
   if (isObject(value)) {
     const symbolMap: Record<string, ISymbolType> = {};
     for (const [key, val] of Object.entries(value)) {
@@ -41,13 +45,11 @@ export function createTokenSymbol(
     return new TokenSymbol(tokenType, symbolMap, config);
   }
 
-  // Convert array elements to symbols
   if (isArray(value)) {
     const symbolArray = value.map((val) => parseValueToSymbol(val, config, parsers) as ISymbolType);
     return new TokenSymbol(tokenType, symbolArray, config);
   }
 
-  // Fallback for other types
   return new TokenSymbol(tokenType, value as Record<string, any>, config);
 }
 
@@ -84,6 +86,7 @@ function buildValueFromResolvedFields(
     }
 
     // No parser matched, recurse into object fields
+    // Wrap in DictionarySymbol for TokenScript compatibility
     const symbolMap: Record<string, ISymbolType> = {};
     for (const [key, val] of Object.entries(originalValue)) {
       const fieldPath = `${currentPath}.${key}`;
@@ -95,10 +98,9 @@ function buildValueFromResolvedFields(
         parsers,
       );
     }
-    return symbolMap as unknown as ISymbolType;
+    return new DictionarySymbol(symbolMap, config);
   }
 
-  // Handle arrays
   if (isArray(originalValue)) {
     const symbolArray: ISymbolType[] = [];
     for (let i = 0; i < originalValue.length; i++) {
@@ -107,7 +109,7 @@ function buildValueFromResolvedFields(
         buildValueFromResolvedFields(fieldPath, originalValue[i], resolvedFields, config, parsers),
       );
     }
-    return symbolArray as unknown as ISymbolType;
+    return new ListSymbol(symbolArray, false, config);
   }
 
   // Primitive values - convert to symbol

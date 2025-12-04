@@ -456,12 +456,13 @@ describe("Structured Tokens - End-to-End Resolution", () => {
     expect(typeof firstShadow).toBe("object");
 
     // Check that fields are properly resolved
-    expect(getValue(firstShadow.blur)).toBe(12);
-    expect(getValue(firstShadow.color)).toBe("red");
-    expect(getValue(firstShadow.inset)).toBe(true);
-    expect(getValue(firstShadow.offsetX)).toBe(12);
-    expect(getValue(firstShadow.offsetY)).toBe(1);
-    expect(getValue(firstShadow.spread)).toBe(4); // Reference resolved
+    // Array elements are now DictionarySymbol instances, use .get() to access fields
+    expect(getValue(firstShadow.get("blur"))).toBe(12);
+    expect(getValue(firstShadow.get("color"))).toBe("red");
+    expect(getValue(firstShadow.get("inset"))).toBe(true);
+    expect(getValue(firstShadow.get("offsetX"))).toBe(12);
+    expect(getValue(firstShadow.get("offsetY"))).toBe(1);
+    expect(getValue(firstShadow.get("spread"))).toBe(4); // Reference resolved
 
     // Sub-field paths should NOT be in the output
     expect(result.tokens.has("shadow.card[0].blur")).toBe(false);
@@ -491,11 +492,12 @@ describe("Structured Tokens - End-to-End Resolution", () => {
     expect(Array.isArray(shadowArray)).toBe(true);
     expect(shadowArray).toHaveLength(2);
 
-    expect(getValue(shadowArray[0].offsetX)).toBe(2);
-    expect(getValue(shadowArray[0].color)).toBe("red");
+    // Array elements are DictionarySymbol instances, use .get() to access fields
+    expect(getValue(shadowArray[0].get("offsetX"))).toBe(2);
+    expect(getValue(shadowArray[0].get("color"))).toBe("red");
 
-    expect(getValue(shadowArray[1].offsetX)).toBe(8);
-    expect(getValue(shadowArray[1].color)).toBe("blue");
+    expect(getValue(shadowArray[1].get("offsetX"))).toBe(8);
+    expect(getValue(shadowArray[1].get("color"))).toBe("blue");
   });
 
   it("should handle nested objects in arrays with expressions", () => {
@@ -520,7 +522,8 @@ describe("Structured Tokens - End-to-End Resolution", () => {
     const shadowArray = (shadow as any).value;
     expect(Array.isArray(shadowArray)).toBe(true);
 
-    expect(getValue(shadowArray[0].offsetX)).toBe(8);
-    expect(getValue(shadowArray[0].offsetY)).toBe(6);
+    // Array elements are DictionarySymbol instances, use .get() to access fields
+    expect(getValue(shadowArray[0].get("offsetX"))).toBe(8);
+    expect(getValue(shadowArray[0].get("offsetY"))).toBe(6);
   });
 });
