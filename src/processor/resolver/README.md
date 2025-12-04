@@ -433,3 +433,226 @@ The cascade resolution mechanism uses event-driven processing:
 - Check if dependent is now ready
 - If ready, add to ready queue
 4. Process continues until queue is empty
+
+### Structured Tokens
+
+Structured tokens are tokens with object or array values (e.g., shadow, typography, gradient). These tokens may contain string fields that reference other tokens.
+
+```javascript
+// Structured token example
+{
+  "spacing.base": "8px",
+  "color.primary": "#FF0000",
+  "shadow.card": {
+    "$type": "shadow",
+    "$value": {
+      "offsetX": "0",
+      "offsetY": "{spacing.base}",  // Reference to another token
+      "color": "{color.primary}",    // Reference to another token
+      "blur": "16"
+    }
+  }
+}
+```
+
+#### Sub-field Resolution
+
+When resolving structured tokens, the resolver:
+
+1. **Extracts string fields** that may contain references
+2. **Creates virtual sub-field tokens** (e.g., `shadow.card.offsetY`, `shadow.card.color`)
+3. **Resolves sub-fields** as internal tokens with dependencies
+4. **Assembles the parent token** once all sub-fields are resolved
+
+**Important:** Sub-fields are internal implementation details and are not exposed in the final output.
+
+#### Callback Behavior
+
+**`onResolve` callbacks** are only invoked for parent tokens, not for internal sub-fields.
+
+**`onError` callbacks** are invoked for both parent tokens AND sub-fields, with metadata to distinguish them:
+
+```javascript
+const fieldErrors = new Map();
+
+const callbacks = {
+  onResolve: (tokenName, value) => {
+    // Called for: "spacing.base", "color.primary", "shadow.card"
+    // NOT called for: "shadow.card.offsetY", "shadow.card.color"
+  },
+  onError: (tokenName, error, originalValue, metadata) => {
+    if (metadata?.isSubField) {
+      // Sub-field error with parent context
+      // tokenName: "shadow.card.offsetY"
+      // metadata.parentToken: "shadow.card"
+      // metadata.fieldPath: "offsetY"
+      fieldErrors.set(metadata.fieldPath, error);
+    } else {
+      // Parent token or regular token error
+      console.log(`Token ${tokenName} failed`);
+    }
+  }
+};
+
+processor.processTokens(tokens, callbacks);
+```
+
+**Successful Resolution:**
+```javascript
+// When all sub-fields resolve successfully:
+onResolve("shadow.card", TokenSymbol)
+// Returns a TokenSymbol containing the fully resolved structure
+```
+
+**Error Propagation:**
+```javascript
+// If any sub-field has an error:
+{
+  "shadow.card": {
+    "$value": {
+      "offsetY": "{nonexistent}",  // ← This reference fails
+      "color": "#FF0000"
+    }
+  }
+}
+
+// Callbacks invoked:
+onError("nonexistent", ProcessorError, "", undefined)
+// Missing dependency (no metadata)
+
+onError("shadow.card.offsetY", ProcessorError, "", {
+  isSubField: true,
+  parentToken: "shadow.card",
+  fieldPath: "offsetY"
+})
+// Sub-field error with metadata
+
+onError("shadow.card", ProcessorError, "[object Object]", undefined)
+// Parent gets sub-field's error (no metadata, regular token error)
+```
+
+**Key Points:**
+
+1. **Sub-fields are internal**: They are created and resolved internally but filtered from the final output
+2. **`onResolve` for parents only**: Only parent tokens trigger `onResolve` callbacks
+3. **`onError` for all failures**: Both parent and sub-field errors trigger `onError`, with metadata to distinguish them
+4. **Metadata provides context**: Sub-field errors include `{ isSubField: true, parentToken, fieldPath }` for targeted error handling
+5. **Form-friendly**: Collect field-level errors by checking `metadata.isSubField` in the `onError` callback
+6. **Sub-fields are cached**: Resolved sub-fields are still stored in the internal cache for reference by other tokens
+
+#### Structured Token Resolution Flow
+
+```
+1. Parse parent token: "shadow.card"
+   └─> Detect structured value with string fields
+
+2. Create sub-field tokens (internal):
+   ├─> "shadow.card.offsetY" depends on "spacing.base"
+   └─> "shadow.card.color" depends on "color.primary"
+
+3. Resolve dependencies:
+   ├─> Resolve "spacing.base" = 8px
+   └─> Resolve "color.primary" = #FF0000
+
+4. Resolve sub-fields (no callbacks):
+   ├─> "shadow.card.offsetY" = 8px (stored in cache)
+   └─> "shadow.card.color" = #FF0000 (stored in cache)
+
+5. Assemble parent token:
+   └─> "shadow.card" = TokenSymbol({
+         offsetX: 0,
+         offsetY: 8px,
+         color: #FF0000,
+         blur: 16
+       })
+
+6. Trigger callback:
+   └─> onResolve("shadow.card", TokenSymbol) ← Only callback invoked
+
+7. Filter output:
+   └─> Sub-fields removed from final tokens map
+```
+
+#### Sub-field Error Handling
+
+When a sub-field has an error, the error is propagated to the parent token:
+
+```javascript
+// Error scenario
+{
+  "shadow": {
+    "$value": {
+      "offsetY": "{missing}",  // Missing token
+      "color": "#FF0000"
+    }
+  }
+}
+
+// Resolution flow:
+// 1. Create sub-field: "shadow.offsetY" depends on "missing"
+// 2. "missing" fails to resolve → Error
+// 3. "shadow.offsetY" gets dependency error (no callback)
+// 4. Parent "shadow" checks sub-fields
+// 5. Finds "shadow.offsetY" has error
+// 6. Propagates error to parent
+// 7. Triggers: onError("shadow", DependencyError)
+```
+
+**Multiple sub-field errors:**
+```javascript
+{
+  "shadow": {
+    "$value": {
+      "offsetY": "{missing1}",  // First error
+      "color": "{missing2}"      // Second error
+    }
+  }
+}
+
+// All sub-field errors are reported:
+onError("missing1", ProcessorError, "", undefined)
+onError("shadow.offsetY", DependencyError, "", { isSubField: true, parentToken: "shadow", fieldPath: "offsetY" })
+onError("missing2", ProcessorError, "", undefined)
+onError("shadow.color", DependencyError, "", { isSubField: true, parentToken: "shadow", fieldPath: "color" })
+onError("shadow", DependencyError, "[object Object]", undefined)
+```
+
+#### Form Use Case Example
+
+When editing structured tokens in a form, you can collect field-level errors for targeted validation:
+
+```javascript
+// Set up error collection for a form editing a "shadow" token
+const fieldErrors = new Map<string, Error>();
+let parentError: Error | null = null;
+
+const callbacks = {
+  onError: (tokenName, error, originalValue, metadata) => {
+    if (metadata?.isSubField && metadata.parentToken === "shadow") {
+      // Collect field-level errors
+      fieldErrors.set(metadata.fieldPath, error);
+    } else if (tokenName === "shadow") {
+      // Parent token error (only if sub-field fails)
+      parentError = error;
+    }
+  }
+};
+
+processor.processTokens(tokens, callbacks);
+
+// Now you can show errors on specific form fields:
+// - Show error on "blur" input field: fieldErrors.get("blur")
+// - Show general form error: parentError
+// - Highlight fields with errors: fieldErrors.has("blur")
+
+// Example form rendering:
+function renderField(fieldName) {
+  const error = fieldErrors.get(fieldName);
+  return {
+    fieldName,
+    hasError: !!error,
+    errorMessage: error?.message,
+    className: error ? "field-error" : "field-valid"
+  };
+}
+```

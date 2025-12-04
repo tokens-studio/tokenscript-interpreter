@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **TokenResolver callbacks for structured tokens**: Enhanced error handling for field-level validation
+  - `onResolve` callbacks: Only invoked for parent tokens, not sub-fields (no spam from internal resolution)
+  - `onError` callbacks: Now invoked for both parent tokens AND sub-fields with metadata
+  - Sub-field errors include metadata: `{ isSubField: true, parentToken: string, fieldPath: string }`
+  - Enables collecting field-level errors for form validation (e.g., show error on specific input field)
+  - Backwards compatible: metadata parameter is optional, existing code continues to work
+
 ## [0.11.0] - 2025-11-27
 
 ### Added
