@@ -52,8 +52,58 @@ export function createTokenSymbol(
 }
 
 /**
+ * Helper function to recursively build values from resolved fields.
+ * Handles nested objects and arrays.
+ *
+ * @param currentPath - The current path being processed
+ * @param originalValue - The original value at this path
+ * @param resolvedFields - Map of field paths to resolved values
+ * @param config - Optional config
+ * @param parsers - Optional custom object parsers
+ * @returns ISymbolType representation of the value
+ */
+function buildValueFromResolvedFields(
+  currentPath: string,
+  originalValue: unknown,
+  resolvedFields: Map<string, InterpreterResult>,
+  config?: Config,
+  parsers: ObjectParser[] = defaultObjectParsers,
+): ISymbolType {
+  // If this exact path is resolved, use it
+  if (resolvedFields.has(currentPath)) {
+    return resolvedFields.get(currentPath) as ISymbolType;
+  }
+
+  // Handle objects
+  if (isObject(originalValue)) {
+    const symbolMap: Record<string, ISymbolType> = {};
+    for (const [key, val] of Object.entries(originalValue)) {
+      const fieldPath = `${currentPath}.${key}`;
+      symbolMap[key] = buildValueFromResolvedFields(fieldPath, val, resolvedFields, config, parsers);
+    }
+    return symbolMap as unknown as ISymbolType;
+  }
+
+  // Handle arrays
+  if (isArray(originalValue)) {
+    const symbolArray: ISymbolType[] = [];
+    for (let i = 0; i < originalValue.length; i++) {
+      const fieldPath = `${currentPath}[${i}]`;
+      symbolArray.push(
+        buildValueFromResolvedFields(fieldPath, originalValue[i], resolvedFields, config, parsers),
+      );
+    }
+    return symbolArray as unknown as ISymbolType;
+  }
+
+  // Primitive values - convert to symbol
+  return parseValueToSymbol(originalValue, config, parsers) as ISymbolType;
+}
+
+/**
  * Create a TokenSymbol from resolved fields and original structured value.
  * This combines the original value with resolved fields to build the final TokenSymbol.
+ * Handles nested objects and arrays recursively.
  *
  * @param tokenName - The parent token name
  * @param resolvedFields - Map of field paths to resolved values
@@ -75,13 +125,7 @@ export function createTokenSymbolFromResolvedFields(
     const symbolMap: Record<string, ISymbolType> = {};
     for (const [key, val] of Object.entries(originalValue)) {
       const fieldPath = `${tokenName}.${key}`;
-      if (resolvedFields.has(fieldPath)) {
-        // Use the resolved value (already a symbol)
-        symbolMap[key] = resolvedFields.get(fieldPath) as ISymbolType;
-      } else {
-        // Convert the original value to a symbol
-        symbolMap[key] = parseValueToSymbol(val, config, parsers) as ISymbolType;
-      }
+      symbolMap[key] = buildValueFromResolvedFields(fieldPath, val, resolvedFields, config, parsers);
     }
     return new TokenSymbol(tokenType, symbolMap, config);
   }
@@ -90,13 +134,9 @@ export function createTokenSymbolFromResolvedFields(
     const symbolArray: ISymbolType[] = [];
     for (let i = 0; i < originalValue.length; i++) {
       const fieldPath = `${tokenName}[${i}]`;
-      if (resolvedFields.has(fieldPath)) {
-        // Use the resolved value (already a symbol)
-        symbolArray.push(resolvedFields.get(fieldPath) as ISymbolType);
-      } else {
-        // Convert the original value to a symbol
-        symbolArray.push(parseValueToSymbol(originalValue[i], config, parsers) as ISymbolType);
-      }
+      symbolArray.push(
+        buildValueFromResolvedFields(fieldPath, originalValue[i], resolvedFields, config, parsers),
+      );
     }
     return new TokenSymbol(tokenType, symbolArray, config);
   }

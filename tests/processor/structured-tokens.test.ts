@@ -420,4 +420,106 @@ describe("Structured Tokens - End-to-End Resolution", () => {
     expect(smallValue.getTypeName()).toBe("NumberWithUnit.Px");
     expect(smallValue.toString()).toBe("8px");
   });
+
+  it("should resolve structured tokens with arrays of objects containing references", () => {
+    const tokens = {
+      "spread": "4px",
+      "shadow.card": {
+        $type: "shadow",
+        $value: [
+          {
+            blur: "12px",
+            color: "red",
+            inset: true,
+            offsetX: "12px",
+            offsetY: "1px",
+            spread: "{spread}",
+          },
+        ],
+      },
+    };
+
+    const result = processTokens(tokens, { output: "symbols" });
+
+    const shadowCard = result.tokens.get("shadow.card");
+    expect(shadowCard).toBeDefined();
+    expect(shadowCard).not.toBeInstanceOf(Error);
+
+    // shadowCard is a TokenSymbol containing an array
+    const shadowArray = (shadowCard as any).value;
+    expect(Array.isArray(shadowArray)).toBe(true);
+    expect(shadowArray).toHaveLength(1);
+
+    const firstShadow = shadowArray[0];
+    expect(firstShadow).toBeDefined();
+    expect(typeof firstShadow).toBe("object");
+
+    // Check that fields are properly resolved
+    expect(getValue(firstShadow.blur)).toBe(12);
+    expect(getValue(firstShadow.color)).toBe("red");
+    expect(getValue(firstShadow.inset)).toBe(true);
+    expect(getValue(firstShadow.offsetX)).toBe(12);
+    expect(getValue(firstShadow.offsetY)).toBe(1);
+    expect(getValue(firstShadow.spread)).toBe(4); // Reference resolved
+
+    // Sub-field paths should NOT be in the output
+    expect(result.tokens.has("shadow.card[0].blur")).toBe(false);
+    expect(result.tokens.has("shadow.card[0].spread")).toBe(false);
+  });
+
+  it("should handle multiple array elements with references", () => {
+    const tokens = {
+      "offset.small": "2px",
+      "offset.large": "8px",
+      "shadow.multi": {
+        $type: "shadow",
+        $value: [
+          { offsetX: "{offset.small}", color: "red" },
+          { offsetX: "{offset.large}", color: "blue" },
+        ],
+      },
+    };
+
+    const result = processTokens(tokens, { output: "symbols" });
+
+    const shadowMulti = result.tokens.get("shadow.multi");
+    expect(shadowMulti).toBeDefined();
+    expect(shadowMulti).not.toBeInstanceOf(Error);
+
+    const shadowArray = (shadowMulti as any).value;
+    expect(Array.isArray(shadowArray)).toBe(true);
+    expect(shadowArray).toHaveLength(2);
+
+    expect(getValue(shadowArray[0].offsetX)).toBe(2);
+    expect(getValue(shadowArray[0].color)).toBe("red");
+
+    expect(getValue(shadowArray[1].offsetX)).toBe(8);
+    expect(getValue(shadowArray[1].color)).toBe("blue");
+  });
+
+  it("should handle nested objects in arrays with expressions", () => {
+    const tokens = {
+      base: "4px",
+      shadow: {
+        $value: [
+          {
+            offsetX: "{base} * 2",
+            offsetY: "{base} + 2px",
+          },
+        ],
+      },
+    };
+
+    const result = processTokens(tokens, { output: "symbols" });
+
+    const shadow = result.tokens.get("shadow");
+    expect(shadow).toBeDefined();
+    expect(shadow).not.toBeInstanceOf(Error);
+
+    const shadowArray = (shadow as any).value;
+    expect(Array.isArray(shadowArray)).toBe(true);
+
+    expect(getValue(shadowArray[0].offsetX)).toBe(8);
+    expect(getValue(shadowArray[0].offsetY)).toBe(6);
+  });
 });

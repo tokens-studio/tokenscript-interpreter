@@ -5,7 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.11.2] - 2025-12-04
+
+### Fixed
+
+- **Structured tokens with nested arrays**: Fixed resolution of string fields and references in objects nested within arrays
+  - Previously, fields in array elements like `[{ blur: "12px", spread: "{spread}" }]` were not being resolved
+  - String fields with references inside array objects now properly resolve to their referenced values
+  - Primitive values (numbers, booleans) in array objects are now correctly typed instead of being stringified
+  - Refactored `extractStringFields` to recursively extract from nested structures
+  - Updated `createTokenSymbolFromResolvedFields` with nested path resolution for deeply structured tokens
+  - Example: Shadow tokens with array values now properly resolve all field references and maintain correct types
 
 ### [0.11.1] - 2025-12-04
 
