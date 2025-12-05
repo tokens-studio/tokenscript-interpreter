@@ -93,5 +93,6 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
     output: builderOutput as T,
     errors,
     lint,
+    resolver,
   };
 }
