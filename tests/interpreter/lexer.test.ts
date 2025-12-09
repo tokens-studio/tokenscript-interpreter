@@ -234,4 +234,41 @@ describe("Lexer", () => {
       { type: TokenType.SEMICOLON, value: ";", line: 2 },
     ]);
   });
+
+  describe("Nested references should not be allowed", () => {
+    it("should throw error for nested reference with simple inner reference", () => {
+      const lexer = new Lexer("{color.{theme}.primary}");
+      expect(() => lexer.nextToken()).toThrow();
+    });
+
+    it("should throw error for nested reference at start", () => {
+      const lexer = new Lexer("{{nested}.value}");
+      expect(() => lexer.nextToken()).toThrow();
+    });
+
+    it("should throw error for nested reference at end", () => {
+      const lexer = new Lexer("{value.{nested}}");
+      expect(() => lexer.nextToken()).toThrow();
+    });
+
+    it("should throw error for multiple nested references", () => {
+      const lexer = new Lexer("{a.{b}.{c}.d}");
+      expect(() => lexer.nextToken()).toThrow();
+    });
+
+    it("should throw error for deeply nested references", () => {
+      const lexer = new Lexer("{outer.{middle.{inner}}}");
+      expect(() => lexer.nextToken()).toThrow();
+    });
+
+    it("should throw error for nested reference in expression", () => {
+      const lexer = new Lexer("variable x: Number = {a.{b}} + 5;");
+      expect(() => {
+        let token = lexer.nextToken();
+        while (token.type !== TokenType.EOF) {
+          token = lexer.nextToken();
+        }
+      }).toThrow();
+    });
+  });
 });
