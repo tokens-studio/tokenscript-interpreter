@@ -78,50 +78,10 @@ jobs:
           !dist/**/*.map
         retention-days: 7
 
-  stencil-components:
-    name: Build & Test Stencil Components
-    runs-on: ubuntu-latest
-    needs: test
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20.x'
-        cache: 'npm'
-        
-    - name: Install root dependencies
-      run: npm ci
-      
-    - name: Build library
-      run: npm run build:lib
-      
-    - name: Install Stencil components dependencies
-      working-directory: packages/stencil-components
-      run: npm ci
-      
-    - name: Build Stencil components
-      run: npm run build:components
-      
-    - name: Test Stencil components
-      run: npm run test:components
-      
-    - name: Upload Stencil build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: stencil-components-artifacts
-        path: |
-          packages/stencil-components/dist/
-          packages/stencil-components/loader/
-        retention-days: 7
-
   e2e:
     name: E2E Tests - ${{ matrix.example }}
     runs-on: ubuntu-latest
-    needs: [build, stencil-components]
+    needs: [build]
     
     strategy:
       fail-fast: false
@@ -143,13 +103,6 @@ jobs:
       
     - name: Build library
       run: npm run build:lib
-      
-    - name: Install Stencil components dependencies
-      working-directory: packages/stencil-components
-      run: npm ci
-      
-    - name: Build Stencil components
-      run: npm run build:components
       
     - name: Install example dependencies
       working-directory: examples/${{ matrix.example }}
