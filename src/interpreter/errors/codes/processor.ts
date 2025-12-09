@@ -1,5 +1,6 @@
 export enum ProcessorErrorCode {
   TOKEN_NOT_FOUND = "PROC_TOKEN_NOT_FOUND",
+  TOKEN_ALREADY_EXISTS = "PROC_TOKEN_ALREADY_EXISTS",
   CIRCULAR_DEPENDENCY = "PROC_CIRCULAR_DEPENDENCY",
   SUB_FIELD_NOT_RESOLVED = "PROC_SUB_FIELD_NOT_RESOLVED",
   DEPENDENCY_ERROR = "PROC_DEPENDENCY_ERROR",
@@ -13,6 +14,9 @@ export enum ProcessorErrorCode {
 
 export interface ProcessorErrorData {
   [ProcessorErrorCode.TOKEN_NOT_FOUND]: {
+    tokenName: string;
+  };
+  [ProcessorErrorCode.TOKEN_ALREADY_EXISTS]: {
     tokenName: string;
   };
   [ProcessorErrorCode.CIRCULAR_DEPENDENCY]: {

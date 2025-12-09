@@ -22,6 +22,10 @@ import { ReadinessTracker } from "./ReadinessTracker";
 import { ResolutionNotifier } from "./ResolutionNotifier";
 import { TokenInterpreter } from "./TokenInterpreter";
 import type {
+  CreateTokenParams,
+  CreateTokenResult,
+  DeleteTokenParams,
+  DeleteTokenResult,
   RefPath,
   ResolvedValueMap,
   TokenDataMap,
@@ -973,80 +977,187 @@ export class TokenResolver {
     };
   }
 
-  /**
-   * Update a single token and recompute only affected tokens.
-   *
-   * This method provides efficient incremental updates by:
-   * 1. Using the existing resolver's cached reference values
-   * 2. Only reprocessing the updated token and its dependents
-   * 3. Reusing resolved values for unaffected tokens
-   *
-   * @param tokenName - Name of the token to update (empty string allowed)
-   * @param tokenValue - New value for the token
-   * @param tokenType - Type of the token (e.g., "color", "dimension", etc.)
-   * @returns The resolved value and dependency subgraph
-   *
-   * @example
-   * const { resolver } = new TokenResolver().build(allTokens);
-   * const result = resolver.updateToken("color.primary", "#FF0000", "color");
-   * console.log(result.resolvedValue); // Resolved value for color.primary
-   */
-  public updateToken(params: UpdateTokenParams): UpdateTokenResult {
+  private ensureInitialized(): void {
     if (!this.prefixResolver || !this.tokens) {
-      throw new Error("TokenResolver.updateToken() can only be called after build()");
+      throw new Error("TokenResolver methods can only be called after build()");
     }
+  }
 
-    const { tokenPath, tokenData } = params;
+  private normalizeTokenPath(tokenPath: string): string {
+    return tokenPath.trim() || "";
+  }
 
-    // Normalize token name (use empty string if not provided)
-    const normalizedTokenPath = tokenPath.trim() || "";
-
-    const isRename = this.tokens.has(normalizedTokenPath);
-
-    // Find all tokens transitively affected by this change
-    const { tokens: affectedTokens, subgraph } = getTokenDependencyGraph(
-      normalizedTokenPath,
-      this.prefixResolver.getGraph(),
-    );
-
-    const updatedTokens = new Map(this.tokens);
-    if (tokenData) {
-      updatedTokens.set(normalizedTokenPath, tokenData);
-    }
-    this.tokens = updatedTokens;
-
+  private createOutputCallbacks(): {
+    output: TokenResultMap;
+    callbacks: ProcessorCallbacks;
+  } {
     const output: TokenResultMap = new Map();
-
     const callbacks: ProcessorCallbacks = {
       onResolve: (name, value) => {
-        // Only capture affected tokens in output
-        if (affectedTokens.has(name)) {
-          output.set(name, value);
-        }
+        output.set(name, value);
       },
       onError: (name, error) => {
-        // Only capture affected tokens in output
-        if (affectedTokens.has(name)) {
-          output.set(name, error);
-        }
+        output.set(name, error);
       },
     };
+    return { output, callbacks };
+  }
 
+  private rebuildResolver(updatedTokens: TokenDataMap, callbacks: ProcessorCallbacks): void {
+    if (!this.prefixResolver) {
+      throw new Error("Cannot rebuild resolver: prefixResolver is not initialized");
+    }
     const newResolver = this.prefixResolver.clone({
       tokens: updatedTokens,
       callbacks,
     });
     newResolver.resolve();
     this.prefixResolver = newResolver;
+  }
 
-    // Extract the resolved value for the updated token
+  public updateToken(params: UpdateTokenParams): UpdateTokenResult {
+    this.ensureInitialized();
+
+    const { tokenPath, tokenData, tokenPathRenamed } = params;
+    const prevPath = this.normalizeTokenPath(tokenPath);
+    const newPath = tokenPathRenamed?.trim();
+
+    if (!this.tokens || !this.tokens.has(prevPath)) {
+      if (tokenData) {
+        const createResult = this.createToken({
+          tokenPath: prevPath,
+          tokenData,
+        });
+        return {
+          ...createResult,
+          updated: false,
+        };
+      }
+      throw new ProcessorError(ProcessorErrorCode.TOKEN_NOT_FOUND, {
+        data: { tokenName: prevPath },
+      });
+    }
+
+    const oldTokenData = this.tokens.get(prevPath);
+    if (!oldTokenData) {
+      throw new ProcessorError(ProcessorErrorCode.TOKEN_NOT_FOUND, {
+        data: { tokenName: prevPath },
+      });
+    }
+
+    const isRename = newPath && newPath !== prevPath;
+
+    if (!this.prefixResolver) {
+      throw new Error("Cannot update token: prefixResolver is not initialized");
+    }
+    const currentGraph = this.prefixResolver.getGraph();
+    const { tokens: affectedTokens } = getTokenDependencyGraph(prevPath, currentGraph);
+    affectedTokens.delete(prevPath);
+
+    const updatedTokens = new Map(this.tokens);
+    updatedTokens.delete(prevPath);
+
+    const finalPath = isRename ? newPath : prevPath;
+    updatedTokens.set(finalPath, tokenData || oldTokenData);
+    this.tokens = updatedTokens;
+
+    const { output, callbacks } = this.createOutputCallbacks();
+    this.rebuildResolver(updatedTokens, callbacks);
+
+    if (!this.prefixResolver) {
+      throw new Error("Cannot update token: prefixResolver is not initialized after rebuild");
+    }
+    const { tokens: dependentTokens, subgraph } = getTokenDependencyGraph(
+      finalPath,
+      this.prefixResolver.getGraph(),
+    );
+
+    const resolvedValue = output.get(finalPath) || "";
+
+    return {
+      resolvedValue,
+      affectedTokens: dependentTokens,
+      subgraph,
+      updated: true,
+      ...(isRename && {
+        renamedReferences: undefined,
+        brokenReferences: new Set(affectedTokens),
+      }),
+    };
+  }
+
+  public createToken(params: CreateTokenParams): CreateTokenResult {
+    this.ensureInitialized();
+
+    const { tokenPath, tokenData } = params;
+    const normalizedTokenPath = this.normalizeTokenPath(tokenPath);
+
+    if (this.tokens?.has(normalizedTokenPath)) {
+      throw new ProcessorError(ProcessorErrorCode.TOKEN_ALREADY_EXISTS, {
+        data: { tokenName: normalizedTokenPath },
+      });
+    }
+
+    const updatedTokens = new Map(this.tokens);
+    updatedTokens.set(normalizedTokenPath, tokenData);
+    this.tokens = updatedTokens;
+
+    const { output, callbacks } = this.createOutputCallbacks();
+    this.rebuildResolver(updatedTokens, callbacks);
+
+    if (!this.prefixResolver) {
+      throw new Error("Cannot create token: prefixResolver is not initialized after rebuild");
+    }
+    const { tokens: dependentTokens, subgraph } = getTokenDependencyGraph(
+      normalizedTokenPath,
+      this.prefixResolver.getGraph(),
+    );
+
     const resolvedValue = output.get(normalizedTokenPath) || "";
 
     return {
       resolvedValue,
+      affectedTokens: dependentTokens,
+      subgraph,
+      created: true,
+    };
+  }
+
+  public deleteToken(params: DeleteTokenParams): DeleteTokenResult {
+    this.ensureInitialized();
+
+    const { tokenPath } = params;
+    const normalizedTokenPath = this.normalizeTokenPath(tokenPath);
+
+    if (!this.tokens?.has(normalizedTokenPath)) {
+      throw new ProcessorError(ProcessorErrorCode.TOKEN_NOT_FOUND, {
+        data: { tokenName: normalizedTokenPath },
+      });
+    }
+
+    if (!this.prefixResolver) {
+      throw new Error("Cannot delete token: prefixResolver is not initialized");
+    }
+    const currentGraph = this.prefixResolver.getGraph();
+    const { tokens: affectedTokens, subgraph } = getTokenDependencyGraph(
+      normalizedTokenPath,
+      currentGraph,
+    );
+
+    affectedTokens.delete(normalizedTokenPath);
+    const brokenReferences = new Set(affectedTokens);
+
+    const updatedTokens = new Map(this.tokens);
+    updatedTokens.delete(normalizedTokenPath);
+    this.tokens = updatedTokens;
+
+    const { callbacks } = this.createOutputCallbacks();
+    this.rebuildResolver(updatedTokens, callbacks);
+
+    return {
       affectedTokens,
       subgraph,
-      updated: isRename,
+      brokenReferences,
     };
   }
 }

@@ -219,6 +219,8 @@ export const messages: MessageMap = {
   // Processor errors
   [ProcessorErrorCode.TOKEN_NOT_FOUND]: (data) => `Token '${data.tokenName}' not found`,
 
+  [ProcessorErrorCode.TOKEN_ALREADY_EXISTS]: (data) => `Token '${data.tokenName}' already exists.`,
+
   [ProcessorErrorCode.CIRCULAR_DEPENDENCY]: (data) =>
     `Circular dependency detected: ${Array.isArray(data.tokens) ? data.tokens.join(", ") : data.tokens}`,
 

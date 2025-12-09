@@ -68,7 +68,8 @@ export type UpdateTokenResult = TokenOperationResult & {
   brokenReferences?: Set<RefPath>;
 };
 
-export type DeleteTokenResult = TokenOperationResult & {
-  deleted: boolean;
+export type DeleteTokenResult = {
+  affectedTokens: Set<RefPath>;
+  subgraph: DependencyGraph<RefPath>;
   brokenReferences: Set<RefPath>;
 };

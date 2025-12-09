@@ -19,6 +19,14 @@ export { processTokenSets, processTokens } from "./process";
 export type { ProcessorOutput, ProcessorResult } from "./resolver/TokenResolver";
 export { TokenResolver } from "./resolver/TokenResolver";
 export type {
+  CreateTokenParams,
+  CreateTokenResult,
+  DeleteTokenParams,
+  DeleteTokenResult,
+  UpdateTokenParams,
+  UpdateTokenResult,
+} from "./resolver/types";
+export type {
   ProcessFilesOptions,
   ProcessOptions,
   ProcessResult,
