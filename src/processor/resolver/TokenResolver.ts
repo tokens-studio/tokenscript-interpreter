@@ -2,6 +2,7 @@ import type { ASTNode } from "@interpreter/ast";
 import type { Config } from "@interpreter/config";
 import { isLanguageError, ProcessorError, ProcessorErrorCode } from "@interpreter/errors";
 import type { InterpreterResult } from "@interpreter/interpreter";
+import { type ParseExpressionResult, parseExpression } from "@interpreter/parser";
 import { BooleanSymbol, NullSymbol, NumberSymbol, StringSymbol } from "@interpreter/symbols";
 import { renameReferences } from "@interpreter/utils/references";
 import { isArray, isBoolean, isNull, isNumber, isObject, isString } from "@interpreter/utils/type";
@@ -1090,7 +1091,8 @@ export class TokenResolver {
 
         // Only update if there was an actual change
         if (updatedValue !== dependentValue) {
-          updatedTokens.set(dependentToken, setTokenValue(dependentTokenData, updatedValue));
+          const updatedTokenData = { ...dependentTokenData, $value: updatedValue };
+          updatedTokens.set(dependentToken, updatedTokenData);
           renamedReferences.add(dependentToken);
         }
       }
