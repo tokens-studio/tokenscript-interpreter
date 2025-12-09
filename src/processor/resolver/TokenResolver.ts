@@ -2,8 +2,8 @@ import type { ASTNode } from "@interpreter/ast";
 import type { Config } from "@interpreter/config";
 import { isLanguageError, ProcessorError, ProcessorErrorCode } from "@interpreter/errors";
 import type { InterpreterResult } from "@interpreter/interpreter";
-import { type ParseExpressionResult, parseExpression } from "@interpreter/parser";
 import { BooleanSymbol, NullSymbol, NumberSymbol, StringSymbol } from "@interpreter/symbols";
+import { renameReferences } from "@interpreter/utils/references";
 import { isArray, isBoolean, isNull, isNumber, isObject, isString } from "@interpreter/utils/type";
 import { UNINTERPRETED_KEYWORDS } from "@src/types";
 import { DependencyError } from "../errors";
@@ -333,6 +333,10 @@ class PrefixResolver {
 
   public getReferenceCache(): Map<string, InterpreterResult> {
     return this.referenceCache;
+  }
+
+  public getTokenInterpreter(): TokenInterpreter {
+    return this.tokenInterpreter;
   }
 
   public clone(overrides: Partial<ResolverParams>): PrefixResolver {
@@ -1018,7 +1022,7 @@ export class TokenResolver {
   public updateToken(params: UpdateTokenParams): UpdateTokenResult {
     this.ensureInitialized();
 
-    const { tokenPath, tokenData, tokenPathRenamed } = params;
+    const { tokenPath, tokenData, tokenPathRenamed, updateReferences = false } = params;
     const prevPath = this.normalizeTokenPath(tokenPath);
     const newPath = tokenPathRenamed?.trim();
 
@@ -1047,6 +1051,13 @@ export class TokenResolver {
 
     const isRename = newPath && newPath !== prevPath;
 
+    // Validate newPath doesn't already exist when renaming
+    if (isRename && this.tokens.has(newPath)) {
+      throw new ProcessorError(ProcessorErrorCode.TOKEN_ALREADY_EXISTS, {
+        data: { tokenName: newPath },
+      });
+    }
+
     if (!this.prefixResolver) {
       throw new Error("Cannot update token: prefixResolver is not initialized");
     }
@@ -1055,8 +1066,38 @@ export class TokenResolver {
     affectedTokens.delete(prevPath);
 
     const updatedTokens = new Map(this.tokens);
-    updatedTokens.delete(prevPath);
+    const renamedReferences = new Set<RefPath>();
 
+    // Handle rename with reference updates if requested
+    if (isRename && updateReferences && affectedTokens.size > 0) {
+      const renameMap = { [prevPath]: newPath };
+      const tokenInterpreter = this.prefixResolver.getTokenInterpreter();
+
+      // Update references in all dependent tokens
+      for (const dependentToken of affectedTokens) {
+        const dependentTokenData = updatedTokens.get(dependentToken);
+        if (!dependentTokenData) continue;
+
+        const dependentValue = getTokenValue(dependentTokenData);
+        if (!isString(dependentValue)) continue;
+
+        // Get cached AST instead of reparsing
+        const ast = tokenInterpreter.getTokenAST(dependentToken);
+        if (!ast) continue;
+
+        // Rename references using the utility function
+        const updatedValue = renameReferences(dependentValue, ast, renameMap);
+
+        // Only update if there was an actual change
+        if (updatedValue !== dependentValue) {
+          updatedTokens.set(dependentToken, setTokenValue(dependentTokenData, updatedValue));
+          renamedReferences.add(dependentToken);
+        }
+      }
+    }
+
+    // Update/rename the token itself
+    updatedTokens.delete(prevPath);
     const finalPath = isRename ? newPath : prevPath;
     updatedTokens.set(finalPath, tokenData || oldTokenData);
     this.tokens = updatedTokens;
@@ -1074,16 +1115,23 @@ export class TokenResolver {
 
     const resolvedValue = output.get(finalPath) || "";
 
-    return {
+    const result: UpdateTokenResult = {
       resolvedValue,
       affectedTokens: dependentTokens,
       subgraph,
       updated: true,
-      ...(isRename && {
-        renamedReferences: undefined,
-        brokenReferences: new Set(affectedTokens),
-      }),
     };
+
+    // Add rename-specific information
+    if (isRename) {
+      if (updateReferences) {
+        result.renamedReferences = renamedReferences;
+      } else {
+        result.brokenReferences = new Set(affectedTokens);
+      }
+    }
+
+    return result;
   }
 
   public createToken(params: CreateTokenParams): CreateTokenResult {
