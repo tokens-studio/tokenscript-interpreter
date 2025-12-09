@@ -1,7 +1,6 @@
 import * as fs from "node:fs";
 import { Command } from "commander";
 import packageJson from "../package.json" with { type: "json" };
-import { parseReferences } from "./interpreter/utils/references";
 import { evaluateExpression } from "./lib/eval";
 import { FlatObjectBuilder, NestedObjectBuilder } from "./processor/builders";
 import { stringifyAsJson } from "./processor/builders/base";
@@ -130,7 +129,7 @@ async function runEval(
   let references: ReferenceRecord = {};
   if (options.refs) {
     try {
-      references = parseReferences(options.refs);
+      references = JSON.parse(options.refs) as ReferenceRecord;
     } catch (parseError) {
       return {
         success: false,
