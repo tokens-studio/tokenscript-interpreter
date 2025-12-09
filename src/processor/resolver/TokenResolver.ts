@@ -22,18 +22,20 @@ import {
   ReadinessTracker,
   type RefPath,
   ResolutionNotifier,
+  type ResolvedValueMap,
+  type TokenDataMap,
+  type TokenErrorMap,
+  type TokenInputMap,
   TokenInterpreter,
   type TokenResult,
-  type UnresolvedToken,
+  type TokenResultMap,
+  type UnresolvedTokenMap,
 } from ".";
-
-type ResolvedTokens = Map<RefPath, TokenResult>;
-type UnresolvedTokens = Map<RefPath, UnresolvedToken>;
 
 export type ProcessorResult = {
   graph: DependencyGraph<RefPath>;
-  resolved: ResolvedTokens;
-  unresolved: UnresolvedTokens;
+  resolved: TokenResultMap;
+  unresolved: UnresolvedTokenMap;
   subFieldPaths?: Set<RefPath>;
   lintIssues?: LintIssue[];
 };
@@ -49,8 +51,8 @@ export type ProcessorCallbacks = {
 };
 
 export type ProcessorOutput = ProcessorResult & {
-  tokens: Map<RefPath, InterpreterResult>;
-  errors: Map<RefPath, Error>;
+  tokens: ResolvedValueMap;
+  errors: TokenErrorMap;
   resolver: TokenResolver;
 };
 
@@ -70,14 +72,14 @@ export type ProcessorOutput = ProcessorResult & {
  * console.log(subgraph.getNodes()); // Map showing dependency relationships
  */
 export function getTokenDependencyGraph(
-  tokenName: string,
-  graph: DependencyGraph<string>,
+  tokenName: RefPath,
+  graph: DependencyGraph<RefPath>,
 ): {
-  tokens: Set<string>;
-  subgraph: DependencyGraph<string>;
+  tokens: Set<RefPath>;
+  subgraph: DependencyGraph<RefPath>;
 } {
   // Build reverse dependency graph to find dependents
-  const reverseDeps = new Map<string, Set<string>>();
+  const reverseDeps = new Map<RefPath, Set<RefPath>>();
   const graphNodes = graph.getNodes();
 
   for (const [node, dependencies] of graphNodes) {
@@ -90,9 +92,9 @@ export function getTokenDependencyGraph(
   }
 
   // Find all tokens transitively affected by this change using BFS
-  const affectedTokens = new Set<string>();
-  const queue: string[] = [tokenName];
-  const visited = new Set<string>();
+  const affectedTokens = new Set<RefPath>();
+  const queue: RefPath[] = [tokenName];
+  const visited = new Set<RefPath>();
 
   while (queue.length > 0) {
     const current = queue.shift();
@@ -113,12 +115,12 @@ export function getTokenDependencyGraph(
   }
 
   // Build subgraph containing only affected tokens and their relationships
-  const subgraph = new DependencyGraph<string>();
+  const subgraph = new DependencyGraph<RefPath>();
   for (const token of affectedTokens) {
     const dependencies = graphNodes.get(token);
     if (dependencies) {
       // Only include dependencies that are also in the affected set
-      const affectedDeps = new Set<string>();
+      const affectedDeps = new Set<RefPath>();
       for (const dep of dependencies) {
         if (affectedTokens.has(dep)) {
           affectedDeps.add(dep);
@@ -137,14 +139,15 @@ export function getTokenDependencyGraph(
 }
 
 class PrefixResolver {
+  private readonly tokens: TokenInputMap;
   private readonly callbacks?: ProcessorCallbacks;
   private readonly config?: Config;
   private readonly objectParsers?: ObjectParser[];
   private readonly linter?: LintRunner;
   private readonly graph = new DependencyGraph<RefPath>();
-  private readonly resolved: ResolvedTokens = new Map();
-  private readonly unresolved: UnresolvedTokens = new Map();
-  private readonly referenceCache: Map<string, InterpreterResult> = new Map();
+  private readonly resolved: TokenResultMap = new Map();
+  private readonly unresolved: UnresolvedTokenMap = new Map();
+  private readonly referenceCache: ResolvedValueMap = new Map();
   private readonly pendingResolution: Set<RefPath> = new Set();
   private readonly readyQueue: Set<RefPath> = new Set();
 
@@ -159,7 +162,7 @@ class PrefixResolver {
 
   // Structured tokens tracking
   private readonly subFieldPaths: Set<RefPath> = new Set();
-  private readonly structuredTokens: Map<RefPath, TokenData> = new Map();
+  private readonly structuredTokens: TokenDataMap = new Map();
 
   // Lint issues collection
   private readonly lintIssues: LintIssue[] = [];
@@ -783,12 +786,12 @@ class PrefixResolver {
  */
 export class TokenResolver {
   private resolver?: PrefixResolver;
-  private tokens?: Map<RefPath, TokenData>;
+  private tokens?: TokenDataMap;
   private config?: Config;
   private objectParsers?: ObjectParser[];
 
   public processTokens(
-    tokens: Map<RefPath, string | TokenData>,
+    tokens: TokenInputMap,
     callbacks?: ProcessorCallbacks,
     config?: Config,
     objectParsers?: ObjectParser[],
@@ -812,9 +815,9 @@ export class TokenResolver {
    * const { tokens, subgraph } = resolver.getTokenDependencyGraph("color.primary");
    * console.log(tokens); // Set(['color.primary', 'button.background', ...])
    */
-  public getTokenDependencyGraph(tokenName: string): {
-    tokens: Set<string>;
-    subgraph: DependencyGraph<string>;
+  public getTokenDependencyGraph(tokenName: RefPath): {
+    tokens: Set<RefPath>;
+    subgraph: DependencyGraph<RefPath>;
   } {
     if (!this.resolver) {
       throw new Error("TokenResolver.getTokenDependencyGraph() can only be called after build()");
@@ -823,7 +826,7 @@ export class TokenResolver {
     const graph = this.resolver.getGraph();
 
     // Build reverse dependency graph to find dependents
-    const reverseDeps = new Map<string, Set<string>>();
+    const reverseDeps = new Map<RefPath, Set<RefPath>>();
     const graphNodes = graph.getNodes();
 
     for (const [node, dependencies] of graphNodes) {
@@ -836,9 +839,9 @@ export class TokenResolver {
     }
 
     // Find all tokens transitively affected by this change using BFS
-    const affectedTokens = new Set<string>();
-    const queue: string[] = [tokenName];
-    const visited = new Set<string>();
+    const affectedTokens = new Set<RefPath>();
+    const queue: RefPath[] = [tokenName];
+    const visited = new Set<RefPath>();
 
     while (queue.length > 0) {
       const current = queue.shift();
@@ -859,12 +862,12 @@ export class TokenResolver {
     }
 
     // Build subgraph containing only affected tokens and their relationships
-    const subgraph = new DependencyGraph<string>();
+    const subgraph = new DependencyGraph<RefPath>();
     for (const token of affectedTokens) {
       const dependencies = graphNodes.get(token);
       if (dependencies) {
         // Only include dependencies that are also in the affected set
-        const affectedDeps = new Set<string>();
+        const affectedDeps = new Set<RefPath>();
         for (const dep of dependencies) {
           if (affectedTokens.has(dep)) {
             affectedDeps.add(dep);
@@ -883,12 +886,12 @@ export class TokenResolver {
   }
 
   public build(
-    tokens: Map<RefPath, TokenData>,
+    tokens: TokenDataMap,
     config?: Config,
     objectParsers?: ObjectParser[],
   ): ProcessorOutput {
-    const output: Map<RefPath, string | InterpreterResult> = new Map();
-    const errors: Map<RefPath, Error> = new Map();
+    const output: ResolvedValueMap = new Map();
+    const errors: TokenErrorMap = new Map();
     let subFieldPaths: Set<RefPath> | undefined;
 
     const callbacks: ProcessorCallbacks = {
@@ -945,13 +948,13 @@ export class TokenResolver {
    * console.log(result.resolvedValue); // Resolved value for color.primary
    */
   public updateToken(
-    tokenName: string,
+    tokenName: RefPath,
     tokenValue: string,
     tokenType?: string,
   ): {
     resolvedValue: InterpreterResult | Error;
-    affectedTokens: Set<string>;
-    subgraph: DependencyGraph<string>;
+    affectedTokens: Set<RefPath>;
+    subgraph: DependencyGraph<RefPath>;
   } {
     if (!this.resolver || !this.tokens) {
       throw new Error("TokenResolver.updateToken() can only be called after build()");
@@ -979,7 +982,7 @@ export class TokenResolver {
     // Pass ALL tokens to the resolver
     // The cache pre-population ensures non-affected tokens use cached values
     // and skip recomputation (early resolution via cache hit)
-    const output: Map<RefPath, InterpreterResult | Error> = new Map();
+    const output: TokenResultMap = new Map();
 
     const callbacks: ProcessorCallbacks = {
       onResolve: (name, value) => {
