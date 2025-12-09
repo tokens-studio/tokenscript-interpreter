@@ -72,6 +72,8 @@ export interface Token {
   type: TokenType;
   value: any;
   line: number;
+  pos: number;
+  endPos: number;
 }
 
 export interface ASTNode {
