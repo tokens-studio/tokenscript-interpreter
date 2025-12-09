@@ -16,21 +16,23 @@ import {
 import { DependencyGraph } from "../utils/DependencyGraph";
 import { extractStringFields } from "../utils/structured-tokens";
 import { getTokenValue, setTokenValue, type TokenData } from "../utils/tokens";
-import {
-  DependencyTracker,
-  PrefixManager,
-  ReadinessTracker,
-  type RefPath,
-  ResolutionNotifier,
-  type ResolvedValueMap,
-  type TokenDataMap,
-  type TokenErrorMap,
-  type TokenInputMap,
-  TokenInterpreter,
-  type TokenResult,
-  type TokenResultMap,
-  type UnresolvedTokenMap,
-} from ".";
+import { DependencyTracker } from "./DependencyTracker";
+import { PrefixManager } from "./PrefixManager";
+import { ReadinessTracker } from "./ReadinessTracker";
+import { ResolutionNotifier } from "./ResolutionNotifier";
+import { TokenInterpreter } from "./TokenInterpreter";
+import type {
+  RefPath,
+  ResolvedValueMap,
+  TokenDataMap,
+  TokenErrorMap,
+  TokenInputMap,
+  TokenResult,
+  TokenResultMap,
+  UnresolvedTokenMap,
+  UpdateTokenParams,
+  UpdateTokenResult,
+} from "./types";
 
 export type ProcessorResult = {
   graph: DependencyGraph<RefPath>;
@@ -54,6 +56,15 @@ export type ProcessorOutput = ProcessorResult & {
   tokens: ResolvedValueMap;
   errors: TokenErrorMap;
   resolver: TokenResolver;
+};
+
+export type ResolverParams = {
+  tokens: TokenInputMap;
+  callbacks?: ProcessorCallbacks;
+  config?: Config;
+  objectParsers?: ObjectParser[];
+  linter?: LintRunner;
+  initialCache?: ResolvedValueMap;
 };
 
 /**
@@ -170,13 +181,10 @@ class PrefixResolver {
   // Phase state
   private earlyResolved: RefPath[] = [];
 
-  constructor(
-    private readonly tokens: Map<RefPath, string | TokenData>,
-    callbacks?: ProcessorCallbacks,
-    config?: Config,
-    objectParsers?: ObjectParser[],
-    linter?: LintRunner,
-  ) {
+  constructor(private readonly params: ResolverParams) {
+    const { tokens, callbacks, config, objectParsers, linter } = params;
+
+    this.tokens = tokens;
     this.callbacks = callbacks;
     this.config = config;
     this.objectParsers = objectParsers;
@@ -321,6 +329,31 @@ class PrefixResolver {
 
   public getReferenceCache(): Map<string, InterpreterResult> {
     return this.referenceCache;
+  }
+
+  public clone(overrides: Partial<ResolverParams>): PrefixResolver {
+    const { tokens, callbacks, linter } = {
+      ...this.params,
+      ...overrides,
+    };
+
+    const resolver = new PrefixResolver({
+      tokens,
+      callbacks,
+      config: this.config,
+      objectParsers: this.objectParsers,
+      linter,
+    });
+
+    if (overrides.initialCache && overrides.tokens) {
+      for (const [tokenName, value] of overrides.initialCache) {
+        if (!overrides.tokens.has(tokenName)) {
+          resolver.referenceCache.set(tokenName, value);
+        }
+      }
+    }
+
+    return resolver;
   }
 
   /**
@@ -785,7 +818,7 @@ class PrefixResolver {
  * const result = processor.build(tokens);
  */
 export class TokenResolver {
-  private resolver?: PrefixResolver;
+  private prefixResolver?: PrefixResolver;
   private tokens?: TokenDataMap;
   private config?: Config;
   private objectParsers?: ObjectParser[];
@@ -797,7 +830,13 @@ export class TokenResolver {
     objectParsers?: ObjectParser[],
     linter?: LintRunner,
   ): ProcessorResult {
-    const resolver = new PrefixResolver(tokens, callbacks, config, objectParsers, linter);
+    const resolver = new PrefixResolver({
+      tokens,
+      callbacks,
+      config,
+      objectParsers,
+      linter,
+    });
     return resolver.resolve();
   }
 
@@ -819,11 +858,11 @@ export class TokenResolver {
     tokens: Set<RefPath>;
     subgraph: DependencyGraph<RefPath>;
   } {
-    if (!this.resolver) {
+    if (!this.prefixResolver) {
       throw new Error("TokenResolver.getTokenDependencyGraph() can only be called after build()");
     }
 
-    const graph = this.resolver.getGraph();
+    const graph = this.prefixResolver.getGraph();
 
     // Build reverse dependency graph to find dependents
     const reverseDeps = new Map<RefPath, Set<RefPath>>();
@@ -905,12 +944,17 @@ export class TokenResolver {
     };
 
     // Create and store the resolver for future updates
-    this.resolver = new PrefixResolver(tokens, callbacks, config, objectParsers);
+    this.prefixResolver = new PrefixResolver({
+      tokens,
+      callbacks,
+      config,
+      objectParsers,
+    });
     this.tokens = tokens;
     this.config = config;
     this.objectParsers = objectParsers;
 
-    const result = this.resolver.resolve();
+    const result = this.prefixResolver.resolve();
     subFieldPaths = result.subFieldPaths;
 
     // Filter out sub-field paths from output
@@ -947,41 +991,30 @@ export class TokenResolver {
    * const result = resolver.updateToken("color.primary", "#FF0000", "color");
    * console.log(result.resolvedValue); // Resolved value for color.primary
    */
-  public updateToken(
-    tokenName: RefPath,
-    tokenValue: string,
-    tokenType?: string,
-  ): {
-    resolvedValue: InterpreterResult | Error;
-    affectedTokens: Set<RefPath>;
-    subgraph: DependencyGraph<RefPath>;
-  } {
-    if (!this.resolver || !this.tokens) {
+  public updateToken(params: UpdateTokenParams): UpdateTokenResult {
+    if (!this.prefixResolver || !this.tokens) {
       throw new Error("TokenResolver.updateToken() can only be called after build()");
     }
 
+    const { tokenPath, tokenData } = params;
+
     // Normalize token name (use empty string if not provided)
-    const normalizedTokenName = tokenName.trim() || "";
+    const normalizedTokenPath = tokenPath.trim() || "";
+
+    const isRename = this.tokens.has(normalizedTokenPath);
 
     // Find all tokens transitively affected by this change
     const { tokens: affectedTokens, subgraph } = getTokenDependencyGraph(
-      normalizedTokenName,
-      this.resolver.getGraph(),
+      normalizedTokenPath,
+      this.prefixResolver.getGraph(),
     );
 
-    // Update the token in the tokens map
     const updatedTokens = new Map(this.tokens);
-    updatedTokens.set(normalizedTokenName, {
-      $value: tokenValue,
-      $type: tokenType || "string",
-    });
-
-    // Update stored tokens
+    if (tokenData) {
+      updatedTokens.set(normalizedTokenPath, tokenData);
+    }
     this.tokens = updatedTokens;
 
-    // Pass ALL tokens to the resolver
-    // The cache pre-population ensures non-affected tokens use cached values
-    // and skip recomputation (early resolution via cache hit)
     const output: TokenResultMap = new Map();
 
     const callbacks: ProcessorCallbacks = {
@@ -999,49 +1032,21 @@ export class TokenResolver {
       },
     };
 
-    // Create a new resolver with ALL tokens and pre-populated cache
-    // Non-affected tokens will use cached values and skip recomputation
-    const tempResolver = new PrefixResolverWithCache(
-      updatedTokens,
-      this.resolver.getReferenceCache(),
+    const newResolver = this.prefixResolver.clone({
+      tokens: updatedTokens,
       callbacks,
-      this.config,
-      this.objectParsers,
-    );
-    tempResolver.resolve();
+    });
+    newResolver.resolve();
+    this.prefixResolver = newResolver;
 
     // Extract the resolved value for the updated token
-    const resolvedValue = output.get(normalizedTokenName) || "";
+    const resolvedValue = output.get(normalizedTokenPath) || "";
 
     return {
       resolvedValue,
       affectedTokens,
       subgraph,
+      updated: isRename,
     };
-  }
-}
-
-// Helper class that extends PrefixResolver to accept pre-populated cache
-class PrefixResolverWithCache extends PrefixResolver {
-  constructor(
-    tokens: Map<RefPath, string | TokenData>,
-    cachedValues: Map<RefPath, InterpreterResult>,
-    callbacks?: ProcessorCallbacks,
-    config?: Config,
-    objectParsers?: ObjectParser[],
-  ) {
-    super(tokens, callbacks, config, objectParsers);
-
-    // Pre-populate the reference cache with already-resolved values
-    for (const [tokenName, value] of cachedValues) {
-      if (!tokens.has(tokenName)) {
-        this.getReferenceCache().set(tokenName, value);
-      }
-    }
-  }
-
-  // Expose reference cache for initialization
-  public getReferenceCache(): Map<string, InterpreterResult> {
-    return (this as any).referenceCache;
   }
 }

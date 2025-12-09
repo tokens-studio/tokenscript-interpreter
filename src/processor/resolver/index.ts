@@ -7,7 +7,6 @@ export { ResolutionPhase } from "./ResolutionPhase";
 export { TokenInterpreter } from "./TokenInterpreter";
 export type {
   ASTNodeMap,
-  CachedValue,
   RefPath,
   ResolvedValueMap,
   TokenDataMap,
