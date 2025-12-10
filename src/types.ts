@@ -95,6 +95,7 @@ export interface ISymbolType {
   toJSON?(): any;
   toString(): string;
   getTypeName(): string;
+  toJs(options?: { recursive?: boolean; stringify?: boolean }): any;
 
   hasMethod?(methodName: string, args: ISymbolType[]): boolean;
   callMethod?(methodName: string, args: ISymbolType[]): ISymbolType | null | undefined;

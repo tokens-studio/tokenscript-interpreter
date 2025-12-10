@@ -191,6 +191,18 @@ describe("StringSymbol - Unit Tests", () => {
       expect(empty.value).toBe(null);
     });
   });
+
+  describe("toJs", () => {
+    it("should convert to JavaScript string", () => {
+      const symbol = new StringSymbol("hello");
+      expect(symbol.toJs()).toBe("hello");
+    });
+
+    it("should convert null to JavaScript null", () => {
+      const symbol = new StringSymbol(null);
+      expect(symbol.toJs()).toBe(null);
+    });
+  });
 });
 
 describe("String Methods - Split Operations", () => {

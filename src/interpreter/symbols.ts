@@ -20,6 +20,15 @@ import {
   nullToUndefined,
 } from "./utils/type";
 
+// Types -----------------------------------------------------------------------
+
+export interface ToJsOptions {
+  /** Whether to recursively convert nested values (default: true) */
+  recursive?: boolean;
+  /** Whether to use toString() for structured types (default: false) */
+  stringify?: boolean;
+}
+
 // Utilities -------------------------------------------------------------------
 
 export function isTokenscriptSymbol(value: unknown): value is ISymbolType {
@@ -290,6 +299,8 @@ export abstract class BaseSymbolType implements ISymbolType {
    */
   abstract cloneIfMutable(): ISymbolType;
 
+  abstract toJs(options?: ToJsOptions): JsValue;
+
   toString(): string {
     return String(this.value);
   }
@@ -410,9 +421,13 @@ export class NullSymbol extends BaseSymbolType {
   static empty(): NullSymbol {
     return new NullSymbol();
   }
+
+  toJs(_options?: ToJsOptions): null {
+    return null;
+  }
 }
 
-type numberValue = number | null;
+type NumberValue = number | null;
 
 export class NumberSymbol extends BaseSymbolType {
   type = "Number";
@@ -434,10 +449,10 @@ export class NumberSymbol extends BaseSymbolType {
     },
   };
 
-  public value: numberValue;
+  public value: NumberValue;
 
   constructor(value: number | NumberSymbol | NumberWithUnitSymbol | null, config?: Config) {
-    let safeValue: numberValue;
+    let safeValue: NumberValue;
     if (isNumber(value)) {
       safeValue = value;
     } else if (value instanceof NumberSymbol || value instanceof NumberWithUnitSymbol) {
@@ -540,7 +555,13 @@ export class NumberSymbol extends BaseSymbolType {
       });
     }
   }
+
+  toJs(_options?: ToJsOptions): NumberValue {
+    return this.value;
+  }
 }
+
+type StringValue = string | null;
 
 export class StringSymbol extends BaseSymbolType {
   type = "String";
@@ -583,7 +604,7 @@ export class StringSymbol extends BaseSymbolType {
     },
   };
 
-  public value: string | null;
+  public value: StringValue;
 
   constructor(value: string | StringSymbol | null, config?: Config) {
     let safeValue: string | null;
@@ -683,15 +704,21 @@ export class StringSymbol extends BaseSymbolType {
       data: { type: typeof delimiter },
     });
   }
+
+  toJs(_options?: ToJsOptions): StringValue {
+    return this.value;
+  }
 }
+
+type BooleanValue = boolean | null;
 
 export class BooleanSymbol extends BaseSymbolType {
   type = "Boolean";
   static readonly type = "Boolean";
 
-  public value: boolean | null;
+  public value: BooleanValue;
   constructor(value: boolean | BooleanSymbol | null, config?: Config) {
-    let safeValue: boolean | null;
+    let safeValue: BooleanValue;
     if (typeof value === "boolean") {
       safeValue = value;
     } else if (value instanceof BooleanSymbol) {
@@ -729,6 +756,10 @@ export class BooleanSymbol extends BaseSymbolType {
 
   static empty(): BooleanSymbol {
     return new BooleanSymbol(null);
+  }
+
+  toJs(_options?: ToJsOptions): BooleanValue {
+    return this.value;
   }
 }
 
@@ -882,7 +913,15 @@ export class ListSymbol extends BaseSymbolType {
   getTypeName(): string {
     return this.isImplicit ? typeName(this.type, "Implicit") : typeName(this.type);
   }
+
+  toJs(options?: ToJsOptions): JsValue[] {
+    const { recursive = true } = options ?? {};
+    if (!recursive) return this.value as any;
+    return this.value.map((item) => item.toJs(options));
+  }
 }
+
+type NumberWithUnitValue = number | null;
 
 export class NumberWithUnitSymbol extends BaseSymbolType {
   type = "NumberWithUnit";
@@ -911,7 +950,7 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
     },
   };
 
-  public value: number | null;
+  public value: NumberWithUnitValue;
   public unit: SupportedFormats;
 
   constructor(
@@ -919,7 +958,7 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
     unit: SupportedFormats | string,
     config?: Config,
   ) {
-    let safeValue: number | null;
+    let safeValue: NumberWithUnitValue;
     if (typeof value === "number") {
       safeValue = value;
     } else if (value instanceof NumberSymbol) {
@@ -1019,6 +1058,12 @@ export class NumberWithUnitSymbol extends BaseSymbolType {
 
   getTypeName(): string {
     return `${this.type}.${capitalize(this.unit)}`;
+  }
+
+  toJs(options?: ToJsOptions): string | { value: number | null; unit: string } {
+    const { stringify = false } = options ?? {};
+    if (stringify) return this.toString();
+    return { value: this.value, unit: this.unit };
   }
 }
 
@@ -1173,6 +1218,15 @@ export class DictionarySymbol extends BaseSymbolType {
 
   getAttribute(attributeName: string): ISymbolType | null {
     return DictionaryImpl.getAttribute(this.value, attributeName);
+  }
+
+  toJs(options?: ToJsOptions): Record<string, JsValue> {
+    const { recursive = true } = options ?? {};
+    const obj: Record<string, JsValue> = {};
+    for (const [key, child] of this.value.entries()) {
+      obj[key] = recursive ? child.toJs(options) : (child as any);
+    }
+    return obj;
   }
 }
 
@@ -1483,9 +1537,27 @@ export class TokenSymbol extends BaseSymbolType {
   getTypeName(): string {
     return typeName(this.type, this.subType);
   }
+
+  toJs(options?: ToJsOptions): JsValue[] | Record<string, JsValue> {
+    const { recursive = true } = options ?? {};
+    if (isMap(this.value)) {
+      const obj: Record<string, JsValue> = {};
+      const mapValue = this.value as Map<string, ISymbolType>;
+      for (const [key, child] of mapValue.entries()) {
+        obj[key] = recursive ? child.toJs(options) : (child as any);
+      }
+      return obj;
+    }
+    if (isArray(this.value)) {
+      const arrayValue = this.value as ISymbolType[];
+      return recursive ? arrayValue.map((item) => item.toJs(options)) : (arrayValue as any);
+    }
+    return {};
+  }
 }
 
 export type dynamicColorValue = Record<string, ISymbolType>;
+type ColorValue = string | dynamicColorValue | null;
 
 export class ColorSymbol extends BaseSymbolType {
   type = "Color";
@@ -1502,13 +1574,13 @@ export class ColorSymbol extends BaseSymbolType {
   };
 
   public subType: string | null = null;
-  public value: string | dynamicColorValue | null;
+  public value: ColorValue;
 
   static empty(): ColorSymbol {
     return new ColorSymbol(null);
   }
 
-  constructor(value: string | dynamicColorValue | null, subType?: string, config?: Config) {
+  constructor(value: ColorValue, subType?: string, config?: Config) {
     const isHex = (isUndefined(subType) || subType?.toLowerCase() === "hex") && isString(value);
     const isDynamic = isString(subType) && isObject(value);
     const isValid = isNull(value) || isHex || isDynamic;
@@ -1663,6 +1735,41 @@ export class ColorSymbol extends BaseSymbolType {
   getTypeName(): string {
     return typeName(this.type, nullToUndefined(this.subType));
   }
+
+  toJs(options?: ToJsOptions): string | Record<string, JsValue> {
+    const { stringify = false, recursive = true } = options ?? {};
+
+    if (stringify) {
+      return this.toString();
+    }
+
+    // For hex colors (string value)
+    if (isString(this.value)) {
+      return {
+        type: this.subType || "hex",
+        value: this.value,
+      };
+    }
+
+    // For dynamic colors (object value)
+    if (isObject(this.value)) {
+      const result: Record<string, JsValue> = {
+        type: this.subType || "unknown",
+      };
+
+      for (const [key, val] of Object.entries(this.value)) {
+        result[key] = recursive ? val.toJs(options) : (val as any);
+      }
+
+      return result;
+    }
+
+    // For null values
+    return {
+      type: this.subType || "unknown",
+      value: null,
+    };
+  }
 }
 
 // Symbol Normalization Utilities ----------------------------------------------
@@ -1733,62 +1840,15 @@ export const hasNullValue = (symbol: ISymbolType): boolean =>
 export type JsValue = string | number | boolean | null | JsValue[] | { [key: string]: JsValue };
 
 /**
- * Converts a TokenScript symbol to a plain JavaScript value.
- * This function recursively serializes symbol types to their JS equivalents.
- */
-export function symbolTypeToJsValue(symbol: ISymbolType): JsValue {
-  if (symbol instanceof StringSymbol) {
-    return symbol.value;
-  }
-  if (symbol instanceof NumberSymbol) {
-    return symbol.value;
-  }
-  if (symbol instanceof BooleanSymbol) {
-    return symbol.value;
-  }
-  if (symbol instanceof NullSymbol) {
-    return null;
-  }
-  if (symbol instanceof NumberWithUnitSymbol) {
-    return symbol.toString();
-  }
-  if (symbol instanceof ColorSymbol) {
-    return symbol.toString();
-  }
-  if (symbol instanceof ListSymbol) {
-    return symbol.value.map((item) => symbolTypeToJsValue(item));
-  }
-  if (symbol instanceof DictionarySymbol) {
-    const obj: Record<string, JsValue> = {};
-    for (const [key, child] of symbol.value.entries()) {
-      obj[key] = symbolTypeToJsValue(child);
-    }
-    return obj;
-  }
-  if (symbol instanceof TokenSymbol) {
-    if (isMap(symbol.value)) {
-      const obj: Record<string, JsValue> = {};
-      const mapValue = symbol.value as Map<string, ISymbolType>;
-      for (const [key, child] of mapValue.entries()) {
-        obj[key] = symbolTypeToJsValue(child);
-      }
-      return obj;
-    }
-    if (isArray(symbol.value)) {
-      const arrayValue = symbol.value as ISymbolType[];
-      return arrayValue.map((item) => symbolTypeToJsValue(item));
-    }
-  }
-  return symbol.toString();
-}
-
-/**
  * Serializes an interpreter result (symbol or primitive) to a plain JavaScript value.
  */
-export function serializeInterpreterResult(value: ISymbolType | string | null): unknown {
+export function serializeInterpreterResult(
+  value: ISymbolType | string | null,
+  options?: ToJsOptions,
+): unknown {
   if (isString(value)) return value;
   if (isNull(value)) return null;
-  if (isTokenscriptSymbol(value)) return symbolTypeToJsValue(value);
+  if (isTokenscriptSymbol(value)) return value.toJs(options);
   return value;
 }
 

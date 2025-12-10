@@ -36,7 +36,7 @@ export class NestedObjectBuilder implements TokenBuilder<Record<string, unknown>
   private result: Record<string, unknown> = {};
 
   onResolve(tokenName: string, value: InterpreterResult): void {
-    const serialized = serializeInterpreterResult(value);
+    const serialized = serializeInterpreterResult(value, { stringify: true });
     if (typeof serialized !== "undefined") {
       setNestedValue(this.result, tokenName, serialized);
     }
@@ -67,12 +67,12 @@ export class FlatObjectBuilder implements TokenBuilder<Record<string, unknown>> 
     let didFlatten = false;
     flattenChildrenObject(value, tokenName, (key, val) => {
       didFlatten = true;
-      this.result[key] = serializeInterpreterResult(val);
+      this.result[key] = serializeInterpreterResult(val, { stringify: true });
     });
 
     // If nothing was flattened, serialize and store the value directly
     if (!didFlatten) {
-      const serialized = serializeInterpreterResult(value);
+      const serialized = serializeInterpreterResult(value, { stringify: true });
       if (typeof serialized !== "undefined") {
         this.result[tokenName] = serialized;
       }

@@ -195,4 +195,31 @@ describe("NumberWithUnitSymbol", () => {
       expect(empty.unit).toBe("px");
     });
   });
+
+  describe("toJs", () => {
+    it("should convert to JavaScript object with value and unit by default", () => {
+      const symbol = new NumberWithUnitSymbol(16, "px");
+      expect(symbol.toJs()).toEqual({ value: 16, unit: "px" });
+    });
+
+    it("should convert to string when stringify option is true", () => {
+      const symbol = new NumberWithUnitSymbol(16, "px");
+      expect(symbol.toJs({ stringify: true })).toBe("16px");
+    });
+
+    it("should convert different units correctly", () => {
+      const remSymbol = new NumberWithUnitSymbol(1.5, "rem");
+      const emSymbol = new NumberWithUnitSymbol(2, "em");
+      expect(remSymbol.toJs()).toEqual({ value: 1.5, unit: "rem" });
+      expect(emSymbol.toJs()).toEqual({ value: 2, unit: "em" });
+      expect(remSymbol.toJs({ stringify: true })).toBe("1.5rem");
+      expect(emSymbol.toJs({ stringify: true })).toBe("2em");
+    });
+
+    it("should handle null values", () => {
+      const symbol = new NumberWithUnitSymbol(null, "px");
+      expect(symbol.toJs()).toEqual({ value: null, unit: "px" });
+      expect(symbol.toJs({ stringify: true })).toBe("nullpx");
+    });
+  });
 });
