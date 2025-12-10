@@ -39,7 +39,10 @@ export function TokensTable() {
   const { selectedToken, selectToken, searchQuery, setSearchQuery } = useUIContext()
   const outputEntries = Array.from(processorOutput.tokens.entries())
   const filteredOutput = searchQuery
-    ? outputEntries.filter(([path]) => path.toLowerCase().includes(searchQuery.toLowerCase()))
+    ? outputEntries.filter((entry: [string, unknown]) => {
+        const [path] = entry
+        return path.toLowerCase().includes(searchQuery.toLowerCase())
+      })
     : outputEntries
 
   return (
@@ -89,7 +92,8 @@ export function TokensTable() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredOutput.map(([path, value]) => {
+                  {filteredOutput.map((entry: [string, unknown]) => {
+                    const [path, value] = entry
                     const tokenData = mergedTokens.get(path)
                     const originalValue = formatValue(tokenData?.$value)
                     const displayValue = formatValue(value)
