@@ -21,4 +21,5 @@ export default defineConfig({
   tsconfig: "tsconfig.build.json",
   target: "es2021",
   splitting: false,
+  keepNames: true,
 });
