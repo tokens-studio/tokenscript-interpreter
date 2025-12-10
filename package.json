@@ -125,11 +125,7 @@
     "dev:repl": "cd examples/web-repl && npm run dev:watch",
     "dev:graph": "cd examples/graph-visualization && npm run dev",
     "prepublishOnly": "npm run test && npm run build:lib",
-    "version": "node scripts/update-changelog.js $npm_package_version && npm run build:lib && git add CHANGELOG.md",
-    "postversion": "git push && git push --tags",
-    "release:patch": "npm version patch && npm publish",
-    "release:minor": "npm version minor && npm publish",
-    "release:major": "npm version major && npm publish",
+    "release": "node scripts/release.js",
     "package:validate": "npx @arethetypeswrong/cli --pack ."
   },
   "keywords": [
