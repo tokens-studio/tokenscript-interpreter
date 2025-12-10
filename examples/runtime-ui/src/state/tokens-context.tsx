@@ -1,5 +1,13 @@
-import { createContext, useContext, useState, type ReactNode } from "react"
-import { processTokens } from "@tokens-studio/tokenscript-interpreter"
+import { createContext, useContext, useCallback, useMemo, useState, type ReactNode } from "react"
+import {
+  parseExpression,
+  processTokens,
+  renameReferences,
+  TokenResolver,
+  type CreateTokenResult,
+  type DeleteTokenResult,
+  type UpdateTokenResult,
+} from "@tokens-studio/tokenscript-interpreter"
 
 import {
   INITIAL_STATE,
@@ -12,10 +20,149 @@ import {
   type TokensMap,
 } from "./index"
 
+export type TokenCrudResult = {
+  create?: CreateTokenResult
+  update?: UpdateTokenResult
+  delete?: DeleteTokenResult
+}
+
+// Token CRUD utilities --------------------------------------------------------
+
+type TokenBackReference = {
+  setName: string
+  tokenPath: string
+  tokenData: { $value: unknown; $type?: string }
+}
+
+/**
+ * Collect back-references for tokens that reference a given token path.
+ * Returns a map of token paths to their set locations.
+ */
+function collectTokenBackReferences(
+  sets: Map<string, TokensMap>,
+  activeSets: Set<string>,
+  referencedTokens: Set<string>
+): Map<string, TokenBackReference> {
+  const backRefs = new Map<string, TokenBackReference>()
+
+  for (const [setName, tokens] of sets) {
+    if (!activeSets.has(setName)) continue
+
+    for (const [tokenPath, tokenData] of tokens) {
+      if (referencedTokens.has(tokenPath)) {
+        backRefs.set(tokenPath, { setName, tokenPath, tokenData })
+      }
+    }
+  }
+
+  return backRefs
+}
+
+/**
+ * Apply reference renames to a single token value using AST-based renaming.
+ */
+function applyReferenceRename(
+  tokenValue: unknown,
+  renameMap: Record<string, string>
+): unknown {
+  if (typeof tokenValue !== "string") return tokenValue
+
+  try {
+    const { ast } = parseExpression(tokenValue)
+    if (!ast) return tokenValue
+
+    return renameReferences(tokenValue, ast, renameMap)
+  } catch {
+    return tokenValue
+  }
+}
+
+/**
+ * Apply renamed references back to original sets using back-references.
+ */
+function applyRenamedReferencesToSets(
+  sets: Map<string, TokensMap>,
+  backRefs: Map<string, TokenBackReference>,
+  renameMap: Record<string, string>
+): Map<string, TokensMap> {
+  const newSets = new Map(sets)
+
+  for (const [tokenPath, backRef] of backRefs) {
+    const setTokens = newSets.get(backRef.setName)
+    if (!setTokens) continue
+
+    const updatedValue = applyReferenceRename(backRef.tokenData.$value, renameMap)
+    if (updatedValue === backRef.tokenData.$value) continue
+
+    const updatedSet = new Map(setTokens)
+    updatedSet.set(tokenPath, { ...backRef.tokenData, $value: updatedValue })
+    newSets.set(backRef.setName, updatedSet)
+  }
+
+  return newSets
+}
+
+// Preview operations ----------------------------------------------------------
+
+function createPreviewResolver(mergedTokens: TokensMap): TokenResolver | null {
+  try {
+    const previewMerged = new Map(mergedTokens)
+    const { resolver } = new TokenResolver().build(previewMerged)
+    return resolver
+  } catch {
+    return null
+  }
+}
+
+function previewCreate(
+  resolver: TokenResolver,
+  tokenPath: string,
+  tokenData: { $value: unknown; $type?: string }
+): TokenCrudResult | null {
+  try {
+    const result = resolver.createToken({ tokenPath, tokenData })
+    return { create: result }
+  } catch {
+    return null
+  }
+}
+
+function previewUpdate(
+  resolver: TokenResolver,
+  tokenPath: string,
+  options?: {
+    tokenData?: { $value: unknown; $type?: string }
+    newTokenPath?: string
+    updateReferences?: boolean
+  }
+): TokenCrudResult | null {
+  try {
+    const result = resolver.updateToken({
+      tokenPath,
+      tokenData: options?.tokenData,
+      tokenPathRenamed: options?.newTokenPath,
+      updateReferences: options?.updateReferences,
+    })
+    return { update: result }
+  } catch {
+    return null
+  }
+}
+
+function previewDelete(resolver: TokenResolver, tokenPath: string): TokenCrudResult | null {
+  try {
+    const result = resolver.deleteToken({ tokenPath })
+    return { delete: result }
+  } catch {
+    return null
+  }
+}
+
 export interface TokensContextValue {
   appState: AppState
   mergedTokens: TokensMap
   processorOutput: ReturnType<typeof processTokens>
+  resolver: TokenResolver | null
   setOrder: string[]
   toggleTheme: (themeName: string) => void
   toggleSet: (setName: string) => void
@@ -31,9 +178,19 @@ export interface TokensContextValue {
     tokenName: string,
     newTokenName: string,
     tokenType: string,
-    tokenValue: string
+    tokenValue: string,
+    updateReferences?: boolean
   ) => void
   deleteToken: (setName: string, tokenName: string) => void
+  previewTokenOperation: (
+    operation: "create" | "update" | "delete",
+    tokenPath: string,
+    options?: {
+      tokenData?: { $value: unknown; $type?: string }
+      newTokenPath?: string
+      updateReferences?: boolean
+    }
+  ) => TokenCrudResult | null
 }
 
 export function groupTokensByType(tokens: TokensMap) {
@@ -248,7 +405,8 @@ export function TokensProvider({ children }: { children: ReactNode }) {
     tokenName: string,
     newTokenName: string,
     tokenType: string,
-    tokenValue: string
+    tokenValue: string,
+    shouldUpdateReferences = false
   ) => {
     setAppState((prev) => {
       const setData = prev.sets.get(setName)
@@ -261,6 +419,58 @@ export function TokensProvider({ children }: { children: ReactNode }) {
         console.log("handleUpdateToken: missing token name", { setName, tokenName })
         return prev
       }
+
+      const isRename = tokenName !== trimmedName
+
+      // If renaming with reference updates, use resolver to find affected tokens
+      if (isRename && shouldUpdateReferences) {
+        const currentSetOrder = Array.from(prev.sets.keys())
+        const currentMerged = mergeActiveSets(prev.sets, prev.activeSets, currentSetOrder)
+
+        try {
+          const { resolver } = new TokenResolver().build(currentMerged)
+          const result = resolver.updateToken({
+            tokenPath: tokenName,
+            tokenData: { $value: tokenValue, $type: tokenType },
+            tokenPathRenamed: trimmedName,
+            updateReferences: true,
+          })
+
+          let newSets = new Map(prev.sets)
+
+          // Apply renamed references using back-references
+          if (result.renamedReferences && result.renamedReferences.size > 0) {
+            const backRefs = collectTokenBackReferences(
+              prev.sets,
+              prev.activeSets,
+              result.renamedReferences
+            )
+            const renameMap = { [tokenName]: trimmedName }
+            newSets = applyRenamedReferencesToSets(newSets, backRefs, renameMap)
+          }
+
+          // Update the token itself in its set
+          const targetSetData = newSets.get(setName)
+          if (targetSetData) {
+            const updatedSet = new Map(targetSetData)
+            updatedSet.delete(tokenName)
+            updatedSet.set(trimmedName, { $value: tokenValue, $type: tokenType })
+            newSets.set(setName, updatedSet)
+          }
+
+          console.log("handleUpdateToken: updated token with references", {
+            setName,
+            tokenName,
+            newTokenName: trimmedName,
+            renamedReferences: Array.from(result.renamedReferences || []),
+          })
+          return { ...prev, sets: newSets }
+        } catch (error) {
+          console.error("handleUpdateToken: resolver error", error)
+        }
+      }
+
+      // Standard update without reference tracking
       const updatedSet = new Map(setData)
       updatedSet.delete(tokenName)
       updatedSet.set(trimmedName, { $value: tokenValue, $type: tokenType })
@@ -297,10 +507,51 @@ export function TokensProvider({ children }: { children: ReactNode }) {
   const mergedTokens = mergeActiveSets(appState.sets, appState.activeSets, setOrder)
   const processorOutput = processTokens<Map<string, unknown>>(mergedTokens)
 
+  // Memoized resolver for preview operations
+  const resolver = useMemo(() => {
+    try {
+      const { resolver } = new TokenResolver().build(mergedTokens)
+      return resolver
+    } catch (error) {
+      console.error("Failed to build resolver", error)
+      return null
+    }
+  }, [mergedTokens])
+
+  const previewTokenOperation = useCallback(
+    (
+      operation: "create" | "update" | "delete",
+      tokenPath: string,
+      options?: {
+        tokenData?: { $value: unknown; $type?: string }
+        newTokenPath?: string
+        updateReferences?: boolean
+      }
+    ): TokenCrudResult | null => {
+      const previewResolver = createPreviewResolver(mergedTokens)
+      if (!previewResolver) return null
+
+      switch (operation) {
+        case "create":
+          return options?.tokenData
+            ? previewCreate(previewResolver, tokenPath, options.tokenData)
+            : null
+        case "update":
+          return previewUpdate(previewResolver, tokenPath, options)
+        case "delete":
+          return previewDelete(previewResolver, tokenPath)
+        default:
+          return null
+      }
+    },
+    [mergedTokens]
+  )
+
   const value: TokensContextValue = {
     appState,
     mergedTokens,
     processorOutput,
+    resolver,
     setOrder,
     toggleTheme: handleThemeToggle,
     toggleSet: handleSetToggle,
@@ -313,6 +564,7 @@ export function TokensProvider({ children }: { children: ReactNode }) {
     deleteSet: handleDeleteSet,
     updateToken: handleUpdateToken,
     deleteToken: handleDeleteToken,
+    previewTokenOperation,
   }
 
   return <TokensContext.Provider value={value}>{children}</TokensContext.Provider>
