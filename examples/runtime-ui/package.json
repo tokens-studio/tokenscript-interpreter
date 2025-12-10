@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run build:interpreter && tsc -b && vite build",
-    "build:interpreter": "cd ../../ && npm run build:lib",
+    "build": "tsc -b && vite build",
+    "build:vercel": "cd ../../ && npm install && npm run build:lib && cd examples/runtime-ui && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test:e2e": "playwright test",
