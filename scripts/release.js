@@ -43,6 +43,11 @@ function hasUncommittedChanges() {
   return status.length > 0;
 }
 
+function isNpmLoggedIn() {
+  const result = exec("npm whoami", { silent: true, allowError: true });
+  return result !== null;
+}
+
 function calculateNextVersion(releaseType) {
   const currentVersion = JSON.parse(
     readFileSync(join(__dirname, "..", "package.json"), "utf8"),
@@ -99,6 +104,11 @@ function main() {
   const currentBranch = exec("git branch --show-current", { silent: true });
   if (currentBranch !== "main") {
     error(`You must be on the main branch to release (currently on: ${currentBranch})`);
+    process.exit(1);
+  }
+
+  if (!isDryRun && !isNpmLoggedIn()) {
+    error("You are not logged in to npm. Please run: npm login");
     process.exit(1);
   }
 
