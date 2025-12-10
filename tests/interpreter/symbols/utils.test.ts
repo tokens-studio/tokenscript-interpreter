@@ -2,6 +2,7 @@ import { Config } from "@interpreter/config/config";
 import {
   BooleanSymbol,
   ColorSymbol,
+  DictionarySymbol,
   getResultTypeName,
   isTokenscriptSymbol,
   ListSymbol,
@@ -98,6 +99,72 @@ describe("Symbol Utilities", () => {
       expect(getResultTypeName(true)).toBe("Unknown");
       expect(getResultTypeName([])).toBe("Unknown");
       expect(getResultTypeName(undefined)).toBe("Unknown");
+    });
+  });
+
+  describe("toJs", () => {
+    test("all symbol types have toJs() method", () => {
+      const symbols = [
+        new NullSymbol(config),
+        new NumberSymbol(42, config),
+        new StringSymbol("test", config),
+        new BooleanSymbol(true, config),
+        new NumberWithUnitSymbol(10, "px", config),
+        new ColorSymbol("#abc123", "Hex", config),
+        new ListSymbol([new NumberSymbol(1, config)], false, config),
+        new DictionarySymbol(new Map([["key", new StringSymbol("value", config)]]), config),
+      ];
+
+      for (const symbol of symbols) {
+        expect(typeof symbol.toJs).toBe("function");
+        expect(symbol.toJs()).toBeDefined();
+      }
+    });
+
+    test("handles deeply nested structures", () => {
+      const deeplyNested = new ListSymbol(
+        [
+          new DictionarySymbol(
+            new Map([
+              [
+                "level1",
+                new ListSymbol(
+                  [
+                    new DictionarySymbol(
+                      new Map([
+                        ["level2", new NumberSymbol(123, config)],
+                        ["color", new ColorSymbol("#ffffff", "Hex", config)],
+                      ]),
+                      config,
+                    ),
+                  ],
+                  false,
+                  config,
+                ),
+              ],
+            ]),
+            config,
+          ),
+        ],
+        false,
+        config,
+      );
+
+      const expected = [
+        {
+          level1: [
+            {
+              level2: 123,
+              color: {
+                type: "Hex",
+                value: "#ffffff",
+              },
+            },
+          ],
+        },
+      ];
+
+      expect(deeplyNested.toJs()).toEqual(expected);
     });
   });
 });

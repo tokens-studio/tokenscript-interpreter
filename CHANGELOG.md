@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Symbol `toJs()` method**: All symbol types now have a `toJs()` method for converting to plain JavaScript values
+  - Supports `ToJsOptions` with `recursive` (default: true) and `stringify` (default: false) options
+  - **NumberWithUnitSymbol**: Returns `{ value: number | null, unit: string }` by default, or string when `stringify: true`
+  - **ColorSymbol**: Returns structured object with `type` field and component values by default
+    - Hex colors: `{ type: "hex", value: "#ff0000" }`
+    - Dynamic colors: `{ type: "rgb", r: 255, g: 0, b: 0, ... }`
+    - String representation when `stringify: true`
+  - **ListSymbol, DictionarySymbol, TokenSymbol**: Recursively convert nested values with `recursive` option
+  - Value types extracted and reused: `NumberValue`, `StringValue`, `BooleanValue`, `NumberWithUnitValue`, `ColorValue`
+  - Comprehensive test coverage across all symbol types
+
+### Changed
+
+- **Removed `symbolTypeToJsValue()` function**: Developers should call `symbol.toJs()` directly instead
+- **Updated `serializeInterpreterResult()`**: Now accepts `ToJsOptions` parameter for customization
+- **Builder serialization**: Uses `stringify: true` option to maintain backward-compatible string output for `NumberWithUnitSymbol` and `ColorSymbol`
+
+### Added
+
 - **TokenResolver CRUD operations**: Complete token lifecycle management with dependency tracking
   - `createToken()`: Add new tokens with automatic dependency graph updates
   - `updateToken()`: Modify existing tokens with options for renaming and reference updates

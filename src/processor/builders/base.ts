@@ -4,7 +4,6 @@ import {
   isTokenscriptSymbol,
   serializeInterpreterResult,
   stringifyInterpreterResult,
-  symbolTypeToJsValue,
 } from "@interpreter/symbols";
 import type { LintResult, LintRunner } from "../linter";
 import type { ObjectParser } from "../object-parsers";
@@ -17,7 +16,7 @@ export { serializeInterpreterResult, stringifyInterpreterResult };
 
 export function toJsonObject(value: unknown): unknown {
   if (value instanceof Map) return Object.fromEntries(value);
-  if (isTokenscriptSymbol(value)) return symbolTypeToJsValue(value);
+  if (isTokenscriptSymbol(value)) return value.toJs({ stringify: true });
   return value;
 }
 

@@ -466,4 +466,54 @@ describe("Dictionary Operations", () => {
       expect(result?.toString()).toBe("first, third, fourth, second");
     });
   });
+
+  describe("toJs", () => {
+    it("should convert to JavaScript plain object", () => {
+      const dict = new DictionarySymbol(
+        new Map([
+          ["num", new NumberSymbol(42)],
+          ["str", new StringSymbol("hello")],
+        ]),
+      );
+      expect(dict.toJs()).toEqual({
+        num: 42,
+        str: "hello",
+      });
+    });
+
+    it("should convert nested dictionaries", () => {
+      const inner = new DictionarySymbol(
+        new Map([
+          ["nested", new StringSymbol("value")],
+          ["bool", new BooleanSymbol(false)],
+        ]),
+      );
+      const outer = new DictionarySymbol(
+        new Map([
+          ["dict", inner],
+          ["num", new NumberSymbol(123)],
+        ]),
+      );
+      expect(outer.toJs()).toEqual({
+        dict: {
+          nested: "value",
+          bool: false,
+        },
+        num: 123,
+      });
+    });
+
+    it("should convert mixed nested structures", () => {
+      const dict = new DictionarySymbol(
+        new Map([
+          ["list", new ListSymbol([new NumberSymbol(1), new NumberSymbol(2)])],
+          ["null", new NullSymbol()],
+        ]),
+      );
+      expect(dict.toJs()).toEqual({
+        list: [1, 2],
+        null: null,
+      });
+    });
+  });
 });

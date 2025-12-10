@@ -285,4 +285,57 @@ describe("ColorSymbol", () => {
       expect(empty.value).toBe(null);
     });
   });
+
+  describe("toJs", () => {
+    it("should convert hex color to object with type and value", () => {
+      const color = new ColorSymbol("#ff0000");
+      expect(color.toJs()).toEqual({
+        type: "Hex",
+        value: "#ff0000",
+      });
+    });
+
+    it("should convert hex color to string when stringify is true", () => {
+      const color = new ColorSymbol("#ff0000");
+      expect(color.toJs({ stringify: true })).toBe("#ff0000");
+    });
+
+    it("should convert dynamic color to object with type and component values", () => {
+      const color = new ColorSymbol(
+        {
+          r: new NumberSymbol(255),
+          g: new NumberSymbol(0),
+          b: new NumberSymbol(0),
+        },
+        "rgb",
+      );
+      const result = color.toJs();
+      expect(result).toEqual({
+        type: "rgb",
+        r: 255,
+        g: 0,
+        b: 0,
+      });
+    });
+
+    it("should convert dynamic color to string when stringify is true", () => {
+      const color = new ColorSymbol(
+        {
+          r: new NumberSymbol(255),
+          g: new NumberSymbol(0),
+          b: new NumberSymbol(0),
+        },
+        "rgb",
+      );
+      expect(typeof color.toJs({ stringify: true })).toBe("string");
+    });
+
+    it("should handle null color value", () => {
+      const color = new ColorSymbol(null);
+      expect(color.toJs()).toEqual({
+        type: "unknown",
+        value: null,
+      });
+    });
+  });
 });

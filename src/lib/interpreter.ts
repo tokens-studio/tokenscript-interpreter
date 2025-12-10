@@ -75,7 +75,6 @@ export {
   NumberSymbol,
   NumberWithUnitSymbol,
   StringSymbol,
-  symbolTypeToJsValue,
   TokenSymbol,
 } from "@interpreter/symbols";
 

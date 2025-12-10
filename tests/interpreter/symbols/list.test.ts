@@ -356,3 +356,21 @@ describe("Lists - Error Cases", () => {
     expect(() => interpretExpectError(text)).toThrow();
   });
 });
+
+describe("ListSymbol - toJs", () => {
+  it("should convert to JavaScript array", () => {
+    const list = new ListSymbol([new NumberSymbol(1), new NumberSymbol(2), new NumberSymbol(3)]);
+    expect(list.toJs()).toEqual([1, 2, 3]);
+  });
+
+  it("should convert mixed types correctly", () => {
+    const list = new ListSymbol([new NumberSymbol(42), new StringSymbol("hello"), new BooleanSymbol(true)]);
+    expect(list.toJs()).toEqual([42, "hello", true]);
+  });
+
+  it("should convert nested lists", () => {
+    const inner = new ListSymbol([new NumberSymbol(1), new NumberSymbol(2)]);
+    const outer = new ListSymbol([inner, new StringSymbol("test")]);
+    expect(outer.toJs()).toEqual([[1, 2], "test"]);
+  });
+});

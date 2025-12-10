@@ -796,4 +796,11 @@ describe("Null Comparison Tests", () => {
       });
     });
   });
+
+  describe("toJs", () => {
+    it("should convert to JavaScript null", () => {
+      const symbol = new NullSymbol();
+      expect(symbol.toJs()).toBe(null);
+    });
+  });
 });

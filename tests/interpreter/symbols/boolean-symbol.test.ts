@@ -125,4 +125,21 @@ describe("BooleanSymbol", () => {
       expect(empty.value).toBe(null);
     });
   });
+
+  describe("toJs", () => {
+    it("should convert true to JavaScript true", () => {
+      const symbol = new BooleanSymbol(true);
+      expect(symbol.toJs()).toBe(true);
+    });
+
+    it("should convert false to JavaScript false", () => {
+      const symbol = new BooleanSymbol(false);
+      expect(symbol.toJs()).toBe(false);
+    });
+
+    it("should convert null to JavaScript null", () => {
+      const symbol = new BooleanSymbol(null);
+      expect(symbol.toJs()).toBe(null);
+    });
+  });
 });

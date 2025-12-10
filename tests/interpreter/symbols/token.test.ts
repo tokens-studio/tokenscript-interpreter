@@ -584,4 +584,51 @@ describe("TokenSymbol", () => {
       });
     });
   });
+
+  describe("toJs", () => {
+    it("should convert TokenSymbol with Map value to plain object", () => {
+      const token = new TokenSymbol(
+        "test",
+        new Map([
+          ["key", new NumberSymbol(1)],
+          ["value", new StringSymbol("test")],
+        ]),
+      );
+      expect(token.toJs()).toEqual({
+        key: 1,
+        value: "test",
+      });
+    });
+
+    it("should convert TokenSymbol with array value to array", () => {
+      const token = new TokenSymbol("test", [new NumberSymbol(1), new NumberSymbol(2), new NumberSymbol(3)]);
+      expect(token.toJs()).toEqual([1, 2, 3]);
+    });
+
+    it("should convert nested TokenSymbol structures", () => {
+      const token = new TokenSymbol(
+        "complex",
+        new Map([
+          ["items", new ListSymbol([new NumberSymbol(1), new NumberSymbol(2)])],
+          [
+            "metadata",
+            new DictionarySymbol(
+              new Map([
+                ["title", new StringSymbol("Test")],
+                ["active", new BooleanSymbol(true)],
+              ]),
+            ),
+          ],
+        ]),
+      );
+
+      expect(token.toJs()).toEqual({
+        items: [1, 2],
+        metadata: {
+          title: "Test",
+          active: true,
+        },
+      });
+    });
+  });
 });

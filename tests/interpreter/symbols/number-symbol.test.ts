@@ -160,4 +160,21 @@ describe("NumberSymbol", () => {
       expect(empty.value).toBe(null);
     });
   });
+
+  describe("toJs", () => {
+    it("should convert integer to JavaScript number", () => {
+      const symbol = new NumberSymbol(42);
+      expect(symbol.toJs()).toBe(42);
+    });
+
+    it("should convert decimal to JavaScript number", () => {
+      const symbol = new NumberSymbol(3.14);
+      expect(symbol.toJs()).toBe(3.14);
+    });
+
+    it("should convert null to JavaScript null", () => {
+      const symbol = new NumberSymbol(null);
+      expect(symbol.toJs()).toBe(null);
+    });
+  });
 });

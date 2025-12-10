@@ -1,6 +1,5 @@
 import {
   flattenChildrenObject,
-  symbolTypeToJsValue,
   type TokenBuilder,
   type InterpreterResult,
 } from "@tokens-studio/tokenscript-interpreter";
@@ -9,14 +8,14 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function isTokenscriptSymbol(value: unknown): value is { type: string } {
-  return isObject(value) && "type" in value && typeof value.type === "string";
+function isTokenscriptSymbol(value: unknown): value is { type: string; toJs: (options?: any) => unknown } {
+  return isObject(value) && "type" in value && typeof value.type === "string" && "toJs" in value;
 }
 
 function serializeInterpreterResult(value: InterpreterResult): unknown {
   if (typeof value === "string") return value;
   if (value === null) return null;
-  if (isTokenscriptSymbol(value)) return symbolTypeToJsValue(value);
+  if (isTokenscriptSymbol(value)) return value.toJs({ stringify: true });
   return value;
 }
 
