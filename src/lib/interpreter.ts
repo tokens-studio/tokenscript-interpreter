@@ -1,7 +1,8 @@
 // TokenScript interpreter with configuration (no processors)
 // Use this if you want just the interpreter without tokenset processing utilities
 
-// AST
+// AST -------------------------------------------------------------------------
+
 import type { ASTNode } from "@interpreter/ast";
 import {
   BinOpNode,
@@ -28,10 +29,14 @@ export const ASTNodes = {
 };
 export type { ASTNode };
 export { collectReferenceNodes, filterAST, walkAST } from "@interpreter/ast";
-// Configuration
+
+// Configuration ---------------------------------------------------------------
+
 export type { ConfigOptions, LanguageOptions } from "@interpreter/config";
 export { Config, DEFAULT_LANGUAGE_OPTIONS } from "@interpreter/config";
-// Config Managers
+
+// Config Managers -------------------------------------------------------------
+
 export { ColorManager } from "@interpreter/config/managers/color/manager";
 export {
   type ColorSpecification,
@@ -48,11 +53,15 @@ export {
   UnitSpecificationSchema,
 } from "@interpreter/config/managers/unit/schema";
 export * from "@interpreter/errors";
-// Core interpreter
+
+// Interpreter Core ------------------------------------------------------------
+
 export { Interpreter, type InterpreterResult } from "@interpreter/interpreter";
 export { Lexer } from "@interpreter/lexer";
 export { Parser, parseExpression } from "@interpreter/parser";
-// Symbols
+
+// Symbols ---------------------------------------------------------------------
+
 export {
   BaseSymbolType,
   BooleanSymbol,
@@ -69,9 +78,13 @@ export {
   symbolTypeToJsValue,
   TokenSymbol,
 } from "@interpreter/symbols";
-// Type definitions
+
+// Types -----------------------------------------------------------------------
+
 export * from "@src/types";
-// Eval utilities
+
+// Eval Utilities --------------------------------------------------------------
+
 export {
   type EvalError,
   type EvalOptions,
