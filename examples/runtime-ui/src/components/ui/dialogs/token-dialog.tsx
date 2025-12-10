@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import type { ValidationError } from "@/lib/token-crud"
 import { TOKEN_GROUPS } from "@/state"
 import { useTokensState } from "@/state/tokens-context"
 
@@ -38,12 +39,6 @@ function formatPreviewValue(value: unknown): string {
   return String(value)
 }
 
-type ValidationWarning = {
-  type: "broken-references" | "override" | "rename-broken-references"
-  message: string
-  affectedTokens?: string[]
-}
-
 export function TokenDialog({
   open,
   onOpenChange,
@@ -58,7 +53,7 @@ export function TokenDialog({
     addToken,
     updateToken,
     deleteToken,
-    previewTokenOperation,
+    getValidationErrors,
   } = useTokensState()
   const availableSetNames = Array.from(appState.sets.keys())
   const [tokenSetName, setTokenSetName] = useState("")
@@ -115,61 +110,39 @@ export function TokenDialog({
   }, [appState.sets, editingToken, editingTokenSet, mergedTokens, open])
 
   const isRenaming = editingToken !== null && tokenName.trim() !== editingToken
-  const isCreating = editingToken === null
 
-  // Compute validation warnings
-  const validationWarnings = useMemo((): ValidationWarning[] => {
-    const warnings: ValidationWarning[] = []
+  // Get validation errors from processor
+  const validationErrors = useMemo((): ValidationError[] => {
     const trimmedName = tokenName.trim()
 
-    if (isCreating) {
-      // Create: warn on override
-      if (mergedTokens.has(trimmedName)) {
-        warnings.push({
-          type: "override",
-          message: `Token "${trimmedName}" already exists and will be overridden`,
-        })
-      }
-    } else if (editingToken) {
-      // Update mode
-      if (isRenaming) {
-        // Check if new name already exists
-        if (mergedTokens.has(trimmedName)) {
-          warnings.push({
-            type: "override",
-            message: `Token "${trimmedName}" already exists and will be overridden`,
-          })
-        }
-
-        // Check for broken references when not updating references
-        if (!updateReferences) {
-          const preview = previewTokenOperation("update", editingToken, {
-            tokenData: { $value: tokenValue, $type: tokenType },
-            newTokenPath: trimmedName,
-            updateReferences: false,
-          })
-          if (preview?.update?.brokenReferences && preview.update.brokenReferences.size > 0) {
-            warnings.push({
-              type: "rename-broken-references",
-              message: `Renaming will break ${preview.update.brokenReferences.size} reference(s)`,
-              affectedTokens: Array.from(preview.update.brokenReferences),
-            })
-          }
-        }
-      }
+    if (!trimmedName) {
+      return []
     }
 
-    return warnings
+    if (editingToken) {
+      // Update mode - validate if renaming without updating references
+      if (isRenaming && !updateReferences) {
+        return getValidationErrors("update", editingToken, {
+          tokenData: { $value: tokenValue || "", $type: tokenType },
+          newTokenPath: trimmedName,
+          updateReferences: false,
+        })
+      }
+      return []
+    }
+
+    // Create mode - check for TOKEN_ALREADY_EXISTS (even without value)
+    return getValidationErrors("create", trimmedName, {
+      tokenData: { $value: tokenValue || "", $type: tokenType },
+    })
   }, [
     tokenName,
+    tokenValue,
     editingToken,
-    isCreating,
     isRenaming,
     updateReferences,
-    tokenValue,
     tokenType,
-    mergedTokens,
-    previewTokenOperation,
+    getValidationErrors,
   ])
 
   const handleSubmit = (event: FormEvent) => {
@@ -306,24 +279,24 @@ export function TokenDialog({
             </div>
           )}
 
-          {/* Validation warnings */}
-          {validationWarnings.length > 0 && (
+          {/* Validation errors from processor */}
+          {validationErrors.length > 0 && (
             <div className="space-y-2">
-              {validationWarnings.map((warning, index) => (
+              {validationErrors.map((error, index) => (
                 <div
                   key={index}
                   className="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-200"
                 >
-                  <p className="font-medium">{warning.message}</p>
-                  {warning.affectedTokens && warning.affectedTokens.length > 0 && (
+                  <p className="font-medium">{error.message}</p>
+                  {error.affectedTokens.length > 0 && (
                     <ul className="mt-1 list-inside list-disc text-xs">
-                      {warning.affectedTokens.slice(0, 5).map((token) => (
+                      {error.affectedTokens.slice(0, 5).map((token) => (
                         <li key={token} className="font-mono">
                           {token}
                         </li>
                       ))}
-                      {warning.affectedTokens.length > 5 && (
-                        <li>...and {warning.affectedTokens.length - 5} more</li>
+                      {error.affectedTokens.length > 5 && (
+                        <li>...and {error.affectedTokens.length - 5} more</li>
                       )}
                     </ul>
                   )}

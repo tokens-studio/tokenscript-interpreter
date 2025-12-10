@@ -25,17 +25,14 @@ export function DeleteTokenDialog({
   tokenPath,
   onConfirm,
 }: DeleteTokenDialogProps) {
-  const { previewTokenOperation } = useTokensState()
+  const { getValidationErrors } = useTokensState()
 
-  const brokenReferences = useMemo(() => {
+  const validationErrors = useMemo(() => {
     if (!tokenPath) return []
+    return getValidationErrors("delete", tokenPath)
+  }, [tokenPath, getValidationErrors])
 
-    const preview = previewTokenOperation("delete", tokenPath)
-    if (preview?.delete?.brokenReferences) {
-      return Array.from(preview.delete.brokenReferences)
-    }
-    return []
-  }, [tokenPath, previewTokenOperation])
+  const brokenReferences = validationErrors.find((e) => e.type === "broken-references")?.affectedTokens || []
 
   const handleConfirm = () => {
     onConfirm()
