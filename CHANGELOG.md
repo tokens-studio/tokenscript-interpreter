@@ -44,6 +44,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `ProcessorErrorCode.TOKEN_ALREADY_EXISTS` for duplicate token detection
   - Improved error messages with structured data for better debugging
 
+### Fixed
+
+- **Build configuration preserves class names in production bundles**
+  - Added `keepNames: true` to tsup build configs to prevent Symbol class name mangling
+  - Ensures runtime type checking and debugging remain accurate in minified builds
+
+- **Test suite cleanup**
+  - Removed debug console.log statements from reference method tests
+
 ### Removed
 
 - **Stencil Components package** (`packages/stencil-components/`)
