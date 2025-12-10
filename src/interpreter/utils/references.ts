@@ -1,5 +1,6 @@
 import type { ASTNode } from "@interpreter/ast";
 import { collectReferenceNodes } from "@interpreter/ast";
+import { isSome } from "./type";
 
 /**
  * Position of a reference in the original string
@@ -41,7 +42,7 @@ export function renameReferences(
     const references = collectReferenceNodes(ast, oldName);
 
     for (const ref of references) {
-      if (ref.token.pos !== undefined && ref.token.endPos !== undefined) {
+      if (isSome(ref.token.pos) && isSome(ref.token.endPos)) {
         positions.push({
           start: ref.token.pos,
           end: ref.token.endPos,
