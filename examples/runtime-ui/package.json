@@ -5,7 +5,6 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "cd ../.. && npm install && npm run build:lib && cd packages/stencil-components && npm install && npm run build",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -23,7 +22,6 @@
     "@tailwindcss/vite": "^4.1.17",
     "@tanstack/react-table": "^8.21.3",
     "@tokens-studio/tokenscript-interpreter": "file:../../",
-    "@tokenscript/stencil-components": "file:../../packages/stencil-components",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.554.0",

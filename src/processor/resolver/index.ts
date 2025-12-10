@@ -5,4 +5,15 @@ export { ReadinessTracker } from "./ReadinessTracker";
 export { ResolutionNotifier } from "./ResolutionNotifier";
 export { ResolutionPhase } from "./ResolutionPhase";
 export { TokenInterpreter } from "./TokenInterpreter";
-export type { CachedValue, RefPath, TokenResult, UnresolvedToken } from "./types";
+export type {
+  ASTNodeMap,
+  RefPath,
+  ResolvedValueMap,
+  TokenDataMap,
+  TokenErrorMap,
+  TokenInputMap,
+  TokenResult,
+  TokenResultMap,
+  UnresolvedToken,
+  UnresolvedTokenMap,
+} from "./types";

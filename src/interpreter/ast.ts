@@ -3,6 +3,8 @@ import type { ASTNode, Operations, SupportedFormats, Token, TokenType } from "@s
 // Re-export ASTNode for external consumers
 export type { ASTNode } from "@src/types";
 
+// Nodes -----------------------------------------------------------------------
+
 export class BinOpNode implements ASTNode {
   nodeType = "BinOpNode";
   constructor(
@@ -260,4 +262,131 @@ export class AttributeAccessNode implements ASTNode {
     public right: IdentifierNode | FunctionCallNode,
     public token?: Token,
   ) {}
+}
+
+// Utilities -------------------------------------------------------------------
+
+/**
+ * Walk the AST and call the visit function on each node
+ *
+ * @param node - The AST node to traverse
+ * @param onVisit - Function called for each node during traversal
+ *
+ * @example
+ * // Print all node types
+ * walk(ast, (node) => console.log(node.nodeType));
+ *
+ * @example
+ * // Collect all reference nodes
+ * const refs: ReferenceNode[] = [];
+ * walk(ast, (node) => {
+ *   if (node instanceof ReferenceNode) refs.push(node);
+ * });
+ */
+export function walkAST(node: ASTNode, onVisit: (node: ASTNode) => void): void {
+  onVisit(node);
+
+  if (node instanceof BinOpNode) {
+    walkAST(node.left, onVisit);
+    walkAST(node.right, onVisit);
+  } else if (node instanceof UnaryOpNode) {
+    walkAST(node.expr, onVisit);
+  } else if (node instanceof ListNode || node instanceof ImplicitListNode) {
+    for (const element of node.elements) {
+      walkAST(element, onVisit);
+    }
+  } else if (node instanceof FunctionCallNode) {
+    for (const arg of node.args) {
+      walkAST(arg, onVisit);
+    }
+  } else if (node instanceof ElementWithUnitNode) {
+    walkAST(node.astNode, onVisit);
+  } else if (node instanceof AssignNode) {
+    if (node.assignmentExpr) {
+      walkAST(node.assignmentExpr, onVisit);
+    }
+  } else if (node instanceof ReassignNode) {
+    walkAST(node.value, onVisit);
+  } else if (node instanceof ReturnNode) {
+    walkAST(node.expr, onVisit);
+  } else if (node instanceof WhileNode) {
+    walkAST(node.condition, onVisit);
+    walkAST(node.body, onVisit);
+  } else if (node instanceof IfConditionNode) {
+    walkAST(node.condition, onVisit);
+    walkAST(node.body, onVisit);
+  } else if (node instanceof IfNode) {
+    for (const condition of node.conditions) {
+      walkAST(condition, onVisit);
+    }
+    if (node.elseBody) {
+      walkAST(node.elseBody, onVisit);
+    }
+  } else if (node instanceof BlockNode) {
+    walkAST(node.statements, onVisit);
+  } else if (node instanceof StatementListNode) {
+    for (const statement of node.statements) {
+      walkAST(statement, onVisit);
+    }
+  } else if (node instanceof AttributeAccessNode) {
+    walkAST(node.left, onVisit);
+    if (node.right instanceof FunctionCallNode) {
+      walkAST(node.right, onVisit);
+    }
+  }
+}
+
+/**
+ * Walk the AST and collect all nodes that match the predicate into a flat list
+ *
+ * @param ast - The AST node to traverse
+ * @param predicate - Function to test each node
+ * @returns Flat array of matching nodes
+ *
+ * @example
+ * // Find all reference nodes
+ * const refs = filterAST(ast, (node) => node instanceof ReferenceNode);
+ *
+ * @example
+ * // Find references to a specific token
+ * const refs = filterAST(ast, (node) =>
+ *   node instanceof ReferenceNode && node.value === "color.primary"
+ * );
+ */
+export function filterAST<T extends ASTNode>(
+  ast: ASTNode,
+  predicate: (node: ASTNode) => boolean,
+): T[] {
+  const results: T[] = [];
+  walkAST(ast, (node) => {
+    if (predicate(node)) {
+      results.push(node as T);
+    }
+  });
+  return results;
+}
+
+/**
+ * Collect all reference nodes from the AST
+ *
+ * @param ast - The AST node to traverse
+ * @param targetName - Optional: only collect references matching this name
+ * @returns Array of reference nodes
+ *
+ * @example
+ * // Get all references
+ * const refs = collectReferenceNodes(ast);
+ *
+ * @example
+ * // Get references to a specific token
+ * const refs = collectReferenceNodes(ast, "color.primary");
+ */
+export function collectReferenceNodes(ast: ASTNode, targetName?: string): ReferenceNode[] {
+  if (targetName) {
+    return filterAST<ReferenceNode>(
+      ast,
+      (node) => node instanceof ReferenceNode && node.value === targetName,
+    );
+  }
+  return filterAST<ReferenceNode>(ast, (node) => node instanceof ReferenceNode);
 }

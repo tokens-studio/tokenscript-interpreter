@@ -5,7 +5,7 @@ import { Interpreter } from "@interpreter/interpreter";
 import { DictionarySymbol } from "@interpreter/symbols";
 import type { ISymbolType } from "@src/types";
 import { DependencyError } from "../errors";
-import type { CachedValue, RefPath, TokenResult } from "./types";
+import type { ASTNodeMap, RefPath, ResolvedValueMap, TokenResult, TokenResultMap } from "./types";
 
 /**
  * Handles token interpretation and dependency error checking.
@@ -13,10 +13,10 @@ import type { CachedValue, RefPath, TokenResult } from "./types";
  */
 export class TokenInterpreter {
   private readonly interpreter: Interpreter;
-  private readonly astNodes = new Map<RefPath, ASTNode>();
+  private readonly astNodes: ASTNodeMap = new Map();
 
   constructor(
-    private readonly referenceCache: Map<string, CachedValue>,
+    private readonly referenceCache: ResolvedValueMap,
     private readonly config?: Config,
   ) {
     this.interpreter = new Interpreter(null, {
@@ -58,8 +58,8 @@ export class TokenInterpreter {
 
   buildDependencyError(
     tokenName: RefPath,
-    dependencies: Set<string>,
-    resolved: Map<RefPath, TokenResult>,
+    dependencies: Set<RefPath>,
+    resolved: TokenResultMap,
   ): DependencyError | undefined {
     for (const dep of dependencies) {
       const depValue = resolved.get(dep);

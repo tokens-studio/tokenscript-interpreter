@@ -1,5 +1,6 @@
 export enum ProcessorErrorCode {
   TOKEN_NOT_FOUND = "PROC_TOKEN_NOT_FOUND",
+  TOKEN_ALREADY_EXISTS = "PROC_TOKEN_ALREADY_EXISTS",
   CIRCULAR_DEPENDENCY = "PROC_CIRCULAR_DEPENDENCY",
   SUB_FIELD_NOT_RESOLVED = "PROC_SUB_FIELD_NOT_RESOLVED",
   DEPENDENCY_ERROR = "PROC_DEPENDENCY_ERROR",
@@ -9,10 +10,15 @@ export enum ProcessorErrorCode {
   TOKEN_SET_INVALID = "PROC_TOKEN_SET_INVALID",
   NO_SETS_TO_PROCESS = "PROC_NO_SETS_TO_PROCESS",
   MULTIPLE_SETS_NO_SELECTION = "PROC_MULTIPLE_SETS_NO_SELECTION",
+  UNKNOWN_PARSING_ERROR = "PROC_UNKNOWN_PARSING_ERROR",
+  RESOLVER_NOT_INITIALIZED = "PROC_RESOLVER_NOT_INITIALIZED",
 }
 
 export interface ProcessorErrorData {
   [ProcessorErrorCode.TOKEN_NOT_FOUND]: {
+    tokenName: string;
+  };
+  [ProcessorErrorCode.TOKEN_ALREADY_EXISTS]: {
     tokenName: string;
   };
   [ProcessorErrorCode.CIRCULAR_DEPENDENCY]: {
@@ -43,4 +49,8 @@ export interface ProcessorErrorData {
   [ProcessorErrorCode.MULTIPLE_SETS_NO_SELECTION]: {
     setNames: string[];
   };
+  [ProcessorErrorCode.UNKNOWN_PARSING_ERROR]: {
+    error?: string;
+  };
+  [ProcessorErrorCode.RESOLVER_NOT_INITIALIZED]: Record<string, never>;
 }

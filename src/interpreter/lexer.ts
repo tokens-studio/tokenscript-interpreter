@@ -76,6 +76,7 @@ export class Lexer {
   }
 
   private number(): Token {
+    const startPos = this.pos;
     let result = "";
     // Prepend 0 to digits like ".5"
     if (this.currentChar === ".") {
@@ -87,7 +88,13 @@ export class Lexer {
       this.advance();
     }
 
-    return { type: TokenType.NUMBER, value: result, line: this.line };
+    return {
+      type: TokenType.NUMBER,
+      value: result,
+      line: this.line,
+      pos: startPos,
+      endPos: this.pos,
+    };
   }
 
   // Python like isdigit, that allows numbers starting with '.'
@@ -121,6 +128,7 @@ export class Lexer {
   }
 
   private stringElement(): Token {
+    const startPos = this.pos;
     let result = "";
 
     while (this.isValidStringElement(this.currentChar)) {
@@ -136,6 +144,8 @@ export class Lexer {
         type: TokenType.RESERVED_KEYWORD,
         value: keyword,
         line: this.line,
+        pos: startPos,
+        endPos: this.pos,
       };
     }
 
@@ -145,6 +155,8 @@ export class Lexer {
         type: TokenType.FORMAT,
         value: format,
         line: this.line,
+        pos: startPos,
+        endPos: this.pos,
       };
     }
 
@@ -152,12 +164,16 @@ export class Lexer {
       type: TokenType.STRING,
       value: result,
       line: this.line,
+      pos: startPos,
+      endPos: this.pos,
     };
   }
 
   private reference(): Token {
+    const _startPos = this.pos;
     this.eat("{");
 
+    const refStartPos = this.pos;
     let result = "";
     while (this.currentChar !== null && this.currentChar !== "}") {
       if (this.currentChar === "{") {
@@ -179,11 +195,19 @@ export class Lexer {
       this.error(LexerErrorCode.EMPTY_VARIABLE_NAME, {});
     }
 
+    const refEndPos = this.pos;
     this.eat("}");
-    return { type: TokenType.REFERENCE, value: result, line: this.line };
+    return {
+      type: TokenType.REFERENCE,
+      value: result,
+      line: this.line,
+      pos: refStartPos,
+      endPos: refEndPos,
+    };
   }
 
   private explicitString(quoteType: string): Token {
+    const startPos = this.pos;
     this.eat(quoteType);
 
     let result = "";
@@ -198,10 +222,17 @@ export class Lexer {
 
     this.eat(quoteType);
 
-    return { type: TokenType.EXPLICIT_STRING, value: result, line: this.line };
+    return {
+      type: TokenType.EXPLICIT_STRING,
+      value: result,
+      line: this.line,
+      pos: startPos,
+      endPos: this.pos,
+    };
   }
 
   private hexColor(): Token {
+    const startPos = this.pos;
     let result = "";
     while (isAlpha(this.currentChar) || this.isDigit() || this.currentChar === "#") {
       result += this.currentChar;
@@ -213,7 +244,13 @@ export class Lexer {
         expectedLength: "#RGB or #RRGGBB",
       });
     }
-    return { type: TokenType.HEX_COLOR, value: result, line: this.line };
+    return {
+      type: TokenType.HEX_COLOR,
+      value: result,
+      line: this.line,
+      pos: startPos,
+      endPos: this.pos,
+    };
   }
 
   public nextToken(): Token {
@@ -242,148 +279,277 @@ export class Lexer {
         return this.reference();
       }
       if (this.currentChar === "[") {
+        const startPos = this.pos;
         this.eat("[");
-        return { type: TokenType.LBLOCK, value: "[", line: this.line };
+        return {
+          type: TokenType.LBLOCK,
+          value: "[",
+          line: this.line,
+          pos: startPos,
+          endPos: this.pos,
+        };
       }
       if (this.currentChar === "]") {
+        const startPos = this.pos;
         this.eat("]");
-        return { type: TokenType.RBLOCK, value: "]", line: this.line };
+        return {
+          type: TokenType.RBLOCK,
+          value: "]",
+          line: this.line,
+          pos: startPos,
+          endPos: this.pos,
+        };
       }
       if (this.currentChar === "!" && this.peek() === "=") {
+        const startPos = this.pos;
         this.eat("!");
         this.eat("=");
-        return { type: TokenType.IS_NOT_EQ, value: "!=", line: this.line };
+        return {
+          type: TokenType.IS_NOT_EQ,
+          value: "!=",
+          line: this.line,
+          pos: startPos,
+          endPos: this.pos,
+        };
       }
       if (this.currentChar === "+") {
+        const startPos = this.pos;
         this.eat("+");
         return {
           type: TokenType.OPERATION,
           value: Operations.ADD,
           line: this.line,
+          pos: startPos,
+          endPos: this.pos,
         };
       }
       if (this.currentChar === "-") {
+        const startPos = this.pos;
         this.eat("-");
         return {
           type: TokenType.OPERATION,
           value: Operations.SUBTRACT,
           line: this.line,
+          pos: startPos,
+          endPos: this.pos,
         };
       }
       if (this.currentChar === "*") {
+        const startPos = this.pos;
         this.eat("*");
         return {
           type: TokenType.OPERATION,
           value: Operations.MULTIPLY,
           line: this.line,
+          pos: startPos,
+          endPos: this.pos,
         };
       }
       if (this.currentChar === "/") {
+        const startPos = this.pos;
         this.eat("/");
         return {
           type: TokenType.OPERATION,
           value: Operations.DIVIDE,
           line: this.line,
+          pos: startPos,
+          endPos: this.pos,
         };
       }
       if (this.currentChar === "^") {
+        const startPos = this.pos;
         this.eat("^");
         return {
           type: TokenType.OPERATION,
           value: Operations.POWER,
           line: this.line,
+          pos: startPos,
+          endPos: this.pos,
         };
       }
       if (this.currentChar === "!") {
+        const startPos = this.pos;
         this.eat("!");
         return {
           type: TokenType.OPERATION,
           value: Operations.LOGIC_NOT,
           line: this.line,
+          pos: startPos,
+          endPos: this.pos,
         };
       }
       if (this.currentChar === "(") {
+        const startPos = this.pos;
         this.eat("(");
-        return { type: TokenType.LPAREN, value: "(", line: this.line };
+        return {
+          type: TokenType.LPAREN,
+          value: "(",
+          line: this.line,
+          pos: startPos,
+          endPos: this.pos,
+        };
       }
       if (this.currentChar === ")") {
+        const startPos = this.pos;
         this.eat(")");
-        return { type: TokenType.RPAREN, value: ")", line: this.line };
+        return {
+          type: TokenType.RPAREN,
+          value: ")",
+          line: this.line,
+          pos: startPos,
+          endPos: this.pos,
+        };
       }
       if (this.currentChar === ",") {
+        const startPos = this.pos;
         this.eat(",");
-        return { type: TokenType.COMMA, value: ",", line: this.line };
+        return {
+          type: TokenType.COMMA,
+          value: ",",
+          line: this.line,
+          pos: startPos,
+          endPos: this.pos,
+        };
       }
       if (this.currentChar === ".") {
         if (this.peek() !== null && isNumber(this.peek())) {
           return this.number();
         }
+        const startPos = this.pos;
         this.eat(".");
-        return { type: TokenType.DOT, value: ".", line: this.line };
+        return {
+          type: TokenType.DOT,
+          value: ".",
+          line: this.line,
+          pos: startPos,
+          endPos: this.pos,
+        };
       }
       if (this.currentChar === "#") {
         return this.hexColor();
       }
       if (this.currentChar === "%") {
+        const startPos = this.pos;
         this.eat("%");
         return {
           type: TokenType.FORMAT,
           value: SupportedFormats.PERCENTAGE,
           line: this.line,
+          pos: startPos,
+          endPos: this.pos,
         };
       }
       if (this.currentChar === "=") {
+        const startPos = this.pos;
         if (this.peek() === "=") {
           this.eat("=");
           this.eat("=");
-          return { type: TokenType.IS_EQ, value: "==", line: this.line };
+          return {
+            type: TokenType.IS_EQ,
+            value: "==",
+            line: this.line,
+            pos: startPos,
+            endPos: this.pos,
+          };
         }
         this.eat("=");
-        return { type: TokenType.ASSIGN, value: "=", line: this.line };
+        return {
+          type: TokenType.ASSIGN,
+          value: "=",
+          line: this.line,
+          pos: startPos,
+          endPos: this.pos,
+        };
       }
       if (this.currentChar === ">") {
+        const startPos = this.pos;
         if (this.peek() === "=") {
           this.eat(">");
           this.eat("=");
-          return { type: TokenType.IS_GT_EQ, value: ">=", line: this.line };
+          return {
+            type: TokenType.IS_GT_EQ,
+            value: ">=",
+            line: this.line,
+            pos: startPos,
+            endPos: this.pos,
+          };
         }
         this.eat(">");
-        return { type: TokenType.IS_GT, value: ">", line: this.line };
+        return {
+          type: TokenType.IS_GT,
+          value: ">",
+          line: this.line,
+          pos: startPos,
+          endPos: this.pos,
+        };
       }
       if (this.currentChar === "<") {
+        const startPos = this.pos;
         if (this.peek() === "=") {
           this.eat("<");
           this.eat("=");
-          return { type: TokenType.IS_LT_EQ, value: "<=", line: this.line };
+          return {
+            type: TokenType.IS_LT_EQ,
+            value: "<=",
+            line: this.line,
+            pos: startPos,
+            endPos: this.pos,
+          };
         }
         this.eat("<");
-        return { type: TokenType.IS_LT, value: "<", line: this.line };
+        return {
+          type: TokenType.IS_LT,
+          value: "<",
+          line: this.line,
+          pos: startPos,
+          endPos: this.pos,
+        };
       }
       if (this.currentChar === ";") {
+        const startPos = this.pos;
         this.eat(";");
-        return { type: TokenType.SEMICOLON, value: ";", line: this.line };
+        return {
+          type: TokenType.SEMICOLON,
+          value: ";",
+          line: this.line,
+          pos: startPos,
+          endPos: this.pos,
+        };
       }
       if (this.currentChar === "&" && this.peek() === "&") {
+        const startPos = this.pos;
         this.eat("&");
         this.eat("&");
         return {
           type: TokenType.LOGIC_AND,
           value: Operations.LOGIC_AND,
           line: this.line,
+          pos: startPos,
+          endPos: this.pos,
         };
       }
       if (this.currentChar === "|" && this.peek() === "|") {
+        const startPos = this.pos;
         this.eat("|");
         this.eat("|");
         return {
           type: TokenType.LOGIC_OR,
           value: Operations.LOGIC_OR,
           line: this.line,
+          pos: startPos,
+          endPos: this.pos,
         };
       }
       if (this.currentChar === ":") {
+        const startPos = this.pos;
         this.eat(":");
-        return { type: TokenType.COLON, value: ":", line: this.line };
+        return {
+          type: TokenType.COLON,
+          value: ":",
+          line: this.line,
+          pos: startPos,
+          endPos: this.pos,
+        };
       }
 
       // If we reach here, the character is not valid
@@ -393,7 +559,7 @@ export class Lexer {
         position: this.pos,
       });
     }
-    return { type: TokenType.EOF, value: null, line: this.line };
+    return { type: TokenType.EOF, value: null, line: this.line, pos: this.pos, endPos: this.pos };
   }
 
   peekToken(): Token | null {

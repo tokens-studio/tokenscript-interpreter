@@ -5,13 +5,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
-    exclude: [
-      "**/node_modules/**",
-      "**/dist/**",
-      "**/e2e/**",
-      "examples/**/tests/e2e/**",
-      "packages/stencil-components/**",
-    ],
+    exclude: ["**/node_modules/**", "**/dist/**", "**/e2e/**", "examples/**/tests/e2e/**"],
     env: {
       NODE_ENV: "test",
     },

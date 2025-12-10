@@ -5,6 +5,53 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **TokenResolver CRUD operations**: Complete token lifecycle management with dependency tracking
+  - `createToken()`: Add new tokens with automatic dependency graph updates
+  - `updateToken()`: Modify existing tokens with options for renaming and reference updates
+    - `updateReferences` option: Automatically updates all dependent tokens when renaming
+    - Returns `renamedReferences` set tracking which tokens had references updated
+    - Returns `brokenReferences` set when renaming without `updateReferences`
+  - `deleteToken()`: Remove tokens with broken reference detection
+    - Returns `brokenReferences` set identifying tokens with missing dependencies
+  - All operations return affected tokens and dependency subgraphs for UI updates
+  - Full integration test coverage for complex CRUD workflows
+
+- **AST utilities for reference management**
+  - `walkAST()`: Traverse AST nodes with visitor pattern
+  - `filterAST()`: Collect matching nodes into flat array
+  - `collectReferenceNodes()`: Extract all reference nodes, optionally filtered by name
+  - `renameReferences()`: Safely rename token references in expressions using AST
+  - Token positions (`pos`, `endPos`) now tracked on all tokens for precise text manipulation
+
+- **Enhanced token position tracking**
+  - Lexer now records start and end positions for all tokens
+  - Enables precise source code manipulation for renames and updates
+  - Reference tokens include exact character ranges in original string
+
+### Changed
+
+- **BREAKING: Removed `@tokenscript/stencil-components` package**
+  - Stencil web components moved out of monorepo to reduce dependencies
+  - Removed from CI/CD pipeline and build scripts
+  - Examples no longer depend on components package
+  - Runtime UI example now uses native form implementation
+
+- **Enhanced error codes**
+  - Added `ProcessorErrorCode.TOKEN_ALREADY_EXISTS` for duplicate token detection
+  - Improved error messages with structured data for better debugging
+
+### Removed
+
+- **Stencil Components package** (`packages/stencil-components/`)
+  - `<token-form>` web component and related infrastructure
+  - Stencil build configuration and dependencies
+  - CI/CD integration for component builds and tests
+  - Example integrations using Stencil components
+
 ## [0.12.0] - 2025-12-04
 
 ### Fixed
@@ -67,22 +114,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updates single token and recomputes only affected dependents using cached values
   - Returns resolved value and dependency subgraph for affected tokens
   - `getTokenDependencyGraph()` method for finding all tokens transitively affected by a change
-
-#### Components Library
-
-- **@tokenscript/stencil-components**: New package with web components for TokenScript
-  - `<token-form>`: Form component for creating/editing design tokens
-  - Real-time token resolution with preview of resolved values
-  - Shadow DOM with CSS custom properties and `::part()` selectors for styling
-  - Event-based API (`formSubmit`, `formCancel`) and prop-based handlers
-  - TypeScript types for form data and events
-
-#### Examples
-
-- **runtime-ui**: Integrated Stencil components into token dialog
-  - Replaced custom React form with `<token-form>` web component
-  - Demonstrates real-time token resolution with dependencies
-  - Custom styling via CSS parts matching design system
 
 ## [0.10.0] - 2025-11-24
 

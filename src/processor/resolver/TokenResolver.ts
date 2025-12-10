@@ -4,6 +4,7 @@ import { isLanguageError, ProcessorError, ProcessorErrorCode } from "@interprete
 import type { InterpreterResult } from "@interpreter/interpreter";
 import { type ParseExpressionResult, parseExpression } from "@interpreter/parser";
 import { BooleanSymbol, NullSymbol, NumberSymbol, StringSymbol } from "@interpreter/symbols";
+import { renameReferences } from "@interpreter/utils/references";
 import { isArray, isBoolean, isNull, isNumber, isObject, isString } from "@interpreter/utils/type";
 import { UNINTERPRETED_KEYWORDS } from "@src/types";
 import { DependencyError } from "../errors";
@@ -16,24 +17,32 @@ import {
 import { DependencyGraph } from "../utils/DependencyGraph";
 import { extractStringFields } from "../utils/structured-tokens";
 import { getTokenValue, setTokenValue, type TokenData } from "../utils/tokens";
-import {
-  DependencyTracker,
-  PrefixManager,
-  ReadinessTracker,
-  type RefPath,
-  ResolutionNotifier,
-  TokenInterpreter,
-  type TokenResult,
-  type UnresolvedToken,
-} from ".";
-
-type ResolvedTokens = Map<RefPath, TokenResult>;
-type UnresolvedTokens = Map<RefPath, UnresolvedToken>;
+import { DependencyTracker } from "./DependencyTracker";
+import { PrefixManager } from "./PrefixManager";
+import { ReadinessTracker } from "./ReadinessTracker";
+import { ResolutionNotifier } from "./ResolutionNotifier";
+import { TokenInterpreter } from "./TokenInterpreter";
+import type {
+  CreateTokenParams,
+  CreateTokenResult,
+  DeleteTokenParams,
+  DeleteTokenResult,
+  RefPath,
+  ResolvedValueMap,
+  TokenDataMap,
+  TokenErrorMap,
+  TokenInputMap,
+  TokenResult,
+  TokenResultMap,
+  UnresolvedTokenMap,
+  UpdateTokenParams,
+  UpdateTokenResult,
+} from "./types";
 
 export type ProcessorResult = {
   graph: DependencyGraph<RefPath>;
-  resolved: ResolvedTokens;
-  unresolved: UnresolvedTokens;
+  resolved: TokenResultMap;
+  unresolved: UnresolvedTokenMap;
   subFieldPaths?: Set<RefPath>;
   lintIssues?: LintIssue[];
 };
@@ -49,9 +58,18 @@ export type ProcessorCallbacks = {
 };
 
 export type ProcessorOutput = ProcessorResult & {
-  tokens: Map<RefPath, InterpreterResult>;
-  errors: Map<RefPath, Error>;
+  tokens: ResolvedValueMap;
+  errors: TokenErrorMap;
   resolver: TokenResolver;
+};
+
+export type ResolverParams = {
+  tokens: TokenInputMap;
+  callbacks?: ProcessorCallbacks;
+  config?: Config;
+  objectParsers?: ObjectParser[];
+  linter?: LintRunner;
+  initialCache?: ResolvedValueMap;
 };
 
 /**
@@ -70,14 +88,14 @@ export type ProcessorOutput = ProcessorResult & {
  * console.log(subgraph.getNodes()); // Map showing dependency relationships
  */
 export function getTokenDependencyGraph(
-  tokenName: string,
-  graph: DependencyGraph<string>,
+  tokenName: RefPath,
+  graph: DependencyGraph<RefPath>,
 ): {
-  tokens: Set<string>;
-  subgraph: DependencyGraph<string>;
+  tokens: Set<RefPath>;
+  subgraph: DependencyGraph<RefPath>;
 } {
   // Build reverse dependency graph to find dependents
-  const reverseDeps = new Map<string, Set<string>>();
+  const reverseDeps = new Map<RefPath, Set<RefPath>>();
   const graphNodes = graph.getNodes();
 
   for (const [node, dependencies] of graphNodes) {
@@ -90,9 +108,9 @@ export function getTokenDependencyGraph(
   }
 
   // Find all tokens transitively affected by this change using BFS
-  const affectedTokens = new Set<string>();
-  const queue: string[] = [tokenName];
-  const visited = new Set<string>();
+  const affectedTokens = new Set<RefPath>();
+  const queue: RefPath[] = [tokenName];
+  const visited = new Set<RefPath>();
 
   while (queue.length > 0) {
     const current = queue.shift();
@@ -113,12 +131,12 @@ export function getTokenDependencyGraph(
   }
 
   // Build subgraph containing only affected tokens and their relationships
-  const subgraph = new DependencyGraph<string>();
+  const subgraph = new DependencyGraph<RefPath>();
   for (const token of affectedTokens) {
     const dependencies = graphNodes.get(token);
     if (dependencies) {
       // Only include dependencies that are also in the affected set
-      const affectedDeps = new Set<string>();
+      const affectedDeps = new Set<RefPath>();
       for (const dep of dependencies) {
         if (affectedTokens.has(dep)) {
           affectedDeps.add(dep);
@@ -137,14 +155,15 @@ export function getTokenDependencyGraph(
 }
 
 class PrefixResolver {
+  private readonly tokens: TokenInputMap;
   private readonly callbacks?: ProcessorCallbacks;
   private readonly config?: Config;
   private readonly objectParsers?: ObjectParser[];
   private readonly linter?: LintRunner;
   private readonly graph = new DependencyGraph<RefPath>();
-  private readonly resolved: ResolvedTokens = new Map();
-  private readonly unresolved: UnresolvedTokens = new Map();
-  private readonly referenceCache: Map<string, InterpreterResult> = new Map();
+  private readonly resolved: TokenResultMap = new Map();
+  private readonly unresolved: UnresolvedTokenMap = new Map();
+  private readonly referenceCache: ResolvedValueMap = new Map();
   private readonly pendingResolution: Set<RefPath> = new Set();
   private readonly readyQueue: Set<RefPath> = new Set();
 
@@ -159,7 +178,7 @@ class PrefixResolver {
 
   // Structured tokens tracking
   private readonly subFieldPaths: Set<RefPath> = new Set();
-  private readonly structuredTokens: Map<RefPath, TokenData> = new Map();
+  private readonly structuredTokens: TokenDataMap = new Map();
 
   // Lint issues collection
   private readonly lintIssues: LintIssue[] = [];
@@ -167,13 +186,10 @@ class PrefixResolver {
   // Phase state
   private earlyResolved: RefPath[] = [];
 
-  constructor(
-    private readonly tokens: Map<RefPath, string | TokenData>,
-    callbacks?: ProcessorCallbacks,
-    config?: Config,
-    objectParsers?: ObjectParser[],
-    linter?: LintRunner,
-  ) {
+  constructor(private readonly params: ResolverParams) {
+    const { tokens, callbacks, config, objectParsers, linter } = params;
+
+    this.tokens = tokens;
     this.callbacks = callbacks;
     this.config = config;
     this.objectParsers = objectParsers;
@@ -255,7 +271,9 @@ class PrefixResolver {
       }
       return this.resolveError(
         refPath,
-        new Error("Unknown parsing error", { cause: error }),
+        new ProcessorError(ProcessorErrorCode.UNKNOWN_PARSING_ERROR, {
+          data: { error: error instanceof Error ? error.message : String(error) },
+        }),
         value,
       );
     }
@@ -318,6 +336,35 @@ class PrefixResolver {
 
   public getReferenceCache(): Map<string, InterpreterResult> {
     return this.referenceCache;
+  }
+
+  public getTokenInterpreter(): TokenInterpreter {
+    return this.tokenInterpreter;
+  }
+
+  public clone(overrides: Partial<ResolverParams>): PrefixResolver {
+    const { tokens, callbacks, linter } = {
+      ...this.params,
+      ...overrides,
+    };
+
+    const resolver = new PrefixResolver({
+      tokens,
+      callbacks,
+      config: this.config,
+      objectParsers: this.objectParsers,
+      linter,
+    });
+
+    if (overrides.initialCache && overrides.tokens) {
+      for (const [tokenName, value] of overrides.initialCache) {
+        if (!overrides.tokens.has(tokenName)) {
+          resolver.referenceCache.set(tokenName, value);
+        }
+      }
+    }
+
+    return resolver;
   }
 
   /**
@@ -782,19 +829,25 @@ class PrefixResolver {
  * const result = processor.build(tokens);
  */
 export class TokenResolver {
-  private resolver?: PrefixResolver;
-  private tokens?: Map<RefPath, TokenData>;
+  private prefixResolver?: PrefixResolver;
+  private tokens?: TokenDataMap;
   private config?: Config;
   private objectParsers?: ObjectParser[];
 
   public processTokens(
-    tokens: Map<RefPath, string | TokenData>,
+    tokens: TokenInputMap,
     callbacks?: ProcessorCallbacks,
     config?: Config,
     objectParsers?: ObjectParser[],
     linter?: LintRunner,
   ): ProcessorResult {
-    const resolver = new PrefixResolver(tokens, callbacks, config, objectParsers, linter);
+    const resolver = new PrefixResolver({
+      tokens,
+      callbacks,
+      config,
+      objectParsers,
+      linter,
+    });
     return resolver.resolve();
   }
 
@@ -812,18 +865,18 @@ export class TokenResolver {
    * const { tokens, subgraph } = resolver.getTokenDependencyGraph("color.primary");
    * console.log(tokens); // Set(['color.primary', 'button.background', ...])
    */
-  public getTokenDependencyGraph(tokenName: string): {
-    tokens: Set<string>;
-    subgraph: DependencyGraph<string>;
+  public getTokenDependencyGraph(tokenName: RefPath): {
+    tokens: Set<RefPath>;
+    subgraph: DependencyGraph<RefPath>;
   } {
-    if (!this.resolver) {
-      throw new Error("TokenResolver.getTokenDependencyGraph() can only be called after build()");
+    if (!this.prefixResolver) {
+      throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
     }
 
-    const graph = this.resolver.getGraph();
+    const graph = this.prefixResolver.getGraph();
 
     // Build reverse dependency graph to find dependents
-    const reverseDeps = new Map<string, Set<string>>();
+    const reverseDeps = new Map<RefPath, Set<RefPath>>();
     const graphNodes = graph.getNodes();
 
     for (const [node, dependencies] of graphNodes) {
@@ -836,9 +889,9 @@ export class TokenResolver {
     }
 
     // Find all tokens transitively affected by this change using BFS
-    const affectedTokens = new Set<string>();
-    const queue: string[] = [tokenName];
-    const visited = new Set<string>();
+    const affectedTokens = new Set<RefPath>();
+    const queue: RefPath[] = [tokenName];
+    const visited = new Set<RefPath>();
 
     while (queue.length > 0) {
       const current = queue.shift();
@@ -859,12 +912,12 @@ export class TokenResolver {
     }
 
     // Build subgraph containing only affected tokens and their relationships
-    const subgraph = new DependencyGraph<string>();
+    const subgraph = new DependencyGraph<RefPath>();
     for (const token of affectedTokens) {
       const dependencies = graphNodes.get(token);
       if (dependencies) {
         // Only include dependencies that are also in the affected set
-        const affectedDeps = new Set<string>();
+        const affectedDeps = new Set<RefPath>();
         for (const dep of dependencies) {
           if (affectedTokens.has(dep)) {
             affectedDeps.add(dep);
@@ -883,12 +936,12 @@ export class TokenResolver {
   }
 
   public build(
-    tokens: Map<RefPath, TokenData>,
+    tokens: TokenDataMap,
     config?: Config,
     objectParsers?: ObjectParser[],
   ): ProcessorOutput {
-    const output: Map<RefPath, string | InterpreterResult> = new Map();
-    const errors: Map<RefPath, Error> = new Map();
+    const output: ResolvedValueMap = new Map();
+    const errors: TokenErrorMap = new Map();
     let subFieldPaths: Set<RefPath> | undefined;
 
     const callbacks: ProcessorCallbacks = {
@@ -902,12 +955,17 @@ export class TokenResolver {
     };
 
     // Create and store the resolver for future updates
-    this.resolver = new PrefixResolver(tokens, callbacks, config, objectParsers);
+    this.prefixResolver = new PrefixResolver({
+      tokens,
+      callbacks,
+      config,
+      objectParsers,
+    });
     this.tokens = tokens;
     this.config = config;
     this.objectParsers = objectParsers;
 
-    const result = this.resolver.resolve();
+    const result = this.prefixResolver.resolve();
     subFieldPaths = result.subFieldPaths;
 
     // Filter out sub-field paths from output
@@ -926,119 +984,232 @@ export class TokenResolver {
     };
   }
 
-  /**
-   * Update a single token and recompute only affected tokens.
-   *
-   * This method provides efficient incremental updates by:
-   * 1. Using the existing resolver's cached reference values
-   * 2. Only reprocessing the updated token and its dependents
-   * 3. Reusing resolved values for unaffected tokens
-   *
-   * @param tokenName - Name of the token to update (empty string allowed)
-   * @param tokenValue - New value for the token
-   * @param tokenType - Type of the token (e.g., "color", "dimension", etc.)
-   * @returns The resolved value and dependency subgraph
-   *
-   * @example
-   * const { resolver } = new TokenResolver().build(allTokens);
-   * const result = resolver.updateToken("color.primary", "#FF0000", "color");
-   * console.log(result.resolvedValue); // Resolved value for color.primary
-   */
-  public updateToken(
-    tokenName: string,
-    tokenValue: string,
-    tokenType?: string,
-  ): {
-    resolvedValue: InterpreterResult | Error;
-    affectedTokens: Set<string>;
-    subgraph: DependencyGraph<string>;
-  } {
-    if (!this.resolver || !this.tokens) {
-      throw new Error("TokenResolver.updateToken() can only be called after build()");
+  private ensureInitialized(): void {
+    if (!this.prefixResolver || !this.tokens) {
+      throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
     }
+  }
 
-    // Normalize token name (use empty string if not provided)
-    const normalizedTokenName = tokenName.trim() || "";
+  private normalizeTokenPath(tokenPath: string): string {
+    return tokenPath.trim() || "";
+  }
 
-    // Find all tokens transitively affected by this change
-    const { tokens: affectedTokens, subgraph } = getTokenDependencyGraph(
-      normalizedTokenName,
-      this.resolver.getGraph(),
-    );
-
-    // Update the token in the tokens map
-    const updatedTokens = new Map(this.tokens);
-    updatedTokens.set(normalizedTokenName, {
-      $value: tokenValue,
-      $type: tokenType || "string",
-    });
-
-    // Update stored tokens
-    this.tokens = updatedTokens;
-
-    // Pass ALL tokens to the resolver
-    // The cache pre-population ensures non-affected tokens use cached values
-    // and skip recomputation (early resolution via cache hit)
-    const output: Map<RefPath, InterpreterResult | Error> = new Map();
-
+  private createOutputCallbacks(): {
+    output: TokenResultMap;
+    callbacks: ProcessorCallbacks;
+  } {
+    const output: TokenResultMap = new Map();
     const callbacks: ProcessorCallbacks = {
       onResolve: (name, value) => {
-        // Only capture affected tokens in output
-        if (affectedTokens.has(name)) {
-          output.set(name, value);
-        }
+        output.set(name, value);
       },
       onError: (name, error) => {
-        // Only capture affected tokens in output
-        if (affectedTokens.has(name)) {
-          output.set(name, error);
-        }
+        output.set(name, error);
       },
     };
+    return { output, callbacks };
+  }
 
-    // Create a new resolver with ALL tokens and pre-populated cache
-    // Non-affected tokens will use cached values and skip recomputation
-    const tempResolver = new PrefixResolverWithCache(
-      updatedTokens,
-      this.resolver.getReferenceCache(),
+  private rebuildResolver(updatedTokens: TokenDataMap, callbacks: ProcessorCallbacks): void {
+    if (!this.prefixResolver) {
+      throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
+    }
+    const newResolver = this.prefixResolver.clone({
+      tokens: updatedTokens,
       callbacks,
-      this.config,
-      this.objectParsers,
-    );
-    tempResolver.resolve();
+    });
+    newResolver.resolve();
+    this.prefixResolver = newResolver;
+  }
 
-    // Extract the resolved value for the updated token
-    const resolvedValue = output.get(normalizedTokenName) || "";
+  public updateToken(params: UpdateTokenParams): UpdateTokenResult {
+    this.ensureInitialized();
+
+    const { tokenPath, tokenData, tokenPathRenamed, updateReferences = false } = params;
+    const prevPath = this.normalizeTokenPath(tokenPath);
+    const newPath = tokenPathRenamed?.trim();
+
+    if (!this.tokens || !this.tokens.has(prevPath)) {
+      if (tokenData) {
+        const createResult = this.createToken({
+          tokenPath: prevPath,
+          tokenData,
+        });
+        return {
+          ...createResult,
+          updated: false,
+        };
+      }
+      throw new ProcessorError(ProcessorErrorCode.TOKEN_NOT_FOUND, {
+        data: { tokenName: prevPath },
+      });
+    }
+
+    const oldTokenData = this.tokens.get(prevPath);
+    if (!oldTokenData) {
+      throw new ProcessorError(ProcessorErrorCode.TOKEN_NOT_FOUND, {
+        data: { tokenName: prevPath },
+      });
+    }
+
+    const isRename = newPath && newPath !== prevPath;
+
+    // Validate newPath doesn't already exist when renaming
+    if (isRename && this.tokens.has(newPath)) {
+      throw new ProcessorError(ProcessorErrorCode.TOKEN_ALREADY_EXISTS, {
+        data: { tokenName: newPath },
+      });
+    }
+
+    if (!this.prefixResolver) {
+      throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
+    }
+    const currentGraph = this.prefixResolver.getGraph();
+    const { tokens: affectedTokens } = getTokenDependencyGraph(prevPath, currentGraph);
+    affectedTokens.delete(prevPath);
+
+    const updatedTokens = new Map(this.tokens);
+    const renamedReferences = new Set<RefPath>();
+
+    // Handle rename with reference updates if requested
+    if (isRename && updateReferences && affectedTokens.size > 0) {
+      const renameMap = { [prevPath]: newPath };
+      const tokenInterpreter = this.prefixResolver.getTokenInterpreter();
+
+      // Update references in all dependent tokens
+      for (const dependentToken of affectedTokens) {
+        const dependentTokenData = updatedTokens.get(dependentToken);
+        if (!dependentTokenData) continue;
+
+        const dependentValue = getTokenValue(dependentTokenData);
+        if (!isString(dependentValue)) continue;
+
+        // Get cached AST instead of reparsing
+        const ast = tokenInterpreter.getTokenAST(dependentToken);
+        if (!ast) continue;
+
+        // Rename references using the utility function
+        const updatedValue = renameReferences(dependentValue, ast, renameMap);
+
+        // Only update if there was an actual change
+        if (updatedValue !== dependentValue) {
+          const updatedTokenData = { ...dependentTokenData, $value: updatedValue };
+          updatedTokens.set(dependentToken, updatedTokenData);
+          renamedReferences.add(dependentToken);
+        }
+      }
+    }
+
+    // Update/rename the token itself
+    updatedTokens.delete(prevPath);
+    const finalPath = isRename ? newPath : prevPath;
+    updatedTokens.set(finalPath, tokenData || oldTokenData);
+    this.tokens = updatedTokens;
+
+    const { output, callbacks } = this.createOutputCallbacks();
+    this.rebuildResolver(updatedTokens, callbacks);
+
+    if (!this.prefixResolver) {
+      throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
+    }
+    const { tokens: dependentTokens, subgraph } = getTokenDependencyGraph(
+      finalPath,
+      this.prefixResolver.getGraph(),
+    );
+
+    const resolvedValue = output.get(finalPath) || "";
+
+    const result: UpdateTokenResult = {
+      resolvedValue,
+      affectedTokens: dependentTokens,
+      subgraph,
+      updated: true,
+    };
+
+    // Add rename-specific information
+    if (isRename) {
+      if (updateReferences) {
+        result.renamedReferences = renamedReferences;
+      } else {
+        result.brokenReferences = new Set(affectedTokens);
+      }
+    }
+
+    return result;
+  }
+
+  public createToken(params: CreateTokenParams): CreateTokenResult {
+    this.ensureInitialized();
+
+    const { tokenPath, tokenData } = params;
+    const normalizedTokenPath = this.normalizeTokenPath(tokenPath);
+
+    if (this.tokens?.has(normalizedTokenPath)) {
+      throw new ProcessorError(ProcessorErrorCode.TOKEN_ALREADY_EXISTS, {
+        data: { tokenName: normalizedTokenPath },
+      });
+    }
+
+    const updatedTokens = new Map(this.tokens);
+    updatedTokens.set(normalizedTokenPath, tokenData);
+    this.tokens = updatedTokens;
+
+    const { output, callbacks } = this.createOutputCallbacks();
+    this.rebuildResolver(updatedTokens, callbacks);
+
+    if (!this.prefixResolver) {
+      throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
+    }
+    const { tokens: dependentTokens, subgraph } = getTokenDependencyGraph(
+      normalizedTokenPath,
+      this.prefixResolver.getGraph(),
+    );
+
+    const resolvedValue = output.get(normalizedTokenPath) || "";
 
     return {
       resolvedValue,
-      affectedTokens,
+      affectedTokens: dependentTokens,
       subgraph,
+      created: true,
     };
   }
-}
 
-// Helper class that extends PrefixResolver to accept pre-populated cache
-class PrefixResolverWithCache extends PrefixResolver {
-  constructor(
-    tokens: Map<RefPath, string | TokenData>,
-    cachedValues: Map<RefPath, InterpreterResult>,
-    callbacks?: ProcessorCallbacks,
-    config?: Config,
-    objectParsers?: ObjectParser[],
-  ) {
-    super(tokens, callbacks, config, objectParsers);
+  public deleteToken(params: DeleteTokenParams): DeleteTokenResult {
+    this.ensureInitialized();
 
-    // Pre-populate the reference cache with already-resolved values
-    for (const [tokenName, value] of cachedValues) {
-      if (!tokens.has(tokenName)) {
-        this.getReferenceCache().set(tokenName, value);
-      }
+    const { tokenPath } = params;
+    const normalizedTokenPath = this.normalizeTokenPath(tokenPath);
+
+    if (!this.tokens?.has(normalizedTokenPath)) {
+      throw new ProcessorError(ProcessorErrorCode.TOKEN_NOT_FOUND, {
+        data: { tokenName: normalizedTokenPath },
+      });
     }
-  }
 
-  // Expose reference cache for initialization
-  public getReferenceCache(): Map<string, InterpreterResult> {
-    return (this as any).referenceCache;
+    if (!this.prefixResolver) {
+      throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
+    }
+    const currentGraph = this.prefixResolver.getGraph();
+    const { tokens: affectedTokens, subgraph } = getTokenDependencyGraph(
+      normalizedTokenPath,
+      currentGraph,
+    );
+
+    affectedTokens.delete(normalizedTokenPath);
+    const brokenReferences = new Set(affectedTokens);
+
+    const updatedTokens = new Map(this.tokens);
+    updatedTokens.delete(normalizedTokenPath);
+    this.tokens = updatedTokens;
+
+    const { callbacks } = this.createOutputCallbacks();
+    this.rebuildResolver(updatedTokens, callbacks);
+
+    return {
+      affectedTokens,
+      subgraph,
+      brokenReferences,
+    };
   }
 }

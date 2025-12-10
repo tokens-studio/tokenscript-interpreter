@@ -10,10 +10,14 @@ describe("TokenResolver.updateToken", () => {
     ]);
 
     const { resolver } = new TokenResolver().build(allTokens);
-    const result = resolver.updateToken("color.primary", "#0000FF", "color");
+    const result = resolver.updateToken({
+      tokenPath: "color.primary",
+      tokenData: { $value: "#0000FF", $type: "color" },
+    });
 
     expect(result.resolvedValue.toString()).toBe("#0000FF");
     expect(result.affectedTokens.has("color.primary")).toBe(true);
+    expect(result.updated).toBe(true);
   });
 
   it("should identify all transitively affected tokens", () => {
@@ -27,7 +31,10 @@ describe("TokenResolver.updateToken", () => {
     const { resolver } = new TokenResolver().build(allTokens);
 
     // Update base from 10 to 20
-    const result = resolver.updateToken("base", "20", "dimension");
+    const result = resolver.updateToken({
+      tokenPath: "base",
+      tokenData: { $value: "20", $type: "dimension" },
+    });
 
     // Should identify base and all its dependents
     expect(result.affectedTokens.has("base")).toBe(true);
@@ -40,11 +47,17 @@ describe("TokenResolver.updateToken", () => {
     expect(result.resolvedValue.toString()).toBe("20"); // base = 20
 
     // Check derived: should be 20 * 2 = 40
-    const derived = resolver.updateToken("derived", "{base} * 2", "dimension");
+    const derived = resolver.updateToken({
+      tokenPath: "derived",
+      tokenData: { $value: "{base} * 2", $type: "dimension" },
+    });
     expect(derived.resolvedValue.toString()).toBe("40");
 
     // Check furtherDerived: should be 40 + 5 = 45
-    const furtherDerived = resolver.updateToken("furtherDerived", "{derived} + 5", "dimension");
+    const furtherDerived = resolver.updateToken({
+      tokenPath: "furtherDerived",
+      tokenData: { $value: "{derived} + 5", $type: "dimension" },
+    });
     expect(furtherDerived.resolvedValue.toString()).toBe("45");
   });
 
@@ -55,7 +68,10 @@ describe("TokenResolver.updateToken", () => {
     ]);
 
     const { resolver } = new TokenResolver().build(allTokens);
-    const result = resolver.updateToken("spacing.large", "{spacing.base} * 3", "dimension");
+    const result = resolver.updateToken({
+      tokenPath: "spacing.large",
+      tokenData: { $value: "{spacing.base} * 3", $type: "dimension" },
+    });
 
     expect(result.resolvedValue.toString()).toBe("24");
     expect(result.affectedTokens.has("spacing.large")).toBe(true);
@@ -65,7 +81,10 @@ describe("TokenResolver.updateToken", () => {
     const allTokens = new Map<string, TokenData>([["existing", { $value: "100", $type: "dimension" }]]);
 
     const { resolver } = new TokenResolver().build(allTokens);
-    const result = resolver.updateToken("", "50", "dimension");
+    const result = resolver.updateToken({
+      tokenPath: "",
+      tokenData: { $value: "50", $type: "dimension" },
+    });
 
     expect(result.resolvedValue.toString()).toBe("50");
     expect(result.affectedTokens.has("")).toBe(true);
@@ -75,7 +94,10 @@ describe("TokenResolver.updateToken", () => {
     const allTokens = new Map<string, TokenData>([["existing", { $value: "100", $type: "dimension" }]]);
 
     const { resolver } = new TokenResolver().build(allTokens);
-    const result = resolver.updateToken("   ", "75", "dimension");
+    const result = resolver.updateToken({
+      tokenPath: "   ",
+      tokenData: { $value: "75", $type: "dimension" },
+    });
 
     expect(result.resolvedValue.toString()).toBe("75");
     expect(result.affectedTokens.has("")).toBe(true);
@@ -85,7 +107,10 @@ describe("TokenResolver.updateToken", () => {
     const allTokens = new Map<string, TokenData>([["valid", { $value: "10", $type: "dimension" }]]);
 
     const { resolver } = new TokenResolver().build(allTokens);
-    const result = resolver.updateToken("invalid", "{nonexistent}", "dimension");
+    const result = resolver.updateToken({
+      tokenPath: "invalid",
+      tokenData: { $value: "{nonexistent}", $type: "dimension" },
+    });
 
     expect(result.resolvedValue).toBeInstanceOf(Error);
   });
@@ -97,7 +122,10 @@ describe("TokenResolver.updateToken", () => {
     ]);
 
     const { resolver } = new TokenResolver().build(allTokens);
-    const result = resolver.updateToken("calculated", "{base} * 3", "dimension");
+    const result = resolver.updateToken({
+      tokenPath: "calculated",
+      tokenData: { $value: "{base} * 3", $type: "dimension" },
+    });
 
     expect(result.resolvedValue.toString()).toBe("30");
   });
@@ -113,20 +141,32 @@ describe("TokenResolver.updateToken", () => {
     const { resolver } = new TokenResolver().build(allTokens);
 
     // Update a from 1 to 10
-    const result = resolver.updateToken("a", "10", "dimension");
+    const result = resolver.updateToken({
+      tokenPath: "a",
+      tokenData: { $value: "10", $type: "dimension" },
+    });
 
     // All tokens should be affected
     expect(result.affectedTokens.size).toBe(4);
     expect(result.resolvedValue.toString()).toBe("10"); // a = 10
 
     // Verify the cascade: a=10, b=11, c=12, d=13
-    const b = resolver.updateToken("b", "{a} + 1", "dimension");
+    const b = resolver.updateToken({
+      tokenPath: "b",
+      tokenData: { $value: "{a} + 1", $type: "dimension" },
+    });
     expect(b.resolvedValue.toString()).toBe("11");
 
-    const c = resolver.updateToken("c", "{b} + 1", "dimension");
+    const c = resolver.updateToken({
+      tokenPath: "c",
+      tokenData: { $value: "{b} + 1", $type: "dimension" },
+    });
     expect(c.resolvedValue.toString()).toBe("12");
 
-    const d = resolver.updateToken("d", "{c} + 1", "dimension");
+    const d = resolver.updateToken({
+      tokenPath: "d",
+      tokenData: { $value: "{c} + 1", $type: "dimension" },
+    });
     expect(d.resolvedValue.toString()).toBe("13");
   });
 
@@ -141,7 +181,10 @@ describe("TokenResolver.updateToken", () => {
     const { resolver } = new TokenResolver().build(allTokens);
 
     // Update base from 10 to 20
-    const result = resolver.updateToken("base", "20", "dimension");
+    const result = resolver.updateToken({
+      tokenPath: "base",
+      tokenData: { $value: "20", $type: "dimension" },
+    });
 
     // Should include base and all three derived tokens
     expect(result.affectedTokens.size).toBe(4);
@@ -153,13 +196,22 @@ describe("TokenResolver.updateToken", () => {
     // Verify all derived tokens have correct updated values
     expect(result.resolvedValue.toString()).toBe("20"); // base = 20
 
-    const derived1 = resolver.updateToken("derived1", "{base} * 2", "dimension");
+    const derived1 = resolver.updateToken({
+      tokenPath: "derived1",
+      tokenData: { $value: "{base} * 2", $type: "dimension" },
+    });
     expect(derived1.resolvedValue.toString()).toBe("40"); // 20 * 2
 
-    const derived2 = resolver.updateToken("derived2", "{base} * 3", "dimension");
+    const derived2 = resolver.updateToken({
+      tokenPath: "derived2",
+      tokenData: { $value: "{base} * 3", $type: "dimension" },
+    });
     expect(derived2.resolvedValue.toString()).toBe("60"); // 20 * 3
 
-    const derived3 = resolver.updateToken("derived3", "{base} + 5", "dimension");
+    const derived3 = resolver.updateToken({
+      tokenPath: "derived3",
+      tokenData: { $value: "{base} + 5", $type: "dimension" },
+    });
     expect(derived3.resolvedValue.toString()).toBe("25"); // 20 + 5
   });
 
@@ -167,7 +219,10 @@ describe("TokenResolver.updateToken", () => {
     const allTokens = new Map<string, TokenData>([["token1", { $value: "test", $type: "string" }]]);
 
     const { resolver } = new TokenResolver().build(allTokens);
-    const result = resolver.updateToken("token1", "updated");
+    const result = resolver.updateToken({
+      tokenPath: "token1",
+      tokenData: { $value: "updated" },
+    });
 
     // Should default to "string" type
     expect(result.resolvedValue.toString()).toBe("updated");
@@ -177,17 +232,24 @@ describe("TokenResolver.updateToken", () => {
     const allTokens = new Map<string, TokenData>([["existing", { $value: "10", $type: "dimension" }]]);
 
     const { resolver } = new TokenResolver().build(allTokens);
-    const result = resolver.updateToken("newToken", "20", "dimension");
+    const result = resolver.updateToken({
+      tokenPath: "newToken",
+      tokenData: { $value: "20", $type: "dimension" },
+    });
 
     expect(result.resolvedValue.toString()).toBe("20");
     expect(result.affectedTokens.has("newToken")).toBe(true);
+    expect(result.updated).toBe(false); // Token didn't exist before
   });
 
   it("should handle string values without references", () => {
     const allTokens = new Map<string, TokenData>([["text", { $value: "hello", $type: "string" }]]);
 
     const { resolver } = new TokenResolver().build(allTokens);
-    const result = resolver.updateToken("text", "world", "string");
+    const result = resolver.updateToken({
+      tokenPath: "text",
+      tokenData: { $value: "world", $type: "string" },
+    });
 
     expect(result.resolvedValue.toString()).toBe("world");
   });
@@ -196,7 +258,10 @@ describe("TokenResolver.updateToken", () => {
     const allTokens = new Map<string, TokenData>([["flag", { $value: "true", $type: "boolean" }]]);
 
     const { resolver } = new TokenResolver().build(allTokens);
-    const result = resolver.updateToken("flag", "false", "boolean");
+    const result = resolver.updateToken({
+      tokenPath: "flag",
+      tokenData: { $value: "false", $type: "boolean" },
+    });
 
     expect(result.resolvedValue.toString()).toBe("false");
   });
@@ -210,7 +275,10 @@ describe("TokenResolver.updateToken", () => {
     ]);
 
     const { resolver } = new TokenResolver().build(allTokens);
-    const result = resolver.updateToken("base", "20", "dimension");
+    const result = resolver.updateToken({
+      tokenPath: "base",
+      tokenData: { $value: "20", $type: "dimension" },
+    });
 
     // Check subgraph is returned
     expect(result.subgraph).toBeDefined();
@@ -238,7 +306,10 @@ describe("TokenResolver.updateToken", () => {
     const { resolver } = new TokenResolver().build(allTokens);
 
     // Change button.bg to reference color.primary instead
-    const result = resolver.updateToken("button.bg", "{color.primary}", "color");
+    const result = resolver.updateToken({
+      tokenPath: "button.bg",
+      tokenData: { $value: "{color.primary}", $type: "color" },
+    });
 
     // Should resolve to the referenced value
     expect(result.resolvedValue.toString()).toBe("#FF0000");
@@ -254,7 +325,10 @@ describe("TokenResolver.updateToken", () => {
     const { resolver } = new TokenResolver().build(allTokens);
 
     // Change spacing.large from literal to reference
-    const result = resolver.updateToken("spacing.large", "{spacing.base} * 2", "dimension");
+    const result = resolver.updateToken({
+      tokenPath: "spacing.large",
+      tokenData: { $value: "{spacing.base} * 2", $type: "dimension" },
+    });
 
     expect(result.resolvedValue.toString()).toBe("16");
     expect(result.affectedTokens.size).toBe(1);
@@ -271,7 +345,10 @@ describe("TokenResolver.updateToken", () => {
     // Try to create circular dependency: b -> a -> b
     // Should throw ProcessorError for circular dependency
     expect(() => {
-      resolver.updateToken("b", "{a} + 1", "dimension");
+      resolver.updateToken({
+        tokenPath: "b",
+        tokenData: { $value: "{a} + 1", $type: "dimension" },
+      });
     }).toThrow("Circular dependency");
   });
 
@@ -283,7 +360,10 @@ describe("TokenResolver.updateToken", () => {
     // Try to create self-reference
     // Should throw ProcessorError, not loop forever
     expect(() => {
-      resolver.updateToken("recursive", "{recursive}", "dimension");
+      resolver.updateToken({
+        tokenPath: "recursive",
+        tokenData: { $value: "{recursive}", $type: "dimension" },
+      });
     }).toThrow("Circular dependency");
   });
 
@@ -299,7 +379,10 @@ describe("TokenResolver.updateToken", () => {
     // Create cycle: c -> a -> b -> c
     // Should throw ProcessorError for circular dependency
     expect(() => {
-      resolver.updateToken("c", "{a}", "dimension");
+      resolver.updateToken({
+        tokenPath: "c",
+        tokenData: { $value: "{a}", $type: "dimension" },
+      });
     }).toThrow("Circular dependency");
   });
 
@@ -320,7 +403,10 @@ describe("TokenResolver.updateToken", () => {
     expect(initialTokens.get("level2")?.toString()).toBe("35"); // 20 + 15
 
     // Update base from 10 to 100 in ONE call
-    const result = resolver.updateToken("base", "100", "dimension");
+    const result = resolver.updateToken({
+      tokenPath: "base",
+      tokenData: { $value: "100", $type: "dimension" },
+    });
 
     // All affected tokens should be identified
     expect(result.affectedTokens.size).toBe(4);
@@ -331,13 +417,22 @@ describe("TokenResolver.updateToken", () => {
 
     // Now check that ALL dependent values are correct after this ONE update
     // No need to call updateToken again for each dependent
-    const level1a = resolver.updateToken("level1a", "{base} * 2", "dimension");
+    const level1a = resolver.updateToken({
+      tokenPath: "level1a",
+      tokenData: { $value: "{base} * 2", $type: "dimension" },
+    });
     expect(level1a.resolvedValue.toString()).toBe("200"); // 100 * 2
 
-    const level1b = resolver.updateToken("level1b", "{base} + 5", "dimension");
+    const level1b = resolver.updateToken({
+      tokenPath: "level1b",
+      tokenData: { $value: "{base} + 5", $type: "dimension" },
+    });
     expect(level1b.resolvedValue.toString()).toBe("105"); // 100 + 5
 
-    const level2 = resolver.updateToken("level2", "{level1a} + {level1b}", "dimension");
+    const level2 = resolver.updateToken({
+      tokenPath: "level2",
+      tokenData: { $value: "{level1a} + {level1b}", $type: "dimension" },
+    });
     expect(level2.resolvedValue.toString()).toBe("305"); // 200 + 105
   });
 });
