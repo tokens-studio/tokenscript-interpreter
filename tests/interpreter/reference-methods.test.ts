@@ -11,7 +11,6 @@ describe("Reference Method Calls", () => {
     const interpreter = createInterpreter('{a}.get("test")', { a: dict });
 
     const result = interpreter.interpret();
-    console.log("Result:", result);
     expect(result).toBeInstanceOf(StringSymbol);
     expect((result as StringSymbol).value).toBe("value");
   });
@@ -24,7 +23,6 @@ describe("Reference Method Calls", () => {
     const interpreter = createInterpreter('{a}.get("test").lower()', { a: dict });
 
     const result = interpreter.interpret();
-    console.log("Result:", result);
     expect(result).toBeInstanceOf(StringSymbol);
     expect((result as StringSymbol).value).toBe("value");
   });
