@@ -138,7 +138,8 @@ function main() {
 
   log("4/6 Creating version bump and git tag...");
   if (isDryRun) {
-    log(`  [DRY RUN] Would run: npm version ${releaseType}`);
+    log(`  [DRY RUN] Would run: npm version ${releaseType} --no-git-tag-version`);
+    log(`  [DRY RUN] Would create git commit and tag`);
   } else {
     exec(`npm version ${releaseType} -m "chore: release v%s"`);
     success(`Version bumped to ${newVersion}`);
@@ -147,9 +148,9 @@ function main() {
 
   log("5/6 Publishing to npm...");
   if (isDryRun) {
-    log("  [DRY RUN] Would run: npm publish");
+    log("  [DRY RUN] Would run: npm publish --ignore-scripts");
   } else {
-    exec("npm publish");
+    exec("npm publish --ignore-scripts");
     success("Published to npm");
   }
   log("");
