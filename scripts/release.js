@@ -43,7 +43,18 @@ function hasUncommittedChanges() {
   return status.length > 0;
 }
 
-function updateChangelog() {
+function calculateNextVersion(releaseType) {
+  const currentVersion = JSON.parse(
+    readFileSync(join(__dirname, "..", "package.json"), "utf8"),
+  ).version;
+  const [major, minor, patch] = currentVersion.split(".").map(Number);
+
+  if (releaseType === "major") return `${major + 1}.0.0`;
+  if (releaseType === "minor") return `${major}.${minor + 1}.0`;
+  return `${major}.${minor}.${patch + 1}`;
+}
+
+function updateChangelog(version) {
   const changelogPath = join(__dirname, "..", "CHANGELOG.md");
   const changelog = readFileSync(changelogPath, "utf8");
   const today = new Date().toISOString().split("T")[0];
@@ -55,11 +66,11 @@ function updateChangelog() {
 
   const updated = changelog.replace(
     /## \[Unreleased\]/i,
-    `## [Unreleased]\n\n## UNRELEASED - ${today}`,
+    `## [Unreleased]\n\n## [${version}] - ${today}`,
   );
 
   writeFileSync(changelogPath, updated, "utf8");
-  success(`Added timestamp to CHANGELOG.md`);
+  success(`Updated CHANGELOG.md with version ${version}`);
 }
 
 function main() {
@@ -91,19 +102,23 @@ function main() {
     process.exit(1);
   }
 
-  log("1/7 Updating CHANGELOG...");
+  const newVersion = calculateNextVersion(releaseType);
+  log(`Calculated next version: ${newVersion}`);
+  log("");
+
+  log("1/6 Updating CHANGELOG...");
   if (isDryRun) {
-    log("  [DRY RUN] Would update CHANGELOG.md");
+    log(`  [DRY RUN] Would update CHANGELOG.md with version ${newVersion}`);
     log("  [DRY RUN] Would commit CHANGELOG.md");
   } else {
-    updateChangelog();
+    updateChangelog(newVersion);
     exec("git add CHANGELOG.md");
     exec('git commit -m "chore: update CHANGELOG for release"');
     success("CHANGELOG committed");
   }
   log("");
 
-  log("2/7 Running tests...");
+  log("2/6 Running tests...");
   if (isDryRun) {
     log("  [DRY RUN] Would run: npm test");
   } else {
@@ -112,7 +127,7 @@ function main() {
   }
   log("");
 
-  log("3/7 Building project...");
+  log("3/6 Building project...");
   if (isDryRun) {
     log("  [DRY RUN] Would run: npm run build");
   } else {
@@ -121,25 +136,16 @@ function main() {
   }
   log("");
 
-  log("4/7 Creating version bump and git tag...");
-  let newVersion;
+  log("4/6 Creating version bump and git tag...");
   if (isDryRun) {
-    const currentVersion = JSON.parse(
-      readFileSync(join(__dirname, "..", "package.json"), "utf8"),
-    ).version;
-    const [major, minor, patch] = currentVersion.split(".").map(Number);
-    if (releaseType === "major") newVersion = `${major + 1}.0.0`;
-    else if (releaseType === "minor") newVersion = `${major}.${minor + 1}.0`;
-    else newVersion = `${major}.${minor}.${patch + 1}`;
-    log(`  [DRY RUN] Would bump version: ${currentVersion} → ${newVersion}`);
+    log(`  [DRY RUN] Would run: npm version ${releaseType}`);
   } else {
     exec(`npm version ${releaseType} -m "chore: release v%s"`);
-    newVersion = JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf8")).version;
     success(`Version bumped to ${newVersion}`);
   }
   log("");
 
-  log("5/7 Publishing to npm...");
+  log("5/6 Publishing to npm...");
   if (isDryRun) {
     log("  [DRY RUN] Would run: npm publish");
   } else {
@@ -148,21 +154,12 @@ function main() {
   }
   log("");
 
-  log("6/7 Pushing commits...");
+  log("6/6 Pushing to remote...");
   if (isDryRun) {
-    log("  [DRY RUN] Would run: git push");
+    log("  [DRY RUN] Would run: git push --follow-tags");
   } else {
-    exec("git push");
-    success("Commits pushed to remote");
-  }
-  log("");
-
-  log("7/7 Pushing tags...");
-  if (isDryRun) {
-    log("  [DRY RUN] Would run: git push --tags");
-  } else {
-    exec("git push --tags");
-    success("Tags pushed to remote");
+    exec("git push --follow-tags");
+    success("Pushed commits and tags to remote");
   }
   log("");
 

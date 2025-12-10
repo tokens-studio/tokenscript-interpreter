@@ -24,7 +24,7 @@ const content = [];
 for (let i = 0; i < lines.length; i++) {
   const line = lines[i];
 
-  if (line.match(/^## UNRELEASED - \d{4}-\d{2}-\d{2}/)) {
+  if (line.match(new RegExp(`^## \\[${version.replace(/\./g, "\\.")}\\] - \\d{4}-\\d{2}-\\d{2}`))) {
     inSection = true;
     continue;
   }

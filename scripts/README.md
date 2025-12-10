@@ -22,12 +22,13 @@ npm run release patch -- --dry-run
 **What it does:**
 
 1. **Validation**: Checks for uncommitted changes and ensures you're on the `main` branch
-2. **CHANGELOG**: Adds timestamp to the `[Unreleased]` section
-3. **Tests**: Runs the full test suite
-4. **Build**: Builds the project
-5. **Version bump**: Updates version in `package.json` and creates a git tag
-6. **Publish**: Publishes to npm registry
-7. **Push**: Pushes commits and tags to GitHub
+2. **Calculate version**: Determines the next version number
+3. **CHANGELOG**: Updates `[Unreleased]` section with version and timestamp (e.g., `## [0.13.0] - 2024-12-10`)
+4. **Tests**: Runs the full test suite
+5. **Build**: Builds the project
+6. **Version bump**: Updates version in `package.json` and creates a git tag
+7. **Publish**: Publishes to npm registry
+8. **Push**: Pushes commits and tags to GitHub
 
 **Requirements:**
 
@@ -77,7 +78,7 @@ The scripts expect the following CHANGELOG format:
 ### Changed
 - Modified behavior
 
-## UNRELEASED - 2024-01-15
+## [0.12.0] - 2024-01-15
 
 ### Added
 - Previous feature
@@ -85,4 +86,13 @@ The scripts expect the following CHANGELOG format:
 ...
 ```
 
-When you run `npm run release`, the `[Unreleased]` section gets a timestamp added and becomes `## UNRELEASED - YYYY-MM-DD`.
+When you run `npm run release minor`, it calculates the new version (e.g., 0.13.0), then updates the CHANGELOG to:
+
+```markdown
+## [Unreleased]
+
+## [0.13.0] - 2024-12-10
+
+### Added
+- New feature
+```
