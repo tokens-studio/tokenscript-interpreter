@@ -131,7 +131,7 @@ describe("TokenResolver.deleteToken", () => {
       resolver.deleteToken({
         tokenPath: "token",
       });
-    }).toThrow("can only be called after build()");
+    }).toThrow("PROC_RESOLVER_NOT_INITIALIZED");
   });
 
   it("should return subgraph with affected tokens", () => {

@@ -10,6 +10,8 @@ export enum ProcessorErrorCode {
   TOKEN_SET_INVALID = "PROC_TOKEN_SET_INVALID",
   NO_SETS_TO_PROCESS = "PROC_NO_SETS_TO_PROCESS",
   MULTIPLE_SETS_NO_SELECTION = "PROC_MULTIPLE_SETS_NO_SELECTION",
+  UNKNOWN_PARSING_ERROR = "PROC_UNKNOWN_PARSING_ERROR",
+  RESOLVER_NOT_INITIALIZED = "PROC_RESOLVER_NOT_INITIALIZED",
 }
 
 export interface ProcessorErrorData {
@@ -47,4 +49,8 @@ export interface ProcessorErrorData {
   [ProcessorErrorCode.MULTIPLE_SETS_NO_SELECTION]: {
     setNames: string[];
   };
+  [ProcessorErrorCode.UNKNOWN_PARSING_ERROR]: {
+    error?: string;
+  };
+  [ProcessorErrorCode.RESOLVER_NOT_INITIALIZED]: Record<string, never>;
 }

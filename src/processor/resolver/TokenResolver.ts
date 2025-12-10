@@ -271,7 +271,9 @@ class PrefixResolver {
       }
       return this.resolveError(
         refPath,
-        new Error("Unknown parsing error", { cause: error }),
+        new ProcessorError(ProcessorErrorCode.UNKNOWN_PARSING_ERROR, {
+          data: { error: error instanceof Error ? error.message : String(error) },
+        }),
         value,
       );
     }
@@ -868,7 +870,7 @@ export class TokenResolver {
     subgraph: DependencyGraph<RefPath>;
   } {
     if (!this.prefixResolver) {
-      throw new Error("TokenResolver.getTokenDependencyGraph() can only be called after build()");
+      throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
     }
 
     const graph = this.prefixResolver.getGraph();
@@ -984,7 +986,7 @@ export class TokenResolver {
 
   private ensureInitialized(): void {
     if (!this.prefixResolver || !this.tokens) {
-      throw new Error("TokenResolver methods can only be called after build()");
+      throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
     }
   }
 
@@ -1010,7 +1012,7 @@ export class TokenResolver {
 
   private rebuildResolver(updatedTokens: TokenDataMap, callbacks: ProcessorCallbacks): void {
     if (!this.prefixResolver) {
-      throw new Error("Cannot rebuild resolver: prefixResolver is not initialized");
+      throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
     }
     const newResolver = this.prefixResolver.clone({
       tokens: updatedTokens,
@@ -1060,7 +1062,7 @@ export class TokenResolver {
     }
 
     if (!this.prefixResolver) {
-      throw new Error("Cannot update token: prefixResolver is not initialized");
+      throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
     }
     const currentGraph = this.prefixResolver.getGraph();
     const { tokens: affectedTokens } = getTokenDependencyGraph(prevPath, currentGraph);
@@ -1108,7 +1110,7 @@ export class TokenResolver {
     this.rebuildResolver(updatedTokens, callbacks);
 
     if (!this.prefixResolver) {
-      throw new Error("Cannot update token: prefixResolver is not initialized after rebuild");
+      throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
     }
     const { tokens: dependentTokens, subgraph } = getTokenDependencyGraph(
       finalPath,
@@ -1156,7 +1158,7 @@ export class TokenResolver {
     this.rebuildResolver(updatedTokens, callbacks);
 
     if (!this.prefixResolver) {
-      throw new Error("Cannot create token: prefixResolver is not initialized after rebuild");
+      throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
     }
     const { tokens: dependentTokens, subgraph } = getTokenDependencyGraph(
       normalizedTokenPath,
@@ -1186,7 +1188,7 @@ export class TokenResolver {
     }
 
     if (!this.prefixResolver) {
-      throw new Error("Cannot delete token: prefixResolver is not initialized");
+      throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
     }
     const currentGraph = this.prefixResolver.getGraph();
     const { tokens: affectedTokens, subgraph } = getTokenDependencyGraph(

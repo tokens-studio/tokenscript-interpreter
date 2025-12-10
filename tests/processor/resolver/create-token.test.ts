@@ -213,7 +213,7 @@ describe("TokenResolver.createToken", () => {
         tokenPath: "token",
         tokenData: { $value: "value" },
       });
-    }).toThrow("can only be called after build()");
+    }).toThrow("PROC_RESOLVER_NOT_INITIALIZED");
   });
 
   it("should persist created token for subsequent operations", () => {
