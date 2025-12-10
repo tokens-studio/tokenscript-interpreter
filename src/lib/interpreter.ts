@@ -1,6 +1,33 @@
 // TokenScript interpreter with configuration (no processors)
 // Use this if you want just the interpreter without tokenset processing utilities
 
+// AST
+import type { ASTNode } from "@interpreter/ast";
+import {
+  BinOpNode,
+  FunctionCallNode,
+  ImplicitListNode,
+  ListNode,
+  NoOpNode,
+  NumNode,
+  ReferenceNode,
+  StringNode,
+  UnaryOpNode,
+} from "@interpreter/ast";
+
+export const ASTNodes = {
+  BinOpNode,
+  FunctionCallNode,
+  ImplicitListNode,
+  ListNode,
+  NoOpNode,
+  NumNode,
+  ReferenceNode,
+  StringNode,
+  UnaryOpNode,
+};
+export type { ASTNode };
+export { collectReferenceNodes, filterAST, walkAST } from "@interpreter/ast";
 // Configuration
 export type { ConfigOptions, LanguageOptions } from "@interpreter/config";
 export { Config, DEFAULT_LANGUAGE_OPTIONS } from "@interpreter/config";
