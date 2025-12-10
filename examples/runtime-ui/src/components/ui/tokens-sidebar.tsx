@@ -25,6 +25,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
 import { TOKEN_GROUPS, type TokenGroup } from "@/state"
+import { DeleteTokenDialog } from "@/components/ui/dialogs/delete-token-dialog"
 import { ThemeDialog } from "@/components/ui/dialogs/theme-dialog"
 import { SetDialog } from "@/components/ui/dialogs/set-dialog"
 import { TokenDialog } from "@/components/ui/dialogs/token-dialog"
@@ -125,6 +126,9 @@ export function TokensSidebar() {
   const [tokenDialogOpen, setTokenDialogOpen] = useState(false)
   const [editingToken, setEditingToken] = useState<string | null>(null)
   const [editingTokenSet, setEditingTokenSet] = useState<string | null>(null)
+  const [deleteTokenDialogOpen, setDeleteTokenDialogOpen] = useState(false)
+  const [deletingToken, setDeletingToken] = useState<string | null>(null)
+  const [deletingTokenSet, setDeletingTokenSet] = useState<string | null>(null)
 
   const findTokenSet = (tokenPath: string): string => {
     for (const setName of setOrder) {
@@ -171,9 +175,19 @@ export function TokensSidebar() {
     setTokenDialogOpen(true)
   }
 
-  const handleDeleteTokenByPath = (tokenPath: string) => {
+  const startDeleteToken = (tokenPath: string) => {
     const tokenSet = findTokenSet(tokenPath)
-    deleteToken(tokenSet, tokenPath)
+    setDeletingToken(tokenPath)
+    setDeletingTokenSet(tokenSet)
+    setDeleteTokenDialogOpen(true)
+  }
+
+  const handleConfirmDeleteToken = () => {
+    if (deletingToken && deletingTokenSet) {
+      deleteToken(deletingTokenSet, deletingToken)
+    }
+    setDeletingToken(null)
+    setDeletingTokenSet(null)
   }
 
   const resetThemeEditing = () => setEditingTheme(null)
@@ -332,7 +346,7 @@ export function TokensSidebar() {
                       onTokenClick={selectToken}
                       selectedToken={selectedToken}
                       onEditToken={startEditToken}
-                      onDeleteToken={handleDeleteTokenByPath}
+                      onDeleteToken={startDeleteToken}
                     />
                   ))}
                 </SidebarGroupContent>
@@ -364,6 +378,14 @@ export function TokensSidebar() {
           editingToken={editingToken}
           editingTokenSet={editingTokenSet}
           onResetEditing={resetTokenEditing}
+        />
+      ) : null}
+      {deleteTokenDialogOpen ? (
+        <DeleteTokenDialog
+          open={deleteTokenDialogOpen}
+          onOpenChange={setDeleteTokenDialogOpen}
+          tokenPath={deletingToken}
+          onConfirm={handleConfirmDeleteToken}
         />
       ) : null}
     </Sidebar>

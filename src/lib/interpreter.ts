@@ -29,6 +29,7 @@ export const ASTNodes = {
 };
 export type { ASTNode };
 export { collectReferenceNodes, filterAST, walkAST } from "@interpreter/ast";
+export { renameReferences } from "@interpreter/utils/references";
 
 // Configuration ---------------------------------------------------------------
 
