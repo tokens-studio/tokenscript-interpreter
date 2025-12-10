@@ -3,6 +3,8 @@ import type { ASTNode, Operations, SupportedFormats, Token, TokenType } from "@s
 // Re-export ASTNode for external consumers
 export type { ASTNode } from "@src/types";
 
+// Nodes -----------------------------------------------------------------------
+
 export class BinOpNode implements ASTNode {
   nodeType = "BinOpNode";
   constructor(
@@ -262,6 +264,78 @@ export class AttributeAccessNode implements ASTNode {
   ) {}
 }
 
+// Utilities -------------------------------------------------------------------
+
+/**
+ * Walk the AST and call the visit function on each node
+ *
+ * @param node - The AST node to traverse
+ * @param onVisit - Function called for each node during traversal
+ *
+ * @example
+ * // Print all node types
+ * walk(ast, (node) => console.log(node.nodeType));
+ *
+ * @example
+ * // Collect all reference nodes
+ * const refs: ReferenceNode[] = [];
+ * walk(ast, (node) => {
+ *   if (node instanceof ReferenceNode) refs.push(node);
+ * });
+ */
+export function walkAst(node: ASTNode, onVisit: (node: ASTNode) => void): void {
+  onVisit(node);
+
+  if (node instanceof BinOpNode) {
+    walkAst(node.left, onVisit);
+    walkAst(node.right, onVisit);
+  } else if (node instanceof UnaryOpNode) {
+    walkAst(node.expr, onVisit);
+  } else if (node instanceof ListNode || node instanceof ImplicitListNode) {
+    for (const element of node.elements) {
+      walkAst(element, onVisit);
+    }
+  } else if (node instanceof FunctionCallNode) {
+    for (const arg of node.args) {
+      walkAst(arg, onVisit);
+    }
+  } else if (node instanceof ElementWithUnitNode) {
+    walkAst(node.astNode, onVisit);
+  } else if (node instanceof AssignNode) {
+    if (node.assignmentExpr) {
+      walkAst(node.assignmentExpr, onVisit);
+    }
+  } else if (node instanceof ReassignNode) {
+    walkAst(node.value, onVisit);
+  } else if (node instanceof ReturnNode) {
+    walkAst(node.expr, onVisit);
+  } else if (node instanceof WhileNode) {
+    walkAst(node.condition, onVisit);
+    walkAst(node.body, onVisit);
+  } else if (node instanceof IfConditionNode) {
+    walkAst(node.condition, onVisit);
+    walkAst(node.body, onVisit);
+  } else if (node instanceof IfNode) {
+    for (const condition of node.conditions) {
+      walkAst(condition, onVisit);
+    }
+    if (node.elseBody) {
+      walkAst(node.elseBody, onVisit);
+    }
+  } else if (node instanceof BlockNode) {
+    walkAst(node.statements, onVisit);
+  } else if (node instanceof StatementListNode) {
+    for (const statement of node.statements) {
+      walkAst(statement, onVisit);
+    }
+  } else if (node instanceof AttributeAccessNode) {
+    walkAst(node.left, onVisit);
+    if (node.right instanceof FunctionCallNode) {
+      walkAst(node.right, onVisit);
+    }
+  }
+}
+
 /**
  * Walk the AST and collect all nodes that match the predicate into a flat list
  *
@@ -284,37 +358,11 @@ export function filterAST<T extends ASTNode>(
   predicate: (node: ASTNode) => boolean,
 ): T[] {
   const results: T[] = [];
-
-  function walk(node: ASTNode): void {
+  walkAst(ast, (node) => {
     if (predicate(node)) {
       results.push(node as T);
     }
-
-    // Recursively walk child nodes
-    if (node instanceof BinOpNode) {
-      walk(node.left);
-      walk(node.right);
-    } else if (node instanceof UnaryOpNode) {
-      walk(node.expr);
-    } else if (node instanceof ListNode || node instanceof ImplicitListNode) {
-      for (const element of node.elements) {
-        walk(element);
-      }
-    } else if (node instanceof FunctionCallNode) {
-      for (const arg of node.args) {
-        walk(arg);
-      }
-    } else if (node instanceof ElementWithUnitNode) {
-      walk(node.astNode);
-    } else if (node instanceof AttributeAccessNode) {
-      walk(node.left);
-      if (node.right instanceof FunctionCallNode) {
-        walk(node.right);
-      }
-    }
-  }
-
-  walk(ast);
+  });
   return results;
 }
 
