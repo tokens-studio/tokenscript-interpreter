@@ -48,6 +48,7 @@ describe("Schema Packager", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.spyOn(console, "warn").mockImplementation(() => {});
     vi.mocked(fetchTokenScriptSchema).mockResolvedValue({
       content: mockColorSchema,
       slug: "rgb-color",
