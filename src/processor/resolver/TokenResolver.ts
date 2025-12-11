@@ -994,8 +994,8 @@ export class TokenResolver {
     }
   }
 
-  private normalizeTokenPath(tokenPath: string): string {
-    return tokenPath.trim() || "";
+  private normalizeTokenPath(tokenPath: string | null | undefined): string {
+    return tokenPath?.trim() || "";
   }
 
   private createOutputCallbacks(): {
