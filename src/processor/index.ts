@@ -10,6 +10,7 @@ export {
   type TokenBuilder,
 } from "./builders";
 export { DependencyError } from "./errors";
+export * as linter from "./linter";
 export {
   defaultObjectParsers,
   numberWithUnitParser,
