@@ -1014,16 +1014,18 @@ export class TokenResolver {
     return { output, callbacks };
   }
 
-  private rebuildResolver(updatedTokens: TokenDataMap, callbacks: ProcessorCallbacks): void {
+  private rebuildResolver(updatedTokens: TokenDataMap, callbacks: ProcessorCallbacks): ProcessorResult {
     if (!this.prefixResolver) {
       throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
     }
     const newResolver = this.prefixResolver.clone({
       tokens: updatedTokens,
       callbacks,
+      linter: this.linter,
     });
-    newResolver.resolve();
+    const result = newResolver.resolve();
     this.prefixResolver = newResolver;
+    return result;
   }
 
   public updateToken(params: UpdateTokenParams): UpdateTokenResult {
@@ -1111,7 +1113,7 @@ export class TokenResolver {
     this.tokens = updatedTokens;
 
     const { output, callbacks } = this.createOutputCallbacks();
-    this.rebuildResolver(updatedTokens, callbacks);
+    const resolverResult = this.rebuildResolver(updatedTokens, callbacks);
 
     if (!this.prefixResolver) {
       throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
@@ -1128,6 +1130,7 @@ export class TokenResolver {
       affectedTokens: dependentTokens,
       subgraph,
       updated: true,
+      lintIssues: resolverResult.lintIssues,
     };
 
     // Add rename-specific information
@@ -1159,7 +1162,7 @@ export class TokenResolver {
     this.tokens = updatedTokens;
 
     const { output, callbacks } = this.createOutputCallbacks();
-    this.rebuildResolver(updatedTokens, callbacks);
+    const resolverResult = this.rebuildResolver(updatedTokens, callbacks);
 
     if (!this.prefixResolver) {
       throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
@@ -1176,6 +1179,7 @@ export class TokenResolver {
       affectedTokens: dependentTokens,
       subgraph,
       created: true,
+      lintIssues: resolverResult.lintIssues,
     };
   }
 
@@ -1208,12 +1212,13 @@ export class TokenResolver {
     this.tokens = updatedTokens;
 
     const { callbacks } = this.createOutputCallbacks();
-    this.rebuildResolver(updatedTokens, callbacks);
+    const resolverResult = this.rebuildResolver(updatedTokens, callbacks);
 
     return {
       affectedTokens,
       subgraph,
       brokenReferences,
+      lintIssues: resolverResult.lintIssues,
     };
   }
 }

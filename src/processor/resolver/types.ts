@@ -1,6 +1,7 @@
 import type { ASTNode } from "@interpreter/ast";
 import type { InterpreterResult } from "@interpreter/interpreter";
 import type { DependencyGraph } from "../utils/DependencyGraph";
+import type { LintIssue } from "../linter";
 import type { TokenData } from "../utils/tokens";
 
 // Utilities -------------------------------------------------------------------
@@ -56,6 +57,7 @@ export type TokenOperationResult = {
   resolvedValue: TokenResult;
   affectedTokens: Set<RefPath>;
   subgraph: DependencyGraph<RefPath>;
+  lintIssues?: LintIssue[];
 };
 
 export type CreateTokenResult = TokenOperationResult & {
@@ -72,4 +74,5 @@ export type DeleteTokenResult = {
   affectedTokens: Set<RefPath>;
   subgraph: DependencyGraph<RefPath>;
   brokenReferences: Set<RefPath>;
+  lintIssues?: LintIssue[];
 };
