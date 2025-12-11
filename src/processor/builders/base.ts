@@ -47,30 +47,46 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
     linter,
   } = options ?? {};
 
-  const resolver = new TokenResolver();
   const errors: Map<string, Error> = new Map();
 
   // Always create a MapBuilder for the tokens map output
   const tokensMapBuilder = builder instanceof MapBuilder ? builder : new MapBuilder(output);
 
-  const callbacks = {
-    onResolve: (tokenName: string, value: InterpreterResult) => {
-      builder.onResolve(tokenName, value);
+  // Convert tokens to TokenData format if needed
+  const tokenDataMap = new Map<string, TokenData>();
+  for (const [key, value] of tokens) {
+    if (typeof value === "string") {
+      tokenDataMap.set(key, { $value: value });
+    } else {
+      tokenDataMap.set(key, value);
+    }
+  }
 
-      // If using a non-Map builder, also populate the map for the tokens property
-      if (!(builder instanceof MapBuilder)) tokensMapBuilder.onResolve(tokenName, value);
-    },
-    onError: (tokenName: string, error: Error, originalValue: string) => {
-      builder.onError(tokenName, error, originalValue);
+  // Use build() to properly initialize the resolver for CRUD operations.
+  // build() stores the PrefixResolver in the TokenResolver instance, enabling
+  // updateToken, createToken, and deleteToken to work on the returned resolver.
+  const result = new TokenResolver().build(tokenDataMap, config, objectParsers, linter);
+
+  // Process all tokens - both successful and failed
+  for (const [tokenName, value] of result.tokens) {
+    const error = result.errors.get(tokenName);
+    
+    if (error) {
+      // Token has an error - get original value as string
+      const originalValue = tokens.get(tokenName);
+      const originalValueStr = typeof originalValue === "string" 
+        ? originalValue 
+        : originalValue?.$value?.toString() || "";
+      builder.onError(tokenName, error, originalValueStr);
       errors.set(tokenName, error);
-
-      // If using a non-Map builder, also populate the map for the tokens property
       if (!(builder instanceof MapBuilder))
-        tokensMapBuilder.onError(tokenName, error, originalValue);
-    },
-  };
-
-  const result = resolver.processTokens(tokens, callbacks, config, objectParsers, linter);
+        tokensMapBuilder.onError(tokenName, error, originalValueStr);
+    } else {
+      // Token resolved successfully
+      builder.onResolve(tokenName, value);
+      if (!(builder instanceof MapBuilder)) tokensMapBuilder.onResolve(tokenName, value);
+    }
+  }
 
   let tokensMap = tokensMapBuilder.getResult();
   const builderOutput = builder.getResult();
@@ -92,6 +108,6 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
     output: builderOutput as T,
     errors,
     lint,
-    resolver,
+    resolver: result.resolver,
   };
 }

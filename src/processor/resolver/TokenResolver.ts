@@ -939,6 +939,7 @@ export class TokenResolver {
     tokens: TokenDataMap,
     config?: Config,
     objectParsers?: ObjectParser[],
+    linter?: LintRunner,
   ): ProcessorOutput {
     const output: ResolvedValueMap = new Map();
     const errors: TokenErrorMap = new Map();
@@ -960,6 +961,7 @@ export class TokenResolver {
       callbacks,
       config,
       objectParsers,
+      linter,
     });
     this.tokens = tokens;
     this.config = config;
