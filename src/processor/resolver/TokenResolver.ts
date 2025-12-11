@@ -833,6 +833,7 @@ export class TokenResolver {
   private tokens?: TokenDataMap;
   private config?: Config;
   private objectParsers?: ObjectParser[];
+  private linter?: LintRunner;
 
   public processTokens(
     tokens: TokenInputMap,
@@ -966,6 +967,7 @@ export class TokenResolver {
     this.tokens = tokens;
     this.config = config;
     this.objectParsers = objectParsers;
+    this.linter = linter;
 
     const result = this.prefixResolver.resolve();
     subFieldPaths = result.subFieldPaths;
