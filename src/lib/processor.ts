@@ -10,6 +10,7 @@ export {
   type FlattenCallback,
   flattenChildrenMap,
   flattenChildrenObject,
+  linter,
   type ProcessorOutput,
   type ProcessorResult,
   type TokenBuilder,
