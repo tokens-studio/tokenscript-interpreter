@@ -1,4 +1,5 @@
 import type { InterpreterResult } from "@interpreter/interpreter";
+import { ensureArray } from "@interpreter/utils/type";
 import type { CreateIssueFn, LintContext, LintIssue } from "../types";
 import { LintSeverity } from "../types";
 import { BaseLintRule } from "./base";
@@ -7,7 +8,7 @@ export type TokenTypeValidator = (
   value: InterpreterResult,
   context: LintContext,
   createIssue: CreateIssueFn,
-) => LintIssue[];
+) => LintIssue | LintIssue[] | null | undefined;
 
 export class TypeBasedRule extends BaseLintRule {
   id = "type-validation";
@@ -33,6 +34,7 @@ export class TypeBasedRule extends BaseLintRule {
     const validator = this.validators.get(tokenType) ?? this.defaultValidator;
     if (!validator) return [];
 
-    return validator(value, context, this.createIssue.bind(this));
+    const result = validator(value, context, this.createIssue.bind(this));
+    return ensureArray(result);
   }
 }
