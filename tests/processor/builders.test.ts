@@ -8,9 +8,9 @@ describe("Token Builders", () => {
   describe("buildTokens integration", () => {
     it("should return both tokens Map and builder output when using ObjectBuilder", () => {
       const tokens = new Map([
-        ["color.primary", "#FF0000"],
-        ["color.secondary", "#00FF00"],
-        ["spacing.base", "8px"],
+        ["color.primary", { $value: "#FF0000" }],
+        ["color.secondary", { $value: "#00FF00" }],
+        ["spacing.base", { $value: "8px" }],
       ]);
 
       const result = buildTokens(tokens, {
@@ -34,9 +34,9 @@ describe("Token Builders", () => {
 
     it("should return both tokens Map and builder output when using NestedObjectBuilder", () => {
       const tokens = new Map([
-        ["color.primary", "#FF0000"],
-        ["color.secondary", "#00FF00"],
-        ["spacing.base", "8px"],
+        ["color.primary", { $value: "#FF0000" }],
+        ["color.secondary", { $value: "#00FF00" }],
+        ["spacing.base", { $value: "8px" }],
       ]);
 
       const result = buildTokens(tokens, {
@@ -64,8 +64,8 @@ describe("Token Builders", () => {
 
     it("should return the same Map for both tokens and output when using MapBuilder", () => {
       const tokens = new Map([
-        ["color.primary", "#FF0000"],
-        ["color.secondary", "#00FF00"],
+        ["color.primary", { $value: "#FF0000" }],
+        ["color.secondary", { $value: "#00FF00" }],
       ]);
 
       const result = buildTokens(tokens, {

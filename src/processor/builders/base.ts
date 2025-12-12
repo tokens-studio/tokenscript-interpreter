@@ -14,6 +14,8 @@ import type { OutputFormat, TokenBuilder } from "./types";
 
 export { serializeInterpreterResult, stringifyInterpreterResult };
 
+export type TokenDataMap = Map<string, TokenData>;
+
 export function toJsonObject(value: unknown): unknown {
   if (value instanceof Map) return Object.fromEntries(value);
   if (isTokenscriptSymbol(value)) return value.toJs({ stringify: true });
@@ -32,8 +34,19 @@ export interface BuildTokensOptions<T> {
   linter?: LintRunner;
 }
 
+/**
+ * Builds tokens from a normalized TokenDataMap.
+ *
+ * @param tokens - Map of token names to TokenData. Must be pre-normalized to TokenData format.
+ * @param options - Build options including builder, config, output format, etc.
+ * @returns ProcessorOutput with resolved tokens, output, and optional lint results.
+ *
+ * @remarks
+ * Consumers must normalize input to Map<string, TokenData> before calling this function.
+ * Use normalization functions in process.ts to convert string values or Records.
+ */
 export function buildTokens<T = Map<string, InterpreterResult>>(
-  tokens: Map<string, string | TokenData>,
+  tokens: TokenDataMap,
   options?: BuildTokensOptions<T>,
 ): ProcessorOutput & {
   output: T;
@@ -52,20 +65,10 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
   // Always create a MapBuilder for the tokens map output
   const tokensMapBuilder = builder instanceof MapBuilder ? builder : new MapBuilder(output);
 
-  // Convert tokens to TokenData format if needed
-  const tokenDataMap = new Map<string, TokenData>();
-  for (const [key, value] of tokens) {
-    if (typeof value === "string") {
-      tokenDataMap.set(key, { $value: value });
-    } else {
-      tokenDataMap.set(key, value);
-    }
-  }
-
   // Use build() to properly initialize the resolver for CRUD operations.
   // build() stores the PrefixResolver in the TokenResolver instance, enabling
   // updateToken, createToken, and deleteToken to work on the returned resolver.
-  const result = new TokenResolver().build(tokenDataMap, config, objectParsers, linter);
+  const result = new TokenResolver().build(tokens, config, objectParsers, linter);
 
   // Process all tokens - both successful and failed
   for (const [tokenName, value] of result.tokens) {
