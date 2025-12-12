@@ -95,12 +95,6 @@ export const isNonEmptyArray = <T>(v: unknown): v is [T, ...T[]] => {
   return isArray(v) && v.length > 0;
 };
 
-/**
- * Ensures the input is always an array.
- * - If input is null or undefined, returns empty array
- * - If input is already an array, returns it as-is
- * - Otherwise, wraps the input in an array
- */
 export const ensureArray = <T>(v: T | T[] | null | undefined): T[] => {
   if (isNone(v)) return [];
   if (isArray<T>(v)) return v;

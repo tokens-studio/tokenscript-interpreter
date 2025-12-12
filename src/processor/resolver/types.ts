@@ -1,7 +1,7 @@
 import type { ASTNode } from "@interpreter/ast";
 import type { InterpreterResult } from "@interpreter/interpreter";
-import type { DependencyGraph } from "../utils/DependencyGraph";
 import type { LintIssue } from "../linter";
+import type { DependencyGraph } from "../utils/DependencyGraph";
 import type { TokenData } from "../utils/tokens";
 
 // Utilities -------------------------------------------------------------------

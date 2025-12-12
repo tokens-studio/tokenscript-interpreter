@@ -34,9 +34,7 @@ describe("processTokens resolver flow", () => {
   });
 
   it("should use resolver from processTokens output directly for createToken", () => {
-    const tokens = new Map<string, TokenData>([
-      ["color.primary", { $value: "#FF0000", $type: "color" }],
-    ]);
+    const tokens = new Map<string, TokenData>([["color.primary", { $value: "#FF0000", $type: "color" }]]);
 
     // Step 1: processTokens
     const result = processTokens(tokens);

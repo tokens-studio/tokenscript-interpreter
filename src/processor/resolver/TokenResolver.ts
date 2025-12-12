@@ -1014,7 +1014,10 @@ export class TokenResolver {
     return { output, callbacks };
   }
 
-  private rebuildResolver(updatedTokens: TokenDataMap, callbacks: ProcessorCallbacks): ProcessorResult {
+  private rebuildResolver(
+    updatedTokens: TokenDataMap,
+    callbacks: ProcessorCallbacks,
+  ): ProcessorResult {
     if (!this.prefixResolver) {
       throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
     }

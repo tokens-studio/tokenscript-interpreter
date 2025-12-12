@@ -226,10 +226,7 @@ describe("TypeBasedRule", () => {
 
     it("should handle array of issues return", () => {
       const multiIssueValidator: TokenTypeValidator = (_value, context, createIssue) => {
-        return [
-          createIssue(context, "ISSUE_1", "First issue"),
-          createIssue(context, "ISSUE_2", "Second issue"),
-        ];
+        return [createIssue(context, "ISSUE_1", "First issue"), createIssue(context, "ISSUE_2", "Second issue")];
       };
 
       const rule = new TypeBasedRule().forType("test", multiIssueValidator);

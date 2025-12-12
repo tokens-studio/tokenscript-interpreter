@@ -1,5 +1,5 @@
-import { processTokens } from "@src/processor/process";
 import type { LintIssue, LintRunner } from "@src/processor/linter";
+import { processTokens } from "@src/processor/process";
 import type { TokenData } from "@src/processor/utils/tokens";
 import { describe, expect, it } from "vitest";
 
@@ -92,9 +92,7 @@ describe("processTokens with linter", () => {
   it("should preserve linter when using createToken CRUD operation", () => {
     const { linter, capturedIssues } = createTestLinter();
 
-    const tokens = new Map<string, TokenData>([
-      ["color.primary", { $value: "#FF0000", $type: "color" }],
-    ]);
+    const tokens = new Map<string, TokenData>([["color.primary", { $value: "#FF0000", $type: "color" }]]);
 
     const result = processTokens(tokens, { linter });
     const { resolver } = result;
@@ -119,9 +117,7 @@ describe("processTokens with linter", () => {
   it("should preserve linter across multiple CRUD operations", () => {
     const { linter, capturedIssues } = createTestLinter();
 
-    const tokens = new Map<string, TokenData>([
-      ["base", { $value: "10", $type: "dimension" }],
-    ]);
+    const tokens = new Map<string, TokenData>([["base", { $value: "10", $type: "dimension" }]]);
 
     const result = processTokens(tokens, { linter });
     const { resolver } = result;
@@ -184,9 +180,7 @@ describe("processTokens with linter", () => {
   });
 
   it("should work without linter (undefined linter)", () => {
-    const tokens = new Map<string, TokenData>([
-      ["color.primary", { $value: "#FF0000", $type: "color" }],
-    ]);
+    const tokens = new Map<string, TokenData>([["color.primary", { $value: "#FF0000", $type: "color" }]]);
 
     // No linter passed
     const result = processTokens(tokens);

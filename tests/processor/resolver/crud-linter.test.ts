@@ -1,8 +1,8 @@
-import { describe, expect, it } from "vitest";
-import { TokenResolver } from "@src/processor/resolver/TokenResolver";
-import { LintRunner, TypeBasedRule, LintSeverity } from "@src/processor/linter";
 import { NumberSymbol } from "@interpreter/symbols";
+import { LintRunner, TypeBasedRule } from "@src/processor/linter";
+import { TokenResolver } from "@src/processor/resolver/TokenResolver";
 import type { TokenData } from "@src/processor/utils/tokens";
+import { describe, expect, it } from "vitest";
 
 describe("TokenResolver - CRUD with Linter", () => {
   const createOpacityValidator = () => {
@@ -19,9 +19,7 @@ describe("TokenResolver - CRUD with Linter", () => {
 
   describe("createToken", () => {
     it("should return lintIssues when creating a token with validation errors", () => {
-      const linter = new LintRunner().addRule(
-        new TypeBasedRule().forType("opacity", createOpacityValidator()),
-      );
+      const linter = new LintRunner().addRule(new TypeBasedRule().forType("opacity", createOpacityValidator()));
 
       const tokens = new Map<string, TokenData>();
       const resolver = new TokenResolver();
@@ -39,9 +37,7 @@ describe("TokenResolver - CRUD with Linter", () => {
     });
 
     it("should return empty lintIssues when creating a valid token", () => {
-      const linter = new LintRunner().addRule(
-        new TypeBasedRule().forType("opacity", createOpacityValidator()),
-      );
+      const linter = new LintRunner().addRule(new TypeBasedRule().forType("opacity", createOpacityValidator()));
 
       const tokens = new Map<string, TokenData>();
       const resolver = new TokenResolver();
@@ -59,13 +55,9 @@ describe("TokenResolver - CRUD with Linter", () => {
 
   describe("updateToken", () => {
     it("should return lintIssues when updating a token with validation errors", () => {
-      const linter = new LintRunner().addRule(
-        new TypeBasedRule().forType("opacity", createOpacityValidator()),
-      );
+      const linter = new LintRunner().addRule(new TypeBasedRule().forType("opacity", createOpacityValidator()));
 
-      const tokens = new Map<string, TokenData>([
-        ["opacity.value", { $type: "opacity", $value: "0.5" }],
-      ]);
+      const tokens = new Map<string, TokenData>([["opacity.value", { $type: "opacity", $value: "0.5" }]]);
       const resolver = new TokenResolver();
       resolver.build(tokens, undefined, undefined, linter);
 
@@ -81,13 +73,9 @@ describe("TokenResolver - CRUD with Linter", () => {
     });
 
     it("should return empty lintIssues when updating to a valid token", () => {
-      const linter = new LintRunner().addRule(
-        new TypeBasedRule().forType("opacity", createOpacityValidator()),
-      );
+      const linter = new LintRunner().addRule(new TypeBasedRule().forType("opacity", createOpacityValidator()));
 
-      const tokens = new Map<string, TokenData>([
-        ["opacity.value", { $type: "opacity", $value: "1.5" }],
-      ]);
+      const tokens = new Map<string, TokenData>([["opacity.value", { $type: "opacity", $value: "1.5" }]]);
       const resolver = new TokenResolver();
       resolver.build(tokens, undefined, undefined, linter);
 
@@ -103,9 +91,7 @@ describe("TokenResolver - CRUD with Linter", () => {
 
   describe("deleteToken", () => {
     it("should return lintIssues for remaining tokens after deletion", () => {
-      const linter = new LintRunner().addRule(
-        new TypeBasedRule().forType("opacity", createOpacityValidator()),
-      );
+      const linter = new LintRunner().addRule(new TypeBasedRule().forType("opacity", createOpacityValidator()));
 
       const tokens = new Map<string, TokenData>([
         ["opacity.value", { $type: "opacity", $value: "0.5" }],
@@ -125,9 +111,7 @@ describe("TokenResolver - CRUD with Linter", () => {
     });
 
     it("should return empty lintIssues when all remaining tokens are valid", () => {
-      const linter = new LintRunner().addRule(
-        new TypeBasedRule().forType("opacity", createOpacityValidator()),
-      );
+      const linter = new LintRunner().addRule(new TypeBasedRule().forType("opacity", createOpacityValidator()));
 
       const tokens = new Map<string, TokenData>([
         ["opacity.value", { $type: "opacity", $value: "0.5" }],
