@@ -8,3 +8,4 @@
 export * from "./interpreter";
 export * from "./processor";
 export * from "./schema";
+export * from "./errors";
