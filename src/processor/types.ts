@@ -2,6 +2,7 @@ import type { InterpreterResult } from "../interpreter/interpreter";
 import type { BuildTokensOptions } from "./builders/base";
 import type { TokenBuilder } from "./builders/types";
 import type { LintResult } from "./linter";
+import type { ObjectParser } from "./object-parsers";
 import type { ProcessorOutput } from "./resolver/TokenResolver";
 
 export type ProcessOptions = BuildTokensOptions<any>;

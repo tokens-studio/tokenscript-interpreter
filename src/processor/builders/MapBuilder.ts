@@ -3,7 +3,7 @@ import type { TokenBuilder } from "./types";
 
 export class MapBuilder implements TokenBuilder<Map<string, string | InterpreterResult>> {
   readonly name = "map";
-  private result: Map<string, string | InterpreterResult> = new Map();
+  protected result: Map<string, string | InterpreterResult> = new Map();
   private successfullyResolved: Map<string, InterpreterResult> = new Map();
 
   onResolve(tokenName: string, value: InterpreterResult): void {

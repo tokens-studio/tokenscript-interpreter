@@ -63,7 +63,7 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
   const errors: Map<string, Error> = new Map();
 
   // Always create a MapBuilder for the tokens map output
-  const tokensMapBuilder = builder instanceof MapBuilder ? builder : new MapBuilder();
+  const tokensMapBuilder = builder.constructor === MapBuilder ? builder : new MapBuilder();
 
   // Use build() to properly initialize the resolver for CRUD operations.
   // build() stores the PrefixResolver in the TokenResolver instance, enabling
@@ -82,13 +82,13 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
       builder.onError(tokenName, error, originalValueStr);
       errors.set(tokenName, error);
 
-      if (!(builder instanceof MapBuilder))
+      if (builder.constructor !== MapBuilder)
         tokensMapBuilder.onError(tokenName, error, originalValueStr);
     } else {
       // Token resolved successfully
       builder.onResolve(tokenName, value);
 
-      if (!(builder instanceof MapBuilder)) tokensMapBuilder.onResolve(tokenName, value);
+      if (builder.constructor !== MapBuilder) tokensMapBuilder.onResolve(tokenName, value);
     }
   }
 

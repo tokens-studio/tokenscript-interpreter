@@ -3,8 +3,6 @@ import { stringifyInterpreterResult } from "./base";
 import { MapBuilder } from "./MapBuilder";
 
 export class StringMapBuilder extends MapBuilder {
-  readonly name = "string-map";
-
   onResolve(tokenName: string, value: InterpreterResult): void {
     super.onResolve(tokenName, value);
     this.result.set(tokenName, stringifyInterpreterResult(value));
