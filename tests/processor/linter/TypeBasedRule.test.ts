@@ -5,42 +5,36 @@ import { describe, expect, it } from "vitest";
 
 const colorValidator: TokenTypeValidator = (value, context, createIssue) => {
   if (!(value instanceof StringSymbol)) {
-    return [createIssue(context, "INVALID_COLOR", "Expected string for color")];
+    return createIssue(context, "INVALID_COLOR", "Expected string for color");
   }
   const strValue = value.value;
   if (!strValue.startsWith("#")) {
-    return [
-      createIssue(context, "INVALID_COLOR_FORMAT", `Color must start with #: ${strValue}`, {
-        value: strValue,
-      }),
-    ];
+    return createIssue(context, "INVALID_COLOR_FORMAT", `Color must start with #: ${strValue}`, {
+      value: strValue,
+    });
   }
-  return [];
+  return null;
 };
 
 const opacityValidator: TokenTypeValidator = (value, context, createIssue) => {
   if (!(value instanceof NumberSymbol)) {
-    return [createIssue(context, "INVALID_OPACITY_TYPE", "Expected number for opacity")];
+    return createIssue(context, "INVALID_OPACITY_TYPE", "Expected number for opacity");
   }
   const numValue = value.value;
   if (numValue < 0 || numValue > 1) {
-    return [
-      createIssue(context, "INVALID_OPACITY_RANGE", `Opacity must be 0-1: ${numValue}`, {
-        value: numValue,
-        min: 0,
-        max: 1,
-      }),
-    ];
+    return createIssue(context, "INVALID_OPACITY_RANGE", `Opacity must be 0-1: ${numValue}`, {
+      value: numValue,
+      min: 0,
+      max: 1,
+    });
   }
-  return [];
+  return undefined;
 };
 
 const defaultValidator: TokenTypeValidator = (_value, context, createIssue) => {
-  return [
-    createIssue(context, "DEFAULT_VALIDATOR", `Unhandled type: ${context.tokenType}`, {
-      tokenType: context.tokenType,
-    }),
-  ];
+  return createIssue(context, "DEFAULT_VALIDATOR", `Unhandled type: ${context.tokenType}`, {
+    tokenType: context.tokenType,
+  });
 };
 
 describe("TypeBasedRule", () => {
@@ -210,13 +204,108 @@ describe("TypeBasedRule", () => {
     });
   });
 
+  describe("flexible return types", () => {
+    it("should handle single issue return", () => {
+      const singleIssueValidator: TokenTypeValidator = (_value, context, createIssue) => {
+        return createIssue(context, "SINGLE_ISSUE", "Single issue");
+      };
+
+      const rule = new TypeBasedRule().forType("test", singleIssueValidator);
+      const runner = new LintRunner().addRule(rule);
+
+      const issues = runner.lintResult({
+        tokenName: "test.token",
+        tokenType: "test",
+        result: new StringSymbol("test"),
+        allTokens: new Map(),
+      });
+
+      expect(issues).toHaveLength(1);
+      expect(issues[0].code).toBe("SINGLE_ISSUE");
+    });
+
+    it("should handle array of issues return", () => {
+      const multiIssueValidator: TokenTypeValidator = (_value, context, createIssue) => {
+        return [createIssue(context, "ISSUE_1", "First issue"), createIssue(context, "ISSUE_2", "Second issue")];
+      };
+
+      const rule = new TypeBasedRule().forType("test", multiIssueValidator);
+      const runner = new LintRunner().addRule(rule);
+
+      const issues = runner.lintResult({
+        tokenName: "test.token",
+        tokenType: "test",
+        result: new StringSymbol("test"),
+        allTokens: new Map(),
+      });
+
+      expect(issues).toHaveLength(2);
+      expect(issues[0].code).toBe("ISSUE_1");
+      expect(issues[1].code).toBe("ISSUE_2");
+    });
+
+    it("should handle null return", () => {
+      const nullValidator: TokenTypeValidator = () => {
+        return null;
+      };
+
+      const rule = new TypeBasedRule().forType("test", nullValidator);
+      const runner = new LintRunner().addRule(rule);
+
+      const issues = runner.lintResult({
+        tokenName: "test.token",
+        tokenType: "test",
+        result: new StringSymbol("test"),
+        allTokens: new Map(),
+      });
+
+      expect(issues).toHaveLength(0);
+    });
+
+    it("should handle undefined return", () => {
+      const undefinedValidator: TokenTypeValidator = () => {
+        return undefined;
+      };
+
+      const rule = new TypeBasedRule().forType("test", undefinedValidator);
+      const runner = new LintRunner().addRule(rule);
+
+      const issues = runner.lintResult({
+        tokenName: "test.token",
+        tokenType: "test",
+        result: new StringSymbol("test"),
+        allTokens: new Map(),
+      });
+
+      expect(issues).toHaveLength(0);
+    });
+
+    it("should handle empty array return", () => {
+      const emptyArrayValidator: TokenTypeValidator = () => {
+        return [];
+      };
+
+      const rule = new TypeBasedRule().forType("test", emptyArrayValidator);
+      const runner = new LintRunner().addRule(rule);
+
+      const issues = runner.lintResult({
+        tokenName: "test.token",
+        tokenType: "test",
+        result: new StringSymbol("test"),
+        allTokens: new Map(),
+      });
+
+      expect(issues).toHaveLength(0);
+    });
+  });
+
   describe("context access", () => {
     it("should provide access to all tokens in context", () => {
       let capturedContext: LintContext | undefined;
 
       const captureValidator: TokenTypeValidator = (_value, context, _createIssue) => {
         capturedContext = context;
-        return [];
+        return null;
       };
 
       const rule = new TypeBasedRule().forType("test", captureValidator);
@@ -245,7 +334,7 @@ describe("TypeBasedRule", () => {
 
       const captureValidator: TokenTypeValidator = (_value, context, _createIssue) => {
         capturedContext = context;
-        return [];
+        return null;
       };
 
       const rule = new TypeBasedRule().forType("test", captureValidator);

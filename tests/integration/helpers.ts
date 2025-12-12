@@ -1,6 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import type { ProcessorOutput } from "@src/processor";
+import { StringMapBuilder } from "@src/processor";
 import { processTokensFromFiles } from "@src/processor/processFiles";
 
 export interface TokenFile {
@@ -82,6 +83,7 @@ export async function processTokenFile(
   const filePath = await writeTokenFile(tempDir, fileName, tokens);
   return processTokensFromFiles({
     path: filePath,
+    builder: new StringMapBuilder(),
     ...options,
   });
 }

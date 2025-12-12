@@ -15,7 +15,6 @@ export async function processTokensFromFiles<T = any>({
   schemas,
   activeSets,
   activeTheme,
-  output,
   builder,
 }: ProcessFilesOptions<T>): Promise<ProcessResult<T>> {
   await fetchAndRegisterSchemas(schemas ?? []);
@@ -27,7 +26,6 @@ export async function processTokensFromFiles<T = any>({
   return processTokenSets<T>(normalizedFiles, {
     activeSets,
     activeTheme,
-    output,
     builder,
   });
 }

@@ -24,7 +24,7 @@ describe("Structured Tokens - TokenScript Type Wrapping", () => {
       },
     };
 
-    const result = processTokens(tokens, { output: "symbols" });
+    const result = processTokens(tokens);
     const shadowCard = result.tokens.get("shadow.card");
 
     expect(shadowCard).toBeInstanceOf(TokenSymbol);
@@ -51,7 +51,7 @@ describe("Structured Tokens - TokenScript Type Wrapping", () => {
       },
     };
 
-    const result = processTokens(tokens, { output: "symbols" });
+    const result = processTokens(tokens);
     const config = result.tokens.get("config");
 
     expect(config).toBeInstanceOf(TokenSymbol);
@@ -75,7 +75,7 @@ describe("Structured Tokens - TokenScript Type Wrapping", () => {
       },
     };
 
-    const result = processTokens(tokens, { output: "symbols" });
+    const result = processTokens(tokens);
     const data = result.tokens.get("data");
 
     expect(data).toBeInstanceOf(TokenSymbol);
@@ -101,7 +101,7 @@ describe("Structured Tokens - TokenScript Type Wrapping", () => {
       },
     };
 
-    const result = processTokens(tokens, { output: "symbols" });
+    const result = processTokens(tokens);
     const shadows = result.tokens.get("shadows");
 
     expect(shadows).toBeInstanceOf(TokenSymbol);
@@ -139,7 +139,7 @@ describe("Structured Tokens - TokenScript Type Wrapping", () => {
       },
     };
 
-    const result = processTokens(tokens, { output: "symbols" });
+    const result = processTokens(tokens);
     const theme = result.tokens.get("theme");
 
     // Access nested object

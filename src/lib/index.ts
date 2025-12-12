@@ -5,6 +5,7 @@
 // - @tokens-studio/tokenscript-interpreter/schema (schema fetching utilities)
 // - @tokens-studio/tokenscript-interpreter/types (TypeScript types only)
 
+export * from "./errors";
 export * from "./interpreter";
 export * from "./processor";
 export * from "./schema";

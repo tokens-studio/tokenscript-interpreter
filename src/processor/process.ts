@@ -8,23 +8,22 @@ import type { TokenData } from "./utils/tokens";
 
 /**
  * Process flat token collection.
+ *
+ * @param tokens - Token input in various formats (Map or Record)
+ * @param options - Processing options
+ * @returns Processed tokens with resolved values
+ *
+ * @note Performance optimization: If you already have a `Map<string, TokenData>`,
+ * you can skip this function and call `buildTokens` directly to avoid unnecessary flattening.
  */
 export function processTokens<T = Map<string, string | InterpreterResult>>(
   tokens: Map<string, TokenData> | Map<string, string> | Record<string, any>,
-  options: ProcessOptions = {},
+  options?: ProcessOptions,
 ): ProcessResult<T> {
-  const { config, output = "string", builder, objectParsers, linter } = options;
+  const tokenDataMap =
+    tokens instanceof Map ? flattenToTokens(tokens, []) : flattenToTokens({ tokens }, ["tokens"]);
 
-  const tokenMap: Map<string, string | TokenData> =
-    tokens instanceof Map ? tokens : flattenToTokens({ tokens }, ["tokens"]);
-
-  return buildTokens(tokenMap, {
-    builder,
-    config,
-    objectParsers,
-    output,
-    linter,
-  }) as ProcessResult<T>;
+  return buildTokens(tokenDataMap, options) as ProcessResult<T>;
 }
 
 /**
@@ -32,27 +31,13 @@ export function processTokens<T = Map<string, string | InterpreterResult>>(
  */
 export function processTokenSets<T = Map<string, string | InterpreterResult>>(
   normalizedFiles: Record<string, unknown>,
-  options: ProcessSetsOptions = {},
+  options?: ProcessSetsOptions,
 ): ProcessResult<T> {
-  const {
-    activeSets,
-    activeTheme,
-    config,
-    output = "string",
-    builder,
-    objectParsers,
-    linter,
-  } = options;
+  const { activeSets, activeTheme } = options ?? {};
 
   const setNames = determineSets(normalizedFiles, activeSets, activeTheme);
 
   const tokens = flattenToTokens(normalizedFiles, setNames);
 
-  return buildTokens(tokens, {
-    builder,
-    config,
-    objectParsers,
-    output,
-    linter,
-  }) as ProcessResult<T>;
+  return buildTokens(tokens, options) as ProcessResult<T>;
 }

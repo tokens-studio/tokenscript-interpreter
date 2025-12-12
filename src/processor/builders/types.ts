@@ -8,5 +8,3 @@ export interface TokenBuilder<T = unknown> {
 }
 
 export type BuilderFormat = "nested" | "flat" | "map";
-
-export type OutputFormat = "string" | "symbols";

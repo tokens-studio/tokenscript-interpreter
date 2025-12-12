@@ -175,11 +175,10 @@ function JsonOutput({ value, visualMode = false }: { value: any; visualMode?: bo
   const { theme } = useTheme();
   const currentTheme = getTheme(theme);
 
-  // Convert ProcessorOutput with Maps to plain object for display
+  // Convert Maps to plain object for display
   let displayValue = value;
-  if (value && typeof value === "object" && "tokens" in value && value.tokens instanceof Map) {
-    // This is a ProcessorOutput - convert tokens Map to plain object
-    displayValue = Object.fromEntries(value.tokens);
+  if (value instanceof Map) {
+    displayValue = Object.fromEntries(value);
   }
 
   const jsonString =

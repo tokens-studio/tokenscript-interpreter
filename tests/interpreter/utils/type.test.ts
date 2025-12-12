@@ -1,6 +1,7 @@
 import {
   assertIsSome,
   assertIsType,
+  ensureArray,
   getKeyAlt,
   hasProperty,
   isArray,
@@ -426,6 +427,45 @@ describe("Helper Utilities", () => {
       expect(isEqual([], {})).toBe(false);
       expect(isEqual("1", 1)).toBe(false);
       expect(isEqual(true, 1)).toBe(false);
+    });
+  });
+
+  describe("ensureArray", () => {
+    test("returns empty array for null or undefined", () => {
+      expect(ensureArray(null)).toEqual([]);
+      expect(ensureArray(undefined)).toEqual([]);
+    });
+
+    test("returns array as-is when already an array", () => {
+      const arr = [1, 2, 3];
+      expect(ensureArray(arr)).toBe(arr);
+      expect(ensureArray([])).toEqual([]);
+      expect(ensureArray(["a", "b"])).toEqual(["a", "b"]);
+    });
+
+    test("wraps non-array values in an array", () => {
+      expect(ensureArray("hello")).toEqual(["hello"]);
+      expect(ensureArray(42)).toEqual([42]);
+      expect(ensureArray(true)).toEqual([true]);
+      expect(ensureArray(false)).toEqual([false]);
+      expect(ensureArray({ key: "value" })).toEqual([{ key: "value" }]);
+    });
+
+    test("handles edge cases", () => {
+      expect(ensureArray(0)).toEqual([0]);
+      expect(ensureArray("")).toEqual([""]);
+      expect(ensureArray(NaN)).toEqual([NaN]);
+    });
+
+    test("preserves types correctly", () => {
+      const stringArray: string[] = ensureArray("test");
+      expect(stringArray).toEqual(["test"]);
+
+      const numberArray: number[] = ensureArray(123);
+      expect(numberArray).toEqual([123]);
+
+      const mixedArray: (string | number)[] = ensureArray<string | number>("test");
+      expect(mixedArray).toEqual(["test"]);
     });
   });
 });

@@ -833,6 +833,7 @@ export class TokenResolver {
   private tokens?: TokenDataMap;
   private config?: Config;
   private objectParsers?: ObjectParser[];
+  private linter?: LintRunner;
 
   public processTokens(
     tokens: TokenInputMap,
@@ -939,6 +940,7 @@ export class TokenResolver {
     tokens: TokenDataMap,
     config?: Config,
     objectParsers?: ObjectParser[],
+    linter?: LintRunner,
   ): ProcessorOutput {
     const output: ResolvedValueMap = new Map();
     const errors: TokenErrorMap = new Map();
@@ -960,10 +962,12 @@ export class TokenResolver {
       callbacks,
       config,
       objectParsers,
+      linter,
     });
     this.tokens = tokens;
     this.config = config;
     this.objectParsers = objectParsers;
+    this.linter = linter;
 
     const result = this.prefixResolver.resolve();
     subFieldPaths = result.subFieldPaths;
@@ -990,8 +994,8 @@ export class TokenResolver {
     }
   }
 
-  private normalizeTokenPath(tokenPath: string): string {
-    return tokenPath.trim() || "";
+  private normalizeTokenPath(tokenPath: string | null | undefined): string {
+    return tokenPath?.trim() || "";
   }
 
   private createOutputCallbacks(): {
@@ -1010,16 +1014,21 @@ export class TokenResolver {
     return { output, callbacks };
   }
 
-  private rebuildResolver(updatedTokens: TokenDataMap, callbacks: ProcessorCallbacks): void {
+  private rebuildResolver(
+    updatedTokens: TokenDataMap,
+    callbacks: ProcessorCallbacks,
+  ): ProcessorResult {
     if (!this.prefixResolver) {
       throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
     }
     const newResolver = this.prefixResolver.clone({
       tokens: updatedTokens,
       callbacks,
+      linter: this.linter,
     });
-    newResolver.resolve();
+    const result = newResolver.resolve();
     this.prefixResolver = newResolver;
+    return result;
   }
 
   public updateToken(params: UpdateTokenParams): UpdateTokenResult {
@@ -1107,7 +1116,7 @@ export class TokenResolver {
     this.tokens = updatedTokens;
 
     const { output, callbacks } = this.createOutputCallbacks();
-    this.rebuildResolver(updatedTokens, callbacks);
+    const resolverResult = this.rebuildResolver(updatedTokens, callbacks);
 
     if (!this.prefixResolver) {
       throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
@@ -1124,6 +1133,7 @@ export class TokenResolver {
       affectedTokens: dependentTokens,
       subgraph,
       updated: true,
+      lintIssues: resolverResult.lintIssues,
     };
 
     // Add rename-specific information
@@ -1155,7 +1165,7 @@ export class TokenResolver {
     this.tokens = updatedTokens;
 
     const { output, callbacks } = this.createOutputCallbacks();
-    this.rebuildResolver(updatedTokens, callbacks);
+    const resolverResult = this.rebuildResolver(updatedTokens, callbacks);
 
     if (!this.prefixResolver) {
       throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
@@ -1172,6 +1182,7 @@ export class TokenResolver {
       affectedTokens: dependentTokens,
       subgraph,
       created: true,
+      lintIssues: resolverResult.lintIssues,
     };
   }
 
@@ -1204,12 +1215,13 @@ export class TokenResolver {
     this.tokens = updatedTokens;
 
     const { callbacks } = this.createOutputCallbacks();
-    this.rebuildResolver(updatedTokens, callbacks);
+    const resolverResult = this.rebuildResolver(updatedTokens, callbacks);
 
     return {
       affectedTokens,
       subgraph,
       brokenReferences,
+      lintIssues: resolverResult.lintIssues,
     };
   }
 }

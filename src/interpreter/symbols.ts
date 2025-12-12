@@ -35,6 +35,14 @@ export function isTokenscriptSymbol(value: unknown): value is ISymbolType {
   return isObjectWithKey(value, "getTypeName");
 }
 
+export function isList(value: TokenSymbol): boolean {
+  return isArray(value.value);
+}
+
+export function isDictionary(value: TokenSymbol): boolean {
+  return isMap(value.value);
+}
+
 export const typeEquals = (typeA: string | null, typeB: string | null) =>
   typeA?.toLowerCase() === typeB?.toLowerCase();
 

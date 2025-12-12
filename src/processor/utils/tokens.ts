@@ -75,25 +75,31 @@ export function flattenTokensObject(
   return result;
 }
 
-/**
- * Converts a Record to a Map with TokenData values
- */
+export function normalizeToTokenData(value: unknown): TokenData {
+  if (typeof value === "string") {
+    return { $value: value };
+  }
+  if (isObject(value) && "$value" in value) {
+    const obj = value as Record<string, unknown>;
+    return {
+      $value: obj.$value,
+      ...(isString(obj.$type) && { $type: obj.$type }),
+    };
+  }
+  return { $value: value };
+}
+
 export function recordToMap(record: Record<string, unknown>): Map<string, TokenData> {
   const map = new Map<string, TokenData>();
   for (const [key, value] of Object.entries(record)) {
-    map.set(key, { $value: value });
+    map.set(key, normalizeToTokenData(value));
   }
   return map;
 }
 
-/**
- * Detects if an object has nested structure (vs flat tokens).
- */
 export function isNested(obj: Record<string, unknown>): boolean {
   return Object.keys(obj).some((key) => {
     const value = obj[key];
-    return (
-      typeof value === "object" && value !== null && !Array.isArray(value) && !key.startsWith("$")
-    );
+    return isObject(value) && !key.startsWith("$");
   });
 }

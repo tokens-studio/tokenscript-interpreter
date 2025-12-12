@@ -25,7 +25,7 @@ describe("Performance Benchmark", () => {
     }
 
     const startTime = performance.now();
-    const output = processTokens(tokens, { output: "symbols" });
+    const output = processTokens(tokens);
     const endTime = performance.now();
 
     const duration = endTime - startTime;
@@ -74,7 +74,7 @@ describe("Performance Benchmark", () => {
     };
 
     const startTime = performance.now();
-    const output = processTokens(tokens, { output: "symbols" });
+    const output = processTokens(tokens);
     const endTime = performance.now();
 
     const duration = endTime - startTime;
@@ -101,7 +101,7 @@ describe("Performance Benchmark", () => {
     }
 
     const startTime = performance.now();
-    const output = processTokens(tokens, { output: "symbols" });
+    const output = processTokens(tokens);
     const endTime = performance.now();
 
     const duration = endTime - startTime;
