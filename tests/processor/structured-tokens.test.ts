@@ -188,7 +188,7 @@ describe("Structured Tokens - End-to-End Resolution", () => {
       },
     };
 
-    const result = processTokens(tokens, { output: "symbols" });
+    const result = processTokens(tokens);
 
     const shadowCard = result.tokens.get("shadow.card");
     expect(shadowCard).toBeDefined();
@@ -218,7 +218,7 @@ describe("Structured Tokens - End-to-End Resolution", () => {
       },
     };
 
-    const result = processTokens(tokens, { output: "symbols" });
+    const result = processTokens(tokens);
 
     const shadow = result.tokens.get("shadow");
     expect(shadow).toBeDefined();
@@ -245,7 +245,7 @@ describe("Structured Tokens - End-to-End Resolution", () => {
       },
     };
 
-    const result = processTokens(tokens, { output: "symbols" });
+    const result = processTokens(tokens);
 
     const shadow = result.tokens.get("shadow");
     expect(shadow).toBeDefined();
@@ -268,7 +268,7 @@ describe("Structured Tokens - End-to-End Resolution", () => {
       },
     };
 
-    const result = processTokens(tokens, { output: "symbols" });
+    const result = processTokens(tokens);
 
     // Main tokens should be present
     expect(result.tokens.has("base")).toBe(true);
@@ -288,7 +288,7 @@ describe("Structured Tokens - End-to-End Resolution", () => {
       },
     };
 
-    const result = processTokens(tokens, { output: "symbols" });
+    const result = processTokens(tokens);
 
     // Check that the error is tracked for the parent token
     expect(result.errors.has("shadow")).toBe(true);
@@ -319,7 +319,7 @@ describe("Structured Tokens - End-to-End Resolution", () => {
       },
     };
 
-    const result = processTokens(tokens, { output: "symbols" });
+    const result = processTokens(tokens);
 
     const smallShadow = result.tokens.get("shadow.small");
     const largeShadow = result.tokens.get("shadow.large");
@@ -351,7 +351,7 @@ describe("Structured Tokens - End-to-End Resolution", () => {
       },
     };
 
-    const result = processTokens(tokens, { output: "symbols" });
+    const result = processTokens(tokens);
 
     const config = result.tokens.get("config");
     expect(config).toBeDefined();
@@ -375,7 +375,7 @@ describe("Structured Tokens - End-to-End Resolution", () => {
       "shadow-offsetInc": '{shadow}.get("offsetX") + 1',
     };
 
-    const result = processTokens(tokens, { output: "symbols" });
+    const result = processTokens(tokens);
 
     const someShadow = result.tokens.get("shadow");
     const testAccess = result.tokens.get("shadow-offsetX");
@@ -408,7 +408,7 @@ describe("Structured Tokens - End-to-End Resolution", () => {
       "spacing-small": '{spacing}.get("small")',
     };
 
-    const result = processTokens(tokens, { output: "symbols", objectParsers: [numberWithUnitParser] });
+    const result = processTokens(tokens, { objectParsers: [numberWithUnitParser] });
 
     const spacing = result.tokens.get("spacing");
     const spacingSmall = result.tokens.get("spacing-small");
@@ -440,7 +440,7 @@ describe("Structured Tokens - End-to-End Resolution", () => {
       },
     };
 
-    const result = processTokens(tokens, { output: "symbols" });
+    const result = processTokens(tokens);
 
     const shadowCard = result.tokens.get("shadow.card");
     expect(shadowCard).toBeDefined();
@@ -482,7 +482,7 @@ describe("Structured Tokens - End-to-End Resolution", () => {
       },
     };
 
-    const result = processTokens(tokens, { output: "symbols" });
+    const result = processTokens(tokens);
 
     const shadowMulti = result.tokens.get("shadow.multi");
     expect(shadowMulti).toBeDefined();
@@ -513,7 +513,7 @@ describe("Structured Tokens - End-to-End Resolution", () => {
       },
     };
 
-    const result = processTokens(tokens, { output: "symbols" });
+    const result = processTokens(tokens);
 
     const shadow = result.tokens.get("shadow");
     expect(shadow).toBeDefined();

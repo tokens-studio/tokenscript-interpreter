@@ -1,4 +1,4 @@
-import { NumberSymbol, StringSymbol } from "@interpreter/symbols";
+import { isTokenscriptSymbol, NumberSymbol, StringSymbol } from "@interpreter/symbols";
 import { buildTokens } from "@src/processor/builders/base";
 import { MapBuilder } from "@src/processor/builders/MapBuilder";
 import { FlatObjectBuilder, NestedObjectBuilder } from "@src/processor/builders/ObjectBuilder";
@@ -15,14 +15,13 @@ describe("Token Builders", () => {
 
       const result = buildTokens(tokens, {
         builder: new FlatObjectBuilder(),
-        output: "string",
       });
 
-      // Should always have a tokens Map
+      // Should always have a tokens Map with symbols
       expect(result.tokens).toBeInstanceOf(Map);
-      expect(result.tokens.get("color.primary")).toBe("#FF0000");
-      expect(result.tokens.get("color.secondary")).toBe("#00FF00");
-      expect(result.tokens.get("spacing.base")).toBe("8px");
+      expect(isTokenscriptSymbol(result.tokens.get("color.primary"))).toBe(true);
+      expect(isTokenscriptSymbol(result.tokens.get("color.secondary"))).toBe(true);
+      expect(isTokenscriptSymbol(result.tokens.get("spacing.base"))).toBe(true);
 
       // Output should be the FlatObjectBuilder result
       expect(result.output).toEqual({
@@ -41,14 +40,13 @@ describe("Token Builders", () => {
 
       const result = buildTokens(tokens, {
         builder: new NestedObjectBuilder(),
-        output: "string",
       });
 
-      // Should always have a tokens Map
+      // Should always have a tokens Map with symbols
       expect(result.tokens).toBeInstanceOf(Map);
-      expect(result.tokens.get("color.primary")).toBe("#FF0000");
-      expect(result.tokens.get("color.secondary")).toBe("#00FF00");
-      expect(result.tokens.get("spacing.base")).toBe("8px");
+      expect(isTokenscriptSymbol(result.tokens.get("color.primary"))).toBe(true);
+      expect(isTokenscriptSymbol(result.tokens.get("color.secondary"))).toBe(true);
+      expect(isTokenscriptSymbol(result.tokens.get("spacing.base"))).toBe(true);
 
       // Output should be the NestedObjectBuilder result
       expect(result.output).toEqual({
@@ -69,15 +67,14 @@ describe("Token Builders", () => {
       ]);
 
       const result = buildTokens(tokens, {
-        builder: new MapBuilder("string"),
-        output: "string",
+        builder: new MapBuilder(),
       });
 
-      // Both should be the same Map instance
+      // Both should be the same Map instance with symbols
       expect(result.tokens).toBeInstanceOf(Map);
       expect(result.output).toBeInstanceOf(Map);
       expect(result.tokens).toBe(result.output);
-      expect(result.tokens.get("color.primary")).toBe("#FF0000");
+      expect(isTokenscriptSymbol(result.tokens.get("color.primary"))).toBe(true);
     });
   });
 
@@ -148,24 +145,8 @@ describe("Token Builders", () => {
   });
 
   describe("MapBuilder", () => {
-    it('should build a map with string values when output is "string"', () => {
-      const builder = new MapBuilder("string");
-      builder.onResolve("spacing.simple.1", new StringSymbol("1px"));
-      builder.onResolve("spacing.simple.2", new StringSymbol("2px"));
-      builder.onResolve("spacing-ref", new StringSymbol("1px"));
-
-      const result = builder.getResult();
-      expect(result).toEqual(
-        new Map([
-          ["spacing.simple.1", "1px"],
-          ["spacing.simple.2", "2px"],
-          ["spacing-ref", "1px"],
-        ]),
-      );
-    });
-
-    it('should build a map with symbol values when output is "symbols"', () => {
-      const builder = new MapBuilder("symbols");
+    it("should build a map with symbol values", () => {
+      const builder = new MapBuilder();
       const symbol1 = new StringSymbol("1px");
       const symbol2 = new StringSymbol("2px");
       const symbolRef = new StringSymbol("1px");

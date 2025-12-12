@@ -1,3 +1,4 @@
+import { StringMapBuilder } from "@src/processor";
 import { processTokensFromFiles } from "@src/processor/processFiles";
 import {
   assertHasErrors,
@@ -39,7 +40,7 @@ describe("CLI Process Integration Tests", () => {
 
       const result = await processTokenFile(ctx.tempDir, "tokens.json", tokens);
 
-      expect(Object.fromEntries(result.tokens)).toEqual(
+      expect(Object.fromEntries(result.output)).toEqual(
         expect.objectContaining({
           "colors.primary": "#FF0000",
           "colors.secondary": "#00FF00",
@@ -67,12 +68,13 @@ describe("CLI Process Integration Tests", () => {
       const result = await processTokensFromFiles({
         path: ctx.tempDir,
         activeSets: ["core", "semantic"],
+        builder: new StringMapBuilder(),
       });
 
-      expect(result.tokens.get("base")).toBe("8");
-      expect(result.tokens.get("primary")).toBe("#FF0000");
-      expect(result.tokens.get("spacing")).toBe("16");
-      expect(result.tokens.get("accent")).toBe("#FF0000");
+      expect(result.output.get("base")).toBe("8");
+      expect(result.output.get("primary")).toBe("#FF0000");
+      expect(result.output.get("spacing")).toBe("16");
+      expect(result.output.get("accent")).toBe("#FF0000");
       assertNoErrors(result);
     });
 
@@ -129,20 +131,22 @@ describe("CLI Process Integration Tests", () => {
       const lightResult = await processTokensFromFiles({
         path: filePath,
         activeTheme: "Light",
+        builder: new StringMapBuilder(),
       });
 
-      expect(lightResult.tokens.get("base")).toBe("8");
-      expect(lightResult.tokens.get("bg")).toBe("#FFFFFF");
-      expect(lightResult.tokens.get("fg")).toBe("#000000");
+      expect(lightResult.output.get("base")).toBe("8");
+      expect(lightResult.output.get("bg")).toBe("#FFFFFF");
+      expect(lightResult.output.get("fg")).toBe("#000000");
 
       const darkResult = await processTokensFromFiles({
         path: filePath,
         activeTheme: "Dark",
+        builder: new StringMapBuilder(),
       });
 
-      expect(darkResult.tokens.get("base")).toBe("8");
-      expect(darkResult.tokens.get("bg")).toBe("#000000");
-      expect(darkResult.tokens.get("fg")).toBe("#FFFFFF");
+      expect(darkResult.output.get("base")).toBe("8");
+      expect(darkResult.output.get("bg")).toBe("#000000");
+      expect(darkResult.output.get("fg")).toBe("#FFFFFF");
     });
 
     it("should handle theme with array format selectedTokenSets", async () => {
@@ -160,8 +164,8 @@ describe("CLI Process Integration Tests", () => {
         activeTheme: "Default",
       });
 
-      expect(result.tokens.get("base")).toBe("16");
-      expect(result.tokens.get("spacing")).toBe("32");
+      expect(result.output.get("base")).toBe("16");
+      expect(result.output.get("spacing")).toBe("32");
       assertNoErrors(result);
     });
 
@@ -212,7 +216,7 @@ describe("CLI Process Integration Tests", () => {
 
       const result = await processTokenFile(ctx.tempDir, "tokens.json", tokens);
 
-      expect(result.tokens.get("valid")).toBe("16px");
+      expect(result.output.get("valid")).toBe("16px");
       expect(result.errors.size).toBeGreaterThanOrEqual(2);
       assertHasErrors(result, ["error1", "error2"]);
     });
@@ -295,23 +299,24 @@ describe("CLI Process Integration Tests", () => {
       const result = await processTokensFromFiles({
         path: ctx.tempDir,
         activeSets: ["core", "semantic", "component"],
+        builder: new StringMapBuilder(),
       });
 
-      expect(result.tokens.get("dimension.xs")).toBe("4");
-      expect(result.tokens.get("dimension.sm")).toBe("8");
-      expect(result.tokens.get("dimension.md")).toBe("16");
-      expect(result.tokens.get("dimension.lg")).toBe("32");
-      expect(result.tokens.get("spacing.xs")).toBe("4px");
-      expect(result.tokens.get("spacing.sm")).toBe("8px");
-      expect(result.tokens.get("spacing.md")).toBe("16px");
-      expect(result.tokens.get("colors.primary")).toBe("#3B82F6");
-      expect(result.tokens.get("button.background")).toBe("#3B82F6");
+      expect(result.output.get("dimension.xs")).toBe("4");
+      expect(result.output.get("dimension.sm")).toBe("8");
+      expect(result.output.get("dimension.md")).toBe("16");
+      expect(result.output.get("dimension.lg")).toBe("32");
+      expect(result.output.get("spacing.xs")).toBe("4px");
+      expect(result.output.get("spacing.sm")).toBe("8px");
+      expect(result.output.get("spacing.md")).toBe("16px");
+      expect(result.output.get("colors.primary")).toBe("#3B82F6");
+      expect(result.output.get("button.background")).toBe("#3B82F6");
       assertNoErrors(result);
     });
   });
 
   describe("Output Format", () => {
-    it("should return tokens as strings", async () => {
+    it("should return output as strings and tokens as symbols", async () => {
       const tokens = {
         number: createToken("42", "dimension"),
         color: createToken("#FF0000", "color"),
@@ -321,10 +326,16 @@ describe("CLI Process Integration Tests", () => {
 
       const result = await processTokenFile(ctx.tempDir, "tokens.json", tokens);
 
-      expect(typeof result.tokens.get("number")).toBe("string");
-      expect(typeof result.tokens.get("color")).toBe("string");
-      expect(typeof result.tokens.get("string")).toBe("string");
-      expect(result.tokens.get("calculated")).toBe("15");
+      // output should be strings (StringMapBuilder)
+      expect(typeof result.output.get("number")).toBe("string");
+      expect(typeof result.output.get("color")).toBe("string");
+      expect(typeof result.output.get("string")).toBe("string");
+      expect(result.output.get("calculated")).toBe("15");
+
+      // tokens should be symbols (MapBuilder)
+      expect(typeof result.tokens.get("number")).toBe("object");
+      expect(typeof result.tokens.get("color")).toBe("object");
+      expect(typeof result.tokens.get("string")).toBe("object");
     });
 
     it("should preserve original values for tokens with errors", async () => {
@@ -335,8 +346,8 @@ describe("CLI Process Integration Tests", () => {
 
       const result = await processTokenFile(ctx.tempDir, "tokens.json", tokens);
 
-      expect(result.tokens.get("valid")).toBe("16px");
-      expect(result.tokens.get("invalid")).toBe("{missing}");
+      expect(result.output.get("valid")).toBe("16px");
+      expect(result.output.get("invalid")).toBe("{missing}");
       assertHasErrors(result, ["invalid"]);
     });
   });

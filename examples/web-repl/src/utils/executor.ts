@@ -159,9 +159,9 @@ export async function executeCode(options: ExecuteCodeOptions): Promise<Executio
       };
     }
 
-    // JSON token processing - use "string" output for JSON-safe values
+    // JSON token processing
     const jsonTokens = JSON.parse(code);
-    const processorOutput = processTokens(jsonTokens, { config, output: "string" });
+    const processorOutput = processTokens(jsonTokens, { config });
     const executionTime = performance.now() - startTime;
 
     return {

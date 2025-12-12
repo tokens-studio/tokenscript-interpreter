@@ -67,7 +67,6 @@ program
       schemas: options.schema,
       activeSets: options.sets ? options.sets.split(",").map((s: string) => s.trim()) : undefined,
       activeTheme: options.theme,
-      output: "symbols",
       builder,
     });
 

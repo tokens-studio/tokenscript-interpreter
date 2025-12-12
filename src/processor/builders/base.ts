@@ -10,7 +10,7 @@ import type { ObjectParser } from "../object-parsers";
 import { type ProcessorOutput, TokenResolver } from "../resolver/TokenResolver";
 import type { TokenData } from "../utils/tokens";
 import { MapBuilder } from "./MapBuilder";
-import type { OutputFormat, TokenBuilder } from "./types";
+import type { TokenBuilder } from "./types";
 
 export { serializeInterpreterResult, stringifyInterpreterResult };
 
@@ -29,7 +29,6 @@ export function stringifyAsJson(output: unknown, indent = 2): string {
 export interface BuildTokensOptions<T> {
   builder?: TokenBuilder<T>;
   config?: Config;
-  output?: OutputFormat;
   objectParsers?: ObjectParser[];
   linter?: LintRunner;
 }
@@ -42,8 +41,7 @@ export interface BuildTokensOptions<T> {
  *
  * @param tokens - Map of token names to TokenData. Must be pre-normalized to TokenData format.
  * @param options - Build options (all optional):
- *   - output: "string" | "symbols" (default: "string")
- *   - builder: Custom token builder (default: MapBuilder with output format)
+ *   - builder: Custom token builder (default: MapBuilder)
  *   - config: Interpreter config
  *   - objectParsers: Array of object parsers
  *   - linter: Lint runner
@@ -60,13 +58,12 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
   output: T;
   lint?: LintResult;
 } {
-  const output: OutputFormat = options?.output ?? "string";
-  const { config, builder = new MapBuilder(output), objectParsers, linter } = options ?? {};
+  const { config, builder = new MapBuilder(), objectParsers, linter } = options ?? {};
 
   const errors: Map<string, Error> = new Map();
 
   // Always create a MapBuilder for the tokens map output
-  const tokensMapBuilder = builder instanceof MapBuilder ? builder : new MapBuilder(output);
+  const tokensMapBuilder = builder instanceof MapBuilder ? builder : new MapBuilder();
 
   // Use build() to properly initialize the resolver for CRUD operations.
   // build() stores the PrefixResolver in the TokenResolver instance, enabling

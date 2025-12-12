@@ -23,7 +23,6 @@ export type ProcessFilesOptions<T = any> = {
   schemas?: string[];
   activeSets?: string[];
   activeTheme?: string;
-  output?: "string" | "symbols";
   builder?: TokenBuilder<T>;
   objectParsers?: ObjectParser[];
 };

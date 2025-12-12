@@ -23,7 +23,6 @@ describe("Example JSON fixtures", () => {
   it("processes generating.json", async () => {
     const result = await processTokensFromFiles({
       path: examplePath("generating.json"),
-      output: "symbols",
     });
 
     const colorsSimple = result.tokens.get("colors.simple");
@@ -62,7 +61,6 @@ describe("Example JSON fixtures", () => {
   it("processes nested.json", async () => {
     const result = await processTokensFromFiles({
       path: examplePath("nested.json"),
-      output: "symbols",
     });
 
     assertNoErrors(result);
@@ -79,7 +77,6 @@ describe("Example JSON fixtures", () => {
   it("processes nested-list.json", async () => {
     const result = await processTokensFromFiles({
       path: examplePath("nested-list.json"),
-      output: "symbols",
     });
 
     assertNoErrors(result);

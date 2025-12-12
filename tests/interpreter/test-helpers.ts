@@ -10,7 +10,7 @@ import { processTokens } from "@src/processor/process";
  */
 export function interpret(expression: string, references: Record<string, any> = {}, config?: Config): string {
   const tokens: Record<string, any> = { __test: expression, ...references };
-  const output = processTokens(tokens, { config, output: "symbols" });
+  const output = processTokens(tokens, { config });
   const value = output.tokens.get("__test");
   return value?.toString() ?? "";
 }
@@ -19,7 +19,7 @@ export function interpret(expression: string, references: Record<string, any> = 
  * Interpret multiple tokens at once, returns processor output with symbols
  */
 export function interpretMultiple(tokens: Record<string, string>, config?: Config): any {
-  return processTokens(tokens, { config, output: "symbols" });
+  return processTokens(tokens, { config });
 }
 
 /**

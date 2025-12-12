@@ -6,7 +6,7 @@ export {
   flattenChildrenObject,
   MapBuilder,
   NestedObjectBuilder,
-  type OutputFormat,
+  StringMapBuilder,
   type TokenBuilder,
 } from "./builders";
 export { DependencyError } from "./errors";

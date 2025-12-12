@@ -288,7 +288,7 @@ describe("Schema Function Integration", () => {
     const config = new Config();
     config.registerSchemas(SCHEMA_REGISTRATIONS);
 
-    const result = processTokens(tokens, { config, output: "symbols" });
+    const result = processTokens(tokens, { config });
 
     const lightList = result.tokens.get("light");
     const darkList = result.tokens.get("dark");
