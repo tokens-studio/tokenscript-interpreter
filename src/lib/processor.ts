@@ -3,6 +3,8 @@
 // import { processTokensFromFiles } from "@tokens-studio/tokenscript-interpreter/processor-node";
 
 export {
+  type BuildTokensOptions,
+  buildTokens,
   type CreateTokenParams,
   type CreateTokenResult,
   type DeleteTokenParams,
@@ -14,6 +16,7 @@ export {
   type ProcessorOutput,
   type ProcessorResult,
   type TokenBuilder,
+  type TokenDataMap,
   TokenResolver,
   type UpdateTokenParams,
   type UpdateTokenResult,

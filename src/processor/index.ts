@@ -1,5 +1,7 @@
 export {
   type BuilderFormat,
+  type BuildTokensOptions,
+  buildTokens,
   FlatObjectBuilder,
   type FlattenCallback,
   flattenChildrenMap,
@@ -8,6 +10,7 @@ export {
   NestedObjectBuilder,
   StringMapBuilder,
   type TokenBuilder,
+  type TokenDataMap,
 } from "./builders";
 export { DependencyError } from "./errors";
 export * as linter from "./linter";
