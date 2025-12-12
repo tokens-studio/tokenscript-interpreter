@@ -30,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Enables consumers to handle and throw interpreter errors properly
   - Useful for custom validators and error handling in applications
 
+- **`isList`, `isDictionary` type guard helpers**: Added type checking utilities for List and Dictionary symbols
+
 ## [0.13.3] - 2025-12-11
 
 - Exported `linter`
