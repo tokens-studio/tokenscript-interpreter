@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **BREAKING: Builder output refactoring**: Simplified builder architecture and separated string vs symbol outputs
+  - Any output is now defined by the `builder` property
+  - Migration: Replace `{ output: "string" }` with `{ builder: new StringMapBuilder() }` for string Map output
+  - Migration: Replace `{ output: "symbols" }` by removing the option (symbols are now the default)
+  
+- **Enhanced CRUD operations with linter support**: All TokenResolver CRUD methods now return lint results
+  - `createToken()`, `updateToken()`, and `deleteToken()` now return `lintIssues` array in their results
+  - Linter is preserved across CRUD operations when passed to `buildTokens()` or `processTokens()`
+  - Enables real-time validation feedback during token editing workflows
+
+### Added
+
+- **`buildTokens()` export**: Core token processing function now available in public API
+  - Skips normalization overhead when you already have `Map<string, TokenData>`
+  - Lower-level API for performance-critical applications
+
+- **Error class exports**: All error classes now exported from main library entry point
+  - New `errorClasses` export includes: `LanguageError`, `LexerError`, `ParserError`, `InterpreterError`, `ProcessorError`, `DependencyError`
+  - Enables consumers to handle and throw interpreter errors properly
+  - Useful for custom validators and error handling in applications
+
 ## [0.13.3] - 2025-12-11
 
 - Exported `linter`
