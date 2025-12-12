@@ -1,4 +1,5 @@
 import {
+  builders,
   ColorManager,
   type ColorSpecification,
   Config,
@@ -159,15 +160,18 @@ export async function executeCode(options: ExecuteCodeOptions): Promise<Executio
       };
     }
 
-    // JSON token processing
+    // JSON token processing - use StringMapBuilder for JSON-safe string values
     const jsonTokens = JSON.parse(code);
-    const processorOutput = processTokens(jsonTokens, { config });
+    const processorOutput = processTokens(jsonTokens, {
+      config,
+      builder: new builders.StringMapBuilder(),
+    });
     const executionTime = performance.now() - startTime;
 
     return {
       type: "json",
       executionTime: Math.round(executionTime * 100) / 100,
-      output: processorOutput,
+      output: processorOutput.output,
       colorManager,
       functionsManager,
     };

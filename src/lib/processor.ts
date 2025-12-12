@@ -21,5 +21,6 @@ export {
   type UpdateTokenParams,
   type UpdateTokenResult,
 } from "@src/processor";
+export * as builders from "@src/processor/builders";
 export { processTokenSets, processTokens } from "@src/processor/process";
 export type { TokenData } from "@src/processor/utils/tokens";
