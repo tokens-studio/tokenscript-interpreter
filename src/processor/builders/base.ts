@@ -37,13 +37,21 @@ export interface BuildTokensOptions<T> {
 /**
  * Builds tokens from a normalized TokenDataMap.
  *
+ * This is the core token processing function. For most use cases, call this directly
+ * rather than using the higher-level processTokens/processTokenSets wrappers.
+ *
  * @param tokens - Map of token names to TokenData. Must be pre-normalized to TokenData format.
- * @param options - Build options including builder, config, output format, etc.
+ * @param options - Build options (all optional):
+ *   - output: "string" | "symbols" (default: "string")
+ *   - builder: Custom token builder (default: MapBuilder with output format)
+ *   - config: Interpreter config
+ *   - objectParsers: Array of object parsers
+ *   - linter: Lint runner
  * @returns ProcessorOutput with resolved tokens, output, and optional lint results.
  *
  * @remarks
  * Consumers must normalize input to Map<string, TokenData> before calling this function.
- * Use normalization functions in process.ts to convert string values or Records.
+ * Use processTokens/processTokenSets for automatic normalization of Records and Maps.
  */
 export function buildTokens<T = Map<string, InterpreterResult>>(
   tokens: TokenDataMap,
@@ -52,13 +60,8 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
   output: T;
   lint?: LintResult;
 } {
-  const {
-    config,
-    output = "string",
-    builder = new MapBuilder(output),
-    objectParsers,
-    linter,
-  } = options ?? {};
+  const output: OutputFormat = options?.output ?? "string";
+  const { config, builder = new MapBuilder(output), objectParsers, linter } = options ?? {};
 
   const errors: Map<string, Error> = new Map();
 
@@ -104,7 +107,7 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
     }
   }
 
-  const lint = result.lintIssues ? linter.aggregateResults(result.lintIssues) : undefined;
+  const lint = result.lintIssues ? linter?.aggregateResults(result.lintIssues) : undefined;
 
   return {
     ...result,

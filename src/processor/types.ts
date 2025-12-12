@@ -1,17 +1,10 @@
-import type { Config } from "@interpreter/config";
 import type { InterpreterResult } from "../interpreter/interpreter";
-import type { OutputFormat, TokenBuilder } from "./builders/types";
-import type { LintResult, LintRunner } from "./linter";
-import type { ObjectParser } from "./object-parsers";
+import type { BuildTokensOptions } from "./builders/base";
+import type { TokenBuilder } from "./builders/types";
+import type { LintResult } from "./linter";
 import type { ProcessorOutput } from "./resolver/TokenResolver";
 
-export interface ProcessOptions {
-  config?: Config;
-  output?: OutputFormat;
-  builder?: TokenBuilder<any>;
-  objectParsers?: ObjectParser[];
-  linter?: LintRunner;
-}
+export type ProcessOptions = BuildTokensOptions<any>;
 
 export interface ProcessSetsOptions extends ProcessOptions {
   activeSets?: string[];
