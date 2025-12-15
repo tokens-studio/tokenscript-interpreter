@@ -19,10 +19,9 @@ export const rules: TokenTypeValidatorMap = {
   // Penpot-specific overrides
   typography: typographyValidator,
   shadow: shadowValidator,
-  letterSpacing: letterSpacingValidator,
+  "letter-spacing": letterSpacingValidator,
 
   // Penpot additions
-  strokeWidth: strokeWidthValidator,
   "stroke-width": strokeWidthValidator,
 };
 

@@ -22,22 +22,21 @@ import { lengthNonNegativeValidator } from "./utils/length";
 export const rules: TokenTypeValidatorMap = {
   // Dimension tokens
   "border-radius": borderRadiusValidator,
-  borderRadius: borderRadiusValidator,
   spacing: lengthNonNegativeValidator,
   sizing: lengthNonNegativeValidator,
 
   // Typography tokens
-  fontFamily: fontFamilyValidator,
-  fontWeight: fontWeightValidator,
-  lineHeight: lineHeightValidator,
-  letterSpacing: letterSpacingValidator,
-  textDecoration: textDecorationLineValidator,
-  textCase: textTransformValidator,
+  "font-family": fontFamilyValidator,
+  "font-weight": fontWeightValidator,
+  "line-height": lineHeightValidator,
+  "letter-spacing": letterSpacingValidator,
+  "text-decoration": textDecorationLineValidator,
+  "text-case": textTransformValidator,
 
   // Other tokens
   opacity: opacityValidator,
   shadow: boxShadowValidator,
-  boxShadow: boxShadowValidator,
+  "box-shadow": boxShadowValidator,
 };
 
 /**
