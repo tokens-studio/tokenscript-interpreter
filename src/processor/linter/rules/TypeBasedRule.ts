@@ -34,7 +34,7 @@ export class TypeBasedRule extends BaseLintRule {
     const validator = this.validators.get(tokenType) ?? this.defaultValidator;
     if (!validator) return [];
 
-    const result = validator(value, context, this.createIssue.bind(this));
+    const result = validator(value, context, this.createIssue);
     return ensureArray(result);
   }
 }

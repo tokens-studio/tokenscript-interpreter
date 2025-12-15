@@ -9,7 +9,14 @@ class AlwaysErrorRule extends BaseLintRule {
   severity = LintSeverity.ERROR;
 
   validate(_value: InterpreterResult, context: LintContext): LintIssue[] {
-    return [this.createIssue(context, "TEST_ERROR", "Always errors")];
+    return [
+      {
+        code: "TEST_ERROR",
+        severity: this.severity,
+        message: "Always errors",
+        tokenName: context.tokenName,
+      },
+    ];
   }
 }
 
@@ -20,9 +27,15 @@ class StringWarningRule extends BaseLintRule {
   validate(value: InterpreterResult, context: LintContext): LintIssue[] {
     if (value instanceof StringSymbol) {
       return [
-        this.createIssue(context, "STRING_WARNING", `String value: ${value.value}`, {
-          value: value.value,
-        }),
+        {
+          code: "STRING_WARNING",
+          severity: this.severity,
+          message: `String value: ${value.value}`,
+          tokenName: context.tokenName,
+          data: {
+            value: value.value,
+          },
+        },
       ];
     }
     return [];
@@ -36,9 +49,15 @@ class TypeSpecificRule extends BaseLintRule {
 
   validate(_value: InterpreterResult, context: LintContext): LintIssue[] {
     return [
-      this.createIssue(context, "TYPE_SPECIFIC", `Token type: ${context.tokenType}`, {
-        tokenType: context.tokenType,
-      }),
+      {
+        code: "TYPE_SPECIFIC",
+        severity: this.severity,
+        message: `Token type: ${context.tokenType}`,
+        tokenName: context.tokenName,
+        data: {
+          tokenType: context.tokenType,
+        },
+      },
     ];
   }
 }
@@ -208,8 +227,8 @@ describe("LintRunner", () => {
     });
   });
 
-  describe("result aggregation", () => {
-    it("should aggregate issues by severity", () => {
+  describe("linting multiple tokens", () => {
+    it("should collect issues for a single token", () => {
       const runner = new LintRunner();
       runner.addRule(new AlwaysErrorRule());
       runner.addRule(new StringWarningRule());
@@ -221,18 +240,40 @@ describe("LintRunner", () => {
         allTokens: new Map(),
       });
 
-      const result = runner.aggregateResults(issues);
-
-      expect(result.issues).toHaveLength(2);
-      expect(result.errors).toHaveLength(1);
-      expect(result.warnings).toHaveLength(1);
-      expect(result.hasErrors).toBe(true);
+      expect(issues).toHaveLength(2);
+      expect(issues[0].severity).toBe(LintSeverity.ERROR);
+      expect(issues[1].severity).toBe(LintSeverity.WARNING);
+      expect(issues[0].tokenName).toBe("test.token");
+      expect(issues[1].tokenName).toBe("test.token");
     });
 
-    it("should report hasErrors as false when only warnings", () => {
+    it("should return issues for different tokens", () => {
       const runner = new LintRunner();
       runner.addRule(new StringWarningRule());
 
+      const issues1 = runner.lintResult({
+        tokenName: "token.one",
+        tokenType: undefined,
+        result: new StringSymbol("test1"),
+        allTokens: new Map(),
+      });
+
+      const issues2 = runner.lintResult({
+        tokenName: "token.two",
+        tokenType: undefined,
+        result: new StringSymbol("test2"),
+        allTokens: new Map(),
+      });
+
+      expect(issues1).toHaveLength(1);
+      expect(issues1[0].tokenName).toBe("token.one");
+
+      expect(issues2).toHaveLength(1);
+      expect(issues2[0].tokenName).toBe("token.two");
+    });
+
+    it("should return empty array when no issues", () => {
+      const runner = new LintRunner();
       const issues = runner.lintResult({
         tokenName: "test.token",
         tokenType: undefined,
@@ -240,22 +281,7 @@ describe("LintRunner", () => {
         allTokens: new Map(),
       });
 
-      const result = runner.aggregateResults(issues);
-
-      expect(result.issues).toHaveLength(1);
-      expect(result.errors).toHaveLength(0);
-      expect(result.warnings).toHaveLength(1);
-      expect(result.hasErrors).toBe(false);
-    });
-
-    it("should handle empty issues array", () => {
-      const runner = new LintRunner();
-      const result = runner.aggregateResults([]);
-
-      expect(result.issues).toHaveLength(0);
-      expect(result.errors).toHaveLength(0);
-      expect(result.warnings).toHaveLength(0);
-      expect(result.hasErrors).toBe(false);
+      expect(issues).toHaveLength(0);
     });
   });
 

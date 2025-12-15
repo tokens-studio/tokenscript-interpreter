@@ -8,7 +8,7 @@ import { renameReferences } from "@interpreter/utils/references";
 import { isArray, isBoolean, isNull, isNumber, isObject, isString } from "@interpreter/utils/type";
 import { UNINTERPRETED_KEYWORDS } from "@src/types";
 import { DependencyError } from "../errors";
-import type { LintIssue, LintRunner } from "../linter";
+import type { LintIssue, LintResult, LintRunner } from "../linter";
 import {
   createTokenSymbol,
   createTokenSymbolFromResolvedFields,
@@ -44,7 +44,7 @@ export type ProcessorResult = {
   resolved: TokenResultMap;
   unresolved: UnresolvedTokenMap;
   subFieldPaths?: Set<RefPath>;
-  lintIssues?: LintIssue[];
+  lintIssues?: LintResult;
 };
 
 export type ProcessorCallbacks = {
@@ -181,7 +181,7 @@ class PrefixResolver {
   private readonly structuredTokens: TokenDataMap = new Map();
 
   // Lint issues collection
-  private readonly lintIssues: LintIssue[] = [];
+  private readonly lintIssues = new Map<string, LintIssue[]>();
 
   // Phase state
   private earlyResolved: RefPath[] = [];
@@ -246,7 +246,9 @@ class PrefixResolver {
         ast,
       });
 
-      this.lintIssues.push(...issues);
+      if (issues.length > 0) {
+        this.lintIssues.set(tokenName, issues);
+      }
     } catch (error) {
       // If a validator throws, log the error but don't crash the resolution process
       console.error(`Linting failed for token '${tokenName}':`, error);
@@ -325,7 +327,7 @@ class PrefixResolver {
       resolved: this.resolved,
       unresolved: this.unresolved,
       subFieldPaths: this.subFieldPaths,
-      lintIssues: this.linter ? this.lintIssues : undefined,
+      lintIssues: this.linter && this.lintIssues.size > 0 ? this.lintIssues : undefined,
     };
   }
 

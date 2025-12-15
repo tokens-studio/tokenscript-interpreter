@@ -104,7 +104,7 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
     }
   }
 
-  const lint = result.lintIssues ? linter?.aggregateResults(result.lintIssues) : undefined;
+  const lint = result.lintIssues;
 
   return {
     ...result,

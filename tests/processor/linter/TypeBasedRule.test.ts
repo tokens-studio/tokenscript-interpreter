@@ -5,12 +5,21 @@ import { describe, expect, it } from "vitest";
 
 const colorValidator: TokenTypeValidator = (value, context, createIssue) => {
   if (!(value instanceof StringSymbol)) {
-    return createIssue(context, "INVALID_COLOR", "Expected string for color");
+    return createIssue({
+      code: "INVALID_COLOR",
+      severity: LintSeverity.ERROR,
+      message: "Expected string for color",
+      tokenName: context.tokenName,
+    });
   }
   const strValue = value.value;
   if (!strValue.startsWith("#")) {
-    return createIssue(context, "INVALID_COLOR_FORMAT", `Color must start with #: ${strValue}`, {
-      value: strValue,
+    return createIssue({
+      code: "INVALID_COLOR_FORMAT",
+      severity: LintSeverity.ERROR,
+      message: `Color must start with #: ${strValue}`,
+      tokenName: context.tokenName,
+      data: { value: strValue },
     });
   }
   return null;
@@ -18,22 +27,39 @@ const colorValidator: TokenTypeValidator = (value, context, createIssue) => {
 
 const opacityValidator: TokenTypeValidator = (value, context, createIssue) => {
   if (!(value instanceof NumberSymbol)) {
-    return createIssue(context, "INVALID_OPACITY_TYPE", "Expected number for opacity");
+    return createIssue({
+      code: "INVALID_OPACITY_TYPE",
+      severity: LintSeverity.ERROR,
+      message: "Expected number for opacity",
+      tokenName: context.tokenName,
+    });
   }
   const numValue = value.value;
   if (numValue < 0 || numValue > 1) {
-    return createIssue(context, "INVALID_OPACITY_RANGE", `Opacity must be 0-1: ${numValue}`, {
-      value: numValue,
-      min: 0,
-      max: 1,
+    return createIssue({
+      code: "INVALID_OPACITY_RANGE",
+      severity: LintSeverity.ERROR,
+      message: `Opacity must be 0-1: ${numValue}`,
+      tokenName: context.tokenName,
+      data: {
+        value: numValue,
+        min: 0,
+        max: 1,
+      },
     });
   }
   return undefined;
 };
 
 const defaultValidator: TokenTypeValidator = (_value, context, createIssue) => {
-  return createIssue(context, "DEFAULT_VALIDATOR", `Unhandled type: ${context.tokenType}`, {
-    tokenType: context.tokenType,
+  return createIssue({
+    code: "DEFAULT_VALIDATOR",
+    severity: LintSeverity.ERROR,
+    message: `Unhandled type: ${context.tokenType}`,
+    tokenName: context.tokenName,
+    data: {
+      tokenType: context.tokenType,
+    },
   });
 };
 
@@ -150,7 +176,7 @@ describe("TypeBasedRule", () => {
   });
 
   describe("issue creation", () => {
-    it("should include correct rule id in issues", () => {
+    it("should include code in issues", () => {
       const rule = new TypeBasedRule().forType("color", colorValidator);
 
       const runner = new LintRunner().addRule(rule);
@@ -162,7 +188,7 @@ describe("TypeBasedRule", () => {
         allTokens: new Map(),
       });
 
-      expect(issues[0].ruleId).toBe("type-validation");
+      expect(issues[0].code).toBe("INVALID_COLOR_FORMAT");
     });
 
     it("should include data in issues", () => {
@@ -207,7 +233,12 @@ describe("TypeBasedRule", () => {
   describe("flexible return types", () => {
     it("should handle single issue return", () => {
       const singleIssueValidator: TokenTypeValidator = (_value, context, createIssue) => {
-        return createIssue(context, "SINGLE_ISSUE", "Single issue");
+        return createIssue({
+          code: "SINGLE_ISSUE",
+          severity: LintSeverity.ERROR,
+          message: "Single issue",
+          tokenName: context.tokenName,
+        });
       };
 
       const rule = new TypeBasedRule().forType("test", singleIssueValidator);
@@ -226,7 +257,20 @@ describe("TypeBasedRule", () => {
 
     it("should handle array of issues return", () => {
       const multiIssueValidator: TokenTypeValidator = (_value, context, createIssue) => {
-        return [createIssue(context, "ISSUE_1", "First issue"), createIssue(context, "ISSUE_2", "Second issue")];
+        return [
+          createIssue({
+            code: "ISSUE_1",
+            severity: LintSeverity.ERROR,
+            message: "First issue",
+            tokenName: context.tokenName,
+          }),
+          createIssue({
+            code: "ISSUE_2",
+            severity: LintSeverity.ERROR,
+            message: "Second issue",
+            tokenName: context.tokenName,
+          }),
+        ];
       };
 
       const rule = new TypeBasedRule().forType("test", multiIssueValidator);

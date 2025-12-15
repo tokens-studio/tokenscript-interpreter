@@ -8,10 +8,20 @@ describe("TokenResolver - CRUD with Linter", () => {
   const createOpacityValidator = () => {
     return (value: any, context: any, createIssue: any) => {
       if (!(value instanceof NumberSymbol)) {
-        return createIssue(context, "INVALID_TYPE", "Expected number");
+        return createIssue({
+          code: "INVALID_TYPE",
+          severity: "error",
+          message: "Expected number",
+          tokenName: context.tokenName,
+        });
       }
       if (value.value < 0 || value.value > 1) {
-        return createIssue(context, "OUT_OF_RANGE", "Opacity must be between 0 and 1");
+        return createIssue({
+          code: "OUT_OF_RANGE",
+          severity: "error",
+          message: "Opacity must be between 0 and 1",
+          tokenName: context.tokenName,
+        });
       }
       return null;
     };
@@ -32,8 +42,8 @@ describe("TokenResolver - CRUD with Linter", () => {
 
       expect(result.created).toBe(true);
       expect(result.lintIssues).toBeDefined();
-      expect(result.lintIssues?.length).toBeGreaterThan(0);
-      expect(result.lintIssues?.[0]?.code).toBe("OUT_OF_RANGE");
+      expect(result.lintIssues?.get("opacity.invalid")).toBeDefined();
+      expect(result.lintIssues?.get("opacity.invalid")?.[0]?.code).toBe("OUT_OF_RANGE");
     });
 
     it("should return empty lintIssues when creating a valid token", () => {
@@ -49,7 +59,7 @@ describe("TokenResolver - CRUD with Linter", () => {
       });
 
       expect(result.created).toBe(true);
-      expect(result.lintIssues).toEqual([]);
+      expect(result.lintIssues).toBeUndefined();
     });
   });
 
@@ -68,8 +78,8 @@ describe("TokenResolver - CRUD with Linter", () => {
 
       expect(result.updated).toBe(true);
       expect(result.lintIssues).toBeDefined();
-      expect(result.lintIssues?.length).toBeGreaterThan(0);
-      expect(result.lintIssues?.[0]?.code).toBe("OUT_OF_RANGE");
+      expect(result.lintIssues?.get("opacity.value")).toBeDefined();
+      expect(result.lintIssues?.get("opacity.value")?.[0]?.code).toBe("OUT_OF_RANGE");
     });
 
     it("should return empty lintIssues when updating to a valid token", () => {
@@ -85,7 +95,7 @@ describe("TokenResolver - CRUD with Linter", () => {
       });
 
       expect(result.updated).toBe(true);
-      expect(result.lintIssues).toEqual([]);
+      expect(result.lintIssues).toBeUndefined();
     });
   });
 
@@ -105,9 +115,8 @@ describe("TokenResolver - CRUD with Linter", () => {
       });
 
       expect(result.lintIssues).toBeDefined();
-      expect(result.lintIssues?.length).toBeGreaterThan(0);
-      expect(result.lintIssues?.[0]?.tokenName).toBe("opacity.invalid");
-      expect(result.lintIssues?.[0]?.code).toBe("OUT_OF_RANGE");
+      expect(result.lintIssues?.get("opacity.invalid")).toBeDefined();
+      expect(result.lintIssues?.get("opacity.invalid")?.[0]?.code).toBe("OUT_OF_RANGE");
     });
 
     it("should return empty lintIssues when all remaining tokens are valid", () => {
@@ -124,7 +133,7 @@ describe("TokenResolver - CRUD with Linter", () => {
         tokenPath: "opacity.value",
       });
 
-      expect(result.lintIssues).toEqual([]);
+      expect(result.lintIssues).toBeUndefined();
     });
   });
 

@@ -14,33 +14,76 @@ const colorValidator: TokenTypeValidator = (value, context, createIssue) => {
     const strValue = value.value;
     if (!strValue.startsWith("#")) {
       return [
-        createIssue(context, "INVALID_COLOR_FORMAT", `Color must start with #`, {
-          value: strValue,
+        createIssue({
+          code: "INVALID_COLOR_FORMAT",
+          severity: LintSeverity.ERROR,
+          message: `Color must start with #`,
+          tokenName: context.tokenName,
+          data: {
+            value: strValue,
+          },
         }),
       ];
     }
     return [];
   }
-  return [createIssue(context, "INVALID_COLOR_TYPE", "Expected color value")];
+  return [
+    createIssue({
+      code: "INVALID_COLOR_TYPE",
+      severity: LintSeverity.ERROR,
+      message: "Expected color value",
+      tokenName: context.tokenName,
+    }),
+  ];
 };
 
 const opacityValidator: TokenTypeValidator = (value, context, createIssue) => {
   if (!(value instanceof NumberSymbol)) {
-    return [createIssue(context, "INVALID_OPACITY_TYPE", "Expected number for opacity")];
+    return [
+      createIssue({
+        code: "INVALID_OPACITY_TYPE",
+        severity: LintSeverity.ERROR,
+        message: "Expected number for opacity",
+        tokenName: context.tokenName,
+      }),
+    ];
   }
   const numValue = value.value;
   if (numValue < 0 || numValue > 1) {
-    return [createIssue(context, "INVALID_OPACITY_RANGE", `Opacity must be between 0 and 1`, { value: numValue }, LintSeverity.ERROR)];
+    return [
+      createIssue({
+        code: "INVALID_OPACITY_RANGE",
+        severity: LintSeverity.ERROR,
+        message: `Opacity must be between 0 and 1`,
+        tokenName: context.tokenName,
+        data: { value: numValue },
+      }),
+    ];
   }
   return [];
 };
 
 const numberValidator: TokenTypeValidator = (value, context, createIssue) => {
   if (!(value instanceof NumberSymbol)) {
-    return [createIssue(context, "INVALID_NUMBER_TYPE", "Expected number")];
+    return [
+      createIssue({
+        code: "INVALID_NUMBER_TYPE",
+        severity: LintSeverity.ERROR,
+        message: "Expected number",
+        tokenName: context.tokenName,
+      }),
+    ];
   }
   if (value.value < 0) {
-    return [createIssue(context, "NEGATIVE_NUMBER", "Number should not be negative", { value: value.value }, LintSeverity.WARNING)];
+    return [
+      createIssue({
+        code: "NEGATIVE_NUMBER",
+        severity: LintSeverity.WARNING,
+        message: "Number should not be negative",
+        tokenName: context.tokenName,
+        data: { value: value.value },
+      }),
+    ];
   }
   return [];
 };
@@ -61,9 +104,9 @@ describe("Linter Integration", () => {
       const result = processTokens(tokens, { linter });
 
       expect(result.lint).toBeDefined();
-      expect(result.lint?.issues).toHaveLength(1);
-      expect(result.lint?.issues[0].code).toBe("INVALID_COLOR_FORMAT");
-      expect(result.lint?.issues[0].tokenName).toBe("color.secondary");
+      expect(result.lint?.size).toBe(1);
+      expect(result.lint?.get("color.secondary")).toHaveLength(1);
+      expect(result.lint?.get("color.secondary")?.[0].code).toBe("INVALID_COLOR_FORMAT");
     });
 
     it("should not return lint results when no linter is provided", () => {
@@ -85,10 +128,12 @@ describe("Linter Integration", () => {
       const result = processTokens(tokens, { linter });
 
       expect(result.lint).toBeDefined();
-      expect(result.lint?.hasErrors).toBe(true);
-      expect(result.lint?.errors.length).toBeGreaterThan(0);
-      expect(result.lint?.warnings).toHaveLength(1);
-      expect(result.lint?.warnings[0].code).toBe("NEGATIVE_NUMBER");
+      expect(result.lint?.size).toBe(3);
+      expect(result.lint?.get("color.bad")).toHaveLength(1);
+      expect(result.lint?.get("opacity.bad")).toHaveLength(1);
+      expect(result.lint?.get("number.negative")).toHaveLength(1);
+      expect(result.lint?.get("number.negative")?.[0].code).toBe("NEGATIVE_NUMBER");
+      expect(result.lint?.get("number.negative")?.[0].severity).toBe(LintSeverity.WARNING);
     });
 
     it("should lint tokens with expressions", () => {
@@ -101,9 +146,9 @@ describe("Linter Integration", () => {
       const result = processTokens(tokens, { linter });
 
       // opacity.double resolves to 1.5 which is out of range
-      expect(result.lint?.issues).toHaveLength(1);
-      expect(result.lint?.issues[0].tokenName).toBe("opacity.double");
-      expect(result.lint?.issues[0].code).toBe("INVALID_OPACITY_RANGE");
+      expect(result.lint?.size).toBe(1);
+      expect(result.lint?.get("opacity.double")).toHaveLength(1);
+      expect(result.lint?.get("opacity.double")?.[0].code).toBe("INVALID_OPACITY_RANGE");
     });
 
     it("should not lint tokens that have errors", () => {
@@ -115,7 +160,7 @@ describe("Linter Integration", () => {
       // Token has resolution error, so shouldn't be linted
       // Note: errors includes both the missing reference and the token that depends on it
       expect(result.errors.size).toBeGreaterThanOrEqual(1);
-      expect(result.lint?.issues).toHaveLength(0);
+      expect(result.lint?.size || 0).toBe(0);
     });
 
     it("should lint primitive values", () => {
@@ -127,8 +172,9 @@ describe("Linter Integration", () => {
       const linter = createTestLinter();
       const result = processTokens(tokens, { linter });
 
-      expect(result.lint?.warnings).toHaveLength(1);
-      expect(result.lint?.warnings[0].tokenName).toBe("number.negative");
+      expect(result.lint?.size).toBe(1);
+      expect(result.lint?.get("number.negative")).toHaveLength(1);
+      expect(result.lint?.get("number.negative")?.[0].severity).toBe(LintSeverity.WARNING);
     });
 
     it("should handle tokens without $type", () => {
@@ -138,7 +184,7 @@ describe("Linter Integration", () => {
       const result = processTokens(tokens, { linter });
 
       // No type means no type-based validation
-      expect(result.lint?.issues).toHaveLength(0);
+      expect(result.lint?.size || 0).toBe(0);
     });
   });
 
@@ -172,15 +218,15 @@ describe("Linter Integration", () => {
       const linter = createTestLinter();
       const result = processTokens(tokens, { linter });
 
-      expect(result.lint?.issues).toHaveLength(3);
+      expect(result.lint?.size).toBe(3);
+      expect(result.lint?.get("color.invalid")?.[0].code).toBe("INVALID_COLOR_FORMAT");
+      expect(result.lint?.get("opacity.invalid")?.[0].code).toBe("INVALID_OPACITY_RANGE");
+      expect(result.lint?.get("number.warning")?.[0].code).toBe("NEGATIVE_NUMBER");
 
-      const codes = result.lint?.issues.map((i) => i.code);
-      expect(codes).toContain("INVALID_COLOR_FORMAT");
-      expect(codes).toContain("INVALID_OPACITY_RANGE");
-      expect(codes).toContain("NEGATIVE_NUMBER");
-
-      expect(result.lint?.errors).toHaveLength(2);
-      expect(result.lint?.warnings).toHaveLength(1);
+      // Check severities
+      expect(result.lint?.get("color.invalid")?.[0].severity).toBe(LintSeverity.ERROR);
+      expect(result.lint?.get("opacity.invalid")?.[0].severity).toBe(LintSeverity.ERROR);
+      expect(result.lint?.get("number.warning")?.[0].severity).toBe(LintSeverity.WARNING);
     });
   });
 
@@ -191,7 +237,7 @@ describe("Linter Integration", () => {
       const linter = createTestLinter();
       const result = processTokens(tokens, { linter });
 
-      expect(result.lint?.issues[0].tokenName).toBe("my.special.token");
+      expect(result.lint?.get("my.special.token")?.[0].tokenName).toBe("my.special.token");
     });
 
     it("should include custom data in issues", () => {
@@ -200,7 +246,7 @@ describe("Linter Integration", () => {
       const linter = createTestLinter();
       const result = processTokens(tokens, { linter });
 
-      expect(result.lint?.issues[0].data).toEqual({ value: 1.5 });
+      expect(result.lint?.get("opacity.bad")?.[0].data).toEqual({ value: 1.5 });
     });
   });
 
@@ -215,8 +261,8 @@ describe("Linter Integration", () => {
       const linter = createTestLinter();
       const result = processTokens(tokens, { linter });
 
-      expect(result.lint?.issues).toHaveLength(1);
-      expect(result.lint?.issues[0].tokenName).toBe("color.primary");
+      expect(result.lint?.size).toBe(1);
+      expect(result.lint?.get("color.primary")?.[0].tokenName).toBe("color.primary");
     });
   });
 });
