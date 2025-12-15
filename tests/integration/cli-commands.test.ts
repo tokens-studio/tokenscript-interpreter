@@ -36,7 +36,8 @@ describe("CLI Commands Integration Tests", () => {
       const result = await runProcessCommand({ input: tokensFile });
 
       expect(result.exitCode).toBe(0);
-      const output = JSON.parse(result.stdout);
+      expect(result.data).toBeDefined();
+      const output = result.data!.output;
       expect(output).toEqual(
         expect.objectContaining({
           base: 8,
@@ -59,7 +60,8 @@ describe("CLI Commands Integration Tests", () => {
       const result = await runProcessCommand({ input: tokensFile });
 
       expect(result.exitCode).toBe(0);
-      const output = JSON.parse(result.stdout);
+      expect(result.data).toBeDefined();
+      const output = result.data!.output as Record<string, unknown>;
       expect(output.colors).toEqual(
         expect.objectContaining({
           base: "#FFFFFF",
@@ -111,7 +113,8 @@ describe("CLI Commands Integration Tests", () => {
       });
 
       expect(result.exitCode).toBe(0);
-      const output = JSON.parse(result.stdout);
+      expect(result.data).toBeDefined();
+      const output = result.data!.output;
       expect(output).toEqual(
         expect.objectContaining({
           base: 8,
@@ -141,7 +144,8 @@ describe("CLI Commands Integration Tests", () => {
         theme: "Light",
       });
       expect(lightResult.exitCode).toBe(0);
-      const lightOutput = JSON.parse(lightResult.stdout);
+      expect(lightResult.data).toBeDefined();
+      const lightOutput = lightResult.data!.output;
       expect(lightOutput).toEqual(
         expect.objectContaining({
           base: 8,
@@ -154,7 +158,8 @@ describe("CLI Commands Integration Tests", () => {
         theme: "Dark",
       });
       expect(darkResult.exitCode).toBe(0);
-      const darkOutput = JSON.parse(darkResult.stdout);
+      expect(darkResult.data).toBeDefined();
+      const darkOutput = darkResult.data!.output;
       expect(darkOutput).toEqual(
         expect.objectContaining({
           base: 8,
@@ -192,8 +197,9 @@ describe("CLI Commands Integration Tests", () => {
         logLevel: "warn",
       });
 
-      expect(result.stderr).toContain("errors");
-      expect(result.stderr).toContain("invalid");
+      expect(result.errors).toBeDefined();
+      const errors = result.errors as Record<string, { message: string; originalValue: string }>;
+      expect(Object.keys(errors)).toContain("invalid");
     });
 
     it("should handle missing input file gracefully", async () => {
@@ -214,12 +220,12 @@ describe("CLI Commands Integration Tests", () => {
         "semantic.json": { spacing: createToken("16px", "dimension") },
       });
 
-      const output = await runInspectCommand(ctx.tempDir);
+      const result = await runInspectCommand(ctx.tempDir);
 
-      expect(output).toEqual(
-        expect.objectContaining({
-          sets: expect.arrayContaining(["core", "semantic"]),
-        }),
+      expect(result.exitCode).toBe(0);
+      expect(result.data).toBeDefined();
+      expect(result.data!.sets).toEqual(
+        expect.arrayContaining(["core", "semantic"]),
       );
     });
 
@@ -239,17 +245,14 @@ describe("CLI Commands Integration Tests", () => {
 
       const tokensFile = await writeTokenFile(ctx.tempDir, "tokens.json", tokens);
 
-      const output = await runInspectCommand(tokensFile);
+      const result = await runInspectCommand(tokensFile);
 
-      expect(output).toEqual(
-        expect.objectContaining({
-          sets: expect.any(Array),
-          themes: expect.objectContaining({
-            Light: expect.arrayContaining(["core", "light"]),
-            Dark: expect.arrayContaining(["core", "dark"]),
-          }),
-        }),
-      );
+      expect(result.exitCode).toBe(0);
+      expect(result.data).toBeDefined();
+      expect(result.data!.sets).toEqual(expect.any(Array));
+      expect(result.data!.themes).toBeDefined();
+      expect(result.data!.themes!.Light).toEqual(expect.arrayContaining(["core", "light"]));
+      expect(result.data!.themes!.Dark).toEqual(expect.arrayContaining(["core", "dark"]));
     });
 
     it("should show only sets when no themes exist", async () => {
@@ -261,15 +264,13 @@ describe("CLI Commands Integration Tests", () => {
 
       const tokensFile = await writeTokenFile(ctx.tempDir, "tokens.json", tokens);
 
-      const output = await runInspectCommand(tokensFile);
+      const result = await runInspectCommand(tokensFile);
 
-      expect(output).toEqual(
-        expect.objectContaining({
-          sets: expect.any(Array),
-        }),
-      );
-      expect(output.sets.length).toBeGreaterThan(0);
-      expect(output.themes).toBeUndefined();
+      expect(result.exitCode).toBe(0);
+      expect(result.data).toBeDefined();
+      expect(result.data!.sets).toEqual(expect.any(Array));
+      expect(result.data!.sets.length).toBeGreaterThan(0);
+      expect(result.data!.themes).toBeUndefined();
     });
 
     it("should handle themes with array format selectedTokenSets", async () => {
@@ -285,14 +286,13 @@ describe("CLI Commands Integration Tests", () => {
 
       const tokensFile = await writeTokenFile(ctx.tempDir, "tokens.json", tokens);
 
-      const output = await runInspectCommand(tokensFile);
+      const result = await runInspectCommand(tokensFile);
 
-      expect(output).toEqual(
-        expect.objectContaining({
-          themes: expect.objectContaining({
-            Default: expect.arrayContaining(["core", "semantic"]),
-          }),
-        }),
+      expect(result.exitCode).toBe(0);
+      expect(result.data).toBeDefined();
+      expect(result.data!.themes).toBeDefined();
+      expect(result.data!.themes!.Default).toEqual(
+        expect.arrayContaining(["core", "semantic"]),
       );
     });
   });
@@ -314,7 +314,8 @@ describe("CLI Commands Integration Tests", () => {
       });
 
       expect(result.exitCode).toBe(1);
-      expect(result.stderr).toContain("not found");
+      expect(result.error).toBeDefined();
+      expect(result.error).toMatch(/not found/i);
     });
 
     it("should show error when multiple sets exist but none specified", async () => {

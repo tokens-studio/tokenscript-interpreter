@@ -3,6 +3,16 @@ import * as path from "node:path";
 import type { ProcessorOutput } from "@src/processor";
 import { StringMapBuilder } from "@src/processor";
 import { processTokensFromFiles } from "@src/processor/processFiles";
+import type {
+  InspectCommandOptions,
+  ProcessCommandOptions,
+  EvalCommandOptions,
+} from "@src/cli-handlers";
+import {
+  handleInspectCommand,
+  handleProcessCommand,
+  handleEvalCommand,
+} from "@src/cli-handlers";
 
 export interface TokenFile {
   [key: string]: any;
@@ -89,147 +99,30 @@ export async function processTokenFile(
 }
 
 /**
- * Run a CLI command and return stdout, stderr, and exit code
- */
-export interface CliResult {
-  stdout: string;
-  stderr: string;
-  exitCode: number;
-}
-
-/**
- * Mock console.log and console.error to capture output
- */
-function mockConsole(): {
-  stdout: string[];
-  stderr: string[];
-  restore: () => void;
-} {
-  const stdout: string[] = [];
-  const stderr: string[] = [];
-  const originalLog = console.log;
-  const originalError = console.error;
-
-  console.log = (...args: any[]) => {
-    stdout.push(args.map(String).join(" "));
-  };
-
-  console.error = (...args: any[]) => {
-    stderr.push(args.map(String).join(" "));
-  };
-
-  return {
-    stdout,
-    stderr,
-    restore: () => {
-      console.log = originalLog;
-      console.error = originalError;
-    },
-  };
-}
-
-/**
- * Mock process.exit to prevent test runner from exiting
- */
-function mockProcessExit(): {
-  exitCode: number;
-  restore: () => void;
-} {
-  const originalExit = process.exit;
-  let exitCode = 0;
-
-  process.exit = ((code?: number) => {
-    exitCode = code ?? 0;
-    throw new Error(`Process exited with code ${exitCode}`);
-  }) as any;
-
-  return {
-    exitCode,
-    restore: () => {
-      process.exit = originalExit;
-    },
-  };
-}
-
-export async function runCliCommand(command: string, args: string[] = []): Promise<CliResult> {
-  const consoleCapture = mockConsole();
-  const exitMock = mockProcessExit();
-
-  try {
-    // Import the CLI module
-    const { program } = await import("@src/cli");
-
-    // Parse with mock argv - from: "node" expects full argv including node and script name
-    await program.parseAsync(["node", "cli.js", command, ...args], { from: "node" });
-
-    return {
-      stdout: consoleCapture.stdout.join("\n"),
-      stderr: consoleCapture.stderr.join("\n"),
-      exitCode: 0,
-    };
-  } catch (error: any) {
-    // Check if this is an exit error
-    const exitMatch = error.message?.match(/Process exited with code (\d+)/);
-    if (exitMatch) {
-      return {
-        stdout: consoleCapture.stdout.join("\n"),
-        stderr: consoleCapture.stderr.join("\n"),
-        exitCode: Number.parseInt(exitMatch[1], 10),
-      };
-    }
-
-    // Any other error
-    return {
-      stdout: consoleCapture.stdout.join("\n"),
-      stderr: consoleCapture.stderr.join("\n") || error.message,
-      exitCode: 1,
-    };
-  } finally {
-    consoleCapture.restore();
-    exitMock.restore();
-  }
-}
-
-/**
  * Run CLI process command
+ * Directly calls the handler for testability (no process spawning)
  */
-export interface ProcessCommandOptions {
-  input: string;
-  output?: string;
-  sets?: string[];
-  theme?: string;
-  logLevel?: "warn" | "error" | "none";
-  strict?: boolean;
-  schemas?: string[];
-}
-
-export async function runProcessCommand(options: ProcessCommandOptions): Promise<CliResult> {
-  const args: string[] = ["--input", options.input];
-
-  if (options.output) args.push("--output", options.output);
-  if (options.sets) args.push("--sets", options.sets.join(","));
-  if (options.theme) args.push("--theme", options.theme);
-  if (options.logLevel) args.push("--log-level", options.logLevel);
-  if (options.strict) args.push("--strict");
-  if (options.schemas) {
-    args.push("--schema");
-    args.push(...options.schemas);
-  }
-
-  return runCliCommand("process", args);
+export async function runProcessCommand(options: Omit<ProcessCommandOptions, "sets"> & { sets?: string[] }) {
+  return handleProcessCommand({
+    ...options,
+    sets: options.sets?.join(","),
+  });
 }
 
 /**
  * Run CLI inspect command
+ * Directly calls the handler for testability (no process spawning)
  */
-export async function runInspectCommand(input: string): Promise<{ sets: string[]; themes?: Record<string, string[]> }> {
-  const result = await runCliCommand("inspect", ["--input", input]);
+export async function runInspectCommand(input: string) {
+  return handleInspectCommand({ input });
+}
 
-  if (result.exitCode !== 0) {
-    throw new Error(`Inspect command failed: ${result.stderr}`);
-  }
-
-  return JSON.parse(result.stdout);
+/**
+ * Run CLI eval command
+ * Directly calls the handler for testability (no process spawning)
+ */
+export async function runEvalCommand(options: EvalCommandOptions) {
+  return handleEvalCommand(options);
 }
 
 /**
