@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Structured token field-level linting** - Added `path` property to `LintIssue` type to enable field-level validation for structured tokens (typography, shadow, etc.)
+  - Validators can now return issues with `path: ["fieldName"]` to identify specific fields
+  - Supports arrays with paths like `[0, "blur"]` for box-shadow tokens
+
+### Changed
+
+- **Linter API improvements** - Simplified `CreateIssueFn` signature to accept full `LintIssue` object instead of individual parameters
+  - **BREAKING**: `createIssue(context, code, message, data?, severity?, line?)` → `createIssue({ code, severity, message, tokenName, path?, data?, line? })`
+  - Migration: Pass complete issue object instead of individual parameters
+  
+- **LintResult type change** - Changed from object with `{ issues, errors, warnings, hasErrors }` to `Map<RefPath, LintIssue[]>`
+  - **BREAKING**: `result.lint.errors` → `result.lint` (Map of token paths to issue arrays)
+  - **BREAKING**: `result.lint.hasErrors` → Check `result.lint.size > 0` or iterate to find errors by severity
+  - Migration: Filter issues by severity instead of using pre-aggregated arrays
+
+- **Removed `aggregateResults()` method** from `LintRunner` - No longer needed with Map-based result structure
+  - **BREAKING**: `linter.aggregateResults(issues)` → Issues are already organized by token in the Map
+  - Migration: Work directly with `Map<RefPath, LintIssue[]>` instead of calling `aggregateResults()`
+
+- **Removed `ruleId` property** from `LintIssue` - Use `code` property for identifying issue types
+  - **BREAKING**: `issue.ruleId` → `issue.code`
+  - Migration: Replace `ruleId` references with `code`
+
+### Documentation
+
+- Updated `src/processor/linter/README.md` with structured token validation examples
+
 ## [0.14.0] - 2025-12-12
 
 ### Changed
