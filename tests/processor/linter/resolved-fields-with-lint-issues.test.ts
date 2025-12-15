@@ -1,4 +1,4 @@
-import { ColorSymbol, DictionarySymbol, NumberSymbol, StringSymbol, TokenSymbol } from "@interpreter/symbols";
+import { ColorSymbol, NumberSymbol, StringSymbol, TokenSymbol } from "@interpreter/symbols";
 import { LintRunner, LintSeverity, TypeBasedRule } from "@src/processor/linter";
 import type { TokenTypeValidator } from "@src/processor/linter/rules/TypeBasedRule";
 import { processTokens } from "@src/processor/process";
@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
 /**
  * Tests to verify that TokenSymbol subfields remain accessible even when
  * there are lint issues (errors or warnings) on other fields.
- * 
+ *
  * This is critical for UI/form scenarios where users need to:
  * - View all field values even if some are invalid
  * - Edit fields individually
@@ -362,9 +362,7 @@ describe("Resolved Fields with Lint Issues", () => {
         ],
       ]);
 
-      const linter = new LintRunner().addRule(
-        new TypeBasedRule().forType("typography", multiFieldValidator),
-      );
+      const linter = new LintRunner().addRule(new TypeBasedRule().forType("typography", multiFieldValidator));
       const result = processTokens(tokens, { linter });
 
       const token = result.resolved.get("heading");
@@ -410,9 +408,7 @@ describe("Resolved Fields with Lint Issues", () => {
         ],
       ]);
 
-      const linter = new LintRunner().addRule(
-        new TypeBasedRule().forType("typography", multiFieldValidator),
-      );
+      const linter = new LintRunner().addRule(new TypeBasedRule().forType("typography", multiFieldValidator));
       const result = processTokens(tokens, { linter });
 
       const token = result.resolved.get("text") as TokenSymbol;
@@ -452,9 +448,7 @@ describe("Resolved Fields with Lint Issues", () => {
         ],
       ]);
 
-      const linter = new LintRunner().addRule(
-        new TypeBasedRule().forType("typography", multiFieldValidator),
-      );
+      const linter = new LintRunner().addRule(new TypeBasedRule().forType("typography", multiFieldValidator));
       const result = processTokens(tokens, { linter });
 
       const token = result.resolved.get("heading") as TokenSymbol;
@@ -480,9 +474,7 @@ describe("Resolved Fields with Lint Issues", () => {
         ],
       ]);
 
-      const linter = new LintRunner().addRule(
-        new TypeBasedRule().forType("typography", multiFieldValidator),
-      );
+      const linter = new LintRunner().addRule(new TypeBasedRule().forType("typography", multiFieldValidator));
       const result = processTokens(tokens, { linter });
 
       const token = result.resolved.get("mixed") as TokenSymbol;
@@ -521,7 +513,7 @@ describe("Resolved Fields with Lint Issues", () => {
         if (!shadow.get) return;
 
         const shadowItem = value.get(index);
-        
+
         // Validate blur - ERROR for negative
         const blur = shadowItem.get("blur");
         if (blur instanceof NumberSymbol && blur.value !== null) {
@@ -597,9 +589,7 @@ describe("Resolved Fields with Lint Issues", () => {
         ],
       ]);
 
-      const linter = new LintRunner().addRule(
-        new TypeBasedRule().forType("shadow", shadowValidator),
-      );
+      const linter = new LintRunner().addRule(new TypeBasedRule().forType("shadow", shadowValidator));
       const result = processTokens(tokens, { linter });
 
       const token = result.resolved.get("shadows") as TokenSymbol;
@@ -647,9 +637,7 @@ describe("Resolved Fields with Lint Issues", () => {
         ],
       ]);
 
-      const linter = new LintRunner().addRule(
-        new TypeBasedRule().forType("shadow", shadowValidator),
-      );
+      const linter = new LintRunner().addRule(new TypeBasedRule().forType("shadow", shadowValidator));
       const result = processTokens(tokens, { linter });
 
       const token = result.resolved.get("shadows") as TokenSymbol;
@@ -682,9 +670,7 @@ describe("Resolved Fields with Lint Issues", () => {
         ],
       ]);
 
-      const linter = new LintRunner().addRule(
-        new TypeBasedRule().forType("shadow", shadowValidator),
-      );
+      const linter = new LintRunner().addRule(new TypeBasedRule().forType("shadow", shadowValidator));
       const result = processTokens(tokens, { linter });
 
       const token = result.resolved.get("shadows") as TokenSymbol;
@@ -703,7 +689,7 @@ describe("Resolved Fields with Lint Issues", () => {
         allShadows.push({
           index: i,
           blur: blur instanceof NumberSymbol ? blur.value : null,
-          color: color instanceof ColorSymbol ? color.value : (color instanceof StringSymbol ? color.value : null),
+          color: color instanceof ColorSymbol ? color.value : color instanceof StringSymbol ? color.value : null,
           hasIssue: issues?.some((issue) => issue.path?.[0] === i),
         });
       }
@@ -738,9 +724,7 @@ describe("Resolved Fields with Lint Issues", () => {
         ],
       ]);
 
-      const linter = new LintRunner().addRule(
-        new TypeBasedRule().forType("shadow", shadowValidator),
-      );
+      const linter = new LintRunner().addRule(new TypeBasedRule().forType("shadow", shadowValidator));
       const result = processTokens(tokens, { linter });
 
       const token = result.resolved.get("shadows") as TokenSymbol;

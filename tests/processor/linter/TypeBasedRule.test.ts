@@ -1,56 +1,23 @@
 import type { InterpreterResult } from "@interpreter/interpreter";
-import { NumberSymbol, StringSymbol } from "@interpreter/symbols";
-import { type LintContext, LintRunner, LintSeverity, type TokenTypeValidator, TypeBasedRule } from "@src/processor/linter";
+import { ColorSymbol, NumberSymbol, StringSymbol } from "@interpreter/symbols";
+import {
+  color,
+  createValidator,
+  css,
+  type LintContext,
+  LintRunner,
+  LintSeverity,
+  type TokenTypeValidator,
+  TypeBasedRule,
+  ValidatorCode,
+} from "@src/processor/linter";
 import { describe, expect, it } from "vitest";
 
-const colorValidator: TokenTypeValidator = (value, context, createIssue) => {
-  if (!(value instanceof StringSymbol)) {
-    return createIssue({
-      code: "INVALID_COLOR",
-      severity: LintSeverity.ERROR,
-      message: "Expected string for color",
-      tokenName: context.tokenName,
-    });
-  }
-  const strValue = value.value;
-  if (!strValue.startsWith("#")) {
-    return createIssue({
-      code: "INVALID_COLOR_FORMAT",
-      severity: LintSeverity.ERROR,
-      message: `Color must start with #: ${strValue}`,
-      tokenName: context.tokenName,
-      data: { value: strValue },
-    });
-  }
-  return null;
-};
+// Use preset validators
+const colorValidator = createValidator(color());
+const opacityValidator = css.opacityValidator;
 
-const opacityValidator: TokenTypeValidator = (value, context, createIssue) => {
-  if (!(value instanceof NumberSymbol)) {
-    return createIssue({
-      code: "INVALID_OPACITY_TYPE",
-      severity: LintSeverity.ERROR,
-      message: "Expected number for opacity",
-      tokenName: context.tokenName,
-    });
-  }
-  const numValue = value.value;
-  if (numValue < 0 || numValue > 1) {
-    return createIssue({
-      code: "INVALID_OPACITY_RANGE",
-      severity: LintSeverity.ERROR,
-      message: `Opacity must be 0-1: ${numValue}`,
-      tokenName: context.tokenName,
-      data: {
-        value: numValue,
-        min: 0,
-        max: 1,
-      },
-    });
-  }
-  return undefined;
-};
-
+// Default validator - custom since there's no preset for this
 const defaultValidator: TokenTypeValidator = (_value, context, createIssue) => {
   return createIssue({
     code: "DEFAULT_VALIDATOR",
@@ -70,16 +37,16 @@ describe("TypeBasedRule", () => {
 
       const runner = new LintRunner().addRule(rule);
 
-      // Valid color
+      // Valid color (ColorSymbol)
       const colorIssues = runner.lintResult({
         tokenName: "test.color",
         tokenType: "color",
-        result: new StringSymbol("#fff"),
+        result: new ColorSymbol("#ffffff"),
         allTokens: new Map(),
       });
       expect(colorIssues).toHaveLength(0);
 
-      // Invalid color format
+      // Invalid color (not a ColorSymbol)
       const badColorIssues = runner.lintResult({
         tokenName: "test.color",
         tokenType: "color",
@@ -87,7 +54,7 @@ describe("TypeBasedRule", () => {
         allTokens: new Map(),
       });
       expect(badColorIssues).toHaveLength(1);
-      expect(badColorIssues[0].code).toBe("INVALID_COLOR_FORMAT");
+      expect(badColorIssues[0].code).toBe(ValidatorCode.EXPECTED_COLOR);
 
       // Valid opacity
       const opacityIssues = runner.lintResult({
@@ -106,7 +73,7 @@ describe("TypeBasedRule", () => {
         allTokens: new Map(),
       });
       expect(badOpacityIssues).toHaveLength(1);
-      expect(badOpacityIssues[0].code).toBe("INVALID_OPACITY_RANGE");
+      expect(badOpacityIssues[0].code).toBe(ValidatorCode.VALUE_TOO_LARGE);
     });
 
     it("should return no issues for unregistered token types", () => {
@@ -132,7 +99,7 @@ describe("TypeBasedRule", () => {
       const issues = runner.lintResult({
         tokenName: "test.token",
         tokenType: undefined,
-        result: new StringSymbol("#fff"),
+        result: new ColorSymbol("#ffffff"),
         allTokens: new Map(),
       });
 
@@ -163,15 +130,16 @@ describe("TypeBasedRule", () => {
 
       const runner = new LintRunner().addRule(rule);
 
+      // Invalid because it's a string, not a ColorSymbol
       const issues = runner.lintResult({
         tokenName: "test.color",
         tokenType: "color",
-        result: new StringSymbol("invalid"),
+        result: new StringSymbol("not-a-color-symbol"),
         allTokens: new Map(),
       });
 
       expect(issues).toHaveLength(1);
-      expect(issues[0].code).toBe("INVALID_COLOR_FORMAT");
+      expect(issues[0].code).toBe(ValidatorCode.EXPECTED_COLOR);
     });
   });
 
@@ -181,14 +149,15 @@ describe("TypeBasedRule", () => {
 
       const runner = new LintRunner().addRule(rule);
 
+      // Invalid because it's a string, not a ColorSymbol
       const issues = runner.lintResult({
         tokenName: "test.color",
         tokenType: "color",
-        result: new StringSymbol("invalid"),
+        result: new StringSymbol("not-a-color-symbol"),
         allTokens: new Map(),
       });
 
-      expect(issues[0].code).toBe("INVALID_COLOR_FORMAT");
+      expect(issues[0].code).toBe(ValidatorCode.EXPECTED_COLOR);
     });
 
     it("should include data in issues", () => {
@@ -203,7 +172,8 @@ describe("TypeBasedRule", () => {
         allTokens: new Map(),
       });
 
-      expect(issues[0].data).toEqual({ value: 2, min: 0, max: 1 });
+      // Preset validators include constraint info in data
+      expect(issues[0].data).toMatchObject({ value: 2, max: 1 });
     });
 
     it("should use ERROR severity by default", () => {
@@ -211,10 +181,11 @@ describe("TypeBasedRule", () => {
 
       const runner = new LintRunner().addRule(rule);
 
+      // Invalid because it's a string, not a ColorSymbol
       const issues = runner.lintResult({
         tokenName: "test.color",
         tokenType: "color",
-        result: new StringSymbol("invalid"),
+        result: new StringSymbol("not-a-color-symbol"),
         allTokens: new Map(),
       });
 

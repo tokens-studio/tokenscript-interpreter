@@ -2,6 +2,115 @@
 
 The linter validates token values based on their types. It runs after token resolution and returns structured issues organized by token path.
 
+## Using Preset Validators
+
+The easiest way to add validation is using the built-in preset validators:
+
+```typescript
+import { LintRunner, TypeBasedRule, css, penpot } from "@tokenscript/processor/linter";
+import { processTokens } from "@tokenscript/processor";
+
+// Use CSS spec-compliant validators
+const linter = new LintRunner().addRule(
+  new TypeBasedRule()
+    .forType("opacity", css.opacityValidator)
+    .forType("fontWeight", css.fontWeightValidator)
+    .forType("borderRadius", css.borderRadiusValidator)
+    .forType("letterSpacing", css.letterSpacingValidator)
+);
+
+const result = processTokens(tokens, { linter });
+```
+
+### Available CSS Presets
+
+| Validator                | Description                                               |
+|--------------------------|-----------------------------------------------------------|
+| `css.opacity`            | Number 0-1                                                |
+| `css.fontWeight`         | Number 1-1000 or keywords (normal, bold, lighter, bolder) |
+| `css.fontFamily`         | String or list of strings                                 |
+| `css.textTransform`      | none, capitalize, uppercase, lowercase, etc.              |
+| `css.textDecorationLine` | none, underline, overline, line-through, blink            |
+| `css.letterSpacing`      | "normal" or length value                                  |
+| `css.lineHeight`         | "normal", number, length, or percentage                   |
+| `css.borderRadius`       | 1-4 non-negative length/percentage values                 |
+| `css.length`             | Length with unit (px, em, rem, etc.) or unitless 0        |
+| `css.lengthPercentage`   | Length or percentage                                      |
+| `css.boxShadow`          | Array of shadow objects                                   |
+
+### Available Penpot Presets
+
+| Validator              | Description                                                                                      |
+|------------------------|--------------------------------------------------------------------------------------------------|
+| `penpot.strokeWidth`   | Non-negative number/dimension (no %)                                                             |
+| `penpot.letterSpacing` | Number or dimension (no %)                                                                       |
+| `penpot.typography`    | Composite: fontSize, fontFamily, fontWeight, lineHeight, letterSpacing, textCase, textDecoration |
+| `penpot.shadow`        | Array of shadows with non-negative blur/spread                                                   |
+
+### Composing Custom Validators
+
+Build custom validators from primitives:
+
+```typescript
+import { number, string, or, struct, createValidator } from "@tokenscript/processor/linter/presets";
+
+// Custom z-index: number or "auto"
+const zIndex = or(
+  number(),
+  string({ allowedValues: ["auto"] })
+);
+
+// Custom spacing with constraints
+const spacing = number({ min: 0, max: 100 });
+
+// Custom composite token
+const customToken = struct({
+  width: { validator: number({ min: 0 }), required: true },
+  height: number({ min: 0 }),
+  label: string(),
+});
+
+// Convert to TokenTypeValidator for use with TypeBasedRule
+const linter = new LintRunner().addRule(
+  new TypeBasedRule()
+    .forType("zIndex", createValidator(zIndex))
+    .forType("spacing", createValidator(spacing))
+    .forType("customToken", createValidator(customToken))
+);
+```
+
+### Primitive Validators
+
+| Validator               | Description                                                                          |
+|-------------------------|--------------------------------------------------------------------------------------|
+| `number(opts?)`         | NumberSymbol with optional `{ min, max }`                                            |
+| `string(opts?)`         | StringSymbol with optional `{ allowedValues, caseSensitive }`                        |
+| `boolean()`             | BooleanSymbol                                                                        |
+| `color()`               | ColorSymbol                                                                          |
+| `numberWithUnit(opts?)` | NumberWithUnitSymbol with `{ min, max, allowedUnits, disallowedUnits, requireUnit }` |
+
+### Combinators
+
+| Combinator                    | Description                                              |
+|-------------------------------|----------------------------------------------------------|
+| `or(...validators)`           | Value must match at least one validator                  |
+| `oneOrList(validator, opts?)` | Single value or list (CSS shorthand pattern)             |
+| `list(validator, opts?)`      | List with `{ count, minCount, maxCount, allowedCounts }` |
+| `struct(fields, opts?)`       | Structured token with field validators                   |
+| `arrayOf(validator)`          | Shorthand for `list(validator, { minCount: 1 })`         |
+
+### Struct Options
+
+```typescript
+struct({
+  width: { validator: number(), required: true },  // Required field
+  height: number(),                                 // Optional field
+}, {
+  strict: true,      // Error on unknown fields
+  warnMissing: true, // Warn when optional fields are missing
+});
+```
+
 ## Basic Example
 
 ```typescript

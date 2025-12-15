@@ -8,12 +8,12 @@ import { describe, expect, it } from "vitest";
 
 /**
  * Comprehensive TokenSymbol validation tests
- * 
+ *
  * TokenSymbol is the primary interface for linting structured tokens (typography, shadow, etc.).
  * It can hold either:
  * - Map<string, ISymbolType> for dictionary-based tokens (typography, single shadows)
  * - ISymbolType[] for array-based tokens (box-shadow with multiple shadows)
- * 
+ *
  * This test suite ensures validators can:
  * 1. Distinguish between Map-based and Array-based TokenSymbols
  * 2. Use TokenSymbol methods (.get, .keys, .values, .length) for validation
@@ -22,7 +22,7 @@ import { describe, expect, it } from "vitest";
  * 5. Validate mixed field types (NumberSymbol, StringSymbol, etc.)
  * 6. Work with CRUD operations (create, update, delete)
  * 7. Access TokenSymbol attributes (subType, type)
- * 
+ *
  * Note: Array items in resolved tokens are typically DictionarySymbol, not TokenSymbol.
  * Validators should check for the existence of .get() method rather than instanceof checks.
  */
@@ -51,7 +51,7 @@ describe("TokenSymbol Validation", () => {
       }
 
       const issues = [];
-      const fields = value.value as Map<string, any>;
+      const _fields = value.value as Map<string, any>;
 
       // Use TokenSymbol methods
       const fieldCount = value.length().value;
@@ -122,9 +122,7 @@ describe("TokenSymbol Validation", () => {
         ],
       ]);
 
-      const linter = new LintRunner().addRule(
-        new TypeBasedRule().forType("typography", typographyValidator),
-      );
+      const linter = new LintRunner().addRule(new TypeBasedRule().forType("typography", typographyValidator));
       const result = processTokens(tokens, { linter });
 
       expect(result.resolved.get("heading")).toBeInstanceOf(TokenSymbol);
@@ -144,9 +142,7 @@ describe("TokenSymbol Validation", () => {
         ],
       ]);
 
-      const linter = new LintRunner().addRule(
-        new TypeBasedRule().forType("typography", typographyValidator),
-      );
+      const linter = new LintRunner().addRule(new TypeBasedRule().forType("typography", typographyValidator));
       const result = processTokens(tokens, { linter });
 
       const issues = result.lint?.get("empty");
@@ -167,9 +163,7 @@ describe("TokenSymbol Validation", () => {
         ],
       ]);
 
-      const linter = new LintRunner().addRule(
-        new TypeBasedRule().forType("typography", typographyValidator),
-      );
+      const linter = new LintRunner().addRule(new TypeBasedRule().forType("typography", typographyValidator));
       const result = processTokens(tokens, { linter });
 
       const token = result.resolved.get("text") as TokenSymbol;
@@ -196,9 +190,7 @@ describe("TokenSymbol Validation", () => {
         ],
       ]);
 
-      const linter = new LintRunner().addRule(
-        new TypeBasedRule().forType("typography", typographyValidator),
-      );
+      const linter = new LintRunner().addRule(new TypeBasedRule().forType("typography", typographyValidator));
       const result = processTokens(tokens, { linter });
 
       const token = result.resolved.get("text") as TokenSymbol;
@@ -346,9 +338,7 @@ describe("TokenSymbol Validation", () => {
         ],
       ]);
 
-      const linter = new LintRunner().addRule(
-        new TypeBasedRule().forType("shadow", shadowArrayValidator),
-      );
+      const linter = new LintRunner().addRule(new TypeBasedRule().forType("shadow", shadowArrayValidator));
       const result = processTokens(tokens, { linter });
 
       const token = result.resolved.get("card-shadow");
@@ -382,9 +372,7 @@ describe("TokenSymbol Validation", () => {
         ],
       ]);
 
-      const linter = new LintRunner().addRule(
-        new TypeBasedRule().forType("shadow", shadowArrayValidator),
-      );
+      const linter = new LintRunner().addRule(new TypeBasedRule().forType("shadow", shadowArrayValidator));
       const result = processTokens(tokens, { linter });
 
       const issues = result.lint?.get("shadows");
@@ -414,9 +402,7 @@ describe("TokenSymbol Validation", () => {
         ],
       ]);
 
-      const linter = new LintRunner().addRule(
-        new TypeBasedRule().forType("shadow", shadowArrayValidator),
-      );
+      const linter = new LintRunner().addRule(new TypeBasedRule().forType("shadow", shadowArrayValidator));
       const result = processTokens(tokens, { linter });
 
       const issues = result.lint?.get("many-shadows");
@@ -434,9 +420,7 @@ describe("TokenSymbol Validation", () => {
         ],
       ]);
 
-      const linter = new LintRunner().addRule(
-        new TypeBasedRule().forType("shadow", shadowArrayValidator),
-      );
+      const linter = new LintRunner().addRule(new TypeBasedRule().forType("shadow", shadowArrayValidator));
       const result = processTokens(tokens, { linter });
 
       const issues = result.lint?.get("empty-shadows");
@@ -456,12 +440,10 @@ describe("TokenSymbol Validation", () => {
       const fontSize = value.get("fontSize");
 
       // Check if lineHeight exists and has a value
-      const hasLineHeight =
-        lineHeight instanceof NumberSymbol && lineHeight.value !== null;
-      
+      const hasLineHeight = lineHeight instanceof NumberSymbol && lineHeight.value !== null;
+
       // Check if fontSize exists and has a value (or is missing/null)
-      const hasFontSize =
-        fontSize instanceof NumberSymbol && fontSize.value !== null;
+      const hasFontSize = fontSize instanceof NumberSymbol && fontSize.value !== null;
 
       if (hasLineHeight && !hasFontSize) {
         issues.push(
@@ -476,12 +458,7 @@ describe("TokenSymbol Validation", () => {
       }
 
       // Cross-field validation: fontSize and lineHeight relationship
-      if (
-        fontSize instanceof NumberSymbol &&
-        lineHeight instanceof NumberSymbol &&
-        fontSize.value !== null &&
-        lineHeight.value !== null
-      ) {
+      if (fontSize instanceof NumberSymbol && lineHeight instanceof NumberSymbol && fontSize.value !== null && lineHeight.value !== null) {
         const absoluteLineHeight = lineHeight.value * fontSize.value;
         if (absoluteLineHeight < fontSize.value) {
           issues.push(
@@ -516,9 +493,7 @@ describe("TokenSymbol Validation", () => {
         ],
       ]);
 
-      const linter = new LintRunner().addRule(
-        new TypeBasedRule().forType("typography", crossFieldValidator),
-      );
+      const linter = new LintRunner().addRule(new TypeBasedRule().forType("typography", crossFieldValidator));
       const result = processTokens(tokens, { linter });
 
       const issues = result.lint?.get("text");
@@ -539,9 +514,7 @@ describe("TokenSymbol Validation", () => {
         ],
       ]);
 
-      const linter = new LintRunner().addRule(
-        new TypeBasedRule().forType("typography", crossFieldValidator),
-      );
+      const linter = new LintRunner().addRule(new TypeBasedRule().forType("typography", crossFieldValidator));
       const result = processTokens(tokens, { linter });
 
       const issues = result.lint?.get("tight-text");
@@ -614,9 +587,7 @@ describe("TokenSymbol Validation", () => {
         ],
       ]);
 
-      const linter = new LintRunner().addRule(
-        new TypeBasedRule().forType("typography", mixedFieldValidator),
-      );
+      const linter = new LintRunner().addRule(new TypeBasedRule().forType("typography", mixedFieldValidator));
       const result = processTokens(tokens, { linter });
 
       // Should resolve without errors
@@ -758,9 +729,7 @@ describe("TokenSymbol Validation", () => {
         ],
       ]);
 
-      const linter = new LintRunner().addRule(
-        new TypeBasedRule().forType("typography", attributeValidator),
-      );
+      const linter = new LintRunner().addRule(new TypeBasedRule().forType("typography", attributeValidator));
       const result = processTokens(tokens, { linter });
 
       const token = result.resolved.get("text");
