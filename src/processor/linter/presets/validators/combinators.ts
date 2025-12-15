@@ -4,32 +4,8 @@ import type { ISymbolType } from "@src/types";
 import type { LintIssue } from "../../types";
 import { LintSeverity } from "../../types";
 import { ValidatorCode } from "../codes";
-import type {
-  FieldDef,
-  ListOptions,
-  StructOptions,
-  ValidatorContext,
-  ValueValidator,
-} from "../types";
-
-/**
- * Creates a LintIssue from validation context.
- */
-function issue(
-  ctx: ValidatorContext,
-  code: ValidatorCode,
-  message: string,
-  data?: Record<string, unknown>,
-): LintIssue {
-  return {
-    code,
-    severity: ctx.severity,
-    message,
-    tokenName: ctx.tokenName,
-    path: ctx.path.length > 0 ? [...ctx.path] : undefined,
-    data,
-  };
-}
+import type { FieldDef, ListOptions, StructOptions, ValueValidator } from "../types";
+import { issue } from "./issue";
 
 /**
  * Collects issues from a validation result into an array.
@@ -353,4 +329,37 @@ export function struct(
  */
 export function arrayOf(itemValidator: ValueValidator): ValueValidator {
   return list(itemValidator, { minCount: 1 });
+}
+
+/**
+ * Intersection validator - value must pass ALL validators.
+ * Collects issues from all validators that fail.
+ *
+ * Use this to compose validators, e.g., combining a CSS base validator
+ * with application-specific validation.
+ *
+ * @example
+ * // Combine CSS border-radius with custom Penpot validation
+ * all(css.borderRadius, customPenpotValidator)
+ *
+ * // Multiple constraints
+ * all(
+ *   number({ min: 0 }),
+ *   customSafeIntValidator,
+ *   customAllowedUnitsValidator
+ * )
+ */
+export function all(...validators: ValueValidator[]): ValueValidator {
+  return (value, ctx) => {
+    if (value instanceof NullSymbol) return null;
+
+    const issues: LintIssue[] = [];
+
+    for (const validator of validators) {
+      const result = validator(value, ctx);
+      issues.push(...collectIssues(result));
+    }
+
+    return issues.length > 0 ? issues : null;
+  };
 }

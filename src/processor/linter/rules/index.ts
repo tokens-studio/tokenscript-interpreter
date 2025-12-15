@@ -1,2 +1,6 @@
 export { BaseLintRule } from "./base";
-export { type TokenTypeValidator, TypeBasedRule } from "./TypeBasedRule";
+export {
+  type TokenTypeValidator,
+  type TokenTypeValidatorMap,
+  TypeBasedRule,
+} from "./TypeBasedRule";

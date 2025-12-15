@@ -1,4 +1,6 @@
 export { letterSpacing, letterSpacingValidator } from "./letter-spacing";
+// LintRunner factory
+export { createLintRunner, rules } from "./rules";
 export { shadow, shadowSingle, shadowSingleValidator, shadowValidator } from "./shadow";
 export { strokeWidth, strokeWidthValidator } from "./stroke-width";
 export {

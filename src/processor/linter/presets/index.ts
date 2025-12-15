@@ -17,7 +17,7 @@ export type {
   ValidatorContext,
   ValueValidator,
 } from "./types";
-export { arrayOf, list, oneOrList, or, struct } from "./validators/combinators";
+export { all, arrayOf, list, oneOrList, or, struct } from "./validators/combinators";
 export { createValidator } from "./validators/create";
 export { boolean, color, number, string } from "./validators/primitives";
 export { numberWithUnit } from "./validators/unit";

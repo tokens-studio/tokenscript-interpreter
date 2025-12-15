@@ -13,6 +13,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Validators can now return issues with `path: ["fieldName"]` to identify specific fields
   - Supports arrays with paths like `[0, "blur"]` for box-shadow tokens
 
+- **CSS and Penpot preset validators** - Pre-built validation rules for standard token types
+  - `css.createLintRunner()` - Standards-compliant CSS validators (opacity, fontWeight, borderRadius, boxShadow, etc.)
+  - `penpot.createLintRunner()` - Penpot-specific validators extending CSS rules (typography, shadow, strokeWidth, letterSpacing)
+  - Composable primitive validators: `number()`, `string()`, `boolean()`, `color()`, `numberWithUnit()`
+  - Combinator validators: `or()`, `oneOrList()`, `list()`, `struct()`, `arrayOf()`, `all()`
+  - `ValidatorCode` enum for type-safe error codes
+
+- **LintRunner extension API** - New `.extend()` method for composing and overriding validators
+  - Enables creating custom rule sets by extending CSS or Penpot presets
+  - Supports validator composition with `all()` combinator for running multiple validators
+  - Immutable - returns new LintRunner instance preserving original
+  - Example: `css.createLintRunner().extend({ opacity: customValidator })`
+
+- **ValueValidator system** - Low-level validation primitives for building custom validators
+  - `createValidator()` wrapper converts ValueValidator to TokenTypeValidator
+  - Context-aware validation with `ValidatorContext` (tokenName, path, severity)
+  - Structured error reporting with `issue()` helper function
+
 ### Changed
 
 - **Linter API improvements** - Simplified `CreateIssueFn` signature to accept full `LintIssue` object instead of individual parameters

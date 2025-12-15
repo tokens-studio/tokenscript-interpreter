@@ -2,15 +2,100 @@
 
 The linter validates token values based on their types. It runs after token resolution and returns structured issues organized by token path.
 
-## Using Preset Validators
+## Quick Start: Pre-built Rulesets
 
-The easiest way to add validation is using the built-in preset validators:
+The fastest way to add validation is using a pre-built ruleset:
+
+```typescript
+import { css } from "@tokenscript/processor/linter";
+import { processTokens } from "@tokenscript/processor";
+
+// Use all CSS spec-compliant validators
+const linter = css.createLintRunner();
+
+const result = processTokens(tokens, { linter });
+```
+
+## Extending Rulesets
+
+Use `extend()` to add, override, or compose validators:
+
+```typescript
+import { css, penpot, all, createValidator, number } from "@tokenscript/processor/linter";
+
+// Start with CSS rules, add custom validators
+const linter = css.createLintRunner().extend({
+  // Override: replace the opacity validator
+  opacity: createValidator(number({ min: 0, max: 0.9 })),
+  
+  // Add: new token type not in CSS
+  "stroke-width": penpot.strokeWidthValidator,
+  
+  // Compose: run CSS validator + custom validator
+  "border-radius": createValidator(
+    all(css.borderRadius, customBorderRadiusValidator)
+  ),
+});
+```
+
+### The `all()` Combinator
+
+Use `all()` to run multiple validators on the same value. All validators run, and all issues are collected:
+
+```typescript
+import { all, number, createValidator } from "@tokenscript/processor/linter";
+
+// Custom validator that only allows integers
+const integerOnly = (value, ctx) => {
+  if (value instanceof NumberSymbol && !Number.isInteger(value.value)) {
+    return {
+      code: "NOT_INTEGER",
+      severity: ctx.severity,
+      message: "Value must be an integer",
+      tokenName: ctx.tokenName,
+    };
+  }
+  return null;
+};
+
+// Combine range constraint with integer constraint
+const integerInRange = all(
+  number({ min: 0, max: 100 }),
+  integerOnly
+);
+
+const linter = css.createLintRunner().extend({
+  "z-index": createValidator(integerInRange),
+});
+```
+
+### Chained Extensions
+
+Extensions can be chained:
+
+```typescript
+const baseRules = css.createLintRunner();
+
+const appRules = baseRules.extend({
+  "custom-type-a": validatorA,
+});
+
+const teamRules = appRules.extend({
+  "custom-type-b": validatorB,
+});
+
+// teamRules has CSS + custom-type-a + custom-type-b
+```
+
+## Using Individual Validators
+
+For fine-grained control, build your own `TypeBasedRule`:
 
 ```typescript
 import { LintRunner, TypeBasedRule, css, penpot } from "@tokenscript/processor/linter";
 import { processTokens } from "@tokenscript/processor";
 
-// Use CSS spec-compliant validators
+// Pick specific validators
 const linter = new LintRunner().addRule(
   new TypeBasedRule()
     .forType("opacity", css.opacityValidator)
@@ -37,15 +122,6 @@ const result = processTokens(tokens, { linter });
 | `css.length`             | Length with unit (px, em, rem, etc.) or unitless 0        |
 | `css.lengthPercentage`   | Length or percentage                                      |
 | `css.boxShadow`          | Array of shadow objects                                   |
-
-### Available Penpot Presets
-
-| Validator              | Description                                                                                      |
-|------------------------|--------------------------------------------------------------------------------------------------|
-| `penpot.strokeWidth`   | Non-negative number/dimension (no %)                                                             |
-| `penpot.letterSpacing` | Number or dimension (no %)                                                                       |
-| `penpot.typography`    | Composite: fontSize, fontFamily, fontWeight, lineHeight, letterSpacing, textCase, textDecoration |
-| `penpot.shadow`        | Array of shadows with non-negative blur/spread                                                   |
 
 ### Composing Custom Validators
 

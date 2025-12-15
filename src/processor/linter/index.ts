@@ -1,7 +1,12 @@
 export { LintRunner } from "./LintRunner";
 // Presets
 export * from "./presets";
-export { BaseLintRule, type TokenTypeValidator, TypeBasedRule } from "./rules";
+export {
+  BaseLintRule,
+  type TokenTypeValidator,
+  type TokenTypeValidatorMap,
+  TypeBasedRule,
+} from "./rules";
 export type {
   CreateIssueFn,
   LintConfig,

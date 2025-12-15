@@ -1,26 +1,7 @@
 import { NullSymbol, NumberSymbol, NumberWithUnitSymbol } from "@interpreter/symbols";
-import type { LintIssue } from "../../types";
 import { ValidatorCode } from "../codes";
-import type { UnitConstraints, ValidatorContext, ValueValidator } from "../types";
-
-/**
- * Creates a LintIssue from validation context.
- */
-function issue(
-  ctx: ValidatorContext,
-  code: ValidatorCode,
-  message: string,
-  data?: Record<string, unknown>,
-): LintIssue {
-  return {
-    code,
-    severity: ctx.severity,
-    message,
-    tokenName: ctx.tokenName,
-    path: ctx.path.length > 0 ? [...ctx.path] : undefined,
-    data,
-  };
-}
+import type { UnitConstraints, ValueValidator } from "../types";
+import { issue } from "./issue";
 
 /**
  * Validates NumberWithUnitSymbol or plain NumberSymbol with unit and value constraints.

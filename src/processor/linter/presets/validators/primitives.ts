@@ -5,33 +5,9 @@ import {
   NumberSymbol,
   StringSymbol,
 } from "@interpreter/symbols";
-import type { LintIssue } from "../../types";
 import { ValidatorCode } from "../codes";
-import type {
-  NumericConstraints,
-  StringConstraints,
-  ValidatorContext,
-  ValueValidator,
-} from "../types";
-
-/**
- * Creates a LintIssue from validation context.
- */
-function issue(
-  ctx: ValidatorContext,
-  code: ValidatorCode,
-  message: string,
-  data?: Record<string, unknown>,
-): LintIssue {
-  return {
-    code,
-    severity: ctx.severity,
-    message,
-    tokenName: ctx.tokenName,
-    path: ctx.path.length > 0 ? [...ctx.path] : undefined,
-    data,
-  };
-}
+import type { NumericConstraints, StringConstraints, ValueValidator } from "../types";
+import { issue } from "./issue";
 
 /**
  * Validates NumberSymbol with optional min/max constraints.
