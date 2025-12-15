@@ -1,4 +1,6 @@
 import * as fs from "node:fs";
+import { evaluateExpression } from "./lib/eval";
+import type { ProcessorOutput } from "./processor";
 import { FlatObjectBuilder, NestedObjectBuilder } from "./processor/builders";
 import { stringifyAsJson } from "./processor/builders/base";
 import { collectErrors } from "./processor/errors";
@@ -7,10 +9,8 @@ import {
   normalizeJsonFiles,
   processTokensFromFiles,
 } from "./processor/processFiles";
-import type { ProcessorOutput } from "./processor";
 import type { Theme } from "./processor/utils/theme-resolver";
 import { extractSetNames, resolveThemes } from "./processor/utils/theme-resolver";
-import { evaluateExpression } from "./lib/eval";
 import type { ReferenceRecord } from "./types";
 import { readStdin } from "./utils/io";
 import { fetchAndRegisterSchemas } from "./utils/schema-fetcher";
@@ -43,7 +43,7 @@ export function printCliResult<T>(result: CliResult<T>): void {
   if (result.errors) {
     try {
       console.error(JSON.stringify({ errors: result.errors }, null, 2));
-    } catch (e) {
+    } catch (_e) {
       console.error("Failed to serialize errors:", result.errors);
     }
   }
@@ -51,7 +51,8 @@ export function printCliResult<T>(result: CliResult<T>): void {
   // Print data to stdout
   if (result.data !== undefined) {
     try {
-      const output = typeof result.data === "string" ? result.data : JSON.stringify(result.data, null, 2);
+      const output =
+        typeof result.data === "string" ? result.data : JSON.stringify(result.data, null, 2);
       console.log(output);
     } catch (e) {
       console.error("Failed to serialize output:", e instanceof Error ? e.message : String(e));
@@ -93,8 +94,7 @@ export async function handleProcessCommand(
 ): Promise<CliResult<ProcessCommandData>> {
   try {
     // Select builder based on format option
-    const builder =
-      options.format === "flat" ? new FlatObjectBuilder() : new NestedObjectBuilder();
+    const builder = options.format === "flat" ? new FlatObjectBuilder() : new NestedObjectBuilder();
 
     const processorResult = await processTokensFromFiles({
       path: options.input,

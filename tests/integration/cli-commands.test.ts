@@ -224,9 +224,7 @@ describe("CLI Commands Integration Tests", () => {
 
       expect(result.exitCode).toBe(0);
       expect(result.data).toBeDefined();
-      expect(result.data!.sets).toEqual(
-        expect.arrayContaining(["core", "semantic"]),
-      );
+      expect(result.data!.sets).toEqual(expect.arrayContaining(["core", "semantic"]));
     });
 
     it("should list available themes", async () => {
@@ -291,9 +289,7 @@ describe("CLI Commands Integration Tests", () => {
       expect(result.exitCode).toBe(0);
       expect(result.data).toBeDefined();
       expect(result.data!.themes).toBeDefined();
-      expect(result.data!.themes!.Default).toEqual(
-        expect.arrayContaining(["core", "semantic"]),
-      );
+      expect(result.data!.themes!.Default).toEqual(expect.arrayContaining(["core", "semantic"]));
     });
   });
 

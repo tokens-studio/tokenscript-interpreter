@@ -1,18 +1,10 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import type { EvalCommandOptions, ProcessCommandOptions } from "@src/cli-handlers";
+import { handleEvalCommand, handleInspectCommand, handleProcessCommand } from "@src/cli-handlers";
 import type { ProcessorOutput } from "@src/processor";
 import { StringMapBuilder } from "@src/processor";
 import { processTokensFromFiles } from "@src/processor/processFiles";
-import type {
-  InspectCommandOptions,
-  ProcessCommandOptions,
-  EvalCommandOptions,
-} from "@src/cli-handlers";
-import {
-  handleInspectCommand,
-  handleProcessCommand,
-  handleEvalCommand,
-} from "@src/cli-handlers";
 
 export interface TokenFile {
   [key: string]: any;
