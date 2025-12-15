@@ -1,6 +1,6 @@
 import { oneOrList } from "../validators/combinators";
 import { createValidator } from "../validators/create";
-import { lengthPercentageNonNegative } from "./length-percentage";
+import { lengthPercentageNonNegative } from "./utils/length-percentage";
 
 /**
  * CSS border-radius: <length-percentage>{1,4}

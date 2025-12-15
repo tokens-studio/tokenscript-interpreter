@@ -5,12 +5,12 @@ import { borderRadiusValidator } from "./border-radius";
 import { boxShadowValidator } from "./box-shadow";
 import { fontFamilyValidator } from "./font-family";
 import { fontWeightValidator } from "./font-weight";
-import { lengthNonNegativeValidator } from "./length";
 import { letterSpacingValidator } from "./letter-spacing";
 import { lineHeightValidator } from "./line-height";
 import { opacityValidator } from "./opacity";
 import { textDecorationLineValidator } from "./text-decoration";
 import { textTransformValidator } from "./text-transform";
+import { lengthNonNegativeValidator } from "./utils/length";
 
 /**
  * CSS token type to validator mapping.

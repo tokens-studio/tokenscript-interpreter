@@ -1,5 +1,5 @@
-import { or } from "../validators/combinators";
-import { createValidator } from "../validators/create";
+import { or } from "../../validators/combinators";
+import { createValidator } from "../../validators/create";
 import { length, lengthNonNegative } from "./length";
 import { percentage, percentageNonNegative } from "./percentage";
 

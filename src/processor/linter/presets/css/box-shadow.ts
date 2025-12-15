@@ -1,7 +1,7 @@
 import { list, struct } from "../validators/combinators";
 import { createValidator } from "../validators/create";
 import { boolean, color } from "../validators/primitives";
-import { length } from "./length";
+import { length } from "./utils/length";
 
 /**
  * Single CSS box-shadow value

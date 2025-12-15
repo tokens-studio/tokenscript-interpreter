@@ -1,7 +1,7 @@
-import { or } from "../validators/combinators";
-import { createValidator } from "../validators/create";
-import { number } from "../validators/primitives";
-import { numberWithUnit } from "../validators/unit";
+import { or } from "../../validators/combinators";
+import { createValidator } from "../../validators/create";
+import { number } from "../../validators/primitives";
+import { numberWithUnit } from "../../validators/unit";
 
 /**
  * CSS <length> units

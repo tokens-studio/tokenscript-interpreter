@@ -1,5 +1,5 @@
-import { createValidator } from "../validators/create";
-import { numberWithUnit } from "../validators/unit";
+import { createValidator } from "../../validators/create";
+import { numberWithUnit } from "../../validators/unit";
 
 /**
  * CSS <percentage>

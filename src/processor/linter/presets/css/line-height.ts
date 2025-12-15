@@ -1,7 +1,7 @@
 import { or } from "../validators/combinators";
 import { createValidator } from "../validators/create";
 import { number, string } from "../validators/primitives";
-import { lengthPercentageNonNegative } from "./length-percentage";
+import { lengthPercentageNonNegative } from "./utils/length-percentage";
 
 /**
  * CSS line-height: normal | <number> | <length> | <percentage>

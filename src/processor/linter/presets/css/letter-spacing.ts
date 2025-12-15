@@ -1,7 +1,7 @@
 import { or } from "../validators/combinators";
 import { createValidator } from "../validators/create";
 import { string } from "../validators/primitives";
-import { length } from "./length";
+import { length } from "./utils/length";
 
 /**
  * CSS letter-spacing: normal | <length>
