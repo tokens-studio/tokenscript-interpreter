@@ -18,6 +18,8 @@ function collectIssues(result: LintIssue | LintIssue[] | null): LintIssue[] {
 /**
  * Union validator - value must match at least one validator.
  *
+ * Returns the first validation error encountered when none of the validators match.
+ *
  * @example
  * // font-weight: number 1-1000 OR keywords
  * or(
@@ -32,23 +34,19 @@ export function or(...validators: ValueValidator[]): ValueValidator {
   return (value, ctx) => {
     if (value instanceof NullSymbol) return null;
 
-    const errors: LintIssue[] = [];
+    let firstError: LintIssue | LintIssue[] | null = null;
 
     for (const validator of validators) {
       const result = validator(value, ctx);
       if (result === null) {
         return null;
       }
-      const issues = collectIssues(result);
-      if (issues.length > 0) {
-        errors.push(issues[0]);
+      if (firstError === null) {
+        firstError = result;
       }
     }
 
-    return issue(ctx, ValidatorCode.NO_VALIDATOR_MATCHED, "Value did not match any expected type", {
-      attemptedValidators: validators.length,
-      errors: errors.map((e) => e.code),
-    });
+    return firstError;
   };
 }
 

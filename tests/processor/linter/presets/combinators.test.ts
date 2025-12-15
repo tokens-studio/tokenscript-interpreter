@@ -27,7 +27,7 @@ describe("Combinators", () => {
       const validator = or(number({ min: 0 }), string({ allowedValues: ["a", "b"] }));
       const result = validator(new NumberSymbol(-5), ctx);
       expect(result).not.toBeNull();
-      expect(result?.code).toBe(ValidatorCode.NO_VALIDATOR_MATCHED);
+      expect(result?.code).toBe(ValidatorCode.VALUE_TOO_SMALL);
     });
 
     it("should work with complex union (font-weight style)", () => {
@@ -38,8 +38,8 @@ describe("Combinators", () => {
       expect(fontWeight(new StringSymbol("bold"), ctx)).toBeNull();
       expect(fontWeight(new StringSymbol("normal"), ctx)).toBeNull();
 
-      expect(fontWeight(new NumberSymbol(0), ctx)?.code).toBe(ValidatorCode.NO_VALIDATOR_MATCHED);
-      expect(fontWeight(new StringSymbol("invalid"), ctx)?.code).toBe(ValidatorCode.NO_VALIDATOR_MATCHED);
+      expect(fontWeight(new NumberSymbol(0), ctx)?.code).toBe(ValidatorCode.VALUE_TOO_SMALL);
+      expect(fontWeight(new StringSymbol("invalid"), ctx)?.code).toBe(ValidatorCode.EXPECTED_NUMBER);
     });
   });
 

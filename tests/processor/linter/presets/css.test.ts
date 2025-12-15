@@ -49,9 +49,9 @@ describe("CSS Presets", () => {
     });
 
     it("should reject invalid values", () => {
-      expect(css.fontWeight(new NumberSymbol(0), ctx)?.code).toBe(ValidatorCode.NO_VALIDATOR_MATCHED);
-      expect(css.fontWeight(new NumberSymbol(1001), ctx)?.code).toBe(ValidatorCode.NO_VALIDATOR_MATCHED);
-      expect(css.fontWeight(new StringSymbol("invalid"), ctx)?.code).toBe(ValidatorCode.NO_VALIDATOR_MATCHED);
+      expect(css.fontWeight(new NumberSymbol(0), ctx)?.code).toBe(ValidatorCode.VALUE_TOO_SMALL);
+      expect(css.fontWeight(new NumberSymbol(1001), ctx)?.code).toBe(ValidatorCode.VALUE_TOO_LARGE);
+      expect(css.fontWeight(new StringSymbol("invalid"), ctx)?.code).toBe(ValidatorCode.EXPECTED_NUMBER);
     });
   });
 
@@ -68,7 +68,7 @@ describe("CSS Presets", () => {
 
     it("should reject empty list", () => {
       const emptyList = new ListSymbol([]);
-      expect(css.fontFamily(emptyList, ctx)?.code).toBe(ValidatorCode.NO_VALIDATOR_MATCHED);
+      expect(css.fontFamily(emptyList, ctx)?.code).toBe(ValidatorCode.EXPECTED_STRING);
     });
   });
 
@@ -111,11 +111,11 @@ describe("CSS Presets", () => {
     });
 
     it("should reject non-zero unitless values", () => {
-      expect(css.length(new NumberSymbol(10), ctx)?.code).toBe(ValidatorCode.NO_VALIDATOR_MATCHED);
+      expect(css.length(new NumberSymbol(10), ctx)?.code).toBe(ValidatorCode.VALUE_TOO_LARGE);
     });
 
     it("should reject percentage", () => {
-      expect(css.length(new NumberWithUnitSymbol(50, "%"), ctx)?.code).toBe(ValidatorCode.NO_VALIDATOR_MATCHED);
+      expect(css.length(new NumberWithUnitSymbol(50, "%"), ctx)?.code).toBe(ValidatorCode.EXPECTED_NUMBER);
     });
   });
 
@@ -166,7 +166,7 @@ describe("CSS Presets", () => {
     });
 
     it("should reject negative values", () => {
-      expect(css.borderRadius(new NumberWithUnitSymbol(-10, "px"), ctx)?.code).toBe(ValidatorCode.NO_VALIDATOR_MATCHED);
+      expect(css.borderRadius(new NumberWithUnitSymbol(-10, "px"), ctx)?.code).toBe(ValidatorCode.EXPECTED_NUMBER);
     });
   });
 
@@ -182,7 +182,7 @@ describe("CSS Presets", () => {
     });
 
     it("should reject percentage", () => {
-      expect(css.letterSpacing(new NumberWithUnitSymbol(10, "%"), ctx)?.code).toBe(ValidatorCode.NO_VALIDATOR_MATCHED);
+      expect(css.letterSpacing(new NumberWithUnitSymbol(10, "%"), ctx)?.code).toBe(ValidatorCode.EXPECTED_STRING);
     });
   });
 
@@ -206,7 +206,7 @@ describe("CSS Presets", () => {
     });
 
     it("should reject negative values", () => {
-      expect(css.lineHeight(new NumberSymbol(-1), ctx)?.code).toBe(ValidatorCode.NO_VALIDATOR_MATCHED);
+      expect(css.lineHeight(new NumberSymbol(-1), ctx)?.code).toBe(ValidatorCode.EXPECTED_STRING);
     });
   });
 

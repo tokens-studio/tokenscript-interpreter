@@ -26,9 +26,6 @@ export enum ValidatorCode {
   // List constraint errors
   LIST_LENGTH_INVALID = "LIST_LENGTH_INVALID",
 
-  // Union/or errors
-  NO_VALIDATOR_MATCHED = "NO_VALIDATOR_MATCHED",
-
   // Struct errors
   REQUIRED_FIELD_MISSING = "REQUIRED_FIELD_MISSING",
   FIELD_MISSING = "FIELD_MISSING",

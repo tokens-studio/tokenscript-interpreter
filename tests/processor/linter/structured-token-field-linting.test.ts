@@ -36,8 +36,8 @@ describe("Structured Token Field-Level Linting", () => {
 
       const issues = result.lint?.get("heading");
       expect(issues).toHaveLength(1);
-      // fontSize uses or(number, numberWithUnit), so when both fail, we get NO_VALIDATOR_MATCHED
-      expect(issues?.[0].code).toBe(ValidatorCode.NO_VALIDATOR_MATCHED);
+      // fontSize uses or(number, numberWithUnit), returns the first error
+      expect(issues?.[0].code).toBe(ValidatorCode.VALUE_TOO_SMALL);
       expect(issues?.[0].path).toEqual(["fontSize"]);
     });
 
@@ -63,7 +63,7 @@ describe("Structured Token Field-Level Linting", () => {
       expect(issues).toHaveLength(3);
 
       const fontSizeIssue = issues?.find((i) => i.path?.[0] === "fontSize");
-      expect(fontSizeIssue?.code).toBe(ValidatorCode.NO_VALIDATOR_MATCHED);
+      expect(fontSizeIssue?.code).toBe(ValidatorCode.VALUE_TOO_SMALL);
 
       const lineHeightIssue = issues?.find((i) => i.path?.[0] === "lineHeight");
       expect(lineHeightIssue?.code).toBe(ValidatorCode.VALUE_TOO_SMALL);
@@ -165,8 +165,8 @@ describe("Structured Token Field-Level Linting", () => {
 
       const issues = result.lint?.get("card-shadow");
       expect(issues).toHaveLength(1);
-      // blur uses or(number, numberWithUnit), so when both fail, we get NO_VALIDATOR_MATCHED
-      expect(issues?.[0].code).toBe(ValidatorCode.NO_VALIDATOR_MATCHED);
+      // blur uses or(number, numberWithUnit), returns the first error
+      expect(issues?.[0].code).toBe(ValidatorCode.VALUE_TOO_SMALL);
       // Path includes array index and field name
       expect(issues?.[0].path).toEqual([0, "blur"]);
     });
@@ -258,7 +258,7 @@ describe("Structured Token Field-Level Linting", () => {
       const issues = result.lint?.get("heading");
       expect(issues).toHaveLength(1);
       // fontSize uses or(number, numberWithUnit)
-      expect(issues?.[0].code).toBe(ValidatorCode.NO_VALIDATOR_MATCHED);
+      expect(issues?.[0].code).toBe(ValidatorCode.VALUE_TOO_SMALL);
       expect(issues?.[0].path).toEqual(["fontSize"]);
     });
 
@@ -285,7 +285,7 @@ describe("Structured Token Field-Level Linting", () => {
       const issues = result.lint?.get("shadow");
       expect(issues).toHaveLength(1);
       // blur uses or(number, numberWithUnit)
-      expect(issues?.[0].code).toBe(ValidatorCode.NO_VALIDATOR_MATCHED);
+      expect(issues?.[0].code).toBe(ValidatorCode.VALUE_TOO_SMALL);
       expect(issues?.[0].path).toEqual([0, "blur"]);
     });
   });
@@ -316,7 +316,7 @@ describe("Structured Token Field-Level Linting", () => {
         const issues = result.lintIssues?.get("heading");
         expect(issues?.[0].path).toEqual(["fontSize"]);
         // fontSize uses or(number, numberWithUnit)
-        expect(issues?.[0].code).toBe(ValidatorCode.NO_VALIDATOR_MATCHED);
+        expect(issues?.[0].code).toBe(ValidatorCode.VALUE_TOO_SMALL);
       });
 
       it("should return no lint issues for valid structured token", () => {
@@ -375,9 +375,10 @@ describe("Structured Token Field-Level Linting", () => {
         expect(result.lintIssues?.has("heading")).toBe(true);
 
         const issues = result.lintIssues?.get("heading");
-        expect(issues?.[0].path).toEqual(["fontSize"]);
+        const fontSizeIssue = issues?.find((i) => i.path?.[0] === "fontSize");
+        expect(fontSizeIssue?.path).toEqual(["fontSize"]);
         // fontSize uses or(number, numberWithUnit)
-        expect(issues?.[0].code).toBe(ValidatorCode.NO_VALIDATOR_MATCHED);
+        expect(fontSizeIssue?.code).toBe(ValidatorCode.VALUE_TOO_SMALL);
       });
 
       it("should clear lint issues when updating to valid values", () => {

@@ -25,12 +25,12 @@ describe("Penpot Presets", () => {
     });
 
     it("should reject negative values", () => {
-      expect(penpot.strokeWidth(new NumberSymbol(-1), ctx)?.code).toBe(ValidatorCode.NO_VALIDATOR_MATCHED);
-      expect(penpot.strokeWidth(new NumberWithUnitSymbol(-1, "px"), ctx)?.code).toBe(ValidatorCode.NO_VALIDATOR_MATCHED);
+      expect(penpot.strokeWidth(new NumberSymbol(-1), ctx)?.code).toBe(ValidatorCode.VALUE_TOO_SMALL);
+      expect(penpot.strokeWidth(new NumberWithUnitSymbol(-1, "px"), ctx)?.code).toBe(ValidatorCode.EXPECTED_NUMBER);
     });
 
     it("should reject percentage", () => {
-      expect(penpot.strokeWidth(new NumberWithUnitSymbol(10, "%"), ctx)?.code).toBe(ValidatorCode.NO_VALIDATOR_MATCHED);
+      expect(penpot.strokeWidth(new NumberWithUnitSymbol(10, "%"), ctx)?.code).toBe(ValidatorCode.EXPECTED_NUMBER);
     });
   });
 
@@ -47,7 +47,7 @@ describe("Penpot Presets", () => {
     });
 
     it("should reject percentage", () => {
-      expect(penpot.letterSpacing(new NumberWithUnitSymbol(10, "%"), ctx)?.code).toBe(ValidatorCode.NO_VALIDATOR_MATCHED);
+      expect(penpot.letterSpacing(new NumberWithUnitSymbol(10, "%"), ctx)?.code).toBe(ValidatorCode.EXPECTED_NUMBER);
     });
   });
 
@@ -89,7 +89,7 @@ describe("Penpot Presets", () => {
     });
 
     it("should reject negative values", () => {
-      expect(penpot.fontSize(new NumberSymbol(-16), ctx)?.code).toBe(ValidatorCode.NO_VALIDATOR_MATCHED);
+      expect(penpot.fontSize(new NumberSymbol(-16), ctx)?.code).toBe(ValidatorCode.VALUE_TOO_SMALL);
     });
   });
 

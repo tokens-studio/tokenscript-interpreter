@@ -29,9 +29,9 @@ describe("LintRunner extension", () => {
       });
 
       // border-radius uses lengthPercentageNonNegative which uses or() combinator
-      // so it returns NO_VALIDATOR_MATCHED when value doesn't match any option
+      // Returns the first error from the first validator that fails
       expect(issues).toHaveLength(1);
-      expect(issues[0].code).toBe(ValidatorCode.NO_VALIDATOR_MATCHED);
+      expect(issues[0].code).toBe(ValidatorCode.VALUE_TOO_SMALL);
     });
   });
 
@@ -59,7 +59,7 @@ describe("LintRunner extension", () => {
       });
 
       expect(strokeIssues).toHaveLength(1);
-      expect(strokeIssues[0].code).toBe(ValidatorCode.NO_VALIDATOR_MATCHED);
+      expect(strokeIssues[0].code).toBe(ValidatorCode.VALUE_TOO_SMALL);
     });
   });
 
