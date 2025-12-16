@@ -92,17 +92,8 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
     }
   }
 
-  let tokensMap = tokensMapBuilder.getResult();
+  const tokensMap = tokensMapBuilder.getResult();
   const builderOutput = builder.getResult();
-
-  // Filter out sub-field paths from both outputs
-  if (result.subFieldPaths && result.subFieldPaths.size > 0) {
-    tokensMap = new Map(tokensMap);
-    for (const subFieldPath of result.subFieldPaths) {
-      tokensMap.delete(subFieldPath);
-    }
-  }
-
   const issues = result.issues;
 
   return {

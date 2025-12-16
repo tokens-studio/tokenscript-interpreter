@@ -24,13 +24,6 @@ describe("Structured Tokens - Field-Level Error Information", () => {
 
       const result = processor.processTokens(tokens);
 
-      // Check sub-field paths are tracked
-      expect(result.subFieldPaths).toBeDefined();
-      expect(result.subFieldPaths?.has("shadow.offsetX")).toBe(true);
-      expect(result.subFieldPaths?.has("shadow.offsetY")).toBe(true);
-      expect(result.subFieldPaths?.has("shadow.blur")).toBe(true);
-      expect(result.subFieldPaths?.has("shadow.color")).toBe(true);
-
       // Check individual sub-field resolutions in result.resolved
       const offsetX = result.resolved.get("shadow.offsetX");
       const offsetY = result.resolved.get("shadow.offsetY");
@@ -78,16 +71,14 @@ describe("Structured Tokens - Field-Level Error Information", () => {
       // Build a field-level error map for form display
       const fieldErrors = new Map<string, Error>();
 
-      if (result.subFieldPaths) {
-        for (const subFieldPath of result.subFieldPaths) {
-          // Check if this sub-field belongs to our token
-          if (subFieldPath.startsWith("shadow.")) {
-            const fieldValue = result.resolved.get(subFieldPath);
-            if (fieldValue instanceof Error) {
-              // Extract just the field name (e.g., "offsetY" from "shadow.offsetY")
-              const fieldName = subFieldPath.substring("shadow.".length);
-              fieldErrors.set(fieldName, fieldValue);
-            }
+      // Check all possible sub-field paths in result.resolved
+      for (const [refPath, fieldValue] of result.resolved) {
+        // Check if this sub-field belongs to our token
+        if (refPath.startsWith("shadow.")) {
+          if (fieldValue instanceof Error) {
+            // Extract just the field name (e.g., "offsetY" from "shadow.offsetY")
+            const fieldName = refPath.substring("shadow.".length);
+            fieldErrors.set(fieldName, fieldValue);
           }
         }
       }
@@ -129,17 +120,14 @@ describe("Structured Tokens - Field-Level Error Information", () => {
       const resolvedFields = new Map<string, any>();
       const errorFields = new Map<string, Error>();
 
-      if (result.subFieldPaths) {
-        for (const subFieldPath of result.subFieldPaths) {
-          if (subFieldPath.startsWith("shadow.")) {
-            const fieldValue = result.resolved.get(subFieldPath);
-            const fieldName = subFieldPath.substring("shadow.".length);
+      for (const [subFieldPath, fieldValue] of result.resolved) {
+        if (subFieldPath.startsWith("shadow.")) {
+          const fieldName = subFieldPath.substring("shadow.".length);
 
-            if (fieldValue instanceof Error) {
-              errorFields.set(fieldName, fieldValue);
-            } else if (fieldValue) {
-              resolvedFields.set(fieldName, fieldValue.value);
-            }
+          if (fieldValue instanceof Error) {
+            errorFields.set(fieldName, fieldValue);
+          } else if (fieldValue) {
+            resolvedFields.set(fieldName, fieldValue.value);
           }
         }
       }
@@ -185,17 +173,14 @@ describe("Structured Tokens - Field-Level Error Information", () => {
 
       const fieldResults = new Map<string, { value?: any; error?: Error }>();
 
-      if (result.subFieldPaths) {
-        for (const subFieldPath of result.subFieldPaths) {
-          if (subFieldPath.startsWith("typography.")) {
-            const fieldValue = result.resolved.get(subFieldPath);
-            const fieldName = getFieldName(subFieldPath, "typography");
+      for (const [subFieldPath, fieldValue] of result.resolved) {
+        if (subFieldPath.startsWith("typography.")) {
+          const fieldName = getFieldName(subFieldPath, "typography");
 
-            if (fieldValue instanceof Error) {
-              fieldResults.set(fieldName, { error: fieldValue });
-            } else if (fieldValue) {
-              fieldResults.set(fieldName, { value: fieldValue.value });
-            }
+          if (fieldValue instanceof Error) {
+            fieldResults.set(fieldName, { error: fieldValue });
+          } else if (fieldValue) {
+            fieldResults.set(fieldName, { value: fieldValue.value });
           }
         }
       }
@@ -303,23 +288,20 @@ describe("Structured Tokens - Field-Level Error Information", () => {
       // Get validation state for all fields
       const fieldValidation = new Map<string, { valid: boolean; value?: any; error?: string }>();
 
-      if (result.subFieldPaths) {
-        for (const subFieldPath of result.subFieldPaths) {
-          if (subFieldPath.startsWith("shadow.card.")) {
-            const fieldValue = result.resolved.get(subFieldPath);
-            const fieldName = subFieldPath.substring("shadow.card.".length);
+      for (const [subFieldPath, fieldValue] of result.resolved) {
+        if (subFieldPath.startsWith("shadow.card.")) {
+          const fieldName = subFieldPath.substring("shadow.card.".length);
 
-            if (fieldValue instanceof Error) {
-              fieldValidation.set(fieldName, {
-                valid: false,
-                error: fieldValue.message,
-              });
-            } else if (fieldValue) {
-              fieldValidation.set(fieldName, {
-                valid: true,
-                value: fieldValue.value,
-              });
-            }
+          if (fieldValue instanceof Error) {
+            fieldValidation.set(fieldName, {
+              valid: false,
+              error: fieldValue.message,
+            });
+          } else if (fieldValue) {
+            fieldValidation.set(fieldName, {
+              valid: true,
+              value: fieldValue.value,
+            });
           }
         }
       }

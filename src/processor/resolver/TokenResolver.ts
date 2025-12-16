@@ -48,8 +48,6 @@ import type {
 export type ProcessorResult = {
   graph: DependencyGraph<RefPath>;
   resolved: TokenResultMap;
-  unresolved: UnresolvedTokenMap;
-  subFieldPaths?: Set<RefPath>;
   issues?: IssuesMap;
 };
 
@@ -358,8 +356,6 @@ class PrefixResolver {
     return {
       graph: this.graph,
       resolved: this.resolved,
-      unresolved: this.unresolved,
-      subFieldPaths: this.subFieldPaths,
       issues: this.issues.size > 0 ? this.issues : undefined,
     };
   }
@@ -375,6 +371,10 @@ class PrefixResolver {
 
   public getTokenInterpreter(): TokenInterpreter {
     return this.tokenInterpreter;
+  }
+
+  public getSubFieldPaths(): Set<RefPath> {
+    return this.subFieldPaths;
   }
 
   public clone(overrides: Partial<ResolverParams>): PrefixResolver {
@@ -1020,7 +1020,6 @@ export class TokenResolver {
     linter?: LintRunner,
   ): ProcessorOutput {
     const output: ResolvedValueMap = new Map();
-    let subFieldPaths: Set<RefPath> | undefined;
 
     const callbacks: ProcessorCallbacks = {
       onResolve: (tokenName, value) => {
@@ -1047,10 +1046,10 @@ export class TokenResolver {
     this.linter = linter;
 
     const result = this.prefixResolver.resolve();
-    subFieldPaths = result.subFieldPaths;
 
     // Filter out sub-field paths from output and issues
-    if (subFieldPaths && subFieldPaths.size > 0) {
+    const subFieldPaths = this.prefixResolver.getSubFieldPaths();
+    if (subFieldPaths.size > 0) {
       for (const subFieldPath of subFieldPaths) {
         output.delete(subFieldPath);
         result.issues?.delete(subFieldPath);
