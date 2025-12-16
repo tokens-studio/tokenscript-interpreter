@@ -843,10 +843,23 @@ class PrefixResolver {
       unresolvedTokens.push(tokenName);
     }
 
+    // Handle circular dependencies by adding them to issues instead of throwing
     if (unresolvedTokens.length > 0) {
-      throw new ProcessorError(ProcessorErrorCode.CIRCULAR_DEPENDENCY, {
-        data: { tokens: unresolvedTokens },
-      });
+      for (const tokenName of unresolvedTokens) {
+        const originalValue = this.tokens.get(tokenName);
+        if (originalValue === undefined) continue;
+
+        const tokenValueStr: string = String(getTokenValue(originalValue));
+        const circularError = new ProcessorError(ProcessorErrorCode.CIRCULAR_DEPENDENCY, {
+          data: { tokens: tokenName },
+        });
+        this.resolved.set(tokenName, circularError);
+        this.callbacks?.onError?.(tokenName, circularError, tokenValueStr);
+        this.addIssue(tokenName, circularError);
+        this.resolveVirtualChildren(tokenName, []);
+        this.notifyResolution(tokenName);
+        this.unresolved.delete(tokenName);
+      }
     }
   }
 }

@@ -287,12 +287,20 @@ describe("TokenResolver.createToken", () => {
     const { resolver } = new TokenResolver().build(allTokens);
 
     // Create token b that references a, creating a cycle
-    expect(() => {
-      resolver.createToken({
-        tokenPath: "b",
-        tokenData: { $value: "{a} + 1", $type: "dimension" },
-      });
-    }).toThrow("Circular dependency");
+    // Should return issues for circular dependency instead of throwing
+    const result = resolver.createToken({
+      tokenPath: "b",
+      tokenData: { $value: "{a} + 1", $type: "dimension" },
+    });
+
+    // Should have issues for tokens in the cycle
+    expect(result.issues).toBeDefined();
+
+    // Check that at least one token has a circular dependency error
+    const hasCircularError = Array.from(result.issues!.entries()).some(([_tokenName, issues]) =>
+      issues.some((issue) => "code" in issue && issue.code === ProcessorErrorCode.CIRCULAR_DEPENDENCY),
+    );
+    expect(hasCircularError).toBe(true);
   });
 
   it("should handle self-referencing token", () => {
@@ -300,12 +308,20 @@ describe("TokenResolver.createToken", () => {
 
     const { resolver } = new TokenResolver().build(allTokens);
 
-    // Creating a self-referencing token should cause circular dependency
-    expect(() => {
-      resolver.createToken({
-        tokenPath: "selfRef",
-        tokenData: { $value: "{selfRef}", $type: "dimension" },
-      });
-    }).toThrow("Circular dependency");
+    // Creating a self-referencing token should return circular dependency issue
+    const result = resolver.createToken({
+      tokenPath: "selfRef",
+      tokenData: { $value: "{selfRef}", $type: "dimension" },
+    });
+
+    // Should have issues for the circular dependency
+    expect(result.issues).toBeDefined();
+    expect(result.issues?.has("selfRef")).toBe(true);
+
+    // Check that the issue is specifically a circular dependency error
+    const selfRefIssues = result.issues?.get("selfRef");
+    expect(selfRefIssues).toBeDefined();
+    const circularError = selfRefIssues?.find((issue) => "code" in issue && issue.code === ProcessorErrorCode.CIRCULAR_DEPENDENCY);
+    expect(circularError).toBeDefined();
   });
 });

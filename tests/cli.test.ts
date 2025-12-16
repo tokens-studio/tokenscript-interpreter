@@ -1,8 +1,9 @@
-import { ProcessorError, ProcessorErrorCode } from "@interpreter/errors";
+import { ProcessorErrorCode } from "@interpreter/errors";
 import { Interpreter } from "@interpreter/interpreter";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
 import { processTokens } from "@src/processor/process";
+import { hasIssueWithCode } from "@src/processor/resolver/issue-helpers";
 import { describe, expect, it } from "vitest";
 
 describe("CLI Functionality", () => {
@@ -194,15 +195,10 @@ describe("CLI Functionality", () => {
         circular: "{circular}",
       };
 
-      expect(() => processTokens(tokens)).toThrow(ProcessorError);
+      const output = processTokens(tokens);
 
-      let error: ProcessorError | undefined;
-      try {
-        processTokens(tokens);
-      } catch (e) {
-        error = e as ProcessorError;
-      }
-      expect(error?.code).toBe(ProcessorErrorCode.CIRCULAR_DEPENDENCY);
+      // Should have circular dependency issues
+      expect(hasIssueWithCode(output.issues, ProcessorErrorCode.CIRCULAR_DEPENDENCY)).toBe(true);
     });
 
     it("should detect two-token circular dependency", () => {
@@ -211,15 +207,10 @@ describe("CLI Functionality", () => {
         b: "{a}",
       };
 
-      expect(() => processTokens(tokens)).toThrow(ProcessorError);
+      const output = processTokens(tokens);
 
-      let error: ProcessorError | undefined;
-      try {
-        processTokens(tokens);
-      } catch (e) {
-        error = e as ProcessorError;
-      }
-      expect(error?.code).toBe(ProcessorErrorCode.CIRCULAR_DEPENDENCY);
+      // Should have circular dependency issues
+      expect(hasIssueWithCode(output.issues, ProcessorErrorCode.CIRCULAR_DEPENDENCY)).toBe(true);
     });
 
     it("should detect multi-token circular dependency chain", () => {
@@ -230,15 +221,10 @@ describe("CLI Functionality", () => {
         d: "{a}",
       };
 
-      expect(() => processTokens(tokens)).toThrow(ProcessorError);
+      const output = processTokens(tokens);
 
-      let error: ProcessorError | undefined;
-      try {
-        processTokens(tokens);
-      } catch (e) {
-        error = e as ProcessorError;
-      }
-      expect(error?.code).toBe(ProcessorErrorCode.CIRCULAR_DEPENDENCY);
+      // Should have circular dependency issues
+      expect(hasIssueWithCode(output.issues, ProcessorErrorCode.CIRCULAR_DEPENDENCY)).toBe(true);
     });
 
     it("should not throw for valid dependency chains", () => {
@@ -263,15 +249,13 @@ describe("CLI Functionality", () => {
         circular2: "{circular1}",
       };
 
-      expect(() => processTokens(tokens)).toThrow(ProcessorError);
+      const output = processTokens(tokens);
 
-      let error: ProcessorError | undefined;
-      try {
-        processTokens(tokens);
-      } catch (e) {
-        error = e as ProcessorError;
-      }
-      expect(error?.code).toBe(ProcessorErrorCode.CIRCULAR_DEPENDENCY);
+      // Valid token should be resolved
+      expect(output.tokens.get("valid")?.toString()).toBe("16px");
+
+      // Should have circular dependency issues
+      expect(hasIssueWithCode(output.issues, ProcessorErrorCode.CIRCULAR_DEPENDENCY)).toBe(true);
     });
   });
 

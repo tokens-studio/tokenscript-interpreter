@@ -26,6 +26,12 @@ export {
   getModifiedDependants,
   getRenamedReferences,
 } from "./resolver/helpers";
+export {
+  getTokensWithIssues,
+  hasAnyIssues,
+  hasIssueWithCode,
+  tokenHasIssueWithCode,
+} from "./resolver/issue-helpers";
 export type { ProcessorOutput, ProcessorResult } from "./resolver/TokenResolver";
 export { TokenResolver } from "./resolver/TokenResolver";
 export type {

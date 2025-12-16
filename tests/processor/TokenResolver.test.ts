@@ -2,7 +2,7 @@ import { ProcessorError, ProcessorErrorCode } from "@interpreter/errors";
 import { DictionarySymbol } from "@interpreter/symbols";
 import { TokenResolver } from "@src/processor";
 import { describe, expect, it } from "vitest";
-import { toTokenData } from "./test-helpers";
+import { hasIssueWithCode, toTokenData } from "./test-helpers";
 
 describe("TokenResolver", () => {
   describe("processTokens", () => {
@@ -70,7 +70,7 @@ describe("TokenResolver", () => {
       expect(result.resolved.get("c")?.value).toBe(30);
     });
 
-    it("should throw error on circular dependencies", () => {
+    it("should add circular dependencies to issues instead of throwing", () => {
       const processor = new TokenResolver();
       const tokens = toTokenData(
         new Map([
@@ -79,15 +79,12 @@ describe("TokenResolver", () => {
         ]),
       );
 
-      expect(() => processor.processTokens(tokens)).toThrow(ProcessorError);
+      const result = processor.processTokens(tokens);
 
-      let error: ProcessorError | undefined;
-      try {
-        processor.processTokens(tokens);
-      } catch (e) {
-        error = e as ProcessorError;
-      }
-      expect(error?.code).toBe(ProcessorErrorCode.CIRCULAR_DEPENDENCY);
+      // Should have circular dependency issues
+      expect(hasIssueWithCode(result.issues, ProcessorErrorCode.CIRCULAR_DEPENDENCY)).toBe(true);
+      expect(result.issues?.has("a")).toBe(true);
+      expect(result.issues?.has("b")).toBe(true);
     });
 
     it("should handle mix of simple values and expressions", () => {
@@ -269,16 +266,14 @@ describe("TokenResolver", () => {
         ]),
       );
 
-      // This should detect the circular dependency and throw an error
-      expect(() => processor.processTokens(tokens)).toThrow(ProcessorError);
+      const result = processor.processTokens(tokens);
 
-      let error: ProcessorError | undefined;
-      try {
-        processor.processTokens(tokens);
-      } catch (e) {
-        error = e as ProcessorError;
-      }
-      expect(error?.code).toBe(ProcessorErrorCode.CIRCULAR_DEPENDENCY);
+      // Should have issues for tokens in the cycle
+      expect(result.issues).toBeDefined();
+      const hasCircularError = Array.from(result.issues!.entries()).some(([_tokenName, issues]) =>
+        issues.some((issue) => "code" in issue && issue.code === ProcessorErrorCode.CIRCULAR_DEPENDENCY),
+      );
+      expect(hasCircularError).toBe(true);
     });
 
     it("should detect circular dependencies through prefix references", () => {
@@ -290,15 +285,14 @@ describe("TokenResolver", () => {
         ]),
       );
 
-      expect(() => processor.processTokens(tokens)).toThrow(ProcessorError);
+      const result = processor.processTokens(tokens);
 
-      let error: ProcessorError | undefined;
-      try {
-        processor.processTokens(tokens);
-      } catch (e) {
-        error = e as ProcessorError;
-      }
-      expect(error?.code).toBe(ProcessorErrorCode.CIRCULAR_DEPENDENCY);
+      // Should have issues for tokens in the cycle
+      expect(result.issues).toBeDefined();
+      const hasCircularError = Array.from(result.issues!.entries()).some(([_tokenName, issues]) =>
+        issues.some((issue) => "code" in issue && issue.code === ProcessorErrorCode.CIRCULAR_DEPENDENCY),
+      );
+      expect(hasCircularError).toBe(true);
     });
 
     it("should handle prefix with only failed token children", () => {

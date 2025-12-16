@@ -9,6 +9,7 @@ import {
   normalizeJsonFiles,
   processTokensFromFiles,
 } from "./processor/processFiles";
+import { hasAnyIssues } from "./processor/resolver/issue-helpers";
 import type { Theme } from "./processor/utils/theme-resolver";
 import { extractSetNames, resolveThemes } from "./processor/utils/theme-resolver";
 import type { ReferenceRecord } from "./types";
@@ -105,7 +106,7 @@ export async function handleProcessCommand(
       builder,
     });
 
-    const hasErrors = processorResult.errors.size > 0;
+    const hasErrors = processorResult.errors.size > 0 || hasAnyIssues(processorResult.issues);
     const shouldShowErrors = options.logLevel === "warn" || options.strict;
     const exitCode = options.strict && hasErrors ? 1 : 0;
 

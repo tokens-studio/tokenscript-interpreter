@@ -5,6 +5,12 @@ export {
   getModifiedDependants,
   getRenamedReferences,
 } from "./helpers";
+export {
+  getTokensWithIssues,
+  hasAnyIssues,
+  hasIssueWithCode,
+  tokenHasIssueWithCode,
+} from "./issue-helpers";
 export { PrefixExtractor } from "./PrefixExtractor";
 export { PrefixManager } from "./PrefixManager";
 export { ReadinessTracker } from "./ReadinessTracker";

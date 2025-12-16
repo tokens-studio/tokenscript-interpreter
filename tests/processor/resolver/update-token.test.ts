@@ -1,3 +1,4 @@
+import { ProcessorErrorCode } from "@interpreter/errors";
 import { getAffectedTokens } from "@src/processor/resolver/helpers";
 import { TokenResolver } from "@src/processor/resolver/TokenResolver";
 import type { TokenData } from "@src/processor/utils/tokens";
@@ -349,13 +350,20 @@ describe("TokenResolver.updateToken", () => {
     const { resolver } = new TokenResolver().build(allTokens);
 
     // Try to create circular dependency: b -> a -> b
-    // Should throw ProcessorError for circular dependency
-    expect(() => {
-      resolver.updateToken({
-        tokenPath: "b",
-        tokenData: { $value: "{a} + 1", $type: "dimension" },
-      });
-    }).toThrow("Circular dependency");
+    // Should return issues for circular dependency instead of throwing
+    const result = resolver.updateToken({
+      tokenPath: "b",
+      tokenData: { $value: "{a} + 1", $type: "dimension" },
+    });
+
+    // Should have issues for tokens in the cycle
+    expect(result.issues).toBeDefined();
+
+    // Check that at least one token has a circular dependency error
+    const hasCircularError = Array.from(result.issues!.entries()).some(([_tokenName, issues]) =>
+      issues.some((issue) => "code" in issue && issue.code === ProcessorErrorCode.CIRCULAR_DEPENDENCY),
+    );
+    expect(hasCircularError).toBe(true);
   });
 
   it("should not loop forever on self-reference", () => {
@@ -364,13 +372,21 @@ describe("TokenResolver.updateToken", () => {
     const { resolver } = new TokenResolver().build(allTokens);
 
     // Try to create self-reference
-    // Should throw ProcessorError, not loop forever
-    expect(() => {
-      resolver.updateToken({
-        tokenPath: "recursive",
-        tokenData: { $value: "{recursive}", $type: "dimension" },
-      });
-    }).toThrow("Circular dependency");
+    // Should return issues for circular dependency, not loop forever or throw
+    const result = resolver.updateToken({
+      tokenPath: "recursive",
+      tokenData: { $value: "{recursive}", $type: "dimension" },
+    });
+
+    // Should have issues for the circular dependency
+    expect(result.issues).toBeDefined();
+    expect(result.issues?.has("recursive")).toBe(true);
+
+    // Check that the issue is specifically a circular dependency error
+    const recursiveIssues = result.issues?.get("recursive");
+    expect(recursiveIssues).toBeDefined();
+    const circularError = recursiveIssues?.find((issue) => "code" in issue && issue.code === ProcessorErrorCode.CIRCULAR_DEPENDENCY);
+    expect(circularError).toBeDefined();
   });
 
   it("should handle complex circular dependency creation", () => {
@@ -383,13 +399,21 @@ describe("TokenResolver.updateToken", () => {
     const { resolver } = new TokenResolver().build(allTokens);
 
     // Create cycle: c -> a -> b -> c
-    // Should throw ProcessorError for circular dependency
-    expect(() => {
-      resolver.updateToken({
-        tokenPath: "c",
-        tokenData: { $value: "{a}", $type: "dimension" },
-      });
-    }).toThrow("Circular dependency");
+    // Should return issues for circular dependency instead of throwing
+    const result = resolver.updateToken({
+      tokenPath: "c",
+      tokenData: { $value: "{a}", $type: "dimension" },
+    });
+
+    // Should have issues for tokens in the cycle
+    expect(result.issues).toBeDefined();
+    expect(result.issues!.size).toBeGreaterThan(0);
+
+    // Check that at least one token has a circular dependency error
+    const hasCircularError = Array.from(result.issues!.entries()).some(([_tokenName, issues]) =>
+      issues.some((issue) => "code" in issue && issue.code === ProcessorErrorCode.CIRCULAR_DEPENDENCY),
+    );
+    expect(hasCircularError).toBe(true);
   });
 
   it("should automatically update all dependents in a single updateToken call", () => {
