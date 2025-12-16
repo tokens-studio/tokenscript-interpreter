@@ -1,6 +1,6 @@
 import type { ASTNode } from "@interpreter/ast";
 import type { Config } from "@interpreter/config";
-import { isLanguageError, type ProcessorError } from "@interpreter/errors";
+import { isLanguageError, ProcessorError, ProcessorErrorCode } from "@interpreter/errors";
 import { Interpreter } from "@interpreter/interpreter";
 import { DictionarySymbol } from "@interpreter/symbols";
 import type { ISymbolType } from "@src/types";
@@ -60,11 +60,21 @@ export class TokenInterpreter {
     tokenName: RefPath,
     dependencies: Set<RefPath>,
     resolved: TokenResultMap,
+    missingDependencies?: Set<RefPath>,
   ): ProcessorError | undefined {
     for (const dep of dependencies) {
+      // Check resolved map first
       const depValue = resolved.get(dep);
       if (depValue instanceof Error) {
         return createDependencyError(tokenName, dep, depValue);
+      }
+
+      // Check if it's a missing dependency (explicitly marked as missing)
+      if (missingDependencies?.has(dep)) {
+        const error = new ProcessorError(ProcessorErrorCode.TOKEN_NOT_FOUND, {
+          data: { tokenName: dep },
+        });
+        return createDependencyError(tokenName, dep, error);
       }
     }
     return undefined;

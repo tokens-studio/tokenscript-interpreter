@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Phantom Token Resolution**: Resolved type-safety issue in missing dependency tracking
+  - Removed unsafe type casts (`error as unknown as InterpreterResult`) in `referenceCache`
+  - Added dedicated `missingDependencies` set to track references to non-existent tokens
+  - Ensured `referenceCache` only contains valid `InterpreterResult` values (`ISymbolType | string | null`)
+  - Fixed circular dependency detection to correctly report `CIRCULAR_DEPENDENCY` instead of `TOKEN_NOT_FOUND`
+  - Prevents phantom tokens (missing dependencies) from appearing in resolved output
+
 ## [0.15.0] - 2025-12-16
 
 ### Added

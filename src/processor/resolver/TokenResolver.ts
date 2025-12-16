@@ -194,6 +194,9 @@ class PrefixResolver {
   // Phase state
   private earlyResolved: RefPath[] = [];
 
+  // Track missing dependencies that were referenced but don't exist
+  private missingDependencies: Set<RefPath> = new Set();
+
   constructor(private readonly params: ResolverParams) {
     const { tokens, callbacks, config, objectParsers, linter } = params;
 
@@ -237,11 +240,18 @@ class PrefixResolver {
   }
 
   private resolveError(refPath: RefPath, error: LanguageError, value: string): LanguageError {
-    this.resolved.set(refPath, error);
-    this.callbacks?.onError?.(refPath, error, value);
-    this.graph.addNode(refPath, []);
-    this.earlyResolved.push(refPath);
-    this.addIssue(refPath, error);
+    // When a token references a missing dependency (e.g., `bar = "{foo}"` where `foo` doesn't exist),
+    // we should only report the error on `bar`, not create a phantom entry for `foo` in the output.
+    const isActualToken = this.tokens.has(refPath) || this.subFieldPaths.has(refPath);
+
+    if (isActualToken) {
+      this.resolved.set(refPath, error);
+      this.callbacks?.onError?.(refPath, error, value);
+      this.addIssue(refPath, error);
+      this.earlyResolved.push(refPath);
+      this.graph.addNode(refPath, []);
+    }
+
     return error;
   }
 
@@ -333,11 +343,10 @@ class PrefixResolver {
         continue;
       }
 
-      if (!this.referenceCache.has(dep)) {
-        const error = new ProcessorError(ProcessorErrorCode.TOKEN_NOT_FOUND, {
-          data: { tokenName: dep },
-        });
-        this.resolveError(dep, error, "");
+      // Track missing dependencies that aren't actual tokens
+      // The error will be reported on the token that references it
+      if (!this.referenceCache.has(dep) && !this.resolved.has(dep) && !this.tokens.has(dep)) {
+        this.missingDependencies.add(dep);
       }
     }
   }
@@ -816,11 +825,20 @@ class PrefixResolver {
   private finalizeResolution(): void {
     const unresolvedTokens: RefPath[] = [];
 
-    for (const tokenName of this.tokens.keys()) {
-      const originalValue = this.tokens.get(tokenName);
-      if (originalValue === undefined || this.resolved.has(tokenName)) continue;
+    // Handle unresolved tokens (both regular tokens and sub-fields)
+    const allTokens = new Set([...this.tokens.keys(), ...this.subFieldPaths]);
 
-      const tokenValueStr: string = String(getTokenValue(originalValue));
+    for (const tokenName of allTokens) {
+      if (this.resolved.has(tokenName)) continue;
+
+      const isSubField = this.subFieldPaths.has(tokenName);
+
+      let tokenValueStr = "";
+      if (!isSubField) {
+        const originalValue = this.tokens.get(tokenName);
+        if (originalValue === undefined) continue;
+        tokenValueStr = String(getTokenValue(originalValue));
+      }
 
       // Check for dependency errors
       const unresolved = this.unresolved.get(tokenName);
@@ -829,10 +847,24 @@ class PrefixResolver {
           tokenName,
           unresolved.dependencies,
           this.resolved,
+          this.missingDependencies,
         );
         if (dependencyError) {
           this.resolved.set(tokenName, dependencyError);
-          this.callbacks?.onError?.(tokenName, dependencyError, tokenValueStr);
+
+          if (isSubField) {
+            // Call onError for sub-field with metadata
+            const { parentToken, fieldPath } = this.extractSubFieldMetadata(tokenName);
+            this.callbacks?.onError?.(tokenName, dependencyError, tokenValueStr, {
+              isSubField: true,
+              parentToken,
+              fieldPath,
+            });
+          } else {
+            this.callbacks?.onError?.(tokenName, dependencyError, tokenValueStr);
+          }
+
+          this.addIssue(tokenName, dependencyError);
           this.resolveVirtualChildren(tokenName, []);
           this.notifyResolution(tokenName);
           this.unresolved.delete(tokenName);
