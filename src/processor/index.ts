@@ -20,6 +20,11 @@ export {
   type ObjectParser,
 } from "./object-parsers";
 export { processTokenSets, processTokens } from "./process";
+export {
+  getAffectedTokens,
+  getBrokenReferences,
+  getRenamedReferences,
+} from "./resolver/helpers";
 export type { ProcessorOutput, ProcessorResult } from "./resolver/TokenResolver";
 export { TokenResolver } from "./resolver/TokenResolver";
 export type {
@@ -27,6 +32,9 @@ export type {
   CreateTokenResult,
   DeleteTokenParams,
   DeleteTokenResult,
+  IssuesMap,
+  ResolveIssue,
+  TokenOperationResult,
   UpdateTokenParams,
   UpdateTokenResult,
 } from "./resolver/types";

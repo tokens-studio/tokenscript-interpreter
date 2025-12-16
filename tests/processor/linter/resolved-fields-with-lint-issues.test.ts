@@ -73,8 +73,8 @@ describe("Resolved Fields with Lint Issues", () => {
     expect(result.resolved.has("heading")).toBe(true);
 
     // Token should have lint issues
-    expect(result.lint?.has("heading")).toBe(true);
-    const lintIssues = result.lint?.get("heading");
+    expect(result.issues?.has("heading")).toBe(true);
+    const lintIssues = result.issues?.get("heading");
     expect(lintIssues).toHaveLength(1);
     expect(lintIssues?.[0].code).toBe("NEGATIVE_FONT_SIZE");
     expect(lintIssues?.[0].path).toEqual(["fontSize"]);
@@ -127,7 +127,7 @@ describe("Resolved Fields with Lint Issues", () => {
     expect(resolvedToken).toBeInstanceOf(TokenSymbol);
 
     // Has lint issues
-    const lintIssues = result.lint?.get("text");
+    const lintIssues = result.issues?.get("text");
     expect(lintIssues).toBeDefined();
 
     // Simulate UI building field state
@@ -194,7 +194,7 @@ describe("Resolved Fields with Lint Issues", () => {
     const result = processTokens(tokens, { linter });
 
     const resolvedToken = result.resolved.get("heading");
-    const lintIssues = result.lint?.get("heading");
+    const lintIssues = result.issues?.get("heading");
 
     // Can use the resolved value for preview/calculations
     if (resolvedToken instanceof TokenSymbol) {
@@ -237,10 +237,13 @@ describe("Resolved Fields with Lint Issues", () => {
     // Token should have resolution error
     expect(result.errors.has("test") || result.errors.has("test.fontSize")).toBe(true);
 
-    // Lint issues should NOT exist for tokens with resolution errors
+    // Issues may contain Error objects, but NOT LintIssues
     // (linting runs on resolved values only)
-    const lintIssues = result.lint?.get("test");
-    expect(lintIssues).toBeUndefined();
+    const issues = result.issues?.get("test");
+    if (issues) {
+      // All issues should be Error objects, not LintIssues
+      expect(issues.every((issue) => issue instanceof Error)).toBe(true);
+    }
   });
 
   it("should work with CRUD operations - resolved fields accessible with lint issues", () => {
@@ -274,14 +277,14 @@ describe("Resolved Fields with Lint Issues", () => {
 
     // Token is updated and resolved
     expect(updateResult.updated).toBe(true);
-    expect(updateResult.resolvedValue).toBeInstanceOf(TokenSymbol);
+    expect(updateResult.resolved).toBeInstanceOf(TokenSymbol);
 
     // Has lint issues
-    expect(updateResult.lintIssues?.has("heading")).toBe(true);
+    expect(updateResult.issues?.has("heading")).toBe(true);
 
     // Can still access all field values
-    if (updateResult.resolvedValue instanceof TokenSymbol) {
-      const fields = updateResult.resolvedValue.value;
+    if (updateResult.resolved instanceof TokenSymbol) {
+      const fields = updateResult.resolved.value;
 
       const fontSize = fields.get("fontSize");
       expect((fontSize as NumberSymbol).value).toBe(-20);
@@ -369,7 +372,7 @@ describe("Resolved Fields with Lint Issues", () => {
       expect(token).toBeInstanceOf(TokenSymbol);
 
       // Should have warnings but token is resolved
-      const issues = result.lint?.get("heading");
+      const issues = result.issues?.get("heading");
       expect(issues).toBeDefined();
       expect(issues?.filter((i) => i.severity === LintSeverity.WARNING).length).toBe(2);
 
@@ -478,7 +481,7 @@ describe("Resolved Fields with Lint Issues", () => {
       const result = processTokens(tokens, { linter });
 
       const token = result.resolved.get("mixed") as TokenSymbol;
-      const issues = result.lint?.get("mixed");
+      const issues = result.issues?.get("mixed");
 
       // Should have 1 error and 1 warning
       expect(issues?.filter((i) => i.severity === LintSeverity.ERROR).length).toBe(1);
@@ -597,7 +600,7 @@ describe("Resolved Fields with Lint Issues", () => {
       expect(Array.isArray(token.value)).toBe(true);
 
       // Should have warning on first shadow
-      const issues = result.lint?.get("shadows");
+      const issues = result.issues?.get("shadows");
       expect(issues?.find((i) => i.path?.[0] === 0)).toBeDefined();
 
       // All array items should be accessible
@@ -674,7 +677,7 @@ describe("Resolved Fields with Lint Issues", () => {
       const result = processTokens(tokens, { linter });
 
       const token = result.resolved.get("shadows") as TokenSymbol;
-      const issues = result.lint?.get("shadows");
+      const issues = result.issues?.get("shadows");
 
       // Should have multiple issues
       expect(issues && issues.length > 0).toBe(true);

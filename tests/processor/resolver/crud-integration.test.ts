@@ -1,3 +1,4 @@
+import { getAffectedTokens, getBrokenReferences } from "@src/processor/resolver/helpers";
 import { TokenResolver } from "@src/processor/resolver/TokenResolver";
 import type { TokenData } from "@src/processor/utils/tokens";
 import { describe, expect, it } from "vitest";
@@ -14,7 +15,7 @@ describe("CRUD Integration Tests", () => {
       tokenData: { $value: "2", $type: "dimension" },
     });
     expect(createResult.created).toBe(true);
-    expect(createResult.resolvedValue.toString()).toBe("2");
+    expect(createResult.resolved?.toString()).toBe("2");
 
     // CREATE: Add a dependent token
     const derivedResult = resolver.createToken({
@@ -22,7 +23,7 @@ describe("CRUD Integration Tests", () => {
       tokenData: { $value: "{base} * {multiplier}", $type: "dimension" },
     });
     expect(derivedResult.created).toBe(true);
-    expect(derivedResult.resolvedValue.toString()).toBe("20");
+    expect(derivedResult.resolved?.toString()).toBe("20");
 
     // UPDATE: Modify the base token
     const updateResult = resolver.updateToken({
@@ -30,15 +31,15 @@ describe("CRUD Integration Tests", () => {
       tokenData: { $value: "15", $type: "dimension" },
     });
     expect(updateResult.updated).toBe(true);
-    expect(updateResult.resolvedValue.toString()).toBe("15");
-    expect(updateResult.affectedTokens.has("derived")).toBe(true);
+    expect(updateResult.resolved?.toString()).toBe("15");
+    expect(getAffectedTokens(updateResult).has("derived")).toBe(true);
 
     // DELETE: Remove the multiplier token
     const deleteResult = resolver.deleteToken({
       tokenPath: "multiplier",
     });
 
-    expect(deleteResult.brokenReferences.has("derived")).toBe(true);
+    expect(getBrokenReferences(deleteResult).has("derived")).toBe(true);
 
     // CREATE: Re-create the deleted token with new value
     const recreateResult = resolver.createToken({
@@ -46,7 +47,7 @@ describe("CRUD Integration Tests", () => {
       tokenData: { $value: "3", $type: "dimension" },
     });
     expect(recreateResult.created).toBe(true);
-    expect(recreateResult.affectedTokens.has("derived")).toBe(true);
+    expect(getAffectedTokens(recreateResult).has("derived")).toBe(true);
   });
 
   it("should handle delete → update pattern", () => {
@@ -63,21 +64,23 @@ describe("CRUD Integration Tests", () => {
       tokenPath: "a",
     });
 
-    expect(deleteResult.brokenReferences.size).toBe(2);
+    const brokenRefs = getBrokenReferences(deleteResult);
+    expect(brokenRefs.has("b")).toBe(true);
+    expect(brokenRefs.has("c")).toBe(true);
 
     // Fix 'b' by updating to a constant
     const updateB = resolver.updateToken({
       tokenPath: "b",
       tokenData: { $value: "50", $type: "dimension" },
     });
-    expect(updateB.resolvedValue.toString()).toBe("50");
+    expect(updateB.resolved?.toString()).toBe("50");
 
     // Fix 'c' by updating to a constant
     const updateC = resolver.updateToken({
       tokenPath: "c",
       tokenData: { $value: "75", $type: "dimension" },
     });
-    expect(updateC.resolvedValue.toString()).toBe("75");
+    expect(updateC.resolved?.toString()).toBe("75");
   });
 
   it("should handle create → delete → create pattern", () => {
@@ -90,7 +93,7 @@ describe("CRUD Integration Tests", () => {
       tokenData: { $value: "100", $type: "dimension" },
     });
     expect(create1.created).toBe(true);
-    expect(create1.resolvedValue.toString()).toBe("100");
+    expect(create1.resolved?.toString()).toBe("100");
 
     // Delete it
     const _deleteResult = resolver.deleteToken({
@@ -110,7 +113,7 @@ describe("CRUD Integration Tests", () => {
       tokenData: { $value: "200", $type: "dimension" },
     });
     expect(create2.created).toBe(true);
-    expect(create2.resolvedValue.toString()).toBe("200");
+    expect(create2.resolved?.toString()).toBe("200");
   });
 
   it("should handle complex dependency management", () => {
@@ -128,9 +131,10 @@ describe("CRUD Integration Tests", () => {
       tokenPath: "b",
     });
 
-    expect(deleteResult.brokenReferences.has("c")).toBe(true);
-    expect(deleteResult.brokenReferences.has("d")).toBe(true);
-    expect(deleteResult.affectedTokens.size).toBe(2);
+    const brokenRefs = getBrokenReferences(deleteResult);
+    expect(brokenRefs.has("c")).toBe(true);
+    expect(brokenRefs.has("d")).toBe(true);
+    expect(getAffectedTokens(deleteResult).size).toBe(2);
 
     // Re-create 'b' with a constant (breaking dependency on 'a')
     const createResult = resolver.createToken({
@@ -138,8 +142,9 @@ describe("CRUD Integration Tests", () => {
       tokenData: { $value: "30", $type: "dimension" },
     });
     expect(createResult.created).toBe(true);
-    expect(createResult.affectedTokens.has("c")).toBe(true);
-    expect(createResult.affectedTokens.has("d")).toBe(true);
+    const createAffected = getAffectedTokens(createResult);
+    expect(createAffected.has("c")).toBe(true);
+    expect(createAffected.has("d")).toBe(true);
   });
 
   it("should handle multiple creates and deletes", () => {
@@ -195,20 +200,20 @@ describe("CRUD Integration Tests", () => {
       tokenPath: "base",
       tokenData: { $value: "20", $type: "dimension" },
     });
-    expect(updateResult.resolvedValue.toString()).toBe("20");
+    expect(updateResult.resolved?.toString()).toBe("20");
 
     // Delete base
     const deleteResult = resolver.deleteToken({
       tokenPath: "base",
     });
-    expect(deleteResult.brokenReferences.has("derived")).toBe(true);
+    expect(getBrokenReferences(deleteResult).has("derived")).toBe(true);
 
     // Create a new base token
     const createResult = resolver.createToken({
       tokenPath: "base",
       tokenData: { $value: "30", $type: "dimension" },
     });
-    expect(createResult.affectedTokens.has("derived")).toBe(true);
+    expect(getAffectedTokens(createResult).has("derived")).toBe(true);
   });
 
   it("should handle create, delete, create cycle", () => {
@@ -228,7 +233,7 @@ describe("CRUD Integration Tests", () => {
     const deleteResult = resolver.deleteToken({
       tokenPath: "nonexistent",
     });
-    expect(deleteResult.brokenReferences.has("missing")).toBe(true);
+    expect(getBrokenReferences(deleteResult).has("missing")).toBe(true);
 
     // Create it again
     const recreateResult = resolver.createToken({
@@ -252,24 +257,27 @@ describe("CRUD Integration Tests", () => {
     const deleteResult = resolver.deleteToken({
       tokenPath: "tree1.root",
     });
-    expect(deleteResult.brokenReferences.has("tree1.child")).toBe(true);
-    expect(deleteResult.affectedTokens.has("tree2.root")).toBe(false);
-    expect(deleteResult.affectedTokens.has("tree2.child")).toBe(false);
+    const deleteAffected = getAffectedTokens(deleteResult);
+    expect(getBrokenReferences(deleteResult).has("tree1.child")).toBe(true);
+    expect(deleteAffected.has("tree2.root")).toBe(false);
+    expect(deleteAffected.has("tree2.child")).toBe(false);
 
     // Update tree2
     const updateResult = resolver.updateToken({
       tokenPath: "tree2.root",
       tokenData: { $value: "30", $type: "dimension" },
     });
-    expect(updateResult.affectedTokens.has("tree2.child")).toBe(true);
-    expect(updateResult.affectedTokens.has("tree1.child")).toBe(false);
+    const updateAffected = getAffectedTokens(updateResult);
+    expect(updateAffected.has("tree2.child")).toBe(true);
+    expect(updateAffected.has("tree1.child")).toBe(false);
 
     // Create new token in tree1
     const createResult = resolver.createToken({
       tokenPath: "tree1.root",
       tokenData: { $value: "15", $type: "dimension" },
     });
-    expect(createResult.affectedTokens.has("tree1.child")).toBe(true);
-    expect(createResult.affectedTokens.has("tree2.child")).toBe(false);
+    const createAffected = getAffectedTokens(createResult);
+    expect(createAffected.has("tree1.child")).toBe(true);
+    expect(createAffected.has("tree2.child")).toBe(false);
   });
 });

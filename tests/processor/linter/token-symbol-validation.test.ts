@@ -127,7 +127,7 @@ describe("TokenSymbol Validation", () => {
 
       expect(result.resolved.get("heading")).toBeInstanceOf(TokenSymbol);
 
-      const issues = result.lint?.get("heading");
+      const issues = result.issues?.get("heading");
       expect(issues?.find((i) => i.code === "INVALID_FONT_SIZE")).toBeDefined();
     });
 
@@ -145,7 +145,7 @@ describe("TokenSymbol Validation", () => {
       const linter = new LintRunner().addRule(new TypeBasedRule().forType("typography", typographyValidator));
       const result = processTokens(tokens, { linter });
 
-      const issues = result.lint?.get("empty");
+      const issues = result.issues?.get("empty");
       expect(issues?.find((i) => i.code === "EMPTY_TOKEN")).toBeDefined();
     });
 
@@ -345,7 +345,7 @@ describe("TokenSymbol Validation", () => {
       expect(token).toBeInstanceOf(TokenSymbol);
       expect(Array.isArray((token as TokenSymbol).value)).toBe(true);
 
-      const issues = result.lint?.get("card-shadow");
+      const issues = result.issues?.get("card-shadow");
       expect(issues).toBeDefined();
 
       // Check that path includes array index
@@ -375,7 +375,7 @@ describe("TokenSymbol Validation", () => {
       const linter = new LintRunner().addRule(new TypeBasedRule().forType("shadow", shadowArrayValidator));
       const result = processTokens(tokens, { linter });
 
-      const issues = result.lint?.get("shadows");
+      const issues = result.issues?.get("shadows");
       expect(issues?.length).toBeGreaterThan(0);
 
       // Find issues with array paths
@@ -405,7 +405,7 @@ describe("TokenSymbol Validation", () => {
       const linter = new LintRunner().addRule(new TypeBasedRule().forType("shadow", shadowArrayValidator));
       const result = processTokens(tokens, { linter });
 
-      const issues = result.lint?.get("many-shadows");
+      const issues = result.issues?.get("many-shadows");
       expect(issues?.find((i) => i.code === "TOO_MANY_SHADOWS")).toBeDefined();
     });
 
@@ -423,7 +423,7 @@ describe("TokenSymbol Validation", () => {
       const linter = new LintRunner().addRule(new TypeBasedRule().forType("shadow", shadowArrayValidator));
       const result = processTokens(tokens, { linter });
 
-      const issues = result.lint?.get("empty-shadows");
+      const issues = result.issues?.get("empty-shadows");
       expect(issues?.find((i) => i.code === "EMPTY_SHADOW_ARRAY")).toBeDefined();
     });
   });
@@ -496,7 +496,7 @@ describe("TokenSymbol Validation", () => {
       const linter = new LintRunner().addRule(new TypeBasedRule().forType("typography", crossFieldValidator));
       const result = processTokens(tokens, { linter });
 
-      const issues = result.lint?.get("text");
+      const issues = result.issues?.get("text");
       expect(issues?.find((i) => i.code === "MISSING_FONT_SIZE")).toBeDefined();
     });
 
@@ -517,7 +517,7 @@ describe("TokenSymbol Validation", () => {
       const linter = new LintRunner().addRule(new TypeBasedRule().forType("typography", crossFieldValidator));
       const result = processTokens(tokens, { linter });
 
-      const issues = result.lint?.get("tight-text");
+      const issues = result.issues?.get("tight-text");
       expect(issues?.find((i) => i.code === "LINE_HEIGHT_TOO_TIGHT")).toBeDefined();
     });
   });
@@ -656,8 +656,8 @@ describe("TokenSymbol Validation", () => {
       });
 
       expect(result.created).toBe(true);
-      expect(result.resolvedValue).toBeInstanceOf(TokenSymbol);
-      expect(result.lintIssues?.get("heading")).toBeDefined();
+      expect(result.resolved).toBeInstanceOf(TokenSymbol);
+      expect(result.issues?.get("heading")).toBeDefined();
     });
 
     it("should validate during updateToken with array-based TokenSymbol", () => {
@@ -684,9 +684,9 @@ describe("TokenSymbol Validation", () => {
       });
 
       expect(result.updated).toBe(true);
-      expect(result.resolvedValue).toBeInstanceOf(TokenSymbol);
+      expect(result.resolved).toBeInstanceOf(TokenSymbol);
 
-      const issues = result.lintIssues?.get("shadow");
+      const issues = result.issues?.get("shadow");
       expect(issues?.find((i) => i.code === "NEGATIVE_BLUR")).toBeDefined();
     });
   });

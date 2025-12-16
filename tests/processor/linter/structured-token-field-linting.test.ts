@@ -31,10 +31,10 @@ describe("Structured Token Field-Level Linting", () => {
       const linter = createStructuredTokenLinter();
       const result = processTokens(tokens, { linter });
 
-      expect(result.lint).toBeDefined();
-      expect(result.lint?.has("heading")).toBe(true);
+      expect(result.issues).toBeDefined();
+      expect(result.issues?.has("heading")).toBe(true);
 
-      const issues = result.lint?.get("heading");
+      const issues = result.issues?.get("heading");
       expect(issues).toHaveLength(1);
       // fontSize uses or(number, numberWithUnit), returns the first error
       expect(issues?.[0].code).toBe(ValidatorCode.VALUE_TOO_SMALL);
@@ -59,7 +59,7 @@ describe("Structured Token Field-Level Linting", () => {
       const linter = createStructuredTokenLinter();
       const result = processTokens(tokens, { linter });
 
-      const issues = result.lint?.get("heading");
+      const issues = result.issues?.get("heading");
       expect(issues).toHaveLength(3);
 
       const fontSizeIssue = issues?.find((i) => i.path?.[0] === "fontSize");
@@ -90,7 +90,7 @@ describe("Structured Token Field-Level Linting", () => {
       const linter = createStructuredTokenLinter();
       const result = processTokens(tokens, { linter });
 
-      const issues = result.lint?.get("text");
+      const issues = result.issues?.get("text");
       expect(issues).toHaveLength(1);
       expect(issues?.[0].path).toEqual(["lineHeight"]);
       expect(issues?.[0].code).toBe(ValidatorCode.VALUE_TOO_SMALL);
@@ -114,7 +114,7 @@ describe("Structured Token Field-Level Linting", () => {
       const result = processTokens(tokens, { linter });
 
       // Should have no issues
-      expect(result.lint?.has("heading")).toBeFalsy();
+      expect(result.issues?.has("heading")).toBeFalsy();
     });
 
     it("should reject invalid textCase values", () => {
@@ -134,7 +134,7 @@ describe("Structured Token Field-Level Linting", () => {
       const linter = createStructuredTokenLinter();
       const result = processTokens(tokens, { linter });
 
-      const issues = result.lint?.get("heading");
+      const issues = result.issues?.get("heading");
       expect(issues).toHaveLength(1);
       expect(issues?.[0].path).toEqual(["textCase"]);
       expect(issues?.[0].code).toBe(ValidatorCode.VALUE_NOT_IN_ENUM);
@@ -163,7 +163,7 @@ describe("Structured Token Field-Level Linting", () => {
       const linter = createStructuredTokenLinter();
       const result = processTokens(tokens, { linter });
 
-      const issues = result.lint?.get("card-shadow");
+      const issues = result.issues?.get("card-shadow");
       expect(issues).toHaveLength(1);
       // blur uses or(number, numberWithUnit), returns the first error
       expect(issues?.[0].code).toBe(ValidatorCode.VALUE_TOO_SMALL);
@@ -198,7 +198,7 @@ describe("Structured Token Field-Level Linting", () => {
       const linter = createStructuredTokenLinter();
       const result = processTokens(tokens, { linter });
 
-      const issues = result.lint?.get("multi-shadow");
+      const issues = result.issues?.get("multi-shadow");
       expect(issues).toHaveLength(2);
 
       const blurIssue = issues?.find((i) => i.path?.includes("blur"));
@@ -227,7 +227,7 @@ describe("Structured Token Field-Level Linting", () => {
       const linter = createStructuredTokenLinter();
       const result = processTokens(tokens, { linter });
 
-      const issues = result.lint?.get("shadow");
+      const issues = result.issues?.get("shadow");
       expect(issues).toHaveLength(2);
 
       const paths = issues?.map((i) => i.path?.[1]);
@@ -255,7 +255,7 @@ describe("Structured Token Field-Level Linting", () => {
       const linter = createStructuredTokenLinter();
       const result = processTokens(tokens, { linter });
 
-      const issues = result.lint?.get("heading");
+      const issues = result.issues?.get("heading");
       expect(issues).toHaveLength(1);
       // fontSize uses or(number, numberWithUnit)
       expect(issues?.[0].code).toBe(ValidatorCode.VALUE_TOO_SMALL);
@@ -282,7 +282,7 @@ describe("Structured Token Field-Level Linting", () => {
       const linter = createStructuredTokenLinter();
       const result = processTokens(tokens, { linter });
 
-      const issues = result.lint?.get("shadow");
+      const issues = result.issues?.get("shadow");
       expect(issues).toHaveLength(1);
       // blur uses or(number, numberWithUnit)
       expect(issues?.[0].code).toBe(ValidatorCode.VALUE_TOO_SMALL);
@@ -310,13 +310,13 @@ describe("Structured Token Field-Level Linting", () => {
         });
 
         expect(result.created).toBe(true);
-        expect(result.lintIssues).toBeDefined();
-        expect(result.lintIssues?.has("heading")).toBe(true);
+        expect(result.issues).toBeDefined();
+        expect(result.issues?.has("heading")).toBe(true);
 
-        const issues = result.lintIssues?.get("heading");
-        expect(issues?.[0].path).toEqual(["fontSize"]);
+        const issues = result.issues?.get("heading");
+        expect(issues?.[0]).toHaveProperty("path", ["fontSize"]);
         // fontSize uses or(number, numberWithUnit)
-        expect(issues?.[0].code).toBe(ValidatorCode.VALUE_TOO_SMALL);
+        expect(issues?.[0]).toHaveProperty("code", ValidatorCode.VALUE_TOO_SMALL);
       });
 
       it("should return no lint issues for valid structured token", () => {
@@ -337,7 +337,7 @@ describe("Structured Token Field-Level Linting", () => {
         });
 
         expect(result.created).toBe(true);
-        expect(result.lintIssues).toBeUndefined();
+        expect(result.issues).toBeUndefined();
       });
     });
 
@@ -372,13 +372,13 @@ describe("Structured Token Field-Level Linting", () => {
         });
 
         expect(result.updated).toBe(true);
-        expect(result.lintIssues?.has("heading")).toBe(true);
+        expect(result.issues?.has("heading")).toBe(true);
 
-        const issues = result.lintIssues?.get("heading");
-        const fontSizeIssue = issues?.find((i) => i.path?.[0] === "fontSize");
-        expect(fontSizeIssue?.path).toEqual(["fontSize"]);
+        const issues = result.issues?.get("heading");
+        const fontSizeIssue = issues?.find((i: any) => i.path?.[0] === "fontSize");
+        expect(fontSizeIssue).toHaveProperty("path", ["fontSize"]);
         // fontSize uses or(number, numberWithUnit)
-        expect(fontSizeIssue?.code).toBe(ValidatorCode.VALUE_TOO_SMALL);
+        expect(fontSizeIssue).toHaveProperty("code", ValidatorCode.VALUE_TOO_SMALL);
       });
 
       it("should clear lint issues when updating to valid values", () => {
@@ -411,7 +411,7 @@ describe("Structured Token Field-Level Linting", () => {
         });
 
         expect(result.updated).toBe(true);
-        expect(result.lintIssues).toBeUndefined();
+        expect(result.issues).toBeUndefined();
       });
 
       it("should return multiple field issues when updating", () => {
@@ -446,10 +446,10 @@ describe("Structured Token Field-Level Linting", () => {
         });
 
         expect(result.updated).toBe(true);
-        const issues = result.lintIssues?.get("heading");
+        const issues = result.issues?.get("heading");
         expect(issues).toHaveLength(2);
 
-        const paths = issues?.map((i) => i.path?.[0]);
+        const paths = issues?.map((i: any) => i.path?.[0]);
         expect(paths).toContain("fontSize");
         expect(paths).toContain("textCase");
       });
@@ -489,11 +489,11 @@ describe("Structured Token Field-Level Linting", () => {
         });
 
         // Should still have lint issue for body
-        expect(result.lintIssues?.has("body")).toBe(true);
-        expect(result.lintIssues?.has("heading")).toBe(false);
+        expect(result.issues?.has("body")).toBe(true);
+        expect(result.issues?.has("heading")).toBe(false);
 
-        const bodyIssues = result.lintIssues?.get("body");
-        expect(bodyIssues?.[0].path).toEqual(["fontSize"]);
+        const bodyIssues = result.issues?.get("body");
+        expect(bodyIssues?.[0]).toHaveProperty("path", ["fontSize"]);
       });
     });
   });
@@ -518,7 +518,7 @@ describe("Structured Token Field-Level Linting", () => {
       const linter = createStructuredTokenLinter();
       const result = processTokens(tokens, { linter });
 
-      const issues = result.lint?.get("heading");
+      const issues = result.issues?.get("heading");
       expect(issues).toHaveLength(2);
 
       // Build field validation map for form
@@ -566,7 +566,7 @@ describe("Structured Token Field-Level Linting", () => {
         },
       });
 
-      expect(create.lintIssues).toBeUndefined();
+      expect(create.issues).toBeUndefined();
 
       // User edits fontSize to invalid value
       const update1 = resolver.updateToken({
@@ -580,8 +580,8 @@ describe("Structured Token Field-Level Linting", () => {
         },
       });
 
-      const issues1 = update1.lintIssues?.get("heading");
-      expect(issues1?.find((i) => i.path?.[0] === "fontSize")).toBeDefined();
+      const issues1 = update1.issues?.get("heading");
+      expect(issues1?.find((i: any) => i.path?.[0] === "fontSize")).toBeDefined();
 
       // User fixes fontSize but breaks lineHeight
       const update2 = resolver.updateToken({
@@ -595,9 +595,9 @@ describe("Structured Token Field-Level Linting", () => {
         },
       });
 
-      const issues2 = update2.lintIssues?.get("heading");
-      expect(issues2?.find((i) => i.path?.[0] === "fontSize")).toBeUndefined();
-      expect(issues2?.find((i) => i.path?.[0] === "lineHeight")).toBeDefined();
+      const issues2 = update2.issues?.get("heading");
+      expect(issues2?.find((i: any) => i.path?.[0] === "fontSize")).toBeUndefined();
+      expect(issues2?.find((i: any) => i.path?.[0] === "lineHeight")).toBeDefined();
 
       // User fixes everything
       const update3 = resolver.updateToken({
@@ -611,7 +611,7 @@ describe("Structured Token Field-Level Linting", () => {
         },
       });
 
-      expect(update3.lintIssues).toBeUndefined();
+      expect(update3.issues).toBeUndefined();
     });
   });
 
@@ -634,7 +634,7 @@ describe("Structured Token Field-Level Linting", () => {
       const linter = createStructuredTokenLinter();
       const result = processTokens(tokens, { linter });
 
-      const allIssues = result.lint?.get("heading");
+      const allIssues = result.issues?.get("heading");
 
       // Get issues for specific field
       const fontSizeIssues = allIssues?.filter((i) => i.path?.[0] === "fontSize");
@@ -664,7 +664,7 @@ describe("Structured Token Field-Level Linting", () => {
       const linter = createStructuredTokenLinter();
       const result = processTokens(tokens, { linter });
 
-      const issues = result.lint?.get("heading");
+      const issues = result.issues?.get("heading");
 
       const errorCount = issues?.filter((i) => i.severity === LintSeverity.ERROR).length;
 
