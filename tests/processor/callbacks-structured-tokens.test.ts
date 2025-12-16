@@ -246,8 +246,8 @@ describe("TokenResolver - Callbacks with Structured Tokens", () => {
       expect(subFieldErrors.get("shadow.offsetY")?.parent).toBe("shadow");
       expect(subFieldErrors.get("shadow.offsetY")?.field).toBe("offsetY");
 
-      // Should also include the nonexistent token
-      expect(errorTokens).toContain("nonexistent");
+      // Missing reference should NOT appear in error callbacks
+      expect(errorTokens).not.toContain("nonexistent");
     });
 
     it("should call onError for parent and all sub-fields with errors", () => {
@@ -290,9 +290,9 @@ describe("TokenResolver - Callbacks with Structured Tokens", () => {
       expect(fieldErrors.has("offsetY")).toBe(true);
       expect(fieldErrors.has("color")).toBe(true);
 
-      // Should have the missing tokens
-      expect(errorTokens).toContain("missing1");
-      expect(errorTokens).toContain("missing2");
+      // Missing references should NOT appear in error callbacks
+      expect(errorTokens).not.toContain("missing1");
+      expect(errorTokens).not.toContain("missing2");
     });
 
     it("should not call callbacks for successfully resolved sub-fields", () => {
@@ -477,7 +477,8 @@ describe("TokenResolver - Callbacks with Structured Tokens", () => {
 
       // Should have error for parent token with failed sub-field
       expect(errorTokens).toContain("shadow.error");
-      expect(errorTokens).toContain("nonexistent");
+      // Missing reference should NOT appear in error callbacks
+      expect(errorTokens).not.toContain("nonexistent");
 
       // Should have sub-field error with metadata
       expect(subFieldErrors).toContain("shadow.error.offsetY");

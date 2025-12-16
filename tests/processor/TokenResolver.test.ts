@@ -153,6 +153,24 @@ describe("TokenResolver", () => {
       expect(result.resolved.get("b")).toBeInstanceOf(Error);
     });
 
+    it("should not include missing dependencies in resolved output", () => {
+      const processor = new TokenResolver();
+      const tokens = toTokenData(new Map([["bar", "{foo}"]]));
+
+      const result = processor.processTokens(tokens);
+
+      // "foo" should NOT be in the resolved map since it was never an input token
+      expect(result.resolved.has("foo")).toBe(false);
+      // "foo" should NOT be in the graph
+      expect(result.graph.getNodes().has("foo")).toBe(false);
+      // "foo" should NOT be in the issues map
+      expect(result.issues?.has("foo") ?? false).toBe(false);
+
+      // Only "bar" should be in the output
+      expect(result.resolved.has("bar")).toBe(true);
+      expect(result.resolved.get("bar")).toBeInstanceOf(Error);
+    });
+
     it("should create DependencyError for tokens depending on failed tokens", () => {
       const processor = new TokenResolver();
       const tokens = toTokenData(

@@ -8,9 +8,13 @@ import { beforeEach, describe, expect, it } from "vitest";
 describe("TokenInterpreter", () => {
   let referenceCache: Map<string, InterpreterResult>;
   let interpreter: TokenInterpreter;
+  let resolved: Map<string, InterpreterResult | Error>;
+  let missingDependencies: Set<string>;
 
   beforeEach(() => {
     referenceCache = new Map();
+    resolved = new Map();
+    missingDependencies = new Set();
     interpreter = new TokenInterpreter(referenceCache);
   });
 
@@ -131,9 +135,9 @@ describe("TokenInterpreter", () => {
   describe("Dependency Error Checking", () => {
     it("should detect error in direct dependency", () => {
       const error = new Error("Reference not found");
-      referenceCache.set("token-b", error);
+      resolved.set("token-b", error);
 
-      const result = interpreter.buildDependencyError("token-a", new Set(["token-b"]), referenceCache);
+      const result = interpreter.buildDependencyError("token-a", new Set(["token-b"]), resolved, missingDependencies);
       expect(result).toBeInstanceOf(ProcessorError);
       expect((result as ProcessorError).code).toBe(ProcessorErrorCode.DEPENDENCY_ERROR);
       expect((result as ProcessorError).data.tokenName).toBe("token-a");
@@ -143,36 +147,39 @@ describe("TokenInterpreter", () => {
       referenceCache.set("token-b", 10);
       referenceCache.set("token-c", 20);
 
-      const result = interpreter.buildDependencyError("token-a", new Set(["token-b", "token-c"]), referenceCache);
+      const result = interpreter.buildDependencyError("token-a", new Set(["token-b", "token-c"]), resolved, missingDependencies);
       expect(result).toBeUndefined();
     });
 
     it("should return undefined for empty dependencies", () => {
-      const result = interpreter.buildDependencyError("token-a", new Set(), referenceCache);
+      const result = interpreter.buildDependencyError("token-a", new Set(), resolved, missingDependencies);
       expect(result).toBeUndefined();
     });
 
     it("should detect first error in multiple dependencies", () => {
       const error1 = new Error("Error 1");
       const error2 = new Error("Error 2");
-      referenceCache.set("token-b", error1);
-      referenceCache.set("token-c", error2);
+      resolved.set("token-b", error1);
+      resolved.set("token-c", error2);
 
-      const result = interpreter.buildDependencyError("token-a", new Set(["token-b", "token-c"]), referenceCache);
+      const result = interpreter.buildDependencyError("token-a", new Set(["token-b", "token-c"]), resolved, missingDependencies);
       expect(result).toBeInstanceOf(ProcessorError);
       expect((result as ProcessorError).code).toBe(ProcessorErrorCode.DEPENDENCY_ERROR);
     });
 
     it("should handle missing dependencies in resolved map", () => {
-      const result = interpreter.buildDependencyError("token-a", new Set(["token-b"]), referenceCache);
-      expect(result).toBeUndefined(); // Token-b not in map, so no error
+      // When a dependency is missing (not in resolved or referenceCache), it should produce an error
+      missingDependencies.add("token-b");
+      const result = interpreter.buildDependencyError("token-a", new Set(["token-b"]), resolved, missingDependencies);
+      expect(result).toBeInstanceOf(ProcessorError);
+      expect((result as ProcessorError).code).toBe(ProcessorErrorCode.DEPENDENCY_ERROR);
     });
 
     it("should differentiate between resolved and unresolved dependencies", () => {
       referenceCache.set("token-b", 10);
-      referenceCache.set("token-c", new Error("Failed"));
+      resolved.set("token-c", new Error("Failed"));
 
-      const result = interpreter.buildDependencyError("token-a", new Set(["token-b", "token-c"]), referenceCache);
+      const result = interpreter.buildDependencyError("token-a", new Set(["token-b", "token-c"]), resolved, missingDependencies);
       expect(result).toBeInstanceOf(ProcessorError);
       expect((result as ProcessorError).code).toBe(ProcessorErrorCode.DEPENDENCY_ERROR);
     });
@@ -321,9 +328,9 @@ describe("TokenInterpreter", () => {
 
     it("should handle error propagation in dependency chains", () => {
       const error = new Error("Token 'missing' not found");
-      referenceCache.set("failed-token", error);
+      resolved.set("failed-token", error);
 
-      const depError = interpreter.buildDependencyError("dependent-token", new Set(["failed-token"]), referenceCache);
+      const depError = interpreter.buildDependencyError("dependent-token", new Set(["failed-token"]), resolved, missingDependencies);
       expect(depError).toBeInstanceOf(ProcessorError);
       expect((depError as ProcessorError).code).toBe(ProcessorErrorCode.DEPENDENCY_ERROR);
     });
