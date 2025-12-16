@@ -219,8 +219,8 @@ describe("CRUD Integration Tests", () => {
   it("should handle create, delete, create cycle", () => {
     const allTokens = new Map<string, TokenData>([["missing", { $value: "{nonexistent}", $type: "dimension" }]]);
 
-    const { resolver, errors } = new TokenResolver().build(allTokens);
-    expect(errors.has("missing")).toBe(true);
+    const { resolver, issues } = new TokenResolver().build(allTokens);
+    expect(issues?.has("missing")).toBe(true);
 
     // Create the missing token
     const createResult = resolver.createToken({

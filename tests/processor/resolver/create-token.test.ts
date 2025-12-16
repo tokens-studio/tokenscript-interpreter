@@ -105,8 +105,8 @@ describe("TokenResolver.createToken", () => {
     const allTokens = new Map<string, TokenData>([["derived", { $value: "{base} * 2", $type: "dimension" }]]);
 
     // Build with broken reference
-    const { resolver, errors } = new TokenResolver().build(allTokens);
-    expect(errors.has("derived")).toBe(true);
+    const { resolver, issues } = new TokenResolver().build(allTokens);
+    expect(issues?.has("derived")).toBe(true);
 
     // Create the missing token
     const result = resolver.createToken({
@@ -127,10 +127,10 @@ describe("TokenResolver.createToken", () => {
     ]);
 
     // Build with broken references
-    const { resolver, errors } = new TokenResolver().build(allTokens);
-    expect(errors.has("derived1")).toBe(true);
-    expect(errors.has("derived2")).toBe(true);
-    expect(errors.has("derived3")).toBe(true);
+    const { resolver, issues } = new TokenResolver().build(allTokens);
+    expect(issues?.has("derived1")).toBe(true);
+    expect(issues?.has("derived2")).toBe(true);
+    expect(issues?.has("derived3")).toBe(true);
 
     // Create the missing token
     const result = resolver.createToken({
@@ -265,9 +265,9 @@ describe("TokenResolver.createToken", () => {
     ]);
 
     // Build with broken references
-    const { resolver, errors } = new TokenResolver().build(allTokens);
-    expect(errors.has("level2")).toBe(true);
-    expect(errors.has("level3")).toBe(true);
+    const { resolver, issues } = new TokenResolver().build(allTokens);
+    expect(issues?.has("level2")).toBe(true);
+    expect(issues?.has("level3")).toBe(true);
 
     // Create the base token
     const result = resolver.createToken({

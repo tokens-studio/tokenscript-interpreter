@@ -37,7 +37,6 @@ import type {
   ResolvedValueMap,
   ResolveIssue,
   TokenDataMap,
-  TokenErrorMap,
   TokenInputMap,
   TokenResult,
   TokenResultMap,
@@ -66,7 +65,6 @@ export type ProcessorCallbacks = {
 
 export type ProcessorOutput = ProcessorResult & {
   tokens: ResolvedValueMap;
-  errors: TokenErrorMap;
   resolver: TokenResolver;
   issues?: IssuesMap;
 };
@@ -1022,16 +1020,16 @@ export class TokenResolver {
     linter?: LintRunner,
   ): ProcessorOutput {
     const output: ResolvedValueMap = new Map();
-    const errors: TokenErrorMap = new Map();
     let subFieldPaths: Set<RefPath> | undefined;
 
     const callbacks: ProcessorCallbacks = {
       onResolve: (tokenName, value) => {
         output.set(tokenName, value);
       },
-      onError: (tokenName, error, originalValue) => {
+      onError: (tokenName, _error, originalValue) => {
+        // Store the original value in output for tokens with errors
         output.set(tokenName, originalValue);
-        errors.set(tokenName, error);
+        // Errors are tracked in the issues map
       },
     };
 
@@ -1051,18 +1049,17 @@ export class TokenResolver {
     const result = this.prefixResolver.resolve();
     subFieldPaths = result.subFieldPaths;
 
-    // Filter out sub-field paths from output
+    // Filter out sub-field paths from output and issues
     if (subFieldPaths && subFieldPaths.size > 0) {
       for (const subFieldPath of subFieldPaths) {
         output.delete(subFieldPath);
-        errors.delete(subFieldPath);
+        result.issues?.delete(subFieldPath);
       }
     }
 
     return {
       ...result,
       tokens: output,
-      errors,
       resolver: this,
       issues: result.issues,
     };

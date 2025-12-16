@@ -71,3 +71,41 @@ export function getTokensWithIssues(issues: IssuesMap | undefined): Set<string> 
 export function hasAnyIssues(issues: IssuesMap | undefined): boolean {
   return issues !== undefined && issues.size > 0;
 }
+
+/**
+ * Check if a specific token has any error (not lint issue).
+ * Errors have a `code` property, while lint issues do not.
+ *
+ * @example
+ * ```typescript
+ * const result = resolver.build(tokens);
+ * const tokenIssues = result.issues?.get("foo");
+ * if (tokenHasError(tokenIssues)) {
+ *   console.error("Token 'foo' has an error");
+ * }
+ * ```
+ */
+export function tokenHasError(tokenIssues: Array<{ message: string }> | undefined): boolean {
+  if (!tokenIssues) return false;
+  return tokenIssues.some((issue) => "code" in issue);
+}
+
+/**
+ * Get the first error from a token's issues (if any).
+ * Returns undefined if there are no errors (only lint issues).
+ *
+ * @example
+ * ```typescript
+ * const result = resolver.build(tokens);
+ * const error = getTokenError(result.issues, "foo");
+ * if (error) {
+ *   console.error("Token 'foo' has error:", error.message);
+ * }
+ * ```
+ */
+export function getTokenError(issues: IssuesMap | undefined, tokenName: string): Error | undefined {
+  if (!issues) return undefined;
+  const tokenIssues = issues.get(tokenName);
+  if (!tokenIssues) return undefined;
+  return tokenIssues.find((issue) => "code" in issue) as Error | undefined;
+}

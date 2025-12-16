@@ -29,7 +29,7 @@ describe("Ready Queue Optimization", () => {
     expect(getValue(result.tokens.get("c"))).toBe(3);
     expect(getValue(result.tokens.get("d"))).toBe(4);
     expect(getValue(result.tokens.get("e"))).toBe(5);
-    expect(result.errors.size).toBe(0);
+    expect(result.issues?.size || 0).toBe(0);
   });
 
   it("should handle complex dependency graph with multiple branches", () => {
@@ -56,7 +56,7 @@ describe("Ready Queue Optimization", () => {
     expect(getValue(result.tokens.get("b"))).toBe(20);
     expect(getValue(result.tokens.get("c"))).toBe(30);
     expect(getValue(result.tokens.get("d"))).toBe(50);
-    expect(result.errors.size).toBe(0);
+    expect(result.issues?.size || 0).toBe(0);
   });
 
   it("should efficiently resolve large chain of dependencies", () => {
@@ -76,7 +76,7 @@ describe("Ready Queue Optimization", () => {
     // Verify the chain resolved correctly
     expect(getValue(result.tokens.get("token0"))).toBe(1);
     expect(getValue(result.tokens.get("token99"))).toBe(100);
-    expect(result.errors.size).toBe(0);
+    expect(result.issues?.size || 0).toBe(0);
 
     // Verify all tokens resolved
     for (let i = 0; i < 100; i++) {
@@ -103,7 +103,7 @@ describe("Ready Queue Optimization", () => {
     expect(getValue(result.tokens.get("colors.blue"))).toBe("#0000ff");
     expect(getValue(result.tokens.get("primary"))).toBe("#ff0000");
     expect(getValue(result.tokens.get("secondary"))).toBe("#0000ff");
-    expect(result.errors.size).toBe(0);
+    expect(result.issues?.size || 0).toBe(0);
   });
 
   it("should handle mixed prefix and token dependencies", () => {
@@ -126,6 +126,6 @@ describe("Ready Queue Optimization", () => {
     expect(getValue(result.tokens.get("size.small"))).toBe(16);
     expect(getValue(result.tokens.get("size.medium"))).toBe(24);
     expect(getValue(result.tokens.get("size.large"))).toBe(36);
-    expect(result.errors.size).toBe(0);
+    expect(result.issues?.size || 0).toBe(0);
   });
 });

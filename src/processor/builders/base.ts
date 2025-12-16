@@ -7,6 +7,7 @@ import {
 } from "@interpreter/symbols";
 import type { LintRunner } from "../linter";
 import type { ObjectParser } from "../object-parsers";
+import { getTokenError } from "../resolver";
 import { type ProcessorOutput, TokenResolver } from "../resolver/TokenResolver";
 import type { IssuesMap } from "../resolver/types";
 import type { TokenData } from "../utils/tokens";
@@ -61,8 +62,6 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
 } {
   const { config, builder = new MapBuilder(), objectParsers, linter } = options ?? {};
 
-  const errors: Map<string, Error> = new Map();
-
   // Always create a MapBuilder for the tokens map output
   const tokensMapBuilder = builder.constructor === MapBuilder ? builder : new MapBuilder();
 
@@ -72,8 +71,9 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
   const result = new TokenResolver().build(tokens, config, objectParsers, linter);
 
   // Process all tokens - both successful and failed
+  // Errors are now tracked in issues map
   for (const [tokenName, value] of result.tokens) {
-    const error = result.errors.get(tokenName);
+    const error = getTokenError(result.issues, tokenName);
 
     if (error) {
       // Token has an error - get original value as string
@@ -81,7 +81,6 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
       const originalValueStr =
         typeof originalValue === "string" ? originalValue : originalValue?.$value?.toString() || "";
       builder.onError(tokenName, error, originalValueStr);
-      errors.set(tokenName, error);
 
       if (builder.constructor !== MapBuilder)
         tokensMapBuilder.onError(tokenName, error, originalValueStr);
@@ -101,7 +100,6 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
     tokensMap = new Map(tokensMap);
     for (const subFieldPath of result.subFieldPaths) {
       tokensMap.delete(subFieldPath);
-      errors.delete(subFieldPath);
     }
   }
 
@@ -111,7 +109,6 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
     ...result,
     tokens: tokensMap,
     output: builderOutput as T,
-    errors,
     issues,
     resolver: result.resolver,
   };

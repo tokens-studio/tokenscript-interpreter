@@ -78,8 +78,8 @@ describe("Linter Integration", () => {
       const result = processTokens(tokens, { linter });
 
       // Token has resolution error, so shouldn't be linted
-      // Note: errors includes both the missing reference and the token that depends on it
-      expect(result.errors.size).toBeGreaterThanOrEqual(1);
+      // Note: issues includes both the missing reference and the token that depends on it
+      expect(result.issues?.size).toBeGreaterThanOrEqual(1);
 
       // Issues should only contain Error objects, not LintIssues
       // (tokens with errors should not be linted)

@@ -162,9 +162,9 @@ export function createTheme(
  * Assert that a result has no errors
  */
 export function assertNoErrors(result: ProcessorOutput): void {
-  if (result.errors.size > 0) {
-    const errorMessages = Array.from(result.errors.entries())
-      .map(([key, error]) => `${key}: ${error.message}`)
+  if (result.issues && result.issues.size > 0) {
+    const errorMessages = Array.from(result.issues.entries())
+      .map(([key, issues]) => `${key}: ${issues.map((i) => i.message).join(", ")}`)
       .join("\n");
     throw new Error(`Expected no errors but found:\n${errorMessages}`);
   }
@@ -175,7 +175,7 @@ export function assertNoErrors(result: ProcessorOutput): void {
  */
 export function assertHasErrors(result: ProcessorOutput, expectedErrorKeys: string[]): void {
   for (const key of expectedErrorKeys) {
-    if (!result.errors.has(key)) {
+    if (!result.issues?.has(key)) {
       throw new Error(`Expected error for key '${key}' but none found`);
     }
   }
@@ -185,5 +185,6 @@ export function assertHasErrors(result: ProcessorOutput, expectedErrorKeys: stri
  * Get error message for a specific token
  */
 export function getErrorMessage(result: ProcessorOutput, tokenKey: string): string | undefined {
-  return result.errors.get(tokenKey)?.message;
+  const issues = result.issues?.get(tokenKey);
+  return issues?.[0]?.message;
 }

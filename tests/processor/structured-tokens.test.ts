@@ -291,12 +291,13 @@ describe("Structured Tokens - End-to-End Resolution", () => {
     const result = processTokens(tokens);
 
     // Check that the error is tracked for the parent token
-    expect(result.errors.has("shadow")).toBe(true);
-    expect(result.errors.get("shadow")).toBeInstanceOf(Error);
+    expect(result.issues?.has("shadow")).toBe(true);
+    const shadowIssues = result.issues?.get("shadow");
+    expect(shadowIssues?.some((issue) => issue instanceof Error)).toBe(true);
 
     // The sub-field error should NOT be in the final output (filtered out)
     expect(result.tokens.has("shadow.offsetY")).toBe(false);
-    expect(result.errors.has("shadow.offsetY")).toBe(false);
+    expect(result.issues?.has("shadow.offsetY")).toBe(false);
   });
 
   it("should handle multiple structured tokens with cross-references", () => {
