@@ -50,6 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **CRUD Result Types**: Unified to `TokenOperationResult` with `tokens`, `resolved`, `issues`, `dependants` properties
 
+- **Circular dependency handling**: Circular dependencies no longer throw errors but are handled gracefully
+
 
 ## [0.14.0] - 2025-12-12
 
