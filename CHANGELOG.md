@@ -9,50 +9,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Structured token field-level linting** - Added `path` property to `LintIssue` type to enable field-level validation for structured tokens (typography, shadow, etc.)
-  - Validators can now return issues with `path: ["fieldName"]` to identify specific fields
-  - Supports arrays with paths like `[0, "blur"]` for box-shadow tokens
+- **CSS and Penpot Preset Validators**: Pre-built validation rulesets for token types
+  - `css.createLintRunner()`: Standards-compliant CSS validators (opacity, fontWeight, borderRadius, boxShadow, lineHeight, letterSpacing, textTransform, textDecoration)
+  - `penpot.createLintRunner()`: Penpot-specific validators extending CSS rules (typography, shadow, strokeWidth)
+  - Composable primitives: `number()`, `string()`, `boolean()`, `color()`, `numberWithUnit()`
+  - Combinators: `or()`, `all()`, `oneOrList()`, `list()`, `struct()`, `arrayOf()`
 
-- **CSS and Penpot preset validators** - Pre-built validation rules for standard token types
-  - `css.createLintRunner()` - Standards-compliant CSS validators (opacity, fontWeight, borderRadius, boxShadow, etc.)
-  - `penpot.createLintRunner()` - Penpot-specific validators extending CSS rules (typography, shadow, strokeWidth, letterSpacing)
-  - Composable primitive validators: `number()`, `string()`, `boolean()`, `color()`, `numberWithUnit()`
-  - Combinator validators: `or()`, `oneOrList()`, `list()`, `struct()`, `arrayOf()`, `all()`
-  - `ValidatorCode` enum for type-safe error codes
+- **LintRunner Extension API**: Composable rule system with `.extend()` method
+  - Override specific validators while preserving others
+  - Combine validators using `all()` combinator
+  - Immutable API returns new instances
 
-- **LintRunner extension API** - New `.extend()` method for composing and overriding validators
-  - Enables creating custom rule sets by extending CSS or Penpot presets
-  - Supports validator composition with `all()` combinator for running multiple validators
-  - Immutable - returns new LintRunner instance preserving original
-  - Example: `css.createLintRunner().extend({ opacity: customValidator })`
+- **Structured Token Field-Level Linting**: Validation with field-level granularity
+  - `path` property on `LintIssue` identifies specific fields (e.g., `["fontSize"]` or `[0, "blur"]`)
+  - Supports Map-based (typography) and array-based (box-shadow) tokens
+  - Cross-field validation (e.g., lineHeight requires fontSize)
 
-- **ValueValidator system** - Low-level validation primitives for building custom validators
-  - `createValidator()` wrapper converts ValueValidator to TokenTypeValidator
-  - Context-aware validation with `ValidatorContext` (tokenName, path, severity)
-  - Structured error reporting with `issue()` helper function
+- **TokenSymbol Validator Support**: Validators can use `.get()`, `.keys()`, `.values()`, `.length()` methods
+
+- **Helper Functions**: `getAffectedTokens()`, `getBrokenReferences()`, `getModifiedDependants()`, `getRenamedReferences()`
 
 ### Changed
 
-- **Linter API improvements** - Simplified `CreateIssueFn` signature to accept full `LintIssue` object instead of individual parameters
-  - **BREAKING**: `createIssue(context, code, message, data?, severity?, line?)` → `createIssue({ code, severity, message, tokenName, path?, data?, line? })`
-  - Migration: Pass complete issue object instead of individual parameters
-  
-- **LintResult type change** - Changed from object with `{ issues, errors, warnings, hasErrors }` to `Map<RefPath, LintIssue[]>`
-  - **BREAKING**: `result.lint.errors` → `result.lint` (Map of token paths to issue arrays)
-  - **BREAKING**: `result.lint.hasErrors` → Check `result.lint.size > 0` or iterate to find errors by severity
-  - Migration: Filter issues by severity instead of using pre-aggregated arrays
+- **BREAKING: LintResult Type**: Changed from object to `Map<RefPath, LintIssue[]>`
+  - Before: `result.lint.errors`, `result.lint.warnings`, `result.lint.hasErrors`
+  - After: `result.issues` (Map), filter by `issue.severity`
 
-- **Removed `aggregateResults()` method** from `LintRunner` - No longer needed with Map-based result structure
-  - **BREAKING**: `linter.aggregateResults(issues)` → Issues are already organized by token in the Map
-  - Migration: Work directly with `Map<RefPath, LintIssue[]>` instead of calling `aggregateResults()`
+- **BREAKING: LintIssue Structure**:
+  - Removed `ruleId` property (use `code` instead)
+  - Changed `tokenName` type from `string` to `RefPath`
+  - Added optional `path` property: `(string | number)[]`
 
-- **Removed `ruleId` property** from `LintIssue` - Use `code` property for identifying issue types
-  - **BREAKING**: `issue.ruleId` → `issue.code`
-  - Migration: Replace `ruleId` references with `code`
+- **BREAKING: CreateIssueFn Signature**: Now accepts full issue object instead of individual parameters
 
-### Documentation
+- **BREAKING: Removed `aggregateResults()`**: Work directly with `Map<RefPath, LintIssue[]>`
 
-- Updated `src/processor/linter/README.md` with structured token validation examples
+- **ProcessorOutput**: Renamed `lintIssues` to `issues` (now includes lint issues and language errors)
+
+- **Error Handling**: `DependencyError` class replaced with `createDependencyError()` helper returning `ProcessorError`
+
+- **CRUD Result Types**: Unified to `TokenOperationResult` with `tokens`, `resolved`, `issues`, `dependants` properties
+
 
 ## [0.14.0] - 2025-12-12
 
