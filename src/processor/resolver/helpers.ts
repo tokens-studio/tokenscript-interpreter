@@ -1,6 +1,5 @@
 import { isLanguageError } from "@interpreter/errors";
 import { ProcessorErrorCode } from "@interpreter/errors/codes/processor";
-import { DependencyError } from "../errors";
 import type { RefPath, TokenOperationResult } from "./types";
 
 /**
@@ -16,7 +15,7 @@ export function getAffectedTokens(result: TokenOperationResult): Set<RefPath> {
 
 /**
  * Get broken references from issues.
- * Filters issues for TOKEN_NOT_FOUND errors or DependencyErrors.
+ * Filters issues for TOKEN_NOT_FOUND or DEPENDENCY_ERROR codes.
  */
 export function getBrokenReferences(result: TokenOperationResult): Set<RefPath> {
   if (!result.issues) {
@@ -27,13 +26,12 @@ export function getBrokenReferences(result: TokenOperationResult): Set<RefPath> 
 
   for (const [tokenPath, issues] of result.issues) {
     for (const issue of issues) {
-      // Check for ProcessorError with TOKEN_NOT_FOUND code
-      if (isLanguageError(issue) && issue.code === ProcessorErrorCode.TOKEN_NOT_FOUND) {
-        brokenRefs.add(tokenPath);
-        break;
-      }
-      // Check for DependencyError (caused by missing/broken dependencies)
-      if (issue instanceof DependencyError) {
+      // Check for ProcessorError with TOKEN_NOT_FOUND or DEPENDENCY_ERROR code
+      if (
+        isLanguageError(issue) &&
+        (issue.code === ProcessorErrorCode.TOKEN_NOT_FOUND ||
+          issue.code === ProcessorErrorCode.DEPENDENCY_ERROR)
+      ) {
         brokenRefs.add(tokenPath);
         break;
       }

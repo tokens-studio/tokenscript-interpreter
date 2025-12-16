@@ -1,13 +1,18 @@
 import type { ASTNode } from "@interpreter/ast";
 import type { Config } from "@interpreter/config";
-import { isLanguageError, ProcessorError, ProcessorErrorCode } from "@interpreter/errors";
+import {
+  isLanguageError,
+  type LanguageError,
+  ProcessorError,
+  ProcessorErrorCode,
+} from "@interpreter/errors";
 import type { InterpreterResult } from "@interpreter/interpreter";
 import { type ParseExpressionResult, parseExpression } from "@interpreter/parser";
 import { BooleanSymbol, NullSymbol, NumberSymbol, StringSymbol } from "@interpreter/symbols";
 import { renameReferences } from "@interpreter/utils/references";
 import { isArray, isBoolean, isNull, isNumber, isObject, isString } from "@interpreter/utils/type";
 import { UNINTERPRETED_KEYWORDS } from "@src/types";
-import { DependencyError } from "../errors";
+import { createDependencyError } from "../errors";
 import type { LintRunner } from "../linter";
 import {
   createTokenSymbol,
@@ -30,6 +35,7 @@ import type {
   IssuesMap,
   RefPath,
   ResolvedValueMap,
+  ResolveIssue,
   TokenDataMap,
   TokenErrorMap,
   TokenInputMap,
@@ -215,12 +221,22 @@ class PrefixResolver {
     );
   }
 
-  private addIssue(tokenName: RefPath, issue: Error): void {
+  private addIssue(tokenName: RefPath, issue: ResolveIssue): void {
     const existing = this.issues.get(tokenName) || [];
     this.issues.set(tokenName, [...existing, issue]);
   }
 
-  private resolveError(refPath: RefPath, error: Error, value: string): Error {
+  private ensureLanguageError(error: Error): LanguageError {
+    if (isLanguageError(error)) {
+      return error;
+    }
+    // Wrap unknown errors as ProcessorError
+    return new ProcessorError(ProcessorErrorCode.UNKNOWN_PARSING_ERROR, {
+      data: { error: error.message },
+    });
+  }
+
+  private resolveError(refPath: RefPath, error: LanguageError, value: string): LanguageError {
     this.resolved.set(refPath, error);
     this.callbacks?.onError?.(refPath, error, value);
     this.graph.addNode(refPath, []);
@@ -629,7 +645,7 @@ class PrefixResolver {
               parentToken,
               fieldPath,
             });
-            this.addIssue(tokenName, tokenValue);
+            this.addIssue(tokenName, this.ensureLanguageError(tokenValue));
           } else {
             // Don't call onResolve for sub-fields
             this.tokenInterpreter.updateReferenceCache(tokenName, tokenValue);
@@ -672,7 +688,7 @@ class PrefixResolver {
 
       if (tokenValue instanceof Error) {
         this.callbacks?.onError?.(tokenName, tokenValue, tokenValueStr);
-        this.addIssue(tokenName, tokenValue);
+        this.addIssue(tokenName, this.ensureLanguageError(tokenValue));
       } else {
         this.callbacks?.onResolve?.(tokenName, tokenValue);
         this.lintTokenResult(tokenName, tokenValue);
@@ -724,7 +740,7 @@ class PrefixResolver {
         // Sub-field has error, propagate to parent
         this.resolved.set(tokenName, fieldValue);
         this.callbacks?.onError?.(tokenName, fieldValue, String(originalValue));
-        this.addIssue(tokenName, fieldValue);
+        this.addIssue(tokenName, this.ensureLanguageError(fieldValue));
         hasError = true;
         break;
       }
@@ -767,7 +783,7 @@ class PrefixResolver {
 
       const error =
         parentValue instanceof Error
-          ? new DependencyError(child, parent, parentValue)
+          ? createDependencyError(child, parent, parentValue)
           : new ProcessorError(ProcessorErrorCode.TOKEN_NOT_FOUND, {
               data: { tokenName: child },
             });

@@ -12,7 +12,7 @@ export {
   type TokenBuilder,
   type TokenDataMap,
 } from "./builders";
-export { DependencyError } from "./errors";
+export { createDependencyError } from "./errors";
 export * as linter from "./linter";
 export {
   defaultObjectParsers,

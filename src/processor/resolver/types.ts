@@ -1,4 +1,5 @@
 import type { ASTNode } from "@interpreter/ast";
+import type { LanguageError } from "@interpreter/errors";
 import type { InterpreterResult } from "@interpreter/interpreter";
 import type { LintIssue } from "../linter";
 import type { DependencyGraph } from "../utils/DependencyGraph";
@@ -37,10 +38,9 @@ export type TokenErrorMap = Map<RefPath, Error>;
 
 /**
  * An issue found during token resolution.
- * Can be a lint issue, a language error (lexer/parser/interpreter/processor),
- * or a general error (e.g., DependencyError).
+ * Can be a lint issue or a language error (lexer/parser/interpreter/processor).
  */
-export type ResolveIssue = LintIssue | Error;
+export type ResolveIssue = LintIssue | LanguageError;
 export type IssuesMap = Map<RefPath, ResolveIssue[]>;
 
 // Crud ------------------------------------------------------------------------
