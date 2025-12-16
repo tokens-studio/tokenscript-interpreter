@@ -2,6 +2,7 @@ export { DependencyTracker } from "./DependencyTracker";
 export {
   getAffectedTokens,
   getBrokenReferences,
+  getModifiedDependants,
   getRenamedReferences,
 } from "./helpers";
 export { PrefixExtractor } from "./PrefixExtractor";

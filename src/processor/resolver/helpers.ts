@@ -51,3 +51,30 @@ export function getRenamedReferences(
 ): Set<RefPath> {
   return modifiedTokens;
 }
+
+/**
+ * Get tokens from the dependants graph whose values actually changed.
+ * Compares the old token values with the new result to filter only modified tokens.
+ */
+export function getModifiedDependants(
+  oldTokens: Map<RefPath, any>,
+  result: TokenOperationResult,
+): Set<RefPath> {
+  const modified = new Set<RefPath>();
+
+  // Get all dependants from the graph
+  const affectedTokens = getAffectedTokens(result);
+
+  // Filter to only those whose values actually changed
+  for (const tokenPath of affectedTokens) {
+    const oldValue = oldTokens.get(tokenPath);
+    const newValue = result.tokens.get(tokenPath);
+
+    // Compare values - if they differ, the token was modified
+    if (oldValue !== newValue) {
+      modified.add(tokenPath);
+    }
+  }
+
+  return modified;
+}

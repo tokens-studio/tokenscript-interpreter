@@ -23,6 +23,7 @@ export { processTokenSets, processTokens } from "./process";
 export {
   getAffectedTokens,
   getBrokenReferences,
+  getModifiedDependants,
   getRenamedReferences,
 } from "./resolver/helpers";
 export type { ProcessorOutput, ProcessorResult } from "./resolver/TokenResolver";
