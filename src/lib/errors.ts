@@ -5,7 +5,7 @@ import {
   ParserError,
   ProcessorError,
 } from "@src/interpreter/errors";
-import { DependencyError } from "@src/processor";
+import { createDependencyError } from "@src/processor";
 
 export const errorClasses = {
   LanguageError,
@@ -13,5 +13,8 @@ export const errorClasses = {
   ParserError,
   InterpreterError,
   ProcessorError,
-  DependencyError,
+};
+
+export const errorHelpers = {
+  createDependencyError,
 };

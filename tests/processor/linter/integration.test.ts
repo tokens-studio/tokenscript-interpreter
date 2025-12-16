@@ -23,10 +23,10 @@ describe("Linter Integration", () => {
       const linter = createTestLinter();
       const result = processTokens(tokens, { linter });
 
-      expect(result.lint).toBeDefined();
-      expect(result.lint?.size).toBe(1);
-      expect(result.lint?.get("color.secondary")).toHaveLength(1);
-      expect(result.lint?.get("color.secondary")?.[0].code).toBe(ValidatorCode.EXPECTED_COLOR);
+      expect(result.issues).toBeDefined();
+      expect(result.issues?.size).toBe(1);
+      expect(result.issues?.get("color.secondary")).toHaveLength(1);
+      expect(result.issues?.get("color.secondary")?.[0].code).toBe(ValidatorCode.EXPECTED_COLOR);
     });
 
     it("should not return lint results when no linter is provided", () => {
@@ -34,7 +34,7 @@ describe("Linter Integration", () => {
 
       const result = processTokens(tokens);
 
-      expect(result.lint).toBeUndefined();
+      expect(result.issues).toBeUndefined();
     });
 
     it("should aggregate errors and warnings correctly", () => {
@@ -47,13 +47,13 @@ describe("Linter Integration", () => {
       const linter = createTestLinter();
       const result = processTokens(tokens, { linter });
 
-      expect(result.lint).toBeDefined();
-      expect(result.lint?.size).toBe(3);
-      expect(result.lint?.get("color.bad")).toHaveLength(1);
-      expect(result.lint?.get("opacity.bad")).toHaveLength(1);
-      expect(result.lint?.get("number.negative")).toHaveLength(1);
-      expect(result.lint?.get("number.negative")?.[0].code).toBe(ValidatorCode.VALUE_TOO_SMALL);
-      expect(result.lint?.get("number.negative")?.[0].severity).toBe(LintSeverity.ERROR);
+      expect(result.issues).toBeDefined();
+      expect(result.issues?.size).toBe(3);
+      expect(result.issues?.get("color.bad")).toHaveLength(1);
+      expect(result.issues?.get("opacity.bad")).toHaveLength(1);
+      expect(result.issues?.get("number.negative")).toHaveLength(1);
+      expect(result.issues?.get("number.negative")?.[0].code).toBe(ValidatorCode.VALUE_TOO_SMALL);
+      expect(result.issues?.get("number.negative")?.[0].severity).toBe(LintSeverity.ERROR);
     });
 
     it("should lint tokens with expressions", () => {
@@ -66,9 +66,9 @@ describe("Linter Integration", () => {
       const result = processTokens(tokens, { linter });
 
       // opacity.double resolves to 1.5 which is out of range
-      expect(result.lint?.size).toBe(1);
-      expect(result.lint?.get("opacity.double")).toHaveLength(1);
-      expect(result.lint?.get("opacity.double")?.[0].code).toBe(ValidatorCode.VALUE_TOO_LARGE);
+      expect(result.issues?.size).toBe(1);
+      expect(result.issues?.get("opacity.double")).toHaveLength(1);
+      expect(result.issues?.get("opacity.double")?.[0].code).toBe(ValidatorCode.VALUE_TOO_LARGE);
     });
 
     it("should not lint tokens that have errors", () => {
@@ -80,7 +80,13 @@ describe("Linter Integration", () => {
       // Token has resolution error, so shouldn't be linted
       // Note: errors includes both the missing reference and the token that depends on it
       expect(result.errors.size).toBeGreaterThanOrEqual(1);
-      expect(result.lint?.size || 0).toBe(0);
+
+      // Issues should only contain Error objects, not LintIssues
+      // (tokens with errors should not be linted)
+      const issues = result.issues?.get("opacity.bad");
+      if (issues) {
+        expect(issues.every((issue) => issue instanceof Error)).toBe(true);
+      }
     });
 
     it("should lint primitive values", () => {
@@ -92,9 +98,9 @@ describe("Linter Integration", () => {
       const linter = createTestLinter();
       const result = processTokens(tokens, { linter });
 
-      expect(result.lint?.size).toBe(1);
-      expect(result.lint?.get("number.negative")).toHaveLength(1);
-      expect(result.lint?.get("number.negative")?.[0].severity).toBe(LintSeverity.ERROR);
+      expect(result.issues?.size).toBe(1);
+      expect(result.issues?.get("number.negative")).toHaveLength(1);
+      expect(result.issues?.get("number.negative")?.[0].severity).toBe(LintSeverity.ERROR);
     });
 
     it("should handle tokens without $type", () => {
@@ -104,7 +110,7 @@ describe("Linter Integration", () => {
       const result = processTokens(tokens, { linter });
 
       // No type means no type-based validation
-      expect(result.lint?.size || 0).toBe(0);
+      expect(result.issues?.size || 0).toBe(0);
     });
   });
 
@@ -117,7 +123,7 @@ describe("Linter Integration", () => {
 
       const result = processTokens(tokens);
 
-      expect(result.lint).toBeUndefined();
+      expect(result.issues).toBeUndefined();
       // Verify tokens still resolve correctly
       expect(result.tokens.get("b")).toBeDefined();
     });
@@ -138,15 +144,15 @@ describe("Linter Integration", () => {
       const linter = createTestLinter();
       const result = processTokens(tokens, { linter });
 
-      expect(result.lint?.size).toBe(3);
-      expect(result.lint?.get("color.invalid")?.[0].code).toBe(ValidatorCode.EXPECTED_COLOR);
-      expect(result.lint?.get("opacity.invalid")?.[0].code).toBe(ValidatorCode.VALUE_TOO_LARGE);
-      expect(result.lint?.get("number.negative")?.[0].code).toBe(ValidatorCode.VALUE_TOO_SMALL);
+      expect(result.issues?.size).toBe(3);
+      expect(result.issues?.get("color.invalid")?.[0].code).toBe(ValidatorCode.EXPECTED_COLOR);
+      expect(result.issues?.get("opacity.invalid")?.[0].code).toBe(ValidatorCode.VALUE_TOO_LARGE);
+      expect(result.issues?.get("number.negative")?.[0].code).toBe(ValidatorCode.VALUE_TOO_SMALL);
 
       // Check severities - preset validators use ERROR by default
-      expect(result.lint?.get("color.invalid")?.[0].severity).toBe(LintSeverity.ERROR);
-      expect(result.lint?.get("opacity.invalid")?.[0].severity).toBe(LintSeverity.ERROR);
-      expect(result.lint?.get("number.negative")?.[0].severity).toBe(LintSeverity.ERROR);
+      expect(result.issues?.get("color.invalid")?.[0].severity).toBe(LintSeverity.ERROR);
+      expect(result.issues?.get("opacity.invalid")?.[0].severity).toBe(LintSeverity.ERROR);
+      expect(result.issues?.get("number.negative")?.[0].severity).toBe(LintSeverity.ERROR);
     });
   });
 
@@ -157,7 +163,7 @@ describe("Linter Integration", () => {
       const linter = createTestLinter();
       const result = processTokens(tokens, { linter });
 
-      expect(result.lint?.get("my.special.token")?.[0].tokenName).toBe("my.special.token");
+      expect(result.issues?.get("my.special.token")?.[0].tokenName).toBe("my.special.token");
     });
 
     it("should include custom data in issues", () => {
@@ -167,7 +173,7 @@ describe("Linter Integration", () => {
       const result = processTokens(tokens, { linter });
 
       // Preset validators include constraint info in data
-      expect(result.lint?.get("opacity.bad")?.[0].data).toMatchObject({ value: 1.5 });
+      expect(result.issues?.get("opacity.bad")?.[0].data).toMatchObject({ value: 1.5 });
     });
   });
 
@@ -182,8 +188,8 @@ describe("Linter Integration", () => {
       const linter = createTestLinter();
       const result = processTokens(tokens, { linter });
 
-      expect(result.lint?.size).toBe(1);
-      expect(result.lint?.get("color.primary")?.[0].tokenName).toBe("color.primary");
+      expect(result.issues?.size).toBe(1);
+      expect(result.issues?.get("color.primary")?.[0].tokenName).toBe("color.primary");
     });
   });
 });

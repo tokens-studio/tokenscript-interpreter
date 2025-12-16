@@ -19,13 +19,13 @@ describe("Preset Validators Integration", () => {
       const result = processTokens(tokens, { linter });
 
       // Valid tokens should have no issues
-      expect(result.lint?.has("opacity.valid")).toBe(false);
-      expect(result.lint?.has("font.weight.valid")).toBe(false);
-      expect(result.lint?.has("font.weight.keyword")).toBe(false);
+      expect(result.issues?.has("opacity.valid")).toBe(false);
+      expect(result.issues?.has("font.weight.valid")).toBe(false);
+      expect(result.issues?.has("font.weight.keyword")).toBe(false);
 
       // Invalid tokens should have issues
-      expect(result.lint?.has("opacity.invalid")).toBe(true);
-      expect(result.lint?.has("font.weight.invalid")).toBe(true);
+      expect(result.issues?.has("opacity.invalid")).toBe(true);
+      expect(result.issues?.has("font.weight.invalid")).toBe(true);
     });
 
     it("should validate border-radius with multiple values", () => {
@@ -39,9 +39,9 @@ describe("Preset Validators Integration", () => {
 
       const result = processTokens(tokens, { linter });
 
-      expect(result.lint?.has("radius.single")).toBe(false);
-      expect(result.lint?.has("radius.four")).toBe(false);
-      expect(result.lint?.has("radius.invalid")).toBe(true);
+      expect(result.issues?.has("radius.single")).toBe(false);
+      expect(result.issues?.has("radius.four")).toBe(false);
+      expect(result.issues?.has("radius.invalid")).toBe(true);
     });
   });
 
@@ -78,8 +78,8 @@ describe("Preset Validators Integration", () => {
 
       const result = processTokens(tokens, { linter });
 
-      expect(result.lint?.has("typography.valid")).toBe(false);
-      expect(result.lint?.has("typography.invalidLineHeight")).toBe(true);
+      expect(result.issues?.has("typography.valid")).toBe(false);
+      expect(result.issues?.has("typography.invalidLineHeight")).toBe(true);
     });
 
     it("should validate Penpot shadow tokens", () => {
@@ -122,8 +122,8 @@ describe("Preset Validators Integration", () => {
 
       const result = processTokens(tokens, { linter });
 
-      expect(result.lint?.has("shadow.valid")).toBe(false);
-      expect(result.lint?.has("shadow.negativeBlur")).toBe(true);
+      expect(result.issues?.has("shadow.valid")).toBe(false);
+      expect(result.issues?.has("shadow.negativeBlur")).toBe(true);
     });
   });
 
@@ -143,9 +143,9 @@ describe("Preset Validators Integration", () => {
 
       const result = processTokens(tokens, { linter });
 
-      expect(result.lint?.has("opacity.valid")).toBe(false);
-      expect(result.lint?.has("stroke.valid")).toBe(false);
-      expect(result.lint?.has("stroke.invalid")).toBe(true);
+      expect(result.issues?.has("opacity.valid")).toBe(false);
+      expect(result.issues?.has("stroke.valid")).toBe(false);
+      expect(result.issues?.has("stroke.invalid")).toBe(true);
     });
   });
 
@@ -166,9 +166,9 @@ describe("Preset Validators Integration", () => {
 
       const result = processTokens(tokens, { linter });
 
-      expect(result.lint?.has("z.valid")).toBe(false);
-      expect(result.lint?.has("z.auto")).toBe(false);
-      expect(result.lint?.has("z.invalid")).toBe(true);
+      expect(result.issues?.has("z.valid")).toBe(false);
+      expect(result.issues?.has("z.auto")).toBe(false);
+      expect(result.issues?.has("z.invalid")).toBe(true);
     });
   });
 });

@@ -1,7 +1,7 @@
+import { ProcessorError, ProcessorErrorCode } from "@interpreter/errors";
 import type { InterpreterResult } from "@interpreter/interpreter";
 import { parseExpression } from "@interpreter/parser";
 import { DictionarySymbol, StringSymbol } from "@interpreter/symbols";
-import { DependencyError } from "@src/processor/errors";
 import { TokenInterpreter } from "@src/processor/resolver";
 import { beforeEach, describe, expect, it } from "vitest";
 
@@ -134,8 +134,9 @@ describe("TokenInterpreter", () => {
       referenceCache.set("token-b", error);
 
       const result = interpreter.buildDependencyError("token-a", new Set(["token-b"]), referenceCache);
-      expect(result).toBeInstanceOf(DependencyError);
-      expect((result as DependencyError).message).toContain("token-a");
+      expect(result).toBeInstanceOf(ProcessorError);
+      expect((result as ProcessorError).code).toBe(ProcessorErrorCode.DEPENDENCY_ERROR);
+      expect((result as ProcessorError).data.tokenName).toBe("token-a");
     });
 
     it("should return undefined if all dependencies are resolved", () => {
@@ -158,7 +159,8 @@ describe("TokenInterpreter", () => {
       referenceCache.set("token-c", error2);
 
       const result = interpreter.buildDependencyError("token-a", new Set(["token-b", "token-c"]), referenceCache);
-      expect(result).toBeInstanceOf(DependencyError);
+      expect(result).toBeInstanceOf(ProcessorError);
+      expect((result as ProcessorError).code).toBe(ProcessorErrorCode.DEPENDENCY_ERROR);
     });
 
     it("should handle missing dependencies in resolved map", () => {
@@ -171,7 +173,8 @@ describe("TokenInterpreter", () => {
       referenceCache.set("token-c", new Error("Failed"));
 
       const result = interpreter.buildDependencyError("token-a", new Set(["token-b", "token-c"]), referenceCache);
-      expect(result).toBeInstanceOf(DependencyError);
+      expect(result).toBeInstanceOf(ProcessorError);
+      expect((result as ProcessorError).code).toBe(ProcessorErrorCode.DEPENDENCY_ERROR);
     });
   });
 
@@ -321,7 +324,8 @@ describe("TokenInterpreter", () => {
       referenceCache.set("failed-token", error);
 
       const depError = interpreter.buildDependencyError("dependent-token", new Set(["failed-token"]), referenceCache);
-      expect(depError).toBeInstanceOf(DependencyError);
+      expect(depError).toBeInstanceOf(ProcessorError);
+      expect((depError as ProcessorError).code).toBe(ProcessorErrorCode.DEPENDENCY_ERROR);
     });
 
     it("should handle dictionary building and flattening workflow", () => {

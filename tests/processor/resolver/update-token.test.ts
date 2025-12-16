@@ -1,3 +1,4 @@
+import { getAffectedTokens } from "@src/processor/resolver/helpers";
 import { TokenResolver } from "@src/processor/resolver/TokenResolver";
 import type { TokenData } from "@src/processor/utils/tokens";
 import { describe, expect, it } from "vitest";
@@ -15,8 +16,8 @@ describe("TokenResolver.updateToken", () => {
       tokenData: { $value: "#0000FF", $type: "color" },
     });
 
-    expect(result.resolvedValue.toString()).toBe("#0000FF");
-    expect(result.affectedTokens.has("color.primary")).toBe(true);
+    expect(result.resolved?.toString()).toBe("#0000FF");
+    expect(getAffectedTokens(result).has("color.primary")).toBe(true);
     expect(result.updated).toBe(true);
   });
 
@@ -36,29 +37,30 @@ describe("TokenResolver.updateToken", () => {
       tokenData: { $value: "20", $type: "dimension" },
     });
 
+    const affectedTokens = getAffectedTokens(result);
     // Should identify base and all its dependents
-    expect(result.affectedTokens.has("base")).toBe(true);
-    expect(result.affectedTokens.has("derived")).toBe(true);
-    expect(result.affectedTokens.has("furtherDerived")).toBe(true);
+    expect(affectedTokens.has("base")).toBe(true);
+    expect(affectedTokens.has("derived")).toBe(true);
+    expect(affectedTokens.has("furtherDerived")).toBe(true);
     // Should NOT include independent token
-    expect(result.affectedTokens.has("independent")).toBe(false);
+    expect(affectedTokens.has("independent")).toBe(false);
 
     // Verify derived tokens have correct updated values
-    expect(result.resolvedValue.toString()).toBe("20"); // base = 20
+    expect(result.resolved?.toString()).toBe("20"); // base = 20
 
     // Check derived: should be 20 * 2 = 40
     const derived = resolver.updateToken({
       tokenPath: "derived",
       tokenData: { $value: "{base} * 2", $type: "dimension" },
     });
-    expect(derived.resolvedValue.toString()).toBe("40");
+    expect(derived.resolved?.toString()).toBe("40");
 
     // Check furtherDerived: should be 40 + 5 = 45
     const furtherDerived = resolver.updateToken({
       tokenPath: "furtherDerived",
       tokenData: { $value: "{derived} + 5", $type: "dimension" },
     });
-    expect(furtherDerived.resolvedValue.toString()).toBe("45");
+    expect(furtherDerived.resolved?.toString()).toBe("45");
   });
 
   it("should resolve token with references correctly", () => {
@@ -73,8 +75,8 @@ describe("TokenResolver.updateToken", () => {
       tokenData: { $value: "{spacing.base} * 3", $type: "dimension" },
     });
 
-    expect(result.resolvedValue.toString()).toBe("24");
-    expect(result.affectedTokens.has("spacing.large")).toBe(true);
+    expect(result.resolved?.toString()).toBe("24");
+    expect(getAffectedTokens(result).has("spacing.large")).toBe(true);
   });
 
   it("should handle empty token name with empty string", () => {
@@ -86,8 +88,8 @@ describe("TokenResolver.updateToken", () => {
       tokenData: { $value: "50", $type: "dimension" },
     });
 
-    expect(result.resolvedValue.toString()).toBe("50");
-    expect(result.affectedTokens.has("")).toBe(true);
+    expect(result.resolved?.toString()).toBe("50");
+    expect(getAffectedTokens(result).has("")).toBe(true);
   });
 
   it("should handle whitespace-only token name as empty string", () => {
@@ -99,12 +101,15 @@ describe("TokenResolver.updateToken", () => {
       tokenData: { $value: "75", $type: "dimension" },
     });
 
-    expect(result.resolvedValue.toString()).toBe("75");
-    expect(result.affectedTokens.has("")).toBe(true);
+    expect(result.resolved?.toString()).toBe("75");
+    expect(getAffectedTokens(result).has("")).toBe(true);
   });
 
-  it("should return error when token has unresolved dependencies", () => {
-    const allTokens = new Map<string, TokenData>([["valid", { $value: "10", $type: "dimension" }]]);
+  it("should return error in issues when token has unresolved dependencies", () => {
+    const allTokens = new Map<string, TokenData>([
+      ["valid", { $value: "10", $type: "dimension" }],
+      ["invalid", { $value: "5", $type: "dimension" }],
+    ]);
 
     const { resolver } = new TokenResolver().build(allTokens);
     const result = resolver.updateToken({
@@ -112,7 +117,7 @@ describe("TokenResolver.updateToken", () => {
       tokenData: { $value: "{nonexistent}", $type: "dimension" },
     });
 
-    expect(result.resolvedValue).toBeInstanceOf(Error);
+    expect(result.issues?.has("invalid")).toBe(true);
   });
 
   it("should handle mathematical expressions", () => {
@@ -127,7 +132,7 @@ describe("TokenResolver.updateToken", () => {
       tokenData: { $value: "{base} * 3", $type: "dimension" },
     });
 
-    expect(result.resolvedValue.toString()).toBe("30");
+    expect(result.resolved?.toString()).toBe("30");
   });
 
   it("should handle complex dependency chains", () => {
@@ -147,27 +152,27 @@ describe("TokenResolver.updateToken", () => {
     });
 
     // All tokens should be affected
-    expect(result.affectedTokens.size).toBe(4);
-    expect(result.resolvedValue.toString()).toBe("10"); // a = 10
+    expect(getAffectedTokens(result).size).toBe(4);
+    expect(result.resolved?.toString()).toBe("10"); // a = 10
 
     // Verify the cascade: a=10, b=11, c=12, d=13
     const b = resolver.updateToken({
       tokenPath: "b",
       tokenData: { $value: "{a} + 1", $type: "dimension" },
     });
-    expect(b.resolvedValue.toString()).toBe("11");
+    expect(b.resolved?.toString()).toBe("11");
 
     const c = resolver.updateToken({
       tokenPath: "c",
       tokenData: { $value: "{b} + 1", $type: "dimension" },
     });
-    expect(c.resolvedValue.toString()).toBe("12");
+    expect(c.resolved?.toString()).toBe("12");
 
     const d = resolver.updateToken({
       tokenPath: "d",
       tokenData: { $value: "{c} + 1", $type: "dimension" },
     });
-    expect(d.resolvedValue.toString()).toBe("13");
+    expect(d.resolved?.toString()).toBe("13");
   });
 
   it("should handle multiple dependents correctly", () => {
@@ -186,33 +191,34 @@ describe("TokenResolver.updateToken", () => {
       tokenData: { $value: "20", $type: "dimension" },
     });
 
+    const affectedTokens = getAffectedTokens(result);
     // Should include base and all three derived tokens
-    expect(result.affectedTokens.size).toBe(4);
-    expect(result.affectedTokens.has("base")).toBe(true);
-    expect(result.affectedTokens.has("derived1")).toBe(true);
-    expect(result.affectedTokens.has("derived2")).toBe(true);
-    expect(result.affectedTokens.has("derived3")).toBe(true);
+    expect(affectedTokens.size).toBe(4);
+    expect(affectedTokens.has("base")).toBe(true);
+    expect(affectedTokens.has("derived1")).toBe(true);
+    expect(affectedTokens.has("derived2")).toBe(true);
+    expect(affectedTokens.has("derived3")).toBe(true);
 
     // Verify all derived tokens have correct updated values
-    expect(result.resolvedValue.toString()).toBe("20"); // base = 20
+    expect(result.resolved?.toString()).toBe("20"); // base = 20
 
     const derived1 = resolver.updateToken({
       tokenPath: "derived1",
       tokenData: { $value: "{base} * 2", $type: "dimension" },
     });
-    expect(derived1.resolvedValue.toString()).toBe("40"); // 20 * 2
+    expect(derived1.resolved?.toString()).toBe("40"); // 20 * 2
 
     const derived2 = resolver.updateToken({
       tokenPath: "derived2",
       tokenData: { $value: "{base} * 3", $type: "dimension" },
     });
-    expect(derived2.resolvedValue.toString()).toBe("60"); // 20 * 3
+    expect(derived2.resolved?.toString()).toBe("60"); // 20 * 3
 
     const derived3 = resolver.updateToken({
       tokenPath: "derived3",
       tokenData: { $value: "{base} + 5", $type: "dimension" },
     });
-    expect(derived3.resolvedValue.toString()).toBe("25"); // 20 + 5
+    expect(derived3.resolved?.toString()).toBe("25"); // 20 + 5
   });
 
   it("should handle token type as undefined", () => {
@@ -225,7 +231,7 @@ describe("TokenResolver.updateToken", () => {
     });
 
     // Should default to "string" type
-    expect(result.resolvedValue.toString()).toBe("updated");
+    expect(result.resolved?.toString()).toBe("updated");
   });
 
   it("should handle adding a new token", () => {
@@ -237,8 +243,8 @@ describe("TokenResolver.updateToken", () => {
       tokenData: { $value: "20", $type: "dimension" },
     });
 
-    expect(result.resolvedValue.toString()).toBe("20");
-    expect(result.affectedTokens.has("newToken")).toBe(true);
+    expect(result.resolved?.toString()).toBe("20");
+    expect(getAffectedTokens(result).has("newToken")).toBe(true);
     expect(result.updated).toBe(false); // Token didn't exist before
   });
 
@@ -251,7 +257,7 @@ describe("TokenResolver.updateToken", () => {
       tokenData: { $value: "world", $type: "string" },
     });
 
-    expect(result.resolvedValue.toString()).toBe("world");
+    expect(result.resolved?.toString()).toBe("world");
   });
 
   it("should handle boolean values", () => {
@@ -263,10 +269,10 @@ describe("TokenResolver.updateToken", () => {
       tokenData: { $value: "false", $type: "boolean" },
     });
 
-    expect(result.resolvedValue.toString()).toBe("false");
+    expect(result.resolved?.toString()).toBe("false");
   });
 
-  it("should return subgraph showing affected token relationships", () => {
+  it("should return dependants graph showing affected token relationships", () => {
     const allTokens = new Map<string, TokenData>([
       ["base", { $value: "10", $type: "dimension" }],
       ["derived1", { $value: "{base} * 2", $type: "dimension" }],
@@ -280,9 +286,9 @@ describe("TokenResolver.updateToken", () => {
       tokenData: { $value: "20", $type: "dimension" },
     });
 
-    // Check subgraph is returned
-    expect(result.subgraph).toBeDefined();
-    const nodes = result.subgraph.getNodes();
+    // Check dependants graph is returned
+    expect(result.dependants?.graph).toBeDefined();
+    const nodes = result.dependants!.graph.getNodes();
 
     // Should only contain affected tokens
     expect(nodes.size).toBe(3);
@@ -312,8 +318,8 @@ describe("TokenResolver.updateToken", () => {
     });
 
     // Should resolve to the referenced value
-    expect(result.resolvedValue.toString()).toBe("#FF0000");
-    expect(result.affectedTokens.has("button.bg")).toBe(true);
+    expect(result.resolved?.toString()).toBe("#FF0000");
+    expect(getAffectedTokens(result).has("button.bg")).toBe(true);
   });
 
   it("should handle changing from literal value to reference", () => {
@@ -330,8 +336,8 @@ describe("TokenResolver.updateToken", () => {
       tokenData: { $value: "{spacing.base} * 2", $type: "dimension" },
     });
 
-    expect(result.resolvedValue.toString()).toBe("16");
-    expect(result.affectedTokens.size).toBe(1);
+    expect(result.resolved?.toString()).toBe("16");
+    expect(getAffectedTokens(result).size).toBe(1);
   });
 
   it("should detect circular dependency when updating creates a cycle", () => {
@@ -408,12 +414,13 @@ describe("TokenResolver.updateToken", () => {
       tokenData: { $value: "100", $type: "dimension" },
     });
 
+    const affectedTokens = getAffectedTokens(result);
     // All affected tokens should be identified
-    expect(result.affectedTokens.size).toBe(4);
-    expect(result.affectedTokens.has("base")).toBe(true);
-    expect(result.affectedTokens.has("level1a")).toBe(true);
-    expect(result.affectedTokens.has("level1b")).toBe(true);
-    expect(result.affectedTokens.has("level2")).toBe(true);
+    expect(affectedTokens.size).toBe(4);
+    expect(affectedTokens.has("base")).toBe(true);
+    expect(affectedTokens.has("level1a")).toBe(true);
+    expect(affectedTokens.has("level1b")).toBe(true);
+    expect(affectedTokens.has("level2")).toBe(true);
 
     // Now check that ALL dependent values are correct after this ONE update
     // No need to call updateToken again for each dependent
@@ -421,18 +428,18 @@ describe("TokenResolver.updateToken", () => {
       tokenPath: "level1a",
       tokenData: { $value: "{base} * 2", $type: "dimension" },
     });
-    expect(level1a.resolvedValue.toString()).toBe("200"); // 100 * 2
+    expect(level1a.resolved?.toString()).toBe("200"); // 100 * 2
 
     const level1b = resolver.updateToken({
       tokenPath: "level1b",
       tokenData: { $value: "{base} + 5", $type: "dimension" },
     });
-    expect(level1b.resolvedValue.toString()).toBe("105"); // 100 + 5
+    expect(level1b.resolved?.toString()).toBe("105"); // 100 + 5
 
     const level2 = resolver.updateToken({
       tokenPath: "level2",
       tokenData: { $value: "{level1a} + {level1b}", $type: "dimension" },
     });
-    expect(level2.resolvedValue.toString()).toBe("305"); // 200 + 105
+    expect(level2.resolved?.toString()).toBe("305"); // 200 + 105
   });
 });

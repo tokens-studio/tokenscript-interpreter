@@ -12,7 +12,7 @@ export {
   type TokenBuilder,
   type TokenDataMap,
 } from "./builders";
-export { DependencyError } from "./errors";
+export { createDependencyError } from "./errors";
 export * as linter from "./linter";
 export {
   defaultObjectParsers,
@@ -20,6 +20,11 @@ export {
   type ObjectParser,
 } from "./object-parsers";
 export { processTokenSets, processTokens } from "./process";
+export {
+  getAffectedTokens,
+  getBrokenReferences,
+  getRenamedReferences,
+} from "./resolver/helpers";
 export type { ProcessorOutput, ProcessorResult } from "./resolver/TokenResolver";
 export { TokenResolver } from "./resolver/TokenResolver";
 export type {
@@ -27,6 +32,9 @@ export type {
   CreateTokenResult,
   DeleteTokenParams,
   DeleteTokenResult,
+  IssuesMap,
+  ResolveIssue,
+  TokenOperationResult,
   UpdateTokenParams,
   UpdateTokenResult,
 } from "./resolver/types";

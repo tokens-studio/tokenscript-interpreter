@@ -1,6 +1,6 @@
 import { ProcessorError, ProcessorErrorCode } from "@interpreter/errors";
 import { DictionarySymbol } from "@interpreter/symbols";
-import { DependencyError, TokenResolver } from "@src/processor";
+import { TokenResolver } from "@src/processor";
 import { describe, expect, it } from "vitest";
 import { toTokenData } from "./test-helpers";
 
@@ -168,11 +168,12 @@ describe("TokenResolver", () => {
       const result = processor.processTokens(tokens);
 
       expect(result.resolved.get("a")).toBeInstanceOf(Error);
-      expect(result.resolved.get("b")).toBeInstanceOf(DependencyError);
+      expect(result.resolved.get("b")).toBeInstanceOf(ProcessorError);
 
-      const bError = result.resolved.get("b") as DependencyError;
-      expect(bError.dependencyChain).toEqual(["b", "a", "nonexistent"]);
-      expect(bError.rootError.message).toContain("nonexistent");
+      const bError = result.resolved.get("b") as ProcessorError;
+      expect(bError.code).toBe(ProcessorErrorCode.DEPENDENCY_ERROR);
+      expect(bError.data.chain).toContain("b");
+      expect(bError.data.chain).toContain("a");
     });
 
     it("should track dependency error chains", () => {
@@ -188,12 +189,13 @@ describe("TokenResolver", () => {
       const result = processor.processTokens(tokens);
 
       expect(result.resolved.get("a")).toBeInstanceOf(Error);
-      expect(result.resolved.get("b")).toBeInstanceOf(DependencyError);
-      expect(result.resolved.get("c")).toBeInstanceOf(DependencyError);
+      expect(result.resolved.get("b")).toBeInstanceOf(ProcessorError);
+      expect(result.resolved.get("c")).toBeInstanceOf(ProcessorError);
 
-      const cError = result.resolved.get("c") as DependencyError;
-      expect(cError.dependencyChain).toEqual(["c", "b", "a", "nonexistent"]);
-      expect(cError.rootError.message).toContain("nonexistent");
+      const cError = result.resolved.get("c") as ProcessorError;
+      expect(cError.code).toBe(ProcessorErrorCode.DEPENDENCY_ERROR);
+      expect(cError.data.chain).toContain("c");
+      expect(cError.data.chain).toContain("b");
     });
 
     it("should continue processing other tokens when some fail", () => {
@@ -212,7 +214,9 @@ describe("TokenResolver", () => {
       expect(result.resolved.get("a")?.value).toBe(10);
       expect(result.resolved.get("b")).toBeInstanceOf(Error);
       expect(result.resolved.get("c")?.value).toBe(20);
-      expect(result.resolved.get("d")).toBeInstanceOf(DependencyError);
+      expect(result.resolved.get("d")).toBeInstanceOf(ProcessorError);
+      const dError = result.resolved.get("d") as ProcessorError;
+      expect(dError.code).toBe(ProcessorErrorCode.DEPENDENCY_ERROR);
     });
 
     it("should resolve tokens depending on prefix subtrees", () => {

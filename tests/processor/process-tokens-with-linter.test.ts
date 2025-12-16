@@ -51,9 +51,9 @@ describe("processTokens with linter", () => {
     expect(capturedIssues[0].message).toBe("Flagged test token");
 
     // Lint results should be in the output
-    expect(result.lint).toBeDefined();
-    expect(result.lint?.size).toBe(1);
-    expect(result.lint?.get("color.primary")).toHaveLength(1);
+    expect(result.issues).toBeDefined();
+    expect(result.issues?.size).toBe(1);
+    expect(result.issues?.get("color.primary")).toHaveLength(1);
   });
 
   it("should preserve linter when using updateToken CRUD operation", () => {
@@ -182,7 +182,7 @@ describe("processTokens with linter", () => {
     const { resolver } = result;
 
     // Should not have lint results
-    expect(result.lint).toBeUndefined();
+    expect(result.issues).toBeUndefined();
 
     // CRUD operations should work without linter
     expect(() => {

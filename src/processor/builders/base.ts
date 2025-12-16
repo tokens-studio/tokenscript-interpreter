@@ -5,9 +5,10 @@ import {
   serializeInterpreterResult,
   stringifyInterpreterResult,
 } from "@interpreter/symbols";
-import type { LintResult, LintRunner } from "../linter";
+import type { LintRunner } from "../linter";
 import type { ObjectParser } from "../object-parsers";
 import { type ProcessorOutput, TokenResolver } from "../resolver/TokenResolver";
+import type { IssuesMap } from "../resolver/types";
 import type { TokenData } from "../utils/tokens";
 import { MapBuilder } from "./MapBuilder";
 import type { TokenBuilder } from "./types";
@@ -56,7 +57,7 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
   options?: BuildTokensOptions<T>,
 ): ProcessorOutput & {
   output: T;
-  lint?: LintResult;
+  issues?: IssuesMap;
 } {
   const { config, builder = new MapBuilder(), objectParsers, linter } = options ?? {};
 
@@ -104,14 +105,14 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
     }
   }
 
-  const lint = result.lintIssues;
+  const issues = result.issues;
 
   return {
     ...result,
     tokens: tokensMap,
     output: builderOutput as T,
     errors,
-    lint,
+    issues,
     resolver: result.resolver,
   };
 }

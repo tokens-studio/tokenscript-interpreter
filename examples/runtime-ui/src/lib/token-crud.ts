@@ -1,4 +1,5 @@
 import {
+  getBrokenReferences,
   parseExpression,
   renameReferences,
   TokenResolver,
@@ -218,21 +219,27 @@ export function extractValidationErrors(
   if (!result) return errors;
 
   // Extract broken references from delete operation
-  if (result.delete?.brokenReferences && result.delete.brokenReferences.size > 0) {
-    errors.push({
-      type: "broken-references",
-      message: `This will break ${result.delete.brokenReferences.size} reference(s)`,
-      affectedTokens: Array.from(result.delete.brokenReferences),
-    });
+  if (result.delete) {
+    const brokenRefs = getBrokenReferences(result.delete);
+    if (brokenRefs.size > 0) {
+      errors.push({
+        type: "broken-references",
+        message: `This will break ${brokenRefs.size} reference(s)`,
+        affectedTokens: Array.from(brokenRefs),
+      });
+    }
   }
 
   // Extract broken references from update operation (when not updating references)
-  if (result.update?.brokenReferences && result.update.brokenReferences.size > 0) {
-    errors.push({
-      type: "rename-broken-references",
-      message: `Renaming will break ${result.update.brokenReferences.size} reference(s)`,
-      affectedTokens: Array.from(result.update.brokenReferences),
-    });
+  if (result.update) {
+    const brokenRefs = getBrokenReferences(result.update);
+    if (brokenRefs.size > 0) {
+      errors.push({
+        type: "rename-broken-references",
+        message: `Renaming will break ${brokenRefs.size} reference(s)`,
+        affectedTokens: Array.from(brokenRefs),
+      });
+    }
   }
 
   return errors;

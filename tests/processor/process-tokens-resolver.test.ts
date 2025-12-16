@@ -1,4 +1,5 @@
 import { processTokens } from "@src/processor/process";
+import { getAffectedTokens, getBrokenReferences } from "@src/processor/resolver/helpers";
 import type { TokenData } from "@src/processor/utils/tokens";
 import { describe, expect, it } from "vitest";
 
@@ -27,10 +28,11 @@ describe("processTokens resolver flow", () => {
     });
 
     // Verify update worked
-    expect(updateResult.resolvedValue.toString()).toBe("#0000FF");
+    expect(updateResult.resolved?.toString()).toBe("#0000FF");
     expect(updateResult.updated).toBe(true);
-    expect(updateResult.affectedTokens.has("color.primary")).toBe(true);
-    expect(updateResult.affectedTokens.has("color.secondary")).toBe(true);
+    const affectedTokens = getAffectedTokens(updateResult);
+    expect(affectedTokens.has("color.primary")).toBe(true);
+    expect(affectedTokens.has("color.secondary")).toBe(true);
   });
 
   it("should use resolver from processTokens output directly for createToken", () => {
@@ -49,9 +51,9 @@ describe("processTokens resolver flow", () => {
     });
 
     // Verify create worked
-    expect(createResult.resolvedValue.toString()).toBe("#FF0000");
+    expect(createResult.resolved?.toString()).toBe("#FF0000");
     expect(createResult.created).toBe(true);
-    expect(createResult.affectedTokens.has("color.secondary")).toBe(true);
+    expect(getAffectedTokens(createResult).has("color.secondary")).toBe(true);
   });
 
   it("should use resolver from processTokens output directly for deleteToken", () => {
@@ -72,8 +74,8 @@ describe("processTokens resolver flow", () => {
     });
 
     // Verify delete worked
-    expect(deleteResult.affectedTokens.has("color.secondary")).toBe(true);
-    expect(deleteResult.brokenReferences?.has("color.secondary")).toBe(true);
+    expect(getAffectedTokens(deleteResult).has("color.secondary")).toBe(true);
+    expect(getBrokenReferences(deleteResult).has("color.secondary")).toBe(true);
   });
 
   it("should handle multiple updateToken calls in sequence", () => {
@@ -95,10 +97,11 @@ describe("processTokens resolver flow", () => {
       tokenData: { $value: "20", $type: "dimension" },
     });
 
-    expect(firstUpdate.resolvedValue.toString()).toBe("20");
-    expect(firstUpdate.affectedTokens.has("base")).toBe(true);
-    expect(firstUpdate.affectedTokens.has("derived")).toBe(true);
-    expect(firstUpdate.affectedTokens.has("furtherDerived")).toBe(true);
+    const firstAffected = getAffectedTokens(firstUpdate);
+    expect(firstUpdate.resolved?.toString()).toBe("20");
+    expect(firstAffected.has("base")).toBe(true);
+    expect(firstAffected.has("derived")).toBe(true);
+    expect(firstAffected.has("furtherDerived")).toBe(true);
 
     // Second update
     const secondUpdate = resolver.updateToken({
@@ -106,9 +109,10 @@ describe("processTokens resolver flow", () => {
       tokenData: { $value: "{base} * 3", $type: "dimension" },
     });
 
-    expect(secondUpdate.resolvedValue.toString()).toBe("60");
-    expect(secondUpdate.affectedTokens.has("derived")).toBe(true);
-    expect(secondUpdate.affectedTokens.has("furtherDerived")).toBe(true);
+    const secondAffected = getAffectedTokens(secondUpdate);
+    expect(secondUpdate.resolved?.toString()).toBe("60");
+    expect(secondAffected.has("derived")).toBe(true);
+    expect(secondAffected.has("furtherDerived")).toBe(true);
   });
 
   it("should handle updateToken with reference updates", () => {
@@ -133,10 +137,11 @@ describe("processTokens resolver flow", () => {
     });
 
     // Verify rename worked
-    expect(updateResult.resolvedValue.toString()).toBe("#0000FF");
+    expect(updateResult.resolved?.toString()).toBe("#0000FF");
     expect(updateResult.updated).toBe(true);
-    expect(updateResult.renamedReferences?.has("button.bg")).toBe(true);
-    expect(updateResult.renamedReferences?.has("card.bg")).toBe(true);
+    // Reference updates are tracked in the tokens map now, not as a separate field
+    expect(updateResult.tokens.has("button.bg")).toBe(true);
+    expect(updateResult.tokens.has("card.bg")).toBe(true);
   });
 
   it("should work with Map<string, string> input", () => {
@@ -158,9 +163,10 @@ describe("processTokens resolver flow", () => {
     });
 
     // Verify update worked
-    expect(updateResult.resolvedValue.toString()).toBe("#00FF00");
-    expect(updateResult.affectedTokens.has("color.primary")).toBe(true);
-    expect(updateResult.affectedTokens.has("color.secondary")).toBe(true);
+    const affectedTokens = getAffectedTokens(updateResult);
+    expect(updateResult.resolved?.toString()).toBe("#00FF00");
+    expect(affectedTokens.has("color.primary")).toBe(true);
+    expect(affectedTokens.has("color.secondary")).toBe(true);
   });
 
   it("should work with Record<string, any> input", () => {
@@ -182,7 +188,7 @@ describe("processTokens resolver flow", () => {
     });
 
     // Verify create worked
-    expect(createResult.resolvedValue.toString()).toBe("#FF0000");
+    expect(createResult.resolved?.toString()).toBe("#FF0000");
     expect(createResult.created).toBe(true);
   });
 });

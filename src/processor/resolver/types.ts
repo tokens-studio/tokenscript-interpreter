@@ -1,6 +1,7 @@
 import type { ASTNode } from "@interpreter/ast";
+import type { LanguageError } from "@interpreter/errors";
 import type { InterpreterResult } from "@interpreter/interpreter";
-import type { LintResult } from "../linter";
+import type { LintIssue } from "../linter";
 import type { DependencyGraph } from "../utils/DependencyGraph";
 import type { TokenData } from "../utils/tokens";
 
@@ -33,6 +34,15 @@ export type TokenResult = InterpreterResult | Error;
 export type TokenResultMap = Map<RefPath, TokenResult>;
 export type TokenErrorMap = Map<RefPath, Error>;
 
+// Issues ----------------------------------------------------------------------
+
+/**
+ * An issue found during token resolution.
+ * Can be a lint issue or a language error (lexer/parser/interpreter/processor).
+ */
+export type ResolveIssue = LintIssue | LanguageError;
+export type IssuesMap = Map<RefPath, ResolveIssue[]>;
+
 // Crud ------------------------------------------------------------------------
 
 export type TokenOperationBase = {
@@ -54,10 +64,12 @@ export type DeleteTokenParams = TokenOperationBase;
 // Crud Results ----------------------------------------------------------------
 
 export type TokenOperationResult = {
-  resolvedValue: TokenResult;
-  affectedTokens: Set<RefPath>;
-  subgraph: DependencyGraph<RefPath>;
-  lintIssues?: LintResult;
+  tokens: ResolvedValueMap;
+  resolved?: InterpreterResult;
+  issues?: IssuesMap;
+  dependants?: {
+    graph: DependencyGraph<RefPath>;
+  };
 };
 
 export type CreateTokenResult = TokenOperationResult & {
@@ -66,13 +78,6 @@ export type CreateTokenResult = TokenOperationResult & {
 
 export type UpdateTokenResult = TokenOperationResult & {
   updated: boolean;
-  renamedReferences?: Set<RefPath>;
-  brokenReferences?: Set<RefPath>;
 };
 
-export type DeleteTokenResult = {
-  affectedTokens: Set<RefPath>;
-  subgraph: DependencyGraph<RefPath>;
-  brokenReferences: Set<RefPath>;
-  lintIssues?: LintResult;
-};
+export type DeleteTokenResult = TokenOperationResult;
