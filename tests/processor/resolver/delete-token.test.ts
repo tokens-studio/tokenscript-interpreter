@@ -1,4 +1,5 @@
 import { ProcessorErrorCode } from "@interpreter/errors";
+import { getAffectedTokens, getBrokenReferences } from "@src/processor/resolver/helpers";
 import { TokenResolver } from "@src/processor/resolver/TokenResolver";
 import type { TokenData } from "@src/processor/utils/tokens";
 import { describe, expect, it } from "vitest";
@@ -15,7 +16,7 @@ describe("TokenResolver.deleteToken", () => {
       tokenPath: "color.secondary",
     });
 
-    expect(result.brokenReferences.size).toBe(0);
+    expect(getBrokenReferences(result).size).toBe(0);
   });
 
   it("should throw error when token doesn't exist", () => {
@@ -41,8 +42,8 @@ describe("TokenResolver.deleteToken", () => {
       tokenPath: "base",
     });
 
-    expect(result.brokenReferences.has("derived")).toBe(true);
-    expect(result.affectedTokens.has("derived")).toBe(true);
+    expect(getBrokenReferences(result).has("derived")).toBe(true);
+    expect(getAffectedTokens(result).has("derived")).toBe(true);
   });
 
   it("should handle multiple dependents", () => {
@@ -58,10 +59,11 @@ describe("TokenResolver.deleteToken", () => {
       tokenPath: "base",
     });
 
-    expect(result.brokenReferences.has("derived1")).toBe(true);
-    expect(result.brokenReferences.has("derived2")).toBe(true);
-    expect(result.brokenReferences.has("derived3")).toBe(true);
-    expect(result.affectedTokens.size).toBe(3);
+    const brokenRefs = getBrokenReferences(result);
+    expect(brokenRefs.has("derived1")).toBe(true);
+    expect(brokenRefs.has("derived2")).toBe(true);
+    expect(brokenRefs.has("derived3")).toBe(true);
+    expect(getAffectedTokens(result).size).toBe(3);
   });
 
   it("should handle cascading broken references", () => {
@@ -76,9 +78,10 @@ describe("TokenResolver.deleteToken", () => {
       tokenPath: "a",
     });
 
-    expect(result.brokenReferences.has("b")).toBe(true);
-    expect(result.brokenReferences.has("c")).toBe(true);
-    expect(result.affectedTokens.size).toBe(2);
+    const brokenRefs = getBrokenReferences(result);
+    expect(brokenRefs.has("b")).toBe(true);
+    expect(brokenRefs.has("c")).toBe(true);
+    expect(getAffectedTokens(result).size).toBe(2);
   });
 
   it("should handle empty token name", () => {
@@ -92,7 +95,7 @@ describe("TokenResolver.deleteToken", () => {
       tokenPath: "",
     });
 
-    expect(result.brokenReferences.size).toBe(0);
+    expect(getBrokenReferences(result).size).toBe(0);
   });
 
   it("should handle whitespace-only token name as empty string", () => {
@@ -106,7 +109,7 @@ describe("TokenResolver.deleteToken", () => {
       tokenPath: "   ",
     });
 
-    expect(result.brokenReferences.size).toBe(0);
+    expect(getBrokenReferences(result).size).toBe(0);
   });
 
   it("should delete token with no dependents", () => {
@@ -120,8 +123,8 @@ describe("TokenResolver.deleteToken", () => {
       tokenPath: "independent",
     });
 
-    expect(result.brokenReferences.size).toBe(0);
-    expect(result.affectedTokens.size).toBe(0);
+    expect(getBrokenReferences(result).size).toBe(0);
+    expect(getAffectedTokens(result).size).toBe(0);
   });
 
   it("should throw error when called before build()", () => {
@@ -134,7 +137,7 @@ describe("TokenResolver.deleteToken", () => {
     }).toThrow("PROC_RESOLVER_NOT_INITIALIZED");
   });
 
-  it("should return subgraph with affected tokens", () => {
+  it("should return dependants graph with affected tokens", () => {
     const allTokens = new Map<string, TokenData>([
       ["base", { $value: "10", $type: "dimension" }],
       ["derived", { $value: "{base} * 2", $type: "dimension" }],
@@ -145,8 +148,8 @@ describe("TokenResolver.deleteToken", () => {
       tokenPath: "base",
     });
 
-    expect(result.subgraph).toBeDefined();
-    const nodes = result.subgraph.getNodes();
+    expect(result.dependants?.graph).toBeDefined();
+    const nodes = result.dependants!.graph.getNodes();
     expect(nodes.has("derived")).toBe(true);
   });
 
@@ -162,7 +165,7 @@ describe("TokenResolver.deleteToken", () => {
       tokenPath: "base",
     });
 
-    expect(result.brokenReferences.has("mixed")).toBe(true);
+    expect(getBrokenReferences(result).has("mixed")).toBe(true);
   });
 
   it("should not affect independent tokens", () => {
@@ -177,8 +180,8 @@ describe("TokenResolver.deleteToken", () => {
       tokenPath: "a",
     });
 
-    expect(result.brokenReferences.has("c")).toBe(true);
-    expect(result.affectedTokens.has("b")).toBe(false);
+    expect(getBrokenReferences(result).has("c")).toBe(true);
+    expect(getAffectedTokens(result).has("b")).toBe(false);
   });
 
   it("should work with createToken after delete", () => {
@@ -194,7 +197,7 @@ describe("TokenResolver.deleteToken", () => {
       tokenPath: "base",
     });
 
-    expect(deleteResult.brokenReferences.has("derived")).toBe(true);
+    expect(getBrokenReferences(deleteResult).has("derived")).toBe(true);
 
     // Re-create the base token
     const createResult = resolver.createToken({
@@ -202,8 +205,8 @@ describe("TokenResolver.deleteToken", () => {
       tokenData: { $value: "15", $type: "dimension" },
     });
 
-    expect(createResult.resolvedValue.toString()).toBe("15");
-    expect(createResult.affectedTokens.has("derived")).toBe(true);
+    expect(createResult.resolved?.toString()).toBe("15");
+    expect(getAffectedTokens(createResult).has("derived")).toBe(true);
   });
 
   it("should work with updateToken after delete", () => {
@@ -225,7 +228,7 @@ describe("TokenResolver.deleteToken", () => {
       tokenData: { $value: "30", $type: "dimension" },
     });
 
-    expect(result.resolvedValue.toString()).toBe("30");
+    expect(result.resolved?.toString()).toBe("30");
   });
 
   it("should handle deleting in middle of dependency chain", () => {
@@ -240,8 +243,8 @@ describe("TokenResolver.deleteToken", () => {
       tokenPath: "level2",
     });
 
-    expect(result.brokenReferences.has("level3")).toBe(true);
-    expect(result.affectedTokens.has("level1")).toBe(false);
+    expect(getBrokenReferences(result).has("level3")).toBe(true);
+    expect(getAffectedTokens(result).has("level1")).toBe(false);
   });
 
   it("should handle deleting leaf node in dependency tree", () => {
@@ -255,7 +258,7 @@ describe("TokenResolver.deleteToken", () => {
       tokenPath: "derived",
     });
 
-    expect(result.brokenReferences.size).toBe(0);
+    expect(getBrokenReferences(result).size).toBe(0);
   });
 
   it("should handle complex dependency graph", () => {
@@ -271,9 +274,10 @@ describe("TokenResolver.deleteToken", () => {
       tokenPath: "a",
     });
 
-    expect(result.brokenReferences.has("b")).toBe(true);
-    expect(result.brokenReferences.has("c")).toBe(true);
-    expect(result.brokenReferences.has("d")).toBe(true);
+    const brokenRefs = getBrokenReferences(result);
+    expect(brokenRefs.has("b")).toBe(true);
+    expect(brokenRefs.has("c")).toBe(true);
+    expect(brokenRefs.has("d")).toBe(true);
   });
 
   it("should handle deleting token referenced multiple times by same dependent", () => {
@@ -287,7 +291,7 @@ describe("TokenResolver.deleteToken", () => {
       tokenPath: "base",
     });
 
-    expect(result.brokenReferences.has("derived")).toBe(true);
+    expect(getBrokenReferences(result).has("derived")).toBe(true);
   });
 
   it("should persist deletion for subsequent operations", () => {
@@ -309,7 +313,7 @@ describe("TokenResolver.deleteToken", () => {
       tokenData: { $value: "{base} * 3", $type: "dimension" },
     });
 
-    expect(result.resolvedValue).toBeInstanceOf(Error);
+    expect(result.issues?.has("newToken")).toBe(true);
   });
 
   it("should handle deleting multiple times (second should throw)", () => {
@@ -366,7 +370,7 @@ describe("TokenResolver.deleteToken", () => {
     });
 
     // Should have error because base is gone
-    expect(result.resolvedValue).toBeInstanceOf(Error);
+    expect(result.issues?.has("another")).toBe(true);
   });
 
   it("should handle deleting token with prefix children", () => {
@@ -381,6 +385,6 @@ describe("TokenResolver.deleteToken", () => {
       tokenPath: "color.primary",
     });
 
-    expect(result.brokenReferences.has("button.bg")).toBe(true);
+    expect(getBrokenReferences(result).has("button.bg")).toBe(true);
   });
 });

@@ -8,17 +8,27 @@ describe("TokenResolver - CRUD with Linter", () => {
   const createOpacityValidator = () => {
     return (value: any, context: any, createIssue: any) => {
       if (!(value instanceof NumberSymbol)) {
-        return createIssue(context, "INVALID_TYPE", "Expected number");
+        return createIssue({
+          code: "INVALID_TYPE",
+          severity: "error",
+          message: "Expected number",
+          tokenName: context.tokenName,
+        });
       }
       if (value.value < 0 || value.value > 1) {
-        return createIssue(context, "OUT_OF_RANGE", "Opacity must be between 0 and 1");
+        return createIssue({
+          code: "OUT_OF_RANGE",
+          severity: "error",
+          message: "Opacity must be between 0 and 1",
+          tokenName: context.tokenName,
+        });
       }
       return null;
     };
   };
 
   describe("createToken", () => {
-    it("should return lintIssues when creating a token with validation errors", () => {
+    it("should return issues when creating a token with validation errors", () => {
       const linter = new LintRunner().addRule(new TypeBasedRule().forType("opacity", createOpacityValidator()));
 
       const tokens = new Map<string, TokenData>();
@@ -31,12 +41,12 @@ describe("TokenResolver - CRUD with Linter", () => {
       });
 
       expect(result.created).toBe(true);
-      expect(result.lintIssues).toBeDefined();
-      expect(result.lintIssues?.length).toBeGreaterThan(0);
-      expect(result.lintIssues?.[0]?.code).toBe("OUT_OF_RANGE");
+      expect(result.issues).toBeDefined();
+      expect(result.issues?.get("opacity.invalid")).toBeDefined();
+      expect(result.issues?.get("opacity.invalid")?.[0]).toHaveProperty("code", "OUT_OF_RANGE");
     });
 
-    it("should return empty lintIssues when creating a valid token", () => {
+    it("should return empty issues when creating a valid token", () => {
       const linter = new LintRunner().addRule(new TypeBasedRule().forType("opacity", createOpacityValidator()));
 
       const tokens = new Map<string, TokenData>();
@@ -49,12 +59,12 @@ describe("TokenResolver - CRUD with Linter", () => {
       });
 
       expect(result.created).toBe(true);
-      expect(result.lintIssues).toEqual([]);
+      expect(result.issues).toBeUndefined();
     });
   });
 
   describe("updateToken", () => {
-    it("should return lintIssues when updating a token with validation errors", () => {
+    it("should return issues when updating a token with validation errors", () => {
       const linter = new LintRunner().addRule(new TypeBasedRule().forType("opacity", createOpacityValidator()));
 
       const tokens = new Map<string, TokenData>([["opacity.value", { $type: "opacity", $value: "0.5" }]]);
@@ -67,12 +77,12 @@ describe("TokenResolver - CRUD with Linter", () => {
       });
 
       expect(result.updated).toBe(true);
-      expect(result.lintIssues).toBeDefined();
-      expect(result.lintIssues?.length).toBeGreaterThan(0);
-      expect(result.lintIssues?.[0]?.code).toBe("OUT_OF_RANGE");
+      expect(result.issues).toBeDefined();
+      expect(result.issues?.get("opacity.value")).toBeDefined();
+      expect(result.issues?.get("opacity.value")?.[0]).toHaveProperty("code", "OUT_OF_RANGE");
     });
 
-    it("should return empty lintIssues when updating to a valid token", () => {
+    it("should return empty issues when updating to a valid token", () => {
       const linter = new LintRunner().addRule(new TypeBasedRule().forType("opacity", createOpacityValidator()));
 
       const tokens = new Map<string, TokenData>([["opacity.value", { $type: "opacity", $value: "1.5" }]]);
@@ -85,12 +95,12 @@ describe("TokenResolver - CRUD with Linter", () => {
       });
 
       expect(result.updated).toBe(true);
-      expect(result.lintIssues).toEqual([]);
+      expect(result.issues).toBeUndefined();
     });
   });
 
   describe("deleteToken", () => {
-    it("should return lintIssues for remaining tokens after deletion", () => {
+    it("should return issues for remaining tokens after deletion", () => {
       const linter = new LintRunner().addRule(new TypeBasedRule().forType("opacity", createOpacityValidator()));
 
       const tokens = new Map<string, TokenData>([
@@ -104,13 +114,12 @@ describe("TokenResolver - CRUD with Linter", () => {
         tokenPath: "opacity.value",
       });
 
-      expect(result.lintIssues).toBeDefined();
-      expect(result.lintIssues?.length).toBeGreaterThan(0);
-      expect(result.lintIssues?.[0]?.tokenName).toBe("opacity.invalid");
-      expect(result.lintIssues?.[0]?.code).toBe("OUT_OF_RANGE");
+      expect(result.issues).toBeDefined();
+      expect(result.issues?.get("opacity.invalid")).toBeDefined();
+      expect(result.issues?.get("opacity.invalid")?.[0]).toHaveProperty("code", "OUT_OF_RANGE");
     });
 
-    it("should return empty lintIssues when all remaining tokens are valid", () => {
+    it("should return empty issues when all remaining tokens are valid", () => {
       const linter = new LintRunner().addRule(new TypeBasedRule().forType("opacity", createOpacityValidator()));
 
       const tokens = new Map<string, TokenData>([
@@ -124,12 +133,12 @@ describe("TokenResolver - CRUD with Linter", () => {
         tokenPath: "opacity.value",
       });
 
-      expect(result.lintIssues).toEqual([]);
+      expect(result.issues).toBeUndefined();
     });
   });
 
   describe("without linter", () => {
-    it("should return undefined lintIssues when no linter is configured", () => {
+    it("should return undefined issues when no linter is configured", () => {
       const tokens = new Map<string, TokenData>();
       const resolver = new TokenResolver();
       resolver.build(tokens);
@@ -139,20 +148,20 @@ describe("TokenResolver - CRUD with Linter", () => {
         tokenData: { $value: "value" },
       });
 
-      expect(createResult.lintIssues).toBeUndefined();
+      expect(createResult.issues).toBeUndefined();
 
       const updateResult = resolver.updateToken({
         tokenPath: "test.token",
         tokenData: { $value: "new value" },
       });
 
-      expect(updateResult.lintIssues).toBeUndefined();
+      expect(updateResult.issues).toBeUndefined();
 
       const deleteResult = resolver.deleteToken({
         tokenPath: "test.token",
       });
 
-      expect(deleteResult.lintIssues).toBeUndefined();
+      expect(deleteResult.issues).toBeUndefined();
     });
   });
 });

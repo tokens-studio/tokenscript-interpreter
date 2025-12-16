@@ -1,14 +1,19 @@
 import type { ASTNode } from "@interpreter/ast";
 import type { Config } from "@interpreter/config";
-import { isLanguageError, ProcessorError, ProcessorErrorCode } from "@interpreter/errors";
+import {
+  isLanguageError,
+  type LanguageError,
+  ProcessorError,
+  ProcessorErrorCode,
+} from "@interpreter/errors";
 import type { InterpreterResult } from "@interpreter/interpreter";
 import { type ParseExpressionResult, parseExpression } from "@interpreter/parser";
 import { BooleanSymbol, NullSymbol, NumberSymbol, StringSymbol } from "@interpreter/symbols";
 import { renameReferences } from "@interpreter/utils/references";
 import { isArray, isBoolean, isNull, isNumber, isObject, isString } from "@interpreter/utils/type";
 import { UNINTERPRETED_KEYWORDS } from "@src/types";
-import { DependencyError } from "../errors";
-import type { LintIssue, LintRunner } from "../linter";
+import { createDependencyError } from "../errors";
+import type { LintRunner } from "../linter";
 import {
   createTokenSymbol,
   createTokenSymbolFromResolvedFields,
@@ -27,8 +32,10 @@ import type {
   CreateTokenResult,
   DeleteTokenParams,
   DeleteTokenResult,
+  IssuesMap,
   RefPath,
   ResolvedValueMap,
+  ResolveIssue,
   TokenDataMap,
   TokenErrorMap,
   TokenInputMap,
@@ -44,7 +51,7 @@ export type ProcessorResult = {
   resolved: TokenResultMap;
   unresolved: UnresolvedTokenMap;
   subFieldPaths?: Set<RefPath>;
-  lintIssues?: LintIssue[];
+  issues?: IssuesMap;
 };
 
 export type ProcessorCallbacks = {
@@ -61,6 +68,7 @@ export type ProcessorOutput = ProcessorResult & {
   tokens: ResolvedValueMap;
   errors: TokenErrorMap;
   resolver: TokenResolver;
+  issues?: IssuesMap;
 };
 
 export type ResolverParams = {
@@ -180,8 +188,8 @@ class PrefixResolver {
   private readonly subFieldPaths: Set<RefPath> = new Set();
   private readonly structuredTokens: TokenDataMap = new Map();
 
-  // Lint issues collection
-  private readonly lintIssues: LintIssue[] = [];
+  // Issues collection (errors and lint issues)
+  private readonly issues: IssuesMap = new Map();
 
   // Phase state
   private earlyResolved: RefPath[] = [];
@@ -213,11 +221,27 @@ class PrefixResolver {
     );
   }
 
-  private resolveError(refPath: RefPath, error: Error, value: string): Error {
+  private addIssue(tokenName: RefPath, issue: ResolveIssue): void {
+    const existing = this.issues.get(tokenName) || [];
+    this.issues.set(tokenName, [...existing, issue]);
+  }
+
+  private ensureLanguageError(error: Error): LanguageError {
+    if (isLanguageError(error)) {
+      return error;
+    }
+    // Wrap unknown errors as ProcessorError
+    return new ProcessorError(ProcessorErrorCode.UNKNOWN_PARSING_ERROR, {
+      data: { error: error.message },
+    });
+  }
+
+  private resolveError(refPath: RefPath, error: LanguageError, value: string): LanguageError {
     this.resolved.set(refPath, error);
     this.callbacks?.onError?.(refPath, error, value);
     this.graph.addNode(refPath, []);
     this.earlyResolved.push(refPath);
+    this.addIssue(refPath, error);
     return error;
   }
 
@@ -236,7 +260,7 @@ class PrefixResolver {
     const ast = this.tokenInterpreter.getTokenAST(tokenName);
 
     try {
-      const issues = this.linter.lintResult({
+      const lintIssues = this.linter.lintResult({
         tokenName,
         tokenType,
         result: value,
@@ -246,7 +270,11 @@ class PrefixResolver {
         ast,
       });
 
-      this.lintIssues.push(...issues);
+      if (lintIssues.length > 0) {
+        for (const issue of lintIssues) {
+          this.addIssue(tokenName, issue);
+        }
+      }
     } catch (error) {
       // If a validator throws, log the error but don't crash the resolution process
       console.error(`Linting failed for token '${tokenName}':`, error);
@@ -325,7 +353,7 @@ class PrefixResolver {
       resolved: this.resolved,
       unresolved: this.unresolved,
       subFieldPaths: this.subFieldPaths,
-      lintIssues: this.linter ? this.lintIssues : undefined,
+      issues: this.issues.size > 0 ? this.issues : undefined,
     };
   }
 
@@ -604,6 +632,7 @@ class PrefixResolver {
             parentToken,
             fieldPath,
           });
+          this.addIssue(tokenName, dependencyError);
         } else {
           const tokenValue = this.tokenInterpreter.interpretTokenWithAST(tokenName, ast);
           this.resolved.set(tokenName, tokenValue);
@@ -616,6 +645,7 @@ class PrefixResolver {
               parentToken,
               fieldPath,
             });
+            this.addIssue(tokenName, this.ensureLanguageError(tokenValue));
           } else {
             // Don't call onResolve for sub-fields
             this.tokenInterpreter.updateReferenceCache(tokenName, tokenValue);
@@ -651,12 +681,14 @@ class PrefixResolver {
       tokenValue = dependencyError;
       this.resolved.set(tokenName, dependencyError);
       this.callbacks?.onError?.(tokenName, dependencyError, tokenValueStr);
+      this.addIssue(tokenName, dependencyError);
     } else {
       tokenValue = this.tokenInterpreter.interpretToken(tokenName, tokenValueStr);
       this.resolved.set(tokenName, tokenValue);
 
       if (tokenValue instanceof Error) {
         this.callbacks?.onError?.(tokenName, tokenValue, tokenValueStr);
+        this.addIssue(tokenName, this.ensureLanguageError(tokenValue));
       } else {
         this.callbacks?.onResolve?.(tokenName, tokenValue);
         this.lintTokenResult(tokenName, tokenValue);
@@ -700,6 +732,7 @@ class PrefixResolver {
         });
         this.resolved.set(tokenName, error);
         this.callbacks?.onError?.(tokenName, error, String(originalValue));
+        this.addIssue(tokenName, error);
         hasError = true;
         break;
       }
@@ -707,6 +740,7 @@ class PrefixResolver {
         // Sub-field has error, propagate to parent
         this.resolved.set(tokenName, fieldValue);
         this.callbacks?.onError?.(tokenName, fieldValue, String(originalValue));
+        this.addIssue(tokenName, this.ensureLanguageError(fieldValue));
         hasError = true;
         break;
       }
@@ -749,7 +783,7 @@ class PrefixResolver {
 
       const error =
         parentValue instanceof Error
-          ? new DependencyError(child, parent, parentValue)
+          ? createDependencyError(child, parent, parentValue)
           : new ProcessorError(ProcessorErrorCode.TOKEN_NOT_FOUND, {
               data: { tokenName: child },
             });
@@ -809,10 +843,23 @@ class PrefixResolver {
       unresolvedTokens.push(tokenName);
     }
 
+    // Handle circular dependencies by adding them to issues instead of throwing
     if (unresolvedTokens.length > 0) {
-      throw new ProcessorError(ProcessorErrorCode.CIRCULAR_DEPENDENCY, {
-        data: { tokens: unresolvedTokens },
-      });
+      for (const tokenName of unresolvedTokens) {
+        const originalValue = this.tokens.get(tokenName);
+        if (originalValue === undefined) continue;
+
+        const tokenValueStr: string = String(getTokenValue(originalValue));
+        const circularError = new ProcessorError(ProcessorErrorCode.CIRCULAR_DEPENDENCY, {
+          data: { tokens: tokenName },
+        });
+        this.resolved.set(tokenName, circularError);
+        this.callbacks?.onError?.(tokenName, circularError, tokenValueStr);
+        this.addIssue(tokenName, circularError);
+        this.resolveVirtualChildren(tokenName, []);
+        this.notifyResolution(tokenName);
+        this.unresolved.delete(tokenName);
+      }
     }
   }
 }
@@ -985,6 +1032,7 @@ export class TokenResolver {
       tokens: output,
       errors,
       resolver: this,
+      issues: result.issues,
     };
   }
 
@@ -999,16 +1047,16 @@ export class TokenResolver {
   }
 
   private createOutputCallbacks(): {
-    output: TokenResultMap;
+    output: ResolvedValueMap;
     callbacks: ProcessorCallbacks;
   } {
-    const output: TokenResultMap = new Map();
+    const output: ResolvedValueMap = new Map();
     const callbacks: ProcessorCallbacks = {
       onResolve: (name, value) => {
         output.set(name, value);
       },
-      onError: (name, error) => {
-        output.set(name, error);
+      onError: (_name, _error) => {
+        // Errors are already tracked in the PrefixResolver's issues map
       },
     };
     return { output, callbacks };
@@ -1078,7 +1126,6 @@ export class TokenResolver {
     affectedTokens.delete(prevPath);
 
     const updatedTokens = new Map(this.tokens);
-    const renamedReferences = new Set<RefPath>();
 
     // Handle rename with reference updates if requested
     if (isRename && updateReferences && affectedTokens.size > 0) {
@@ -1104,7 +1151,6 @@ export class TokenResolver {
         if (updatedValue !== dependentValue) {
           const updatedTokenData = { ...dependentTokenData, $value: updatedValue };
           updatedTokens.set(dependentToken, updatedTokenData);
-          renamedReferences.add(dependentToken);
         }
       }
     }
@@ -1121,31 +1167,17 @@ export class TokenResolver {
     if (!this.prefixResolver) {
       throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
     }
-    const { tokens: dependentTokens, subgraph } = getTokenDependencyGraph(
-      finalPath,
-      this.prefixResolver.getGraph(),
-    );
+    const { subgraph } = getTokenDependencyGraph(finalPath, this.prefixResolver.getGraph());
 
-    const resolvedValue = output.get(finalPath) || "";
+    const resolvedValue = output.get(finalPath);
 
-    const result: UpdateTokenResult = {
-      resolvedValue,
-      affectedTokens: dependentTokens,
-      subgraph,
+    return {
+      tokens: output,
+      resolved: resolvedValue,
+      issues: resolverResult.issues,
+      dependants: { graph: subgraph },
       updated: true,
-      lintIssues: resolverResult.lintIssues,
     };
-
-    // Add rename-specific information
-    if (isRename) {
-      if (updateReferences) {
-        result.renamedReferences = renamedReferences;
-      } else {
-        result.brokenReferences = new Set(affectedTokens);
-      }
-    }
-
-    return result;
   }
 
   public createToken(params: CreateTokenParams): CreateTokenResult {
@@ -1170,19 +1202,19 @@ export class TokenResolver {
     if (!this.prefixResolver) {
       throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
     }
-    const { tokens: dependentTokens, subgraph } = getTokenDependencyGraph(
+    const { subgraph } = getTokenDependencyGraph(
       normalizedTokenPath,
       this.prefixResolver.getGraph(),
     );
 
-    const resolvedValue = output.get(normalizedTokenPath) || "";
+    const resolvedValue = output.get(normalizedTokenPath);
 
     return {
-      resolvedValue,
-      affectedTokens: dependentTokens,
-      subgraph,
+      tokens: output,
+      resolved: resolvedValue,
+      issues: resolverResult.issues,
+      dependants: { graph: subgraph },
       created: true,
-      lintIssues: resolverResult.lintIssues,
     };
   }
 
@@ -1202,26 +1234,22 @@ export class TokenResolver {
       throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
     }
     const currentGraph = this.prefixResolver.getGraph();
-    const { tokens: affectedTokens, subgraph } = getTokenDependencyGraph(
-      normalizedTokenPath,
-      currentGraph,
-    );
+    const { subgraph } = getTokenDependencyGraph(normalizedTokenPath, currentGraph);
 
-    affectedTokens.delete(normalizedTokenPath);
-    const brokenReferences = new Set(affectedTokens);
+    // Remove the deleted token from the subgraph (it no longer exists)
+    subgraph.removeNode(normalizedTokenPath);
 
     const updatedTokens = new Map(this.tokens);
     updatedTokens.delete(normalizedTokenPath);
     this.tokens = updatedTokens;
 
-    const { callbacks } = this.createOutputCallbacks();
+    const { output, callbacks } = this.createOutputCallbacks();
     const resolverResult = this.rebuildResolver(updatedTokens, callbacks);
 
     return {
-      affectedTokens,
-      subgraph,
-      brokenReferences,
-      lintIssues: resolverResult.lintIssues,
+      tokens: output,
+      issues: resolverResult.issues,
+      dependants: { graph: subgraph },
     };
   }
 }

@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **CSS and Penpot Preset Validators**: Pre-built validation rulesets for token types
+  - `css.createLintRunner()`: Standards-compliant CSS validators (opacity, fontWeight, borderRadius, boxShadow, lineHeight, letterSpacing, textTransform, textDecoration)
+  - `penpot.createLintRunner()`: Penpot-specific validators extending CSS rules (typography, shadow, strokeWidth)
+  - Composable primitives: `number()`, `string()`, `boolean()`, `color()`, `numberWithUnit()`
+  - Combinators: `or()`, `all()`, `oneOrList()`, `list()`, `struct()`, `arrayOf()`
+
+- **LintRunner Extension API**: Composable rule system with `.extend()` method
+  - Override specific validators while preserving others
+  - Combine validators using `all()` combinator
+  - Immutable API returns new instances
+
+- **Structured Token Field-Level Linting**: Validation with field-level granularity
+  - `path` property on `LintIssue` identifies specific fields (e.g., `["fontSize"]` or `[0, "blur"]`)
+  - Supports Map-based (typography) and array-based (box-shadow) tokens
+  - Cross-field validation (e.g., lineHeight requires fontSize)
+
+- **TokenSymbol Validator Support**: Validators can use `.get()`, `.keys()`, `.values()`, `.length()` methods
+
+- **Helper Functions**: `getAffectedTokens()`, `getBrokenReferences()`, `getModifiedDependants()`, `getRenamedReferences()`
+
+### Changed
+
+- **BREAKING: LintResult Type**: Changed from object to `Map<RefPath, LintIssue[]>`
+  - Before: `result.lint.errors`, `result.lint.warnings`, `result.lint.hasErrors`
+  - After: `result.issues` (Map), filter by `issue.severity`
+
+- **BREAKING: LintIssue Structure**:
+  - Removed `ruleId` property (use `code` instead)
+  - Changed `tokenName` type from `string` to `RefPath`
+  - Added optional `path` property: `(string | number)[]`
+
+- **BREAKING: CreateIssueFn Signature**: Now accepts full issue object instead of individual parameters
+
+- **BREAKING: Removed `aggregateResults()`**: Work directly with `Map<RefPath, LintIssue[]>`
+
+- **ProcessorOutput**: Renamed `lintIssues` to `issues` (now includes lint issues and language errors)
+
+- **Error Handling**: `DependencyError` class replaced with `createDependencyError()` helper returning `ProcessorError`
+
+- **CRUD Result Types**: Unified to `TokenOperationResult` with `tokens`, `resolved`, `issues`, `dependants` properties
+
+- **Circular dependency handling**: Circular dependencies no longer throw errors but are handled gracefully
+
+
 ## [0.14.0] - 2025-12-12
 
 ### Changed

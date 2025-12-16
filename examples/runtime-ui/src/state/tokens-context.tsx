@@ -1,5 +1,9 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react"
-import { processTokens, TokenResolver } from "@tokens-studio/tokenscript-interpreter"
+import {
+  getModifiedDependants,
+  processTokens,
+  TokenResolver,
+} from "@tokens-studio/tokenscript-interpreter"
 
 import {
   applyRenamedReferencesToSets,
@@ -299,11 +303,13 @@ export function TokensProvider({ children }: { children: ReactNode }) {
           let newSets = new Map(prev.sets)
 
           // Apply renamed references using back-references
-          if (result.renamedReferences && result.renamedReferences.size > 0) {
+          // Get only tokens whose values actually changed during the rename
+          const modifiedTokens = getModifiedDependants(currentMerged, result)
+          if (modifiedTokens.size > 0) {
             const backRefs = collectTokenBackReferences(
               prev.sets,
               prev.activeSets,
-              result.renamedReferences
+              modifiedTokens
             )
             const renameMap = { [tokenName]: trimmedName }
             newSets = applyRenamedReferencesToSets(newSets, backRefs, renameMap)
@@ -322,7 +328,7 @@ export function TokensProvider({ children }: { children: ReactNode }) {
             setName,
             tokenName,
             newTokenName: trimmedName,
-            renamedReferences: Array.from(result.renamedReferences || []),
+            modifiedTokens: Array.from(modifiedTokens),
           })
           return { ...prev, sets: newSets }
         } catch (error) {

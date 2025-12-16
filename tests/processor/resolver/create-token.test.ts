@@ -1,4 +1,5 @@
 import { ProcessorErrorCode } from "@interpreter/errors";
+import { getAffectedTokens } from "@src/processor/resolver/helpers";
 import { TokenResolver } from "@src/processor/resolver/TokenResolver";
 import type { TokenData } from "@src/processor/utils/tokens";
 import { describe, expect, it } from "vitest";
@@ -13,8 +14,8 @@ describe("TokenResolver.createToken", () => {
       tokenData: { $value: "#00FF00", $type: "color" },
     });
 
-    expect(result.resolvedValue.toString()).toBe("#00FF00");
-    expect(result.affectedTokens.has("color.secondary")).toBe(true);
+    expect(result.resolved?.toString()).toBe("#00FF00");
+    expect(getAffectedTokens(result).has("color.secondary")).toBe(true);
     expect(result.created).toBe(true);
   });
 
@@ -56,11 +57,11 @@ describe("TokenResolver.createToken", () => {
       tokenData: { $value: "{base} * 2", $type: "dimension" },
     });
 
-    expect(result.resolvedValue.toString()).toBe("20");
-    expect(result.affectedTokens.has("derived")).toBe(true);
+    expect(result.resolved?.toString()).toBe("20");
+    expect(getAffectedTokens(result).has("derived")).toBe(true);
   });
 
-  it("should return error when new token has unresolved dependencies", () => {
+  it("should return error in issues when new token has unresolved dependencies", () => {
     const allTokens = new Map<string, TokenData>([["valid", { $value: "10", $type: "dimension" }]]);
 
     const { resolver } = new TokenResolver().build(allTokens);
@@ -69,7 +70,7 @@ describe("TokenResolver.createToken", () => {
       tokenData: { $value: "{nonexistent}", $type: "dimension" },
     });
 
-    expect(result.resolvedValue).toBeInstanceOf(Error);
+    expect(result.issues?.has("invalid")).toBe(true);
     expect(result.created).toBe(true);
   });
 
@@ -82,8 +83,8 @@ describe("TokenResolver.createToken", () => {
       tokenData: { $value: "50", $type: "dimension" },
     });
 
-    expect(result.resolvedValue.toString()).toBe("50");
-    expect(result.affectedTokens.has("")).toBe(true);
+    expect(result.resolved?.toString()).toBe("50");
+    expect(getAffectedTokens(result).has("")).toBe(true);
     expect(result.created).toBe(true);
   });
 
@@ -96,8 +97,8 @@ describe("TokenResolver.createToken", () => {
       tokenData: { $value: "75", $type: "dimension" },
     });
 
-    expect(result.resolvedValue.toString()).toBe("75");
-    expect(result.affectedTokens.has("")).toBe(true);
+    expect(result.resolved?.toString()).toBe("75");
+    expect(getAffectedTokens(result).has("")).toBe(true);
   });
 
   it("should create token without tracking previously broken references", () => {
@@ -113,8 +114,8 @@ describe("TokenResolver.createToken", () => {
       tokenData: { $value: "10", $type: "dimension" },
     });
 
-    expect(result.resolvedValue.toString()).toBe("10");
-    expect(result.affectedTokens.has("base")).toBe(true);
+    expect(result.resolved?.toString()).toBe("10");
+    expect(getAffectedTokens(result).has("base")).toBe(true);
     // Note: We don't track that 'derived' was fixed - that's ok
   });
 
@@ -137,8 +138,8 @@ describe("TokenResolver.createToken", () => {
       tokenData: { $value: "10", $type: "dimension" },
     });
 
-    expect(result.resolvedValue.toString()).toBe("10");
-    expect(result.affectedTokens.has("base")).toBe(true);
+    expect(result.resolved?.toString()).toBe("10");
+    expect(getAffectedTokens(result).has("base")).toBe(true);
     // Note: We don't track that derived tokens were fixed
   });
 
@@ -151,7 +152,7 @@ describe("TokenResolver.createToken", () => {
       tokenData: { $value: "{base} * 2 + 5", $type: "dimension" },
     });
 
-    expect(result.resolvedValue.toString()).toBe("25");
+    expect(result.resolved?.toString()).toBe("25");
   });
 
   it("should handle string values", () => {
@@ -163,7 +164,7 @@ describe("TokenResolver.createToken", () => {
       tokenData: { $value: "world", $type: "string" },
     });
 
-    expect(result.resolvedValue.toString()).toBe("world");
+    expect(result.resolved?.toString()).toBe("world");
   });
 
   it("should handle boolean values", () => {
@@ -175,10 +176,10 @@ describe("TokenResolver.createToken", () => {
       tokenData: { $value: "false", $type: "boolean" },
     });
 
-    expect(result.resolvedValue.toString()).toBe("false");
+    expect(result.resolved?.toString()).toBe("false");
   });
 
-  it("should return subgraph with dependency relationships", () => {
+  it("should return dependants graph with dependency relationships", () => {
     const allTokens = new Map<string, TokenData>([["base", { $value: "10", $type: "dimension" }]]);
 
     const { resolver } = new TokenResolver().build(allTokens);
@@ -187,8 +188,8 @@ describe("TokenResolver.createToken", () => {
       tokenData: { $value: "{base} * 2", $type: "dimension" },
     });
 
-    expect(result.subgraph).toBeDefined();
-    const nodes = result.subgraph.getNodes();
+    expect(result.dependants?.graph).toBeDefined();
+    const nodes = result.dependants!.graph.getNodes();
     expect(nodes.has("derived")).toBe(true);
   });
 
@@ -201,7 +202,7 @@ describe("TokenResolver.createToken", () => {
       tokenData: { $value: "newValue" },
     });
 
-    expect(result.resolvedValue.toString()).toBe("newValue");
+    expect(result.resolved?.toString()).toBe("newValue");
     expect(result.created).toBe(true);
   });
 
@@ -233,7 +234,7 @@ describe("TokenResolver.createToken", () => {
       tokenData: { $value: "{base} * {multiplier}", $type: "dimension" },
     });
 
-    expect(result.resolvedValue.toString()).toBe("20");
+    expect(result.resolved?.toString()).toBe("20");
   });
 
   it("should work with updateToken after create", () => {
@@ -253,7 +254,7 @@ describe("TokenResolver.createToken", () => {
       tokenData: { $value: "{existing} * 3", $type: "dimension" },
     });
 
-    expect(result.resolvedValue.toString()).toBe("15");
+    expect(result.resolved?.toString()).toBe("15");
     expect(result.updated).toBe(true);
   });
 
@@ -274,8 +275,8 @@ describe("TokenResolver.createToken", () => {
       tokenData: { $value: "10", $type: "dimension" },
     });
 
-    expect(result.resolvedValue.toString()).toBe("10");
-    expect(result.affectedTokens.has("level1")).toBe(true);
+    expect(result.resolved?.toString()).toBe("10");
+    expect(getAffectedTokens(result).has("level1")).toBe(true);
     // Note: We don't track that level2 and level3 were fixed
   });
 
@@ -286,12 +287,20 @@ describe("TokenResolver.createToken", () => {
     const { resolver } = new TokenResolver().build(allTokens);
 
     // Create token b that references a, creating a cycle
-    expect(() => {
-      resolver.createToken({
-        tokenPath: "b",
-        tokenData: { $value: "{a} + 1", $type: "dimension" },
-      });
-    }).toThrow("Circular dependency");
+    // Should return issues for circular dependency instead of throwing
+    const result = resolver.createToken({
+      tokenPath: "b",
+      tokenData: { $value: "{a} + 1", $type: "dimension" },
+    });
+
+    // Should have issues for tokens in the cycle
+    expect(result.issues).toBeDefined();
+
+    // Check that at least one token has a circular dependency error
+    const hasCircularError = Array.from(result.issues!.entries()).some(([_tokenName, issues]) =>
+      issues.some((issue) => "code" in issue && issue.code === ProcessorErrorCode.CIRCULAR_DEPENDENCY),
+    );
+    expect(hasCircularError).toBe(true);
   });
 
   it("should handle self-referencing token", () => {
@@ -299,12 +308,20 @@ describe("TokenResolver.createToken", () => {
 
     const { resolver } = new TokenResolver().build(allTokens);
 
-    // Creating a self-referencing token should cause circular dependency
-    expect(() => {
-      resolver.createToken({
-        tokenPath: "selfRef",
-        tokenData: { $value: "{selfRef}", $type: "dimension" },
-      });
-    }).toThrow("Circular dependency");
+    // Creating a self-referencing token should return circular dependency issue
+    const result = resolver.createToken({
+      tokenPath: "selfRef",
+      tokenData: { $value: "{selfRef}", $type: "dimension" },
+    });
+
+    // Should have issues for the circular dependency
+    expect(result.issues).toBeDefined();
+    expect(result.issues?.has("selfRef")).toBe(true);
+
+    // Check that the issue is specifically a circular dependency error
+    const selfRefIssues = result.issues?.get("selfRef");
+    expect(selfRefIssues).toBeDefined();
+    const circularError = selfRefIssues?.find((issue) => "code" in issue && issue.code === ProcessorErrorCode.CIRCULAR_DEPENDENCY);
+    expect(circularError).toBeDefined();
   });
 });

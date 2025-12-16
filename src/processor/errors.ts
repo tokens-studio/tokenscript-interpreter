@@ -1,3 +1,5 @@
+import { ProcessorError, ProcessorErrorCode } from "@interpreter/errors";
+
 export function collectErrors(result: {
   errors: Map<string, Error>;
   resolved: Map<string, any>;
@@ -13,38 +15,50 @@ export function collectErrors(result: {
   return errors;
 }
 
-export class DependencyError extends Error {
-  public readonly dependencyChain: string[];
-  public readonly rootError: Error;
+/**
+ * Create a ProcessorError for dependency-related failures.
+ * Builds the dependency chain and extracts the root cause.
+ */
+export function createDependencyError(
+  tokenName: string,
+  dependencyName: string,
+  originalError: Error,
+): ProcessorError {
+  // Extract chain and root error
+  const { chain, rootError } = extractDependencyInfo(tokenName, dependencyName, originalError);
+  const chainStr = chain.join(" → ");
 
-  constructor(tokenName: string, dependencyName: string, originalError: Error) {
-    // Build the error chain
-    const rootError = DependencyError.extractRootError(originalError);
-    const chain = [tokenName, ...DependencyError.extractChain(originalError, dependencyName)];
-    const chainStr = chain.join(" → ");
+  return new ProcessorError(ProcessorErrorCode.DEPENDENCY_ERROR, {
+    data: {
+      tokenName,
+      chain: chainStr,
+      rootCause: rootError.message,
+    },
+  });
+}
 
-    super(
-      `Token '${tokenName}' failed due to dependency error: ${chainStr}\nRoot cause: ${rootError.message}`,
-    );
-
-    this.name = "DependencyError";
-    this.dependencyChain = chain;
-    this.rootError = rootError;
+function extractDependencyInfo(
+  tokenName: string,
+  dependencyName: string,
+  error: Error,
+): { chain: string[]; rootError: Error } {
+  // Check if it's already a dependency error
+  if (
+    error instanceof ProcessorError &&
+    error.code === ProcessorErrorCode.DEPENDENCY_ERROR &&
+    error.data.chain
+  ) {
+    // Parse the chain from the existing error
+    const existingChain = String(error.data.chain).split(" → ");
+    return {
+      chain: [tokenName, ...existingChain],
+      rootError: new Error(String(error.data.rootCause)),
+    };
   }
 
-  private static extractChain(error: Error, dependencyName: string): string[] {
-    if (error instanceof DependencyError) {
-      // Return the full chain from the dependency error
-      return [...error.dependencyChain];
-    }
-    // If it's a regular error, just return the dependency name
-    return [dependencyName];
-  }
-
-  private static extractRootError(error: Error): Error {
-    if (error instanceof DependencyError) {
-      return error.rootError;
-    }
-    return error;
-  }
+  // Otherwise, it's a new chain
+  return {
+    chain: [tokenName, dependencyName],
+    rootError: error,
+  };
 }

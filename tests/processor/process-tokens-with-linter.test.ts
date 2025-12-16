@@ -1,4 +1,5 @@
-import type { LintIssue, LintRunner } from "@src/processor/linter";
+import type { LintIssue } from "@src/processor/linter";
+import { LintRunner, LintSeverity, TypeBasedRule } from "@src/processor/linter";
 import { processTokens } from "@src/processor/process";
 import type { TokenData } from "@src/processor/utils/tokens";
 import { describe, expect, it } from "vitest";
@@ -14,29 +15,22 @@ describe("processTokens with linter", () => {
   } => {
     const capturedIssues: LintIssue[] = [];
 
-    const linter: LintRunner = {
-      lintResult: (params) => {
-        // Simple rule: flag any token with value "FLAG_THIS"
-        if (params.result?.value === "FLAG_THIS") {
-          const issue: LintIssue = {
-            severity: "warning",
-            message: "Flagged test token",
-            tokenName: params.tokenName,
-            rule: "test-rule",
-          };
-          capturedIssues.push(issue);
-          return [issue];
-        }
-        return [];
-      },
-      aggregateResults: (issues) => {
-        return {
-          issues,
-          hasErrors: false,
-          hasWarnings: issues.length > 0,
-        };
-      },
+    const flagValidator = (value: any, context: any, createIssue: any) => {
+      // Simple rule: flag any token with value "FLAG_THIS"
+      if (value?.value === "FLAG_THIS") {
+        const issue = createIssue({
+          code: "TEST_FLAG",
+          severity: LintSeverity.WARNING,
+          message: "Flagged test token",
+          tokenName: context.tokenName,
+        });
+        capturedIssues.push(issue);
+        return issue;
+      }
+      return null;
     };
+
+    const linter = new LintRunner().addRule(new TypeBasedRule().forType("color", flagValidator).forType("dimension", flagValidator).forDefault(flagValidator));
 
     return { linter, capturedIssues };
   };
@@ -57,8 +51,9 @@ describe("processTokens with linter", () => {
     expect(capturedIssues[0].message).toBe("Flagged test token");
 
     // Lint results should be in the output
-    expect(result.lint?.hasWarnings).toBe(true);
-    expect(result.lint?.issues.length).toBe(1);
+    expect(result.issues).toBeDefined();
+    expect(result.issues?.size).toBe(1);
+    expect(result.issues?.get("color.primary")).toHaveLength(1);
   });
 
   it("should preserve linter when using updateToken CRUD operation", () => {
@@ -187,7 +182,7 @@ describe("processTokens with linter", () => {
     const { resolver } = result;
 
     // Should not have lint results
-    expect(result.lint).toBeUndefined();
+    expect(result.issues).toBeUndefined();
 
     // CRUD operations should work without linter
     expect(() => {

@@ -1,10 +1,10 @@
 import type { ASTNode } from "@interpreter/ast";
 import type { Config } from "@interpreter/config";
-import { isLanguageError } from "@interpreter/errors";
+import { isLanguageError, type ProcessorError } from "@interpreter/errors";
 import { Interpreter } from "@interpreter/interpreter";
 import { DictionarySymbol } from "@interpreter/symbols";
 import type { ISymbolType } from "@src/types";
-import { DependencyError } from "../errors";
+import { createDependencyError } from "../errors";
 import type { ASTNodeMap, RefPath, ResolvedValueMap, TokenResult, TokenResultMap } from "./types";
 
 /**
@@ -60,11 +60,11 @@ export class TokenInterpreter {
     tokenName: RefPath,
     dependencies: Set<RefPath>,
     resolved: TokenResultMap,
-  ): DependencyError | undefined {
+  ): ProcessorError | undefined {
     for (const dep of dependencies) {
       const depValue = resolved.get(dep);
       if (depValue instanceof Error) {
-        return new DependencyError(tokenName, dep, depValue);
+        return createDependencyError(tokenName, dep, depValue);
       }
     }
     return undefined;

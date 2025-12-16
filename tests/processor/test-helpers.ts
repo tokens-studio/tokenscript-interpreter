@@ -7,3 +7,6 @@ export function toTokenData(tokens: Map<string, string>): Map<string, TokenData>
   }
   return result;
 }
+
+// Re-export issue helpers from source for convenience
+export { hasIssueWithCode, tokenHasIssueWithCode } from "@src/processor/resolver/issue-helpers";

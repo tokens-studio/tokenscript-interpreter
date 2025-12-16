@@ -9,6 +9,14 @@ export class DependencyGraph<N = string> {
     }
   }
 
+  removeNode(node: N): void {
+    this.nodes.delete(node);
+    // Also remove this node from all dependency sets
+    for (const deps of this.nodes.values()) {
+      deps.delete(node);
+    }
+  }
+
   getNodes(): Map<N, Set<N>> {
     return this.nodes;
   }
