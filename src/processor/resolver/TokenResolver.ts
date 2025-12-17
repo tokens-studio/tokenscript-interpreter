@@ -873,19 +873,70 @@ class PrefixResolver {
       unresolvedTokens.push(tokenName);
     }
 
-    // Handle circular dependencies by adding them to issues instead of throwing
-    if (unresolvedTokens.length > 0) {
-      for (const tokenName of unresolvedTokens) {
-        const originalValue = this.tokens.get(tokenName);
-        if (originalValue === undefined) continue;
+    // Process any tokens that became ready during dependency error resolution
+    while (this.readyQueue.size > 0) {
+      const tokenName = this.readyQueue.values().next().value as RefPath;
+      this.readyQueue.delete(tokenName);
+      this.resolveSingleToken(tokenName);
+    }
 
-        const tokenValueStr: string = String(getTokenValue(originalValue));
-        const circularError = new ProcessorError(ProcessorErrorCode.CIRCULAR_DEPENDENCY, {
-          data: { tokens: tokenName },
-        });
-        this.resolved.set(tokenName, circularError);
-        this.callbacks?.onError?.(tokenName, circularError, tokenValueStr);
-        this.addIssue(tokenName, circularError);
+    // Filter out tokens that were resolved during the ready queue processing
+    const stillUnresolved = unresolvedTokens.filter((tokenName) => !this.resolved.has(tokenName));
+
+    // Handle remaining unresolved tokens
+    if (stillUnresolved.length > 0) {
+      // Build a set of tokens that depend on missing dependencies
+      const tokensWithMissingDeps = new Set<string>();
+
+      // Check each unresolved token to see if it depends on missing tokens
+      for (const tokenName of stillUnresolved) {
+        const unresolvedData = this.unresolved.get(tokenName);
+        if (unresolvedData) {
+          // Check if any of its dependencies are missing
+          for (const dep of unresolvedData.dependencies) {
+            if (this.missingDependencies.has(dep)) {
+              tokensWithMissingDeps.add(tokenName);
+              break;
+            }
+          }
+        }
+      }
+
+      for (const tokenName of stillUnresolved) {
+        const isSubField = this.subFieldPaths.has(tokenName);
+
+        let tokenValueStr = "";
+        if (!isSubField) {
+          const originalValue = this.tokens.get(tokenName);
+          if (originalValue === undefined) continue;
+          tokenValueStr = String(getTokenValue(originalValue));
+        }
+
+        // If token depends on missing dependencies, it's not a circular dependency
+        // Otherwise, if it's still unresolved, it must be part of a cycle
+        const dependsOnMissing = tokensWithMissingDeps.has(tokenName);
+        const error = dependsOnMissing
+          ? new ProcessorError(ProcessorErrorCode.TOKEN_NOT_FOUND, {
+              data: { tokenName },
+            })
+          : new ProcessorError(ProcessorErrorCode.CIRCULAR_DEPENDENCY, {
+              data: { tokens: tokenName },
+            });
+
+        this.resolved.set(tokenName, error);
+
+        if (isSubField) {
+          const { parentToken, fieldPath } = this.extractSubFieldMetadata(tokenName);
+          this.callbacks?.onError?.(tokenName, error, tokenValueStr, {
+            isSubField: true,
+            parentToken,
+            fieldPath,
+          });
+        } else {
+          this.callbacks?.onError?.(tokenName, error, tokenValueStr);
+        }
+
+        this.addIssue(tokenName, error);
         this.resolveVirtualChildren(tokenName, []);
         this.notifyResolution(tokenName);
         this.unresolved.delete(tokenName);
