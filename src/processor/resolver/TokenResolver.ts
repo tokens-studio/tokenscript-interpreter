@@ -56,7 +56,7 @@ export type ProcessorCallbacks = {
   onError?: (
     tokenName: RefPath,
     error: Error,
-    originalValue: string,
+    originalValue: string | unknown,
     metadata?: { isSubField: boolean; parentToken?: string; fieldPath?: string },
   ) => void;
 };
@@ -738,7 +738,7 @@ class PrefixResolver {
           data: { fieldPath },
         });
         this.resolved.set(tokenName, error);
-        this.callbacks?.onError?.(tokenName, error, String(originalValue));
+        this.callbacks?.onError?.(tokenName, error, originalValue);
         this.addIssue(tokenName, error);
         hasError = true;
         break;
@@ -746,7 +746,7 @@ class PrefixResolver {
       if (fieldValue instanceof Error) {
         // Sub-field has error, propagate to parent
         this.resolved.set(tokenName, fieldValue);
-        this.callbacks?.onError?.(tokenName, fieldValue, String(originalValue));
+        this.callbacks?.onError?.(tokenName, fieldValue, originalValue);
         this.addIssue(tokenName, this.ensureLanguageError(fieldValue));
         hasError = true;
         break;
@@ -1078,7 +1078,8 @@ export class TokenResolver {
       },
       onError: (tokenName, _error, originalValue) => {
         // Store the original value in output for tokens with errors
-        output.set(tokenName, originalValue);
+        // Cast to any since originalValue can be an object for structured tokens
+        output.set(tokenName, originalValue as any);
         // Errors are tracked in the issues map
       },
     };

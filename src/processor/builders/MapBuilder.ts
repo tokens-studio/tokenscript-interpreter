@@ -11,8 +11,8 @@ export class MapBuilder implements TokenBuilder<Map<string, string | Interpreter
     this.result.set(tokenName, value);
   }
 
-  onError(tokenName: string, _error: Error, originalValue: string): void {
-    this.result.set(tokenName, originalValue);
+  onError(tokenName: string, _error: Error, originalValue: string | unknown): void {
+    this.result.set(tokenName, originalValue as string);
   }
 
   getResult(): Map<string, string | InterpreterResult> {

@@ -76,14 +76,15 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
     const error = getTokenError(result.issues, tokenName);
 
     if (error) {
-      // Token has an error - get original value as string
+      // Token has an error - get original value (keep objects as-is)
       const originalValue = tokens.get(tokenName);
-      const originalValueStr =
-        typeof originalValue === "string" ? originalValue : originalValue?.$value?.toString() || "";
-      builder.onError(tokenName, error, originalValueStr);
+      const originalValueData =
+        typeof originalValue === "string" ? originalValue : originalValue?.$value;
+
+      builder.onError(tokenName, error, originalValueData);
 
       if (builder.constructor !== MapBuilder)
-        tokensMapBuilder.onError(tokenName, error, originalValueStr);
+        tokensMapBuilder.onError(tokenName, error, originalValueData);
     } else {
       // Token resolved successfully
       builder.onResolve(tokenName, value);

@@ -1,8 +1,106 @@
+import type { ProcessorError } from "@src/interpreter/errors";
 import { ProcessorErrorCode } from "@src/interpreter/errors";
-import { TokenResolver } from "@src/processor";
+import { processTokens, TokenResolver } from "@src/processor";
 import { describe, expect, it } from "vitest";
 
 describe("Structured Tokens - Missing Reference Handling", () => {
+  it("should pass actual object to builder onError, not stringified", () => {
+    const errors: Array<{ name: string; error: Error; originalValue: any }> = [];
+
+    const tokens = new Map([
+      ["fontFamilies.body", { $value: ["Roboto"], $type: "fontFamilies" }],
+      [
+        "typography.Body",
+        {
+          $type: "typography",
+          $value: {
+            fontFamily: "{fontFamilies.body}",
+            fontWeight: "{fontWeights.missing}", // Missing reference
+          },
+        },
+      ],
+    ]);
+
+    processTokens(tokens, {
+      builder: {
+        name: "test-builder",
+        onResolve: () => {},
+        onError: (name: string, error: Error, originalValue: string | unknown) => {
+          errors.push({ name, error, originalValue });
+        },
+        getResult: () => ({}),
+      },
+    });
+
+    // Find the parent token error
+    const parentError = errors.find((e) => e.name === "typography.Body");
+    expect(parentError).toBeDefined();
+
+    // The originalValue should be the actual object, not stringified
+    expect(parentError!.originalValue).toEqual({
+      fontFamily: "{fontFamilies.body}",
+      fontWeight: "{fontWeights.missing}",
+    });
+    expect(typeof parentError!.originalValue).toBe("object");
+
+    // Should NOT be stringified
+    expect(typeof parentError!.originalValue).not.toBe("string");
+    expect(parentError!.originalValue).not.toContain?.("[object Object]");
+  });
+
+  it("should not stringify token objects in error callbacks", () => {
+    const processor = new TokenResolver();
+    const errors: Array<{ name: string; error: Error; originalValue: any }> = [];
+
+    const tokens = new Map([
+      ["fontFamilies.body", { $value: ["Roboto"], $type: "fontFamilies" }],
+      [
+        "typography.Body",
+        {
+          $type: "typography",
+          $value: {
+            fontFamily: "{fontFamilies.body}",
+            fontWeight: "{fontWeights.missing}", // Missing reference
+          },
+        },
+      ],
+    ]);
+
+    const result = processor.processTokens(tokens, {
+      onResolve: () => {},
+      onError: (name, error, originalValue) => {
+        errors.push({ name, error, originalValue });
+      },
+    });
+
+    // Find the parent token error
+    const parentError = errors.find((e) => e.name === "typography.Body");
+    expect(parentError).toBeDefined();
+
+    // The error should be a ProcessorError with proper data
+    const procError = parentError!.error as ProcessorError;
+    expect(procError).toBeInstanceOf(Error);
+
+    // Check the error message doesn't contain [object Object]
+    expect(procError.message).not.toContain("[object Object]");
+
+    // Check the originalValue is the actual object, not stringified
+    expect(parentError!.originalValue).toEqual({
+      fontFamily: "{fontFamilies.body}",
+      fontWeight: "{fontWeights.missing}",
+    });
+    expect(typeof parentError!.originalValue).toBe("object");
+
+    // Check issues map
+    const issues = result.issues?.get("typography.Body");
+    expect(issues).toBeDefined();
+    if (issues) {
+      for (const issue of issues) {
+        expect(issue.message).not.toContain("[object Object]");
+      }
+    }
+  });
+
   it("should handle typography token with missing reference without circular dependency error", () => {
     const processor = new TokenResolver();
 
@@ -129,7 +227,9 @@ describe("Structured Tokens - Missing Reference Handling", () => {
         if (fieldValue instanceof Error) {
           errorFields.set(fieldName, fieldValue);
         } else if (fieldValue) {
-          resolvedFields.set(fieldName, fieldValue.value);
+          // Extract the value - handle both symbols and primitives
+          const val = typeof fieldValue === "object" && "value" in fieldValue ? (fieldValue as any).value : fieldValue;
+          resolvedFields.set(fieldName, val);
         }
       }
     }
