@@ -106,7 +106,7 @@ export async function handleProcessCommand(
       builder,
     });
 
-    const hasErrors = processorResult.errors.size > 0 || hasAnyIssues(processorResult.issues);
+    const hasErrors = hasAnyIssues(processorResult.issues);
     const shouldShowErrors = options.logLevel === "warn" || options.strict;
     const exitCode = options.strict && hasErrors ? 1 : 0;
 

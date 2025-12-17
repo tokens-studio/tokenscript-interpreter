@@ -27,8 +27,8 @@ export function process(tokensInput: TokensInput): {
     onResolve: (tokenName: string, value: InterpreterResult) => {
       graphBuilder.onResolve(tokenName, value);
     },
-    onError: (tokenName: string, error: Error, originalValue: string) => {
-      graphBuilder.onError(tokenName, error, originalValue);
+    onError: (tokenName: string, error: Error, originalValue: unknown) => {
+      graphBuilder.onError(tokenName, error, String(originalValue));
     },
   };
 

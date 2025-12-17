@@ -591,7 +591,7 @@ describe("TokenSymbol Validation", () => {
       const result = processTokens(tokens, { linter });
 
       // Should resolve without errors
-      expect(result.errors.size).toBe(0);
+      expect(result.issues?.size || 0).toBe(0);
       expect(result.resolved.get("text")).toBeInstanceOf(TokenSymbol);
     });
   });

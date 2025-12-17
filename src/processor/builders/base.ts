@@ -7,6 +7,7 @@ import {
 } from "@interpreter/symbols";
 import type { LintRunner } from "../linter";
 import type { ObjectParser } from "../object-parsers";
+import { getTokenError } from "../resolver";
 import { type ProcessorOutput, TokenResolver } from "../resolver/TokenResolver";
 import type { IssuesMap } from "../resolver/types";
 import type { TokenData } from "../utils/tokens";
@@ -61,8 +62,6 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
 } {
   const { config, builder = new MapBuilder(), objectParsers, linter } = options ?? {};
 
-  const errors: Map<string, Error> = new Map();
-
   // Always create a MapBuilder for the tokens map output
   const tokensMapBuilder = builder.constructor === MapBuilder ? builder : new MapBuilder();
 
@@ -72,19 +71,20 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
   const result = new TokenResolver().build(tokens, config, objectParsers, linter);
 
   // Process all tokens - both successful and failed
+  // Errors are now tracked in issues map
   for (const [tokenName, value] of result.tokens) {
-    const error = result.errors.get(tokenName);
+    const error = getTokenError(result.issues, tokenName);
 
     if (error) {
-      // Token has an error - get original value as string
+      // Token has an error - get original value (keep objects as-is)
       const originalValue = tokens.get(tokenName);
-      const originalValueStr =
-        typeof originalValue === "string" ? originalValue : originalValue?.$value?.toString() || "";
-      builder.onError(tokenName, error, originalValueStr);
-      errors.set(tokenName, error);
+      const originalValueData =
+        typeof originalValue === "string" ? originalValue : originalValue?.$value;
+
+      builder.onError(tokenName, error, originalValueData);
 
       if (builder.constructor !== MapBuilder)
-        tokensMapBuilder.onError(tokenName, error, originalValueStr);
+        tokensMapBuilder.onError(tokenName, error, originalValueData);
     } else {
       // Token resolved successfully
       builder.onResolve(tokenName, value);
@@ -93,25 +93,14 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
     }
   }
 
-  let tokensMap = tokensMapBuilder.getResult();
+  const tokensMap = tokensMapBuilder.getResult();
   const builderOutput = builder.getResult();
-
-  // Filter out sub-field paths from both outputs
-  if (result.subFieldPaths && result.subFieldPaths.size > 0) {
-    tokensMap = new Map(tokensMap);
-    for (const subFieldPath of result.subFieldPaths) {
-      tokensMap.delete(subFieldPath);
-      errors.delete(subFieldPath);
-    }
-  }
-
   const issues = result.issues;
 
   return {
     ...result,
     tokens: tokensMap,
     output: builderOutput as T,
-    errors,
     issues,
     resolver: result.resolver,
   };

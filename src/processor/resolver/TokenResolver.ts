@@ -37,7 +37,6 @@ import type {
   ResolvedValueMap,
   ResolveIssue,
   TokenDataMap,
-  TokenErrorMap,
   TokenInputMap,
   TokenResult,
   TokenResultMap,
@@ -49,8 +48,6 @@ import type {
 export type ProcessorResult = {
   graph: DependencyGraph<RefPath>;
   resolved: TokenResultMap;
-  unresolved: UnresolvedTokenMap;
-  subFieldPaths?: Set<RefPath>;
   issues?: IssuesMap;
 };
 
@@ -59,14 +56,13 @@ export type ProcessorCallbacks = {
   onError?: (
     tokenName: RefPath,
     error: Error,
-    originalValue: string,
+    originalValue: string | unknown,
     metadata?: { isSubField: boolean; parentToken?: string; fieldPath?: string },
   ) => void;
 };
 
 export type ProcessorOutput = ProcessorResult & {
   tokens: ResolvedValueMap;
-  errors: TokenErrorMap;
   resolver: TokenResolver;
   issues?: IssuesMap;
 };
@@ -360,8 +356,6 @@ class PrefixResolver {
     return {
       graph: this.graph,
       resolved: this.resolved,
-      unresolved: this.unresolved,
-      subFieldPaths: this.subFieldPaths,
       issues: this.issues.size > 0 ? this.issues : undefined,
     };
   }
@@ -377,6 +371,10 @@ class PrefixResolver {
 
   public getTokenInterpreter(): TokenInterpreter {
     return this.tokenInterpreter;
+  }
+
+  public getSubFieldPaths(): Set<RefPath> {
+    return this.subFieldPaths;
   }
 
   public clone(overrides: Partial<ResolverParams>): PrefixResolver {
@@ -740,7 +738,7 @@ class PrefixResolver {
           data: { fieldPath },
         });
         this.resolved.set(tokenName, error);
-        this.callbacks?.onError?.(tokenName, error, String(originalValue));
+        this.callbacks?.onError?.(tokenName, error, originalValue);
         this.addIssue(tokenName, error);
         hasError = true;
         break;
@@ -748,7 +746,7 @@ class PrefixResolver {
       if (fieldValue instanceof Error) {
         // Sub-field has error, propagate to parent
         this.resolved.set(tokenName, fieldValue);
-        this.callbacks?.onError?.(tokenName, fieldValue, String(originalValue));
+        this.callbacks?.onError?.(tokenName, fieldValue, originalValue);
         this.addIssue(tokenName, this.ensureLanguageError(fieldValue));
         hasError = true;
         break;
@@ -875,19 +873,70 @@ class PrefixResolver {
       unresolvedTokens.push(tokenName);
     }
 
-    // Handle circular dependencies by adding them to issues instead of throwing
-    if (unresolvedTokens.length > 0) {
-      for (const tokenName of unresolvedTokens) {
-        const originalValue = this.tokens.get(tokenName);
-        if (originalValue === undefined) continue;
+    // Process any tokens that became ready during dependency error resolution
+    while (this.readyQueue.size > 0) {
+      const tokenName = this.readyQueue.values().next().value as RefPath;
+      this.readyQueue.delete(tokenName);
+      this.resolveSingleToken(tokenName);
+    }
 
-        const tokenValueStr: string = String(getTokenValue(originalValue));
-        const circularError = new ProcessorError(ProcessorErrorCode.CIRCULAR_DEPENDENCY, {
-          data: { tokens: tokenName },
-        });
-        this.resolved.set(tokenName, circularError);
-        this.callbacks?.onError?.(tokenName, circularError, tokenValueStr);
-        this.addIssue(tokenName, circularError);
+    // Filter out tokens that were resolved during the ready queue processing
+    const stillUnresolved = unresolvedTokens.filter((tokenName) => !this.resolved.has(tokenName));
+
+    // Handle remaining unresolved tokens
+    if (stillUnresolved.length > 0) {
+      // Build a set of tokens that depend on missing dependencies
+      const tokensWithMissingDeps = new Set<string>();
+
+      // Check each unresolved token to see if it depends on missing tokens
+      for (const tokenName of stillUnresolved) {
+        const unresolvedData = this.unresolved.get(tokenName);
+        if (unresolvedData) {
+          // Check if any of its dependencies are missing
+          for (const dep of unresolvedData.dependencies) {
+            if (this.missingDependencies.has(dep)) {
+              tokensWithMissingDeps.add(tokenName);
+              break;
+            }
+          }
+        }
+      }
+
+      for (const tokenName of stillUnresolved) {
+        const isSubField = this.subFieldPaths.has(tokenName);
+
+        let tokenValueStr = "";
+        if (!isSubField) {
+          const originalValue = this.tokens.get(tokenName);
+          if (originalValue === undefined) continue;
+          tokenValueStr = String(getTokenValue(originalValue));
+        }
+
+        // If token depends on missing dependencies, it's not a circular dependency
+        // Otherwise, if it's still unresolved, it must be part of a cycle
+        const dependsOnMissing = tokensWithMissingDeps.has(tokenName);
+        const error = dependsOnMissing
+          ? new ProcessorError(ProcessorErrorCode.TOKEN_NOT_FOUND, {
+              data: { tokenName },
+            })
+          : new ProcessorError(ProcessorErrorCode.CIRCULAR_DEPENDENCY, {
+              data: { tokens: tokenName },
+            });
+
+        this.resolved.set(tokenName, error);
+
+        if (isSubField) {
+          const { parentToken, fieldPath } = this.extractSubFieldMetadata(tokenName);
+          this.callbacks?.onError?.(tokenName, error, tokenValueStr, {
+            isSubField: true,
+            parentToken,
+            fieldPath,
+          });
+        } else {
+          this.callbacks?.onError?.(tokenName, error, tokenValueStr);
+        }
+
+        this.addIssue(tokenName, error);
         this.resolveVirtualChildren(tokenName, []);
         this.notifyResolution(tokenName);
         this.unresolved.delete(tokenName);
@@ -1022,16 +1071,16 @@ export class TokenResolver {
     linter?: LintRunner,
   ): ProcessorOutput {
     const output: ResolvedValueMap = new Map();
-    const errors: TokenErrorMap = new Map();
-    let subFieldPaths: Set<RefPath> | undefined;
 
     const callbacks: ProcessorCallbacks = {
       onResolve: (tokenName, value) => {
         output.set(tokenName, value);
       },
-      onError: (tokenName, error, originalValue) => {
-        output.set(tokenName, originalValue);
-        errors.set(tokenName, error);
+      onError: (tokenName, _error, originalValue) => {
+        // Store the original value in output for tokens with errors
+        // Cast to any since originalValue can be an object for structured tokens
+        output.set(tokenName, originalValue as any);
+        // Errors are tracked in the issues map
       },
     };
 
@@ -1049,20 +1098,19 @@ export class TokenResolver {
     this.linter = linter;
 
     const result = this.prefixResolver.resolve();
-    subFieldPaths = result.subFieldPaths;
 
-    // Filter out sub-field paths from output
-    if (subFieldPaths && subFieldPaths.size > 0) {
+    // Filter out sub-field paths from output and issues
+    const subFieldPaths = this.prefixResolver.getSubFieldPaths();
+    if (subFieldPaths.size > 0) {
       for (const subFieldPath of subFieldPaths) {
         output.delete(subFieldPath);
-        errors.delete(subFieldPath);
+        result.issues?.delete(subFieldPath);
       }
     }
 
     return {
       ...result,
       tokens: output,
-      errors,
       resolver: this,
       issues: result.issues,
     };

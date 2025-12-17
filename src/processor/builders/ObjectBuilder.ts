@@ -42,7 +42,7 @@ export class NestedObjectBuilder implements TokenBuilder<Record<string, unknown>
     }
   }
 
-  onError(tokenName: string, _error: Error, originalValue: string): void {
+  onError(tokenName: string, _error: Error, originalValue: string | unknown): void {
     // Store original value for failed tokens
     setNestedValue(this.result, tokenName, originalValue);
   }
@@ -79,7 +79,7 @@ export class FlatObjectBuilder implements TokenBuilder<Record<string, unknown>> 
     }
   }
 
-  onError(tokenName: string, _error: Error, originalValue: string): void {
+  onError(tokenName: string, _error: Error, originalValue: string | unknown): void {
     // Store original value for failed tokens
     this.result[tokenName] = originalValue;
   }

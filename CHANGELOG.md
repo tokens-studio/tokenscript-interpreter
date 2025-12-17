@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **BREAKING: Cleaned up processor output interface**: Removed internal properties from public API
+  - Removed `unresolved` property from `ProcessorResult` - internal tracking no longer exposed
+  - Removed `subFieldPaths` property from `ProcessorResult` - internal tracking no longer exposed
+  - Added `getSubFieldPaths()` method on `PrefixResolver` for internal use
+  - Simplified `ProcessorOutput` by removing redundant filtering logic in builder
+  - Users should rely on `tokens` Map for resolved values and `issues` Map for problems
+
+- **BREAKING: Unified error tracking in `issues` Map**: Removed separate `errors` Map from processor output
+  - `ProcessorOutput` no longer includes `errors` property - all errors now tracked in `issues` Map
+  - Added `getTokenError()` helper to extract Error objects from issues
+  - Added `tokenHasError()` helper to check if token has error vs lint issue
+  - Errors in issues can be identified by presence of `code` property (vs lint issues)
+  - Simplifies error handling with single source of truth for all token problems
+  - Migration: Replace `result.errors.get(token)` with `getTokenError(result.issues, token)`
+  - Migration: Replace `result.errors.has(token)` with `tokenHasError(result.issues?.get(token))`
+
 ## [0.15.1] - 2025-12-16
 
 ### Fixed

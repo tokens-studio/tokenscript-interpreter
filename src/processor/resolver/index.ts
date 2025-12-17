@@ -6,9 +6,11 @@ export {
   getRenamedReferences,
 } from "./helpers";
 export {
+  getTokenError,
   getTokensWithIssues,
   hasAnyIssues,
   hasIssueWithCode,
+  tokenHasError,
   tokenHasIssueWithCode,
 } from "./issue-helpers";
 export { PrefixExtractor } from "./PrefixExtractor";

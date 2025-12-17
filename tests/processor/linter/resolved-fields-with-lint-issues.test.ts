@@ -68,8 +68,8 @@ describe("Resolved Fields with Lint Issues", () => {
     const linter = createLinter();
     const result = processTokens(tokens, { linter });
 
-    // Token should be resolved (not an error)
-    expect(result.errors.has("heading")).toBe(false);
+    // Token should be resolved successfully
+    expect(result.tokens.has("heading")).toBe(true);
     expect(result.resolved.has("heading")).toBe(true);
 
     // Token should have lint issues
@@ -235,7 +235,8 @@ describe("Resolved Fields with Lint Issues", () => {
     const result = processTokens(tokens, { linter });
 
     // Token should have resolution error
-    expect(result.errors.has("test") || result.errors.has("test.fontSize")).toBe(true);
+    const hasError = result.issues?.has("test") || result.issues?.has("test.fontSize");
+    expect(hasError).toBe(true);
 
     // Issues may contain Error objects, but NOT LintIssues
     // (linting runs on resolved values only)

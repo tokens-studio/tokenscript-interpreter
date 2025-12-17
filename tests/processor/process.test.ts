@@ -249,7 +249,7 @@ describe("processTokensFromFiles", () => {
     expect(getValue(result.tokens.get("spacing.base"))).toBe(8);
     expect(getValue(result.tokens.get("spacing.small"))).toBe(4);
     expect(getValue(result.tokens.get("spacing.large"))).toBe(16);
-    expect(result.errors.size).toBe(0);
+    expect(result.issues?.size || 0).toBe(0);
   });
 
   it("should interpret tokens with chained references", async () => {
@@ -270,6 +270,6 @@ describe("processTokensFromFiles", () => {
     expect(getValue(result.tokens.get("values.a"))).toBe(10);
     expect(getValue(result.tokens.get("values.b"))).toBe(15);
     expect(getValue(result.tokens.get("values.c"))).toBe(30);
-    expect(result.errors.size).toBe(0);
+    expect(result.issues?.size || 0).toBe(0);
   });
 });

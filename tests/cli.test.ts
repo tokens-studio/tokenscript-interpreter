@@ -266,8 +266,8 @@ describe("CLI Functionality", () => {
       };
 
       const output = processTokens(tokens);
-      expect(output.errors.size).toBeGreaterThan(0);
-      expect(output.errors.has("derived")).toBe(true);
+      expect(output.issues?.size || 0).toBeGreaterThan(0);
+      expect(output.issues?.has("derived")).toBe(true);
     });
 
     it("should propagate errors through dependency chains", () => {
@@ -278,9 +278,9 @@ describe("CLI Functionality", () => {
       };
 
       const output = processTokens(tokens);
-      expect(output.errors.has("a")).toBe(true);
-      expect(output.errors.has("b")).toBe(true);
-      expect(output.errors.has("c")).toBe(true);
+      expect(output.issues?.has("a")).toBe(true);
+      expect(output.issues?.has("b")).toBe(true);
+      expect(output.issues?.has("c")).toBe(true);
     });
 
     it("should not propagate errors to independent tokens", () => {
@@ -290,8 +290,8 @@ describe("CLI Functionality", () => {
       };
 
       const output = processTokens(tokens);
-      expect(output.errors.has("invalid")).toBe(true);
-      expect(output.errors.has("valid")).toBe(false);
+      expect(output.issues?.has("invalid")).toBe(true);
+      expect(output.issues?.has("valid")).toBe(false);
       expect(output.tokens.get("valid")?.toString()).toBe("10px");
     });
 

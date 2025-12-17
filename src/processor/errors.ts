@@ -1,16 +1,22 @@
 import { ProcessorError, ProcessorErrorCode } from "@interpreter/errors";
 
 export function collectErrors(result: {
-  errors: Map<string, Error>;
-  resolved: Map<string, any>;
+  issues?: Map<string, Array<{ message: string }>>;
+  tokens: Map<string, any>;
 }): Record<string, { message: string; originalValue: string }> {
   const errors: Record<string, { message: string; originalValue: string }> = {};
-  for (const [tokenName, error] of result.errors) {
-    const originalValue = result.resolved.get(tokenName);
-    errors[tokenName] = {
-      message: error.message,
-      originalValue: String(originalValue),
-    };
+  if (!result.issues) return errors;
+
+  for (const [tokenName, issueList] of result.issues) {
+    const originalValue = result.tokens.get(tokenName);
+    // Get the first error issue
+    const error = issueList.find((issue) => "code" in issue);
+    if (error) {
+      errors[tokenName] = {
+        message: error.message,
+        originalValue: String(originalValue),
+      };
+    }
   }
   return errors;
 }
