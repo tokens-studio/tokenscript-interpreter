@@ -265,13 +265,12 @@ describe("Syntax Highlighter Integration Tests", () => {
     });
 
     it("should tokenize color types", () => {
-      const code = "Color.Hex Color.Rgb Color.Rgba Color.Hsl Color.Oklch";
+      const code = "Color.Hex Color.Rgb Color.Hsl Color.Oklch";
       const tokens = tokenizeWithPrism(code);
 
       expect(tokens["color-type"]).toBeDefined();
       expect(tokens["color-type"]).toContain("Color.Hex");
       expect(tokens["color-type"]).toContain("Color.Rgb");
-      expect(tokens["color-type"]).toContain("Color.Rgba");
       expect(tokens["color-type"]).toContain("Color.Hsl");
       expect(tokens["color-type"]).toContain("Color.Oklch");
     });
@@ -279,16 +278,16 @@ describe("Syntax Highlighter Integration Tests", () => {
 
   describe("Functions", () => {
     it("should tokenize color functions", () => {
-      const code = "rgb rgba hsl hsla oklch hex";
+      const code = "rgb hsl oklch hex srgb lrgb";
       const tokens = tokenizeWithPrism(code);
 
       expect(tokens.function).toBeDefined();
       expect(tokens.function).toContain("rgb");
-      expect(tokens.function).toContain("rgba");
       expect(tokens.function).toContain("hsl");
-      expect(tokens.function).toContain("hsla");
       expect(tokens.function).toContain("oklch");
       expect(tokens.function).toContain("hex");
+      expect(tokens.function).toContain("srgb");
+      expect(tokens.function).toContain("lrgb");
     });
 
     it("should tokenize color manipulation functions", () => {

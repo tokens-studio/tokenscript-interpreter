@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Persistent color alpha channel**: Added `alpha` property to `ColorSymbol` (stored outside `value` channels, defaults to `null`). Alpha is now preserved across all color format conversions (RGB → HSL → Hex, etc.). All color types (RGB, HSL, Hex) now support alpha via `.alpha` property. CSS color formatting includes alpha as fourth parameter when set and < 1 (e.g., `rgb(255, 0, 0, 0.5)`).
+
+### Breaking Changes
+
+- **Color alpha property**: Replace `rgbaColor.value.a` with `rgbaColor.alpha`
+- **Color alpha access**: Use `color.alpha` property on any color type instead of RGBA-specific handling  
+- **ColorSymbol constructor**: Constructor signature changed from `(value, subType?, config?, alpha?)` to `(value, subType?, alpha?, config?)`. Update any direct `ColorSymbol` constructor calls to use new parameter order.
+
 ## [0.16.1] - 2025-12-29
 
 ### Added

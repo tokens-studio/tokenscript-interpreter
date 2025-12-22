@@ -49,16 +49,7 @@
         "script": "variable outputs: List = \"rgb(\" {input}.r \", \" {input}.g \", \" {input}.b \")\";\nvariable output: Color.CssColor;\noutput.value = outputs.join();\noutput.input = {input}\n;\nreturn output;"
       }
     },
-    {
-      "source": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgba-color/0.0.1/",
-      "target": "$self",
-      "description": "Converts RGBA to CssColor",
-      "lossless": true,
-      "script": {
-        "type": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/",
-        "script": "variable outputs: List = \"rgba(\" {input}.r \", \" {input}.g \", \" {input}.b \", \" {input}.a \")\";\nvariable output: Color.CssColor;\noutput.value = outputs.join();\noutput.input = {input}\n;\nreturn output;"
-      }
-    },
+
     {
       "source": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-color/0.0.1/",
       "target": "$self",
@@ -97,16 +88,6 @@
       "script": {
         "type": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/",
         "script": "variable outputs: List = \"rgb(\" {input}.r \", \" {input}.g \", \" {input}.b \")\";\nvariable output: Color.CssColor;\noutput.value = outputs.join();\noutput.input = {input}\n;\nreturn output;"
-      }
-    },
-    {
-      "source": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgba-color/0.0.1/",
-      "target": "$self",
-      "description": "Converts RGBA to CssColor",
-      "lossless": true,
-      "script": {
-        "type": "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/",
-        "script": "variable outputs: List = \"rgba(\" {input}.r \", \" {input}.g \", \" {input}.b \", \" {input}.a \")\";\nvariable output: Color.CssColor;\noutput.value = outputs.join();\noutput.input = {input}\n;\nreturn output;"
       }
     },
     {

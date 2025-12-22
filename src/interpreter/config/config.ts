@@ -60,9 +60,9 @@ export class Config {
             data: { specName: subType },
           });
         }
-        return new ColorSymbol(null, subType, this);
+        return new ColorSymbol(null, subType, null, this);
       }
-      return new ColorSymbol(null, undefined, this);
+      return new ColorSymbol(null, undefined, null, this);
     }
 
     const basicSymbolConstructor = basicSymbolTypes[baseType.toLowerCase()];

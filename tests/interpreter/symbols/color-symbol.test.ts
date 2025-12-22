@@ -109,7 +109,7 @@ describe("ColorSymbol", () => {
       it("should use formatColorMethod for hex colors when config is provided", () => {
         const colorManager = new ColorManager();
         const config = new Config({ colorManager });
-        const color = new ColorSymbol("#ff0000", "Hex", config);
+        const color = new ColorSymbol("#ff0000", "Hex", null, config);
 
         const result = color.toStringSymbol();
         expect(result.value).toBe("#ff0000");
@@ -145,6 +145,7 @@ describe("ColorSymbol", () => {
             b: new NumberSymbol(64),
           },
           "RGB",
+          null,
           config,
         );
 
@@ -160,7 +161,7 @@ describe("ColorSymbol", () => {
           red: new NumberSymbol(255),
           green: new NumberSymbol(128),
         };
-        const color = new ColorSymbol(colorValue, "UnknownType", config);
+        const color = new ColorSymbol(colorValue, "UnknownType", null, config);
 
         const result = color.toStringSymbol();
         expect(result.value).toBe(""); // formatColorMethod returns empty string for unknown types
@@ -226,7 +227,7 @@ describe("ColorSymbol", () => {
       expect(color.hasAttribute("red")).toBe(true);
       expect(color.hasAttribute("green")).toBe(true);
       expect(color.hasAttribute("blue")).toBe(true);
-      expect(color.hasAttribute("alpha")).toBe(false);
+      expect(color.hasAttribute("alpha")).toBe(true);
 
       expect(color.getAttribute("red")?.value).toBe("255");
       expect(color.getAttribute("green")?.value).toBe("128");
@@ -292,6 +293,7 @@ describe("ColorSymbol", () => {
       expect(color.toJs()).toEqual({
         type: "Hex",
         value: "#ff0000",
+        alpha: null,
       });
     });
 
@@ -312,6 +314,7 @@ describe("ColorSymbol", () => {
       const result = color.toJs();
       expect(result).toEqual({
         type: "rgb",
+        alpha: null,
         r: 255,
         g: 0,
         b: 0,
@@ -335,6 +338,7 @@ describe("ColorSymbol", () => {
       expect(color.toJs()).toEqual({
         type: "unknown",
         value: null,
+        alpha: null,
       });
     });
   });

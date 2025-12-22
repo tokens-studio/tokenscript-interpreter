@@ -41,8 +41,6 @@ const SCHEMA_FILE_MAP: Record<string, string> = {
     "./data/specifications/colors/srgb.json",
   "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgb-color/0/":
     "./data/specifications/colors/rgb.json",
-  "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgba-color/0/":
-    "./data/specifications/colors/rgba.json",
   "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/lrgb-color/0/":
     "./data/specifications/colors/lrgb.json",
 };

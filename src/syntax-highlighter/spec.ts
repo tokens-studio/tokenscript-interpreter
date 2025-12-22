@@ -28,9 +28,7 @@ export const TYPES = [
 
 export const BUILTIN_FUNCTIONS = [
   "rgb",
-  "rgba",
   "hsl",
-  "hsla",
   "srgb",
   "lrgb",
   "hex",
