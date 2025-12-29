@@ -256,9 +256,7 @@ describe("Syntax Highlighter Spec", () => {
       it("should match standard Color subtypes", () => {
         expect("Color.Hex").toMatch(PATTERNS.colorType);
         expect("Color.Rgb").toMatch(PATTERNS.colorType);
-        expect("Color.Rgba").toMatch(PATTERNS.colorType);
         expect("Color.Hsl").toMatch(PATTERNS.colorType);
-        expect("Color.Hsla").toMatch(PATTERNS.colorType);
         expect("Color.Srgb").toMatch(PATTERNS.colorType);
         expect("Color.Lrgb").toMatch(PATTERNS.colorType);
         expect("Color.Oklch").toMatch(PATTERNS.colorType);
@@ -413,11 +411,11 @@ describe("Syntax Highlighter Spec", () => {
     describe("BUILTIN_FUNCTIONS", () => {
       it("should include color functions", () => {
         expect(BUILTIN_FUNCTIONS).toContain("rgb");
-        expect(BUILTIN_FUNCTIONS).toContain("rgba");
         expect(BUILTIN_FUNCTIONS).toContain("hsl");
-        expect(BUILTIN_FUNCTIONS).toContain("hsla");
         expect(BUILTIN_FUNCTIONS).toContain("hex");
         expect(BUILTIN_FUNCTIONS).toContain("oklch");
+        expect(BUILTIN_FUNCTIONS).toContain("srgb");
+        expect(BUILTIN_FUNCTIONS).toContain("lrgb");
       });
 
       it("should include color manipulation functions", () => {

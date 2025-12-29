@@ -13,7 +13,6 @@ import { languages } from "monaco-editor";
 import hslSpec from "../../../../data/specifications/colors/hsl.json";
 import lrgbSpec from "../../../../data/specifications/colors/lrgb.json";
 import rgbSpec from "../../../../data/specifications/colors/rgb.json";
-import rgbaSpec from "../../../../data/specifications/colors/rgba.json";
 import srgbSpec from "../../../../data/specifications/colors/srgb.json";
 
 interface VariableInfo {
@@ -51,10 +50,6 @@ export class TokenScriptCompletionProvider {
     this.colorManager.register(
       "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/srgb-color/0/",
       srgbSpec as any,
-    );
-    this.colorManager.register(
-      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/rgba-color/0/",
-      rgbaSpec as any,
     );
     this.colorManager.register(
       "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/lrgb-color/0/",
@@ -189,21 +184,6 @@ export class TokenScriptCompletionProvider {
             break;
           case "b":
             description = "Blue component (0-255)";
-            break;
-        }
-      } else if (subType.toLowerCase() === "rgba") {
-        switch (key) {
-          case "r":
-            description = "Red component (0-255)";
-            break;
-          case "g":
-            description = "Green component (0-255)";
-            break;
-          case "b":
-            description = "Blue component (0-255)";
-            break;
-          case "a":
-            description = "Alpha/transparency (0-1)";
             break;
         }
       } else if (subType.toLowerCase() === "hex") {
@@ -466,20 +446,13 @@ export class TokenScriptCompletionProvider {
     });
 
     // Color types - match the registered specs
-    const colorTypes = [
-      "Color.Hex",
-      "Color.Rgb",
-      "Color.Hsl",
-      "Color.Srgb",
-      "Color.Rgba",
-      "Color.Lrgb",
-    ];
+    const colorTypes = ["Color.Hex", "Color.Rgb", "Color.Hsl", "Color.Srgb", "Color.Lrgb"];
     colorTypes.forEach((type) => {
       completions.push({
         label: type,
         kind: languages.CompletionItemKind.Class,
         insertText: type,
-        detail: "Color type",
+        detail: "Color type (supports .alpha property)",
         range,
         sortText: `2_${type}`,
       });
@@ -487,12 +460,31 @@ export class TokenScriptCompletionProvider {
 
     // Color functions
     const colorFunctions = [
-      { name: "rgb", params: "r, g, b", desc: "Create RGB color" },
-      { name: "rgba", params: "r, g, b, a", desc: "Create RGBA color" },
-      { name: "hsl", params: "h, s, l", desc: "Create HSL color" },
-      { name: "srgb", params: "r, g, b", desc: "Create sRGB color" },
-      { name: "lrgb", params: "r, g, b", desc: "Create linear RGB color" },
-      { name: "hex", params: "value", desc: "Create hex color" },
+      {
+        name: "rgb",
+        params: "r, g, b",
+        desc: "Create RGB color (use .alpha property for transparency)",
+      },
+      {
+        name: "hsl",
+        params: "h, s, l",
+        desc: "Create HSL color (use .alpha property for transparency)",
+      },
+      {
+        name: "srgb",
+        params: "r, g, b",
+        desc: "Create sRGB color (use .alpha property for transparency)",
+      },
+      {
+        name: "lrgb",
+        params: "r, g, b",
+        desc: "Create linear RGB color (use .alpha property for transparency)",
+      },
+      {
+        name: "hex",
+        params: "value",
+        desc: "Create hex color (use .alpha property for transparency)",
+      },
     ];
 
     colorFunctions.forEach((func) => {

@@ -1,7 +1,7 @@
 import { type ISymbolType, SupportedFormats } from "@src/types";
 import type { Config } from "./config/config";
 import { InterpreterError, SymbolsErrorCode } from "./errors";
-import { isValidHex } from "./utils/color";
+import { ensureValidAlpha, isValidHex } from "./utils/color";
 import { capitalize } from "./utils/string";
 import {
   isArray,
@@ -1583,12 +1583,13 @@ export class ColorSymbol extends BaseSymbolType {
 
   public subType: string | null = null;
   public value: ColorValue;
+  public alpha: number | null = null;
 
   static empty(): ColorSymbol {
     return new ColorSymbol(null);
   }
 
-  constructor(value: ColorValue, subType?: string, config?: Config) {
+  constructor(value: ColorValue, subType?: string, alpha?: number | null, config?: Config) {
     const isHex = (isUndefined(subType) || subType?.toLowerCase() === "hex") && isString(value);
     const isDynamic = isString(subType) && isObject(value);
     const isValid = isNull(value) || isHex || isDynamic;
@@ -1611,6 +1612,10 @@ export class ColorSymbol extends BaseSymbolType {
 
     this.value = value;
     this.subType = isHex ? "Hex" : subType || null;
+
+    const alphaValue = alpha ?? null;
+    ensureValidAlpha(alphaValue);
+    this.alpha = alphaValue;
   }
 
   toStringSymbol(): StringSymbol {
@@ -1654,6 +1659,30 @@ export class ColorSymbol extends BaseSymbolType {
     return val instanceof ColorSymbol || isNull(val) || isObject(val) || isValidHex(val);
   }
 
+  equals(other: ISymbolType): boolean {
+    if (!this.typeEquals(other)) return false;
+
+    const otherColor = other as ColorSymbol;
+
+    if (this.alpha !== otherColor.alpha) return false;
+
+    // Compare non-hex
+    if (isObject(this.value) && isObject(otherColor.value)) {
+      const thisKeys = Object.keys(this.value);
+      const otherKeys = Object.keys(otherColor.value);
+
+      if (thisKeys.length !== otherKeys.length) return false;
+
+      for (const key of thisKeys) {
+        if (!this.value[key].equals(otherColor.value[key])) return false;
+      }
+      return true;
+    }
+
+    // Compare hex value directly
+    return this.value === otherColor.value;
+  }
+
   deepCopy(): ColorSymbol {
     if (isObject(this.value)) {
       // For dynamic colors with object values, deep copy the object
@@ -1661,10 +1690,10 @@ export class ColorSymbol extends BaseSymbolType {
       for (const [key, val] of Object.entries(this.value)) {
         copiedValue[key] = val.deepCopy();
       }
-      return new ColorSymbol(copiedValue, this.subType || undefined, this.config);
+      return new ColorSymbol(copiedValue, this.subType || undefined, this.alpha, this.config);
     }
     // For hex colors (string values), no deep copy needed
-    return new ColorSymbol(this.value, this.subType || undefined, this.config);
+    return new ColorSymbol(this.value, this.subType || undefined, this.alpha, this.config);
   }
 
   cloneIfMutable(): ColorSymbol {
@@ -1677,7 +1706,7 @@ export class ColorSymbol extends BaseSymbolType {
   }
 
   hasAttribute(attributeName: string): boolean {
-    if (attributeName === "to") {
+    if (attributeName === "to" || attributeName === "alpha") {
       return true;
     }
 
@@ -1693,6 +1722,12 @@ export class ColorSymbol extends BaseSymbolType {
   getAttribute(attributeName: string): ISymbolType | null {
     if (attributeName === "to") {
       return this;
+    }
+
+    if (attributeName === "alpha") {
+      return this.alpha !== null
+        ? new NumberSymbol(this.alpha, this.config)
+        : new NullSymbol(this.config);
     }
 
     if (isObject(this.value)) {
@@ -1756,6 +1791,7 @@ export class ColorSymbol extends BaseSymbolType {
       return {
         type: this.subType || "hex",
         value: this.value,
+        alpha: this.alpha,
       };
     }
 
@@ -1763,6 +1799,7 @@ export class ColorSymbol extends BaseSymbolType {
     if (isObject(this.value)) {
       const result: Record<string, JsValue> = {
         type: this.subType || "unknown",
+        alpha: this.alpha,
       };
 
       for (const [key, val] of Object.entries(this.value)) {
@@ -1776,6 +1813,7 @@ export class ColorSymbol extends BaseSymbolType {
     return {
       type: this.subType || "unknown",
       value: null,
+      alpha: this.alpha,
     };
   }
 }
@@ -1790,7 +1828,7 @@ export const jsValueToSymbolType = (value: any, config?: Config): ISymbolType =>
   if (isNone(value)) return new NullSymbol(config);
   if (isNumber(value)) return new NumberSymbol(value, config);
   if (isString(value)) {
-    if (isValidHex(value)) return new ColorSymbol(value, "Hex", config);
+    if (isValidHex(value)) return new ColorSymbol(value, "Hex", null, config);
     return new StringSymbol(value, config);
   }
   if (isBoolean(value)) return new BooleanSymbol(value, config);

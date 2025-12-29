@@ -7,6 +7,7 @@ import {
 } from "@interpreter/errors";
 import { parseExpression } from "@interpreter/parser";
 import { ColorSymbol, type dynamicColorValue, typeEquals } from "@interpreter/symbols";
+import { ensureValidAlpha, isTransparent } from "@interpreter/utils/color";
 import { Interpreter } from "@src/lib";
 import type { ISymbolType } from "@src/types";
 import { buildSchemaUri, parseVersionString } from "@src/utils/schema-uri";
@@ -135,7 +136,7 @@ export class ColorManager extends BaseManager<ColorSpecification, ColorSymbol, C
             });
           }
           const value = typeof result === "string" ? result : (result?.value ?? null);
-          return new ColorSymbol(value, targetSpec.name, this.parentConfig);
+          return new ColorSymbol(value, targetSpec.name, null, this.parentConfig);
         }
         return result as ColorSymbol;
       };
@@ -225,7 +226,9 @@ ${spec}`,
     }
 
     try {
-      return this.convertThroughPath(color, sourceUri, targetUri);
+      const result = this.convertThroughPath(color, sourceUri, targetUri);
+      result.alpha = color.alpha;
+      return result;
     } catch (error) {
       throw new InterpreterError(ColorErrorCode.CONVERSION_ERROR, {
         data: {
@@ -236,7 +239,7 @@ ${spec}`,
   }
 
   public convertToByType(color: ColorSymbol, targetType: string): ColorSymbol {
-    // Identity conversion - if source and target types are the same, return original
+    // Identity conversion - return original instance without cloning
     if (color.subType?.toLowerCase() === targetType.toLowerCase()) {
       return color;
     }
@@ -255,17 +258,6 @@ ${spec}`,
   setAttribute(color: ColorSymbol, node: ReassignNode, attributeValue: ISymbolType): ColorSymbol {
     const attributes = node.attributesStringChain();
 
-    if (typeof color.value === "string") {
-      throw new InterpreterError(ColorErrorCode.STRING_VALUE_ASSIGNMENT, {
-        token: node.token,
-        data: {
-          attributes: attributesToString(attributes),
-          identifier: node.identifierToString(),
-          colorType: color.subType || "unknown",
-        },
-      });
-    }
-
     if (attributes.length !== 1) {
       throw new InterpreterError(ColorErrorCode.ATTRIBUTE_CHAIN_TOO_LONG, {
         token: node.token,
@@ -277,6 +269,34 @@ ${spec}`,
       });
     }
     const attr = attributes[0];
+
+    // alpha attribute
+    if (attr === "alpha") {
+      if (attributeValue.type !== "Number" && attributeValue.type !== "Null") {
+        throw new InterpreterError(ColorErrorCode.INVALID_ATTRIBUTE_TYPE, {
+          token: node.token,
+          data: {
+            attributeType: attributeValue.type,
+            validTypes: "Number or Null",
+          },
+        });
+      }
+      const alphaValue = attributeValue.value as number | null;
+      ensureValidAlpha(alphaValue);
+      color.alpha = alphaValue;
+      return color;
+    }
+
+    if (typeof color.value === "string") {
+      throw new InterpreterError(ColorErrorCode.STRING_VALUE_ASSIGNMENT, {
+        token: node.token,
+        data: {
+          attributes: attributesToString(attributes),
+          identifier: node.identifierToString(),
+          colorType: color.subType || "unknown",
+        },
+      });
+    }
 
     const spec = this.getSpecFromColor(color);
     if (!spec) {
@@ -352,6 +372,7 @@ ${spec}`,
    * For hex colors (string values), returns the hex string as-is.
    * For dynamic colors (object values), uses the schema's `order` property to determine
    * parameter order and formats as a function call (e.g., "hsl(0, 100, 50.0)").
+   * If alpha is set and less than 1, it is included as the fourth parameter.
    *
    * @param color - The ColorSymbol to format
    * @param opts - Formatting options for numeric values
@@ -367,16 +388,16 @@ ${spec}`,
    * const hslColor = new ColorSymbol({ h: 0, s: 100, l: 50.123456 }, "HSL");
    * manager.formatColorMethod(hslColor); // "hsl(0, 100, 50.12)"
    *
-   * // RGB color with trailing zeros removed
-   * const rgbColor = new ColorSymbol({ r: 0, g: 85.00000000000004, b: 255 }, "RGB");
-   * manager.formatColorMethod(rgbColor); // "rgb(0, 85, 255)"
+   * // RGB color with alpha
+   * const rgbColor = new ColorSymbol({ r: 255, g: 0, b: 0 }, "RGB", undefined, 0.5);
+   * manager.formatColorMethod(rgbColor); // "rgb(255, 0, 0, 0.5)"
    * ```
    */
   formatColorMethod(color: ColorSymbol, opts: FormatColorOptions = {}): string {
     const { decimalPlaces = 2, removeTrailingZeros = true } = opts;
 
     if (typeof color.value === "string") {
-      // For hex colors, return the hex string
+      // For hex colors, return the hex string (no alpha in output for now)
       return color.value;
     }
 
@@ -401,6 +422,13 @@ ${spec}`,
         }
         return value?.toString() || "0";
       });
+
+      // Include alpha only when set and not fully opaque (< 1)
+      // This follows CSS convention where alpha=1 (fully opaque) is omitted
+      // Alpha=0 (fully transparent) is included to distinguish from no alpha
+      if (isTransparent(color.alpha)) {
+        values.push(this.formatNumber(color.alpha, decimalPlaces, removeTrailingZeros));
+      }
 
       // Format as function call with the subtype name
       const functionName = color.subType.toLowerCase();

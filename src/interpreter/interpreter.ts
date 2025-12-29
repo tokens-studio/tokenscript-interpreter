@@ -283,7 +283,7 @@ export class Interpreter {
   }
 
   private visitHexColorNode(node: HexColorNode): ColorSymbol {
-    return new ColorSymbol(node.value, "Hex", this.config);
+    return new ColorSymbol(node.value, "Hex", null, this.config);
   }
 
   private visitBooleanNode(node: BooleanNode): BooleanSymbol {

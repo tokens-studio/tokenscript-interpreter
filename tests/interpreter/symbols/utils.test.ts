@@ -84,7 +84,7 @@ describe("Symbol Utilities", () => {
       expect(getResultTypeName(new BooleanSymbol(true, config))).toBe("Boolean");
       expect(getResultTypeName(new NullSymbol(config))).toBe("Null");
       expect(getResultTypeName(new NumberWithUnitSymbol(10, "px", config))).toBe("NumberWithUnit.Px");
-      expect(getResultTypeName(new ColorSymbol("#ff0000", "Hex", config))).toBe("Color.Hex");
+      expect(getResultTypeName(new ColorSymbol("#ff0000", "Hex", null, config))).toBe("Color.Hex");
       expect(getResultTypeName(new ListSymbol([new NumberSymbol(1, config)], false, config))).toBe("List");
       expect(getResultTypeName(new ListSymbol([new NumberSymbol(1, config)], true, config))).toBe("List.Implicit");
     });
@@ -110,7 +110,7 @@ describe("Symbol Utilities", () => {
         new StringSymbol("test", config),
         new BooleanSymbol(true, config),
         new NumberWithUnitSymbol(10, "px", config),
-        new ColorSymbol("#abc123", "Hex", config),
+        new ColorSymbol("#abc123", "Hex", null, config),
         new ListSymbol([new NumberSymbol(1, config)], false, config),
         new DictionarySymbol(new Map([["key", new StringSymbol("value", config)]]), config),
       ];
@@ -133,7 +133,7 @@ describe("Symbol Utilities", () => {
                     new DictionarySymbol(
                       new Map([
                         ["level2", new NumberSymbol(123, config)],
-                        ["color", new ColorSymbol("#ffffff", "Hex", config)],
+                        ["color", new ColorSymbol("#ffffff", "Hex", null, config)],
                       ]),
                       config,
                     ),
@@ -158,6 +158,7 @@ describe("Symbol Utilities", () => {
               color: {
                 type: "Hex",
                 value: "#ffffff",
+                alpha: null,
               },
             },
           ],

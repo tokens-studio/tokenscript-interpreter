@@ -282,6 +282,9 @@ export const messages: MessageMap = {
   [ColorErrorCode.INVALID_ATTRIBUTE_TYPE]: (data) =>
     `Invalid attribute type '${data.attributeType}'. Use a valid type. (${data.validTypes})`,
 
+  [ColorErrorCode.INVALID_ALPHA_VALUE]: (data) =>
+    `Invalid alpha value '${data.alpha}'. Alpha must be between 0 and 1.`,
+
   // Unit errors
   [UnitErrorCode.CONVERSION_CRASHED]: (data) =>
     `Conversion function crashed!${data.error ? ` ${data.error}` : ""}`,

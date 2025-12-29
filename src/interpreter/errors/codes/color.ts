@@ -23,6 +23,9 @@ export enum ColorErrorCode {
 
   // Type errors
   INVALID_ATTRIBUTE_TYPE = "COLOR_INVALID_ATTRIBUTE_TYPE",
+
+  // Alpha errors
+  INVALID_ALPHA_VALUE = "COLOR_INVALID_ALPHA_VALUE",
 }
 
 export interface ColorErrorData {
@@ -70,5 +73,8 @@ export interface ColorErrorData {
   [ColorErrorCode.INVALID_ATTRIBUTE_TYPE]: {
     attributeType: string;
     validTypes: string;
+  };
+  [ColorErrorCode.INVALID_ALPHA_VALUE]: {
+    alpha: number;
   };
 }
