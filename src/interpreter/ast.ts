@@ -390,3 +390,63 @@ export function collectReferenceNodes(ast: ASTNode, targetName?: string): Refere
   }
   return filterAST<ReferenceNode>(ast, (node) => node instanceof ReferenceNode);
 }
+
+/**
+ * Get the last statement from an AST node.
+ * If the node is a StatementListNode, returns the last statement.
+ * Otherwise, returns the node itself.
+ */
+export function getLastStatement(ast: ASTNode): ASTNode {
+  if (ast instanceof StatementListNode) {
+    const statements = ast.statements;
+    if (statements && statements.length > 0) {
+      return statements[statements.length - 1];
+    }
+  }
+  return ast;
+}
+
+/**
+ * Check if an AST node or its last statement is an AssignNode with an assignment expression.
+ * This is useful for determining if a REPL should print the assigned value.
+ *
+ * Returns the variable name and whether it has an assignment expression:
+ * - `variable foo: String;` -> { varName: "foo", hasAssignment: false }
+ * - `variable foo: String = "bar";` -> { varName: "foo", hasAssignment: true }
+ * - Other nodes -> null
+ */
+export function getAssignmentInfo(ast: ASTNode): {
+  varName: string;
+  hasAssignment: boolean;
+} | null {
+  const lastStatement = getLastStatement(ast);
+
+  if (lastStatement instanceof AssignNode) {
+    return {
+      varName: lastStatement.varName.name,
+      hasAssignment: lastStatement.assignmentExpr !== null,
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Check if an AST node or its last statement is a ReassignNode.
+ * This is useful for determining if a REPL should print the reassigned value.
+ *
+ * Returns the variable name:
+ * - `a = 1 + 1` -> { varName: "a" }
+ * - Other nodes -> null
+ */
+export function getReassignmentInfo(ast: ASTNode): { varName: string } | null {
+  const lastStatement = getLastStatement(ast);
+
+  if (lastStatement instanceof ReassignNode) {
+    return {
+      varName: lastStatement.baseIdentifier().name,
+    };
+  }
+
+  return null;
+}

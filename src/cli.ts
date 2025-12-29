@@ -20,8 +20,12 @@ program
   .command("repl")
   .description("Start interactive REPL mode for TokenScript")
   .option("--schema <uris...>", "Schema URIs to fetch and register")
+  .option("--mode <mode>", "Execution mode: inline or script")
   .action(async (options) => {
-    await startRepl(options.schema);
+    await startRepl({
+      mode: options.mode === "script" ? "script" : "inline",
+      schemas: options.schema,
+    });
   });
 
 program

@@ -111,6 +111,10 @@ export class Interpreter {
     this.symbolTable.reset();
   }
 
+  public getSymbol(name: string): ISymbolType | null {
+    return this.symbolTable.get(name);
+  }
+
   public coerceValue(
     constructorSymbol: ISymbolType,
     valueSymbol: ISymbolType,
