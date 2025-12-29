@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Script mode for REPL**: Two execution modes for interactive development
+  - **Inline mode** (default): Executes each line immediately, like traditional REPLs
+  - **Script mode** (`--mode script`): Accumulates lines into a multi-statement script for complex workflows
+  - Smart output handling: Only prints assigned/reassigned values and expression results
+  - New commands: `exit()` to quit, `clear()` to reset script buffer
+  
+- **Interpreter**
+  - Public `getSymbol()` method on Interpreter for accessing symbol table values
+
 ## [0.16.0] - 2025-12-17
 
 ### Changed
