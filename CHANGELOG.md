@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.17.0] - 2025-12-29
+
 ### Added
 
 - **Persistent color alpha channel**: Added `alpha` property to `ColorSymbol` (stored outside `value` channels, defaults to `null`). Alpha is now preserved across all color format conversions (RGB → HSL → Hex, etc.). All color types (RGB, HSL, Hex) now support alpha via `.alpha` property. CSS color formatting includes alpha as fourth parameter when set and < 1 (e.g., `rgb(255, 0, 0, 0.5)`).
