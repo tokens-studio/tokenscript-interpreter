@@ -506,25 +506,6 @@ describe("Math Functions - Logarithmic", () => {
   });
 });
 
-describe("Math Functions - String Functions", () => {
-  it("should handle rgba function", () => {
-    const text = `
-    variable red: Number = 255;
-    variable green: Number = 128;
-    variable blue: Number = 0;
-    variable alpha: Number = 0.5;
-    variable color: String = rgba(red, green, blue, alpha);
-    `;
-    const lexer = new Lexer(text);
-    const parser = new Parser(lexer);
-    const interpreter = new Interpreter(parser);
-    interpreter.interpret();
-
-    const color = interpreter.symbolTable.get("color");
-    expect(color?.value).toBe("rgba(255, 128, 0, 0.5)");
-  });
-});
-
 describe("Math Functions - Enhanced round_to with Banker's Rounding", () => {
   it("should use banker's rounding for precision cases", () => {
     const text = `

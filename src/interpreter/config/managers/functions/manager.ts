@@ -449,11 +449,6 @@ export class FunctionsManager extends BaseManager<
       return new StringSymbol(`linear-gradient(${stringArgs})`);
     });
 
-    this.registerFunction("rgba", (...args: ISymbolType[]): StringSymbol => {
-      const stringArgs = args.map((arg) => arg.toString()).join(", ");
-      return new StringSymbol(`rgba(${stringArgs})`);
-    });
-
     this.registerFunction("pi", (): NumberSymbol => new NumberSymbol(Math.PI));
 
     this.registerFunction("type", (arg: ISymbolType): StringSymbol => {
