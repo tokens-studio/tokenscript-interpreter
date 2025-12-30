@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Bundle splitting for multiple entry points**: Enabled code splitting in build configuration to prevent class duplication across entry points (`/processor`, `/interpreter`, etc.). Previously, importing from multiple entry points (e.g., `Config` from main and `buildTokens` from `/processor`) created separate class instances, breaking `instanceof` checks and causing initialization issues. Now all entry points share common code via chunks, ensuring class identity is preserved.
+
 ## [0.17.1] - 2025-12-29
 
 ### Removed
