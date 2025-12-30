@@ -20,6 +20,9 @@ export default defineConfig({
   treeshake: true,
   tsconfig: "tsconfig.build.json",
   target: "es2021",
-  splitting: false,
+  // Enable code splitting to extract shared code into chunks
+  // This prevents class duplication across bundles and ensures that
+  // imports from different entry points reference the same class instances
+  splitting: true,
   keepNames: true,
 });
