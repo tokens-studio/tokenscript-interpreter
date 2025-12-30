@@ -187,6 +187,8 @@ function main() {
     log(
       `  - Check: https://github.com/tokens-studio/tokenscript-interpreter/releases/tag/v${newVersion}`,
     );
+    log("");
+    log(`npm i @tokens-studio/tokenscript-interpreter@${newVersion}`);
   }
 }
 
