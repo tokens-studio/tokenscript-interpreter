@@ -7,7 +7,12 @@ import {
 import { Interpreter } from "@interpreter/interpreter";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
-import { NumberSymbol, StringSymbol } from "@interpreter/symbols";
+import {
+  BooleanSymbol,
+  NumberSymbol,
+  NumberWithUnitSymbol,
+  StringSymbol,
+} from "@interpreter/symbols";
 import type { ISymbolType } from "@src/types";
 import { type } from "arktype";
 import { BaseManager } from "../base-manager";
@@ -115,6 +120,44 @@ export class FunctionsManager extends BaseManager<
       }
 
       return new StringSymbol(typeName.toLowerCase());
+    });
+
+    // Type predicate functions
+    // TODO Move these to schemas with a proper type
+    this.registerFunction("is_null", (arg: ISymbolType): BooleanSymbol => {
+      return new BooleanSymbol(arg.type === "Null");
+    });
+
+    this.registerFunction("is_number", (arg: ISymbolType): BooleanSymbol => {
+      return new BooleanSymbol(arg.type === "Number");
+    });
+
+    this.registerFunction("is_string", (arg: ISymbolType): BooleanSymbol => {
+      return new BooleanSymbol(arg.type === "String");
+    });
+
+    this.registerFunction("is_boolean", (arg: ISymbolType): BooleanSymbol => {
+      return new BooleanSymbol(arg.type === "Boolean");
+    });
+
+    this.registerFunction("is_list", (arg: ISymbolType): BooleanSymbol => {
+      return new BooleanSymbol(arg.type === "List");
+    });
+
+    this.registerFunction("is_number_with_unit", (arg: ISymbolType): BooleanSymbol => {
+      return new BooleanSymbol(arg.type === "NumberWithUnit");
+    });
+
+    this.registerFunction("is_dictionary", (arg: ISymbolType): BooleanSymbol => {
+      return new BooleanSymbol(arg.type === "Dictionary");
+    });
+
+    this.registerFunction("is_token", (arg: ISymbolType): BooleanSymbol => {
+      return new BooleanSymbol(arg.type === "Token");
+    });
+
+    this.registerFunction("is_color", (arg: ISymbolType): BooleanSymbol => {
+      return new BooleanSymbol(arg.type === "Color");
     });
   }
 

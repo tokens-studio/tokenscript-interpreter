@@ -5,6 +5,8 @@ import { ColorManager } from "./managers/color/manager";
 import type { ColorSpecification } from "./managers/color/schema";
 import { FunctionsManager } from "./managers/functions/manager";
 import type { FunctionSpecification } from "./managers/functions/schema";
+import { TokenManager } from "./managers/token/manager";
+import type { TokenSpecification } from "./managers/token/schema";
 import { UnitManager } from "./managers/unit/manager";
 
 export interface LanguageOptions {
@@ -16,6 +18,7 @@ export interface ConfigOptions {
   colorManager?: ColorManager;
   unitManager?: UnitManager;
   functionsManager?: FunctionsManager;
+  tokenManager?: TokenManager;
 }
 
 export const DEFAULT_LANGUAGE_OPTIONS: LanguageOptions = {
@@ -27,6 +30,7 @@ export class Config {
   public colorManager: ColorManager;
   public unitManager: UnitManager;
   public functionsManager: FunctionsManager;
+  public tokenManager: TokenManager;
 
   constructor(options?: ConfigOptions) {
     this.languageOptions = {
@@ -36,6 +40,7 @@ export class Config {
     this.colorManager = options?.colorManager || new ColorManager();
     this.unitManager = options?.unitManager || new UnitManager();
     this.functionsManager = options?.functionsManager || new FunctionsManager();
+    this.tokenManager = options?.tokenManager || new TokenManager();
 
     // Set parent config reference to avoid recursion issues
     // Only set if not already set to prevent overriding existing parent references
@@ -47,6 +52,9 @@ export class Config {
     }
     if (!this.functionsManager.getParentConfig()) {
       this.functionsManager.setParentConfig(this);
+    }
+    if (!this.tokenManager.getParentConfig()) {
+      this.tokenManager.setParentConfig(this);
     }
   }
 
@@ -94,23 +102,30 @@ export class Config {
       colorManager: this.colorManager.clone(),
       unitManager: this.unitManager.clone(),
       functionsManager: this.functionsManager.clone(),
+      tokenManager: this.tokenManager.clone(),
     });
   }
 
   registerSchemas(
     schemas: Array<{
       uri: string;
-      schema: ColorSpecification | FunctionSpecification;
+      schema: ColorSpecification | FunctionSpecification | TokenSpecification;
     }>,
   ): Config {
     for (const { uri, schema } of schemas) {
-      if (schema.type === "color") {
-        this.colorManager.register(uri, schema as ColorSpecification);
-      } else if (schema.type === "function") {
-        this.functionsManager.register(
-          (schema as FunctionSpecification).keyword,
-          schema as FunctionSpecification,
-        );
+      switch (schema.type) {
+        case "color":
+          this.colorManager.register(uri, schema as ColorSpecification);
+          break;
+        case "function":
+          this.functionsManager.register(
+            (schema as FunctionSpecification).keyword,
+            schema as FunctionSpecification,
+          );
+          break;
+        case "token":
+          this.tokenManager.register(uri, schema as TokenSpecification);
+          break;
       }
     }
     return this;

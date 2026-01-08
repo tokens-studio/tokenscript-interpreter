@@ -5,7 +5,6 @@ import {
   serializeInterpreterResult,
   stringifyInterpreterResult,
 } from "@interpreter/symbols";
-import type { LintRunner } from "../linter";
 import type { ObjectParser } from "../object-parsers";
 import { getTokenError } from "../resolver";
 import { type ProcessorOutput, TokenResolver } from "../resolver/TokenResolver";
@@ -32,7 +31,6 @@ export interface BuildTokensOptions<T> {
   builder?: TokenBuilder<T>;
   config?: Config;
   objectParsers?: ObjectParser[];
-  linter?: LintRunner;
 }
 
 /**
@@ -60,7 +58,7 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
   output: T;
   issues?: IssuesMap;
 } {
-  const { config, builder = new MapBuilder(), objectParsers, linter } = options ?? {};
+  const { config, builder = new MapBuilder(), objectParsers } = options ?? {};
 
   // Always create a MapBuilder for the tokens map output
   const tokensMapBuilder = builder.constructor === MapBuilder ? builder : new MapBuilder();
@@ -68,7 +66,7 @@ export function buildTokens<T = Map<string, InterpreterResult>>(
   // Use build() to properly initialize the resolver for CRUD operations.
   // build() stores the PrefixResolver in the TokenResolver instance, enabling
   // updateToken, createToken, and deleteToken to work on the returned resolver.
-  const result = new TokenResolver().build(tokens, config, objectParsers, linter);
+  const result = new TokenResolver().build(tokens, config, objectParsers);
 
   // Process all tokens - both successful and failed
   // Errors are now tracked in issues map

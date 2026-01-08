@@ -96,3 +96,4 @@ When you run `npm run release minor`, it calculates the new version (e.g., 0.13.
 ### Added
 - New feature
 ```
+

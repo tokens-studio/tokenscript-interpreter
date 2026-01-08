@@ -8,12 +8,19 @@ import {
 } from "@interpreter/errors";
 import type { InterpreterResult } from "@interpreter/interpreter";
 import { type ParseExpressionResult, parseExpression } from "@interpreter/parser";
-import { BooleanSymbol, NullSymbol, NumberSymbol, StringSymbol } from "@interpreter/symbols";
+import {
+  BooleanSymbol,
+  DictionarySymbol,
+  ListSymbol,
+  NullSymbol,
+  NumberSymbol,
+  StringSymbol,
+  TokenSymbol,
+} from "@interpreter/symbols";
 import { renameReferences } from "@interpreter/utils/references";
 import { isArray, isBoolean, isNull, isNumber, isObject, isString } from "@interpreter/utils/type";
 import { UNINTERPRETED_KEYWORDS } from "@src/types";
 import { createDependencyError } from "../errors";
-import type { LintRunner } from "../linter";
 import {
   createTokenSymbol,
   createTokenSymbolFromResolvedFields,
@@ -27,6 +34,8 @@ import { PrefixManager } from "./PrefixManager";
 import { ReadinessTracker } from "./ReadinessTracker";
 import { ResolutionNotifier } from "./ResolutionNotifier";
 import { TokenInterpreter } from "./TokenInterpreter";
+import { ValidationSeverity } from "../validator";
+import type { ValidationIssue } from "../validator";
 import type {
   CreateTokenParams,
   CreateTokenResult,
@@ -44,6 +53,68 @@ import type {
   UpdateTokenParams,
   UpdateTokenResult,
 } from "./types";
+
+/**
+ * Parse a field path string into an array of path segments.
+ * E.g., "[0].blur" -> [0, "blur"]
+ * E.g., "offsetX" -> ["offsetX"]
+ * E.g., "[0][1].color" -> [0, 1, "color"]
+ */
+function parseFieldPath(fieldPath: string): (string | number)[] {
+  const result: (string | number)[] = [];
+  let remaining = fieldPath;
+
+  while (remaining.length > 0) {
+    // Check for array index: [n]
+    const arrayMatch = remaining.match(/^\[(\d+)\]/);
+    if (arrayMatch) {
+      result.push(parseInt(arrayMatch[1], 10));
+      remaining = remaining.substring(arrayMatch[0].length);
+      continue;
+    }
+
+    // Check for property access: .name or name (at start)
+    const propMatch = remaining.match(/^\.?([^.\[\]]+)/);
+    if (propMatch) {
+      result.push(propMatch[1]);
+      remaining = remaining.substring(propMatch[0].length);
+      continue;
+    }
+
+    // Skip leading dot
+    if (remaining.startsWith(".")) {
+      remaining = remaining.substring(1);
+      continue;
+    }
+
+    // Unknown format, break to avoid infinite loop
+    break;
+  }
+
+  return result;
+}
+
+/**
+ * Convert a LanguageError to a ValidationIssue for uniform interface.
+ * This allows sub-field errors to be in the same format as validation issues.
+ */
+function errorToValidationIssue(
+  error: LanguageError,
+  parentToken: RefPath,
+  path: (string | number)[],
+): ValidationIssue {
+  return {
+    code: error.code,
+    severity: ValidationSeverity.ERROR,
+    message: path.length > 0
+      ? `Error at ${path.join(".")}: ${error.message}`
+      : error.message,
+    tokenName: parentToken,
+    path,
+    line: error.line,
+    data: error.data as Record<string, unknown>,
+  };
+}
 
 export type ProcessorResult = {
   graph: DependencyGraph<RefPath>;
@@ -72,7 +143,6 @@ export type ResolverParams = {
   callbacks?: ProcessorCallbacks;
   config?: Config;
   objectParsers?: ObjectParser[];
-  linter?: LintRunner;
   initialCache?: ResolvedValueMap;
 };
 
@@ -163,7 +233,6 @@ class PrefixResolver {
   private readonly callbacks?: ProcessorCallbacks;
   private readonly config?: Config;
   private readonly objectParsers?: ObjectParser[];
-  private readonly linter?: LintRunner;
   private readonly graph = new DependencyGraph<RefPath>();
   private readonly resolved: TokenResultMap = new Map();
   private readonly unresolved: UnresolvedTokenMap = new Map();
@@ -194,13 +263,12 @@ class PrefixResolver {
   private missingDependencies: Set<RefPath> = new Set();
 
   constructor(private readonly params: ResolverParams) {
-    const { tokens, callbacks, config, objectParsers, linter } = params;
+    const { tokens, callbacks, config, objectParsers } = params;
 
     this.tokens = tokens;
     this.callbacks = callbacks;
     this.config = config;
     this.objectParsers = objectParsers;
-    this.linter = linter;
 
     // Initialize components
     this.dependencyTracker = new DependencyTracker();
@@ -225,6 +293,21 @@ class PrefixResolver {
     this.issues.set(tokenName, [...existing, issue]);
   }
 
+  /**
+   * Add an issue for a sub-field, converting the error to a ValidationIssue.
+   * This ensures all issues have a uniform interface (same as validation issues).
+   */
+  private addSubFieldIssue(
+    parentToken: string,
+    fieldPath: string,
+    error: LanguageError,
+  ): void {
+    const path = parseFieldPath(fieldPath);
+    const issue = errorToValidationIssue(error, parentToken, path);
+    // Store under parent token name for uniform access
+    this.addIssue(parentToken, issue);
+  }
+
   private ensureLanguageError(error: Error): LanguageError {
     if (isLanguageError(error)) {
       return error;
@@ -243,7 +326,19 @@ class PrefixResolver {
     if (isActualToken) {
       this.resolved.set(refPath, error);
       this.callbacks?.onError?.(refPath, error, value);
-      this.addIssue(refPath, error);
+
+      // For sub-fields, add issue under parent token with path for uniform interface
+      if (this.subFieldPaths.has(refPath)) {
+        const { parentToken, fieldPath } = this.extractSubFieldMetadata(refPath);
+        if (parentToken) {
+          this.addSubFieldIssue(parentToken, fieldPath, error);
+        } else {
+          this.addIssue(refPath, error);
+        }
+      } else {
+        this.addIssue(refPath, error);
+      }
+
       this.earlyResolved.push(refPath);
       this.graph.addNode(refPath, []);
     }
@@ -252,8 +347,6 @@ class PrefixResolver {
   }
 
   private lintTokenResult(tokenName: RefPath, value: InterpreterResult): void {
-    if (!this.linter) return;
-
     // Skip linting sub-fields (internal tokens for structured token resolution)
     if (this.subFieldPaths.has(tokenName)) return;
 
@@ -263,27 +356,71 @@ class PrefixResolver {
         ? tokenData.$type
         : undefined;
 
-    const ast = this.tokenInterpreter.getTokenAST(tokenName);
+    // Run token type validation
+    this.validateTokenType(tokenName, tokenType, value);
+  }
 
-    try {
-      const lintIssues = this.linter.lintResult({
-        tokenName,
-        tokenType,
-        result: value,
-        allTokens: this.tokens as Map<string, TokenData>,
-        resolvedTokens: this.referenceCache,
-        config: this.config,
-        ast,
-      });
+  /**
+   * Validate token value against its registered type validation function.
+   * Handles both top-level and nested validation errors.
+   */
+  private validateTokenType(
+    tokenName: RefPath,
+    tokenType: string | undefined,
+    value: InterpreterResult,
+  ): void {
+    if (!tokenType || !this.config?.tokenManager) return;
 
-      if (lintIssues.length > 0) {
-        for (const issue of lintIssues) {
-          this.addIssue(tokenName, issue);
-        }
+    // Early return if no spec registered for this token type
+    if (!this.config.tokenManager.getSpecByType(tokenType)) return;
+
+    if (value === null || typeof value === "string") return;
+
+    // Get the value to validate
+    // For TokenSymbol with complex types (shadow), extract inner value (Array or Map)
+    // For simple types (color, borderRadius), use the value directly
+    let valueToValidate: ListSymbol | DictionarySymbol | typeof value;
+
+    if (value instanceof TokenSymbol) {
+      const innerValue = value.value;
+
+      if (Array.isArray(innerValue)) {
+        // List-type tokens (e.g., shadow) - wrap in ListSymbol
+        valueToValidate = new ListSymbol(innerValue, false, this.config);
+      } else if (innerValue instanceof Map) {
+        // Object-type tokens - wrap in DictionarySymbol
+        valueToValidate = new DictionarySymbol(innerValue, this.config);
+      } else {
+        // Simple value inside TokenSymbol - shouldn't happen often
+        valueToValidate = value;
       }
-    } catch (error) {
-      // If a validator throws, log the error but don't crash the resolution process
-      console.error(`Linting failed for token '${tokenName}':`, error);
+    } else if (typeof value === "object" && value !== null && "type" in value) {
+      // Direct symbol value (e.g., NumberWithUnitSymbol, ColorSymbol)
+      valueToValidate = value;
+    } else {
+      return;
+    }
+
+    // validate() returns an array of results - each failed result becomes an issue
+    const validationResults = this.config.tokenManager.validate(tokenType, valueToValidate as any);
+
+    for (const result of validationResults) {
+      if (!result.valid && result.error) {
+        const isNested = result.path && result.path.length > 0;
+        const issue: ValidationIssue = {
+          code: result.error,
+          severity: ValidationSeverity.WARNING,
+          message: isNested
+            ? `Validation failed at ${result.path?.join(".")}: ${result.error}`
+            : `Token validation failed: ${result.error}`,
+          tokenName,
+          path: result.path,
+          data: isNested
+            ? { tokenType: result.tokenType, parentTokenType: tokenType }
+            : { tokenType },
+        };
+        this.addIssue(tokenName, issue);
+      }
     }
   }
 
@@ -378,7 +515,7 @@ class PrefixResolver {
   }
 
   public clone(overrides: Partial<ResolverParams>): PrefixResolver {
-    const { tokens, callbacks, linter } = {
+    const { tokens, callbacks } = {
       ...this.params,
       ...overrides,
     };
@@ -388,7 +525,6 @@ class PrefixResolver {
       callbacks,
       config: this.config,
       objectParsers: this.objectParsers,
-      linter,
     });
 
     if (overrides.initialCache && overrides.tokens) {
@@ -577,6 +713,7 @@ class PrefixResolver {
   /**
    * Extract parent token and field path from a sub-field token name.
    * Example: "shadow.card.offsetY" -> { parentToken: "shadow.card", fieldPath: "offsetY" }
+   * Example: "shadow[0].blur" -> { parentToken: "shadow", fieldPath: "[0].blur" }
    */
   private extractSubFieldMetadata(subFieldPath: RefPath): {
     parentToken: string;
@@ -584,9 +721,17 @@ class PrefixResolver {
   } {
     // Find the parent token by checking which structured token this sub-field belongs to
     for (const [parentToken] of this.structuredTokens) {
-      if (subFieldPath.startsWith(`${parentToken}.`)) {
-        const fieldPath = subFieldPath.substring(parentToken.length + 1);
-        return { parentToken, fieldPath };
+      // Check for both dot notation (shadow.offsetX) and bracket notation (shadow[0].blur)
+      if (
+        subFieldPath.startsWith(`${parentToken}.`) ||
+        subFieldPath.startsWith(`${parentToken}[`)
+      ) {
+        const fieldPath = subFieldPath.substring(parentToken.length);
+        // Remove leading dot if present (for dot notation like "shadow.offsetX" -> "offsetX")
+        const normalizedFieldPath = fieldPath.startsWith(".")
+          ? fieldPath.substring(1)
+          : fieldPath;
+        return { parentToken, fieldPath: normalizedFieldPath };
       }
     }
 
@@ -639,7 +784,12 @@ class PrefixResolver {
             parentToken,
             fieldPath,
           });
-          this.addIssue(tokenName, dependencyError);
+          // Add issue under parent token with path for uniform interface
+          if (parentToken) {
+            this.addSubFieldIssue(parentToken, fieldPath, dependencyError);
+          } else {
+            this.addIssue(tokenName, dependencyError);
+          }
         } else {
           const tokenValue = this.tokenInterpreter.interpretTokenWithAST(tokenName, ast);
           this.resolved.set(tokenName, tokenValue);
@@ -652,7 +802,13 @@ class PrefixResolver {
               parentToken,
               fieldPath,
             });
-            this.addIssue(tokenName, this.ensureLanguageError(tokenValue));
+            // Add issue under parent token with path for uniform interface
+            const langError = this.ensureLanguageError(tokenValue);
+            if (parentToken) {
+              this.addSubFieldIssue(parentToken, fieldPath, langError);
+            } else {
+              this.addIssue(tokenName, langError);
+            }
           } else {
             // Don't call onResolve for sub-fields
             this.tokenInterpreter.updateReferenceCache(tokenName, tokenValue);
@@ -858,11 +1014,17 @@ class PrefixResolver {
               parentToken,
               fieldPath,
             });
+            // Add issue under parent token with path for uniform interface
+            if (parentToken) {
+              this.addSubFieldIssue(parentToken, fieldPath, dependencyError);
+            } else {
+              this.addIssue(tokenName, dependencyError);
+            }
           } else {
             this.callbacks?.onError?.(tokenName, dependencyError, tokenValueStr);
+            this.addIssue(tokenName, dependencyError);
           }
 
-          this.addIssue(tokenName, dependencyError);
           this.resolveVirtualChildren(tokenName, []);
           this.notifyResolution(tokenName);
           this.unresolved.delete(tokenName);
@@ -932,11 +1094,17 @@ class PrefixResolver {
             parentToken,
             fieldPath,
           });
+          // Add issue under parent token with path for uniform interface
+          if (parentToken) {
+            this.addSubFieldIssue(parentToken, fieldPath, error);
+          } else {
+            this.addIssue(tokenName, error);
+          }
         } else {
           this.callbacks?.onError?.(tokenName, error, tokenValueStr);
+          this.addIssue(tokenName, error);
         }
 
-        this.addIssue(tokenName, error);
         this.resolveVirtualChildren(tokenName, []);
         this.notifyResolution(tokenName);
         this.unresolved.delete(tokenName);
@@ -961,21 +1129,18 @@ export class TokenResolver {
   private tokens?: TokenDataMap;
   private config?: Config;
   private objectParsers?: ObjectParser[];
-  private linter?: LintRunner;
 
   public processTokens(
     tokens: TokenInputMap,
     callbacks?: ProcessorCallbacks,
     config?: Config,
     objectParsers?: ObjectParser[],
-    linter?: LintRunner,
   ): ProcessorResult {
     const resolver = new PrefixResolver({
       tokens,
       callbacks,
       config,
       objectParsers,
-      linter,
     });
     return resolver.resolve();
   }
@@ -1068,7 +1233,6 @@ export class TokenResolver {
     tokens: TokenDataMap,
     config?: Config,
     objectParsers?: ObjectParser[],
-    linter?: LintRunner,
   ): ProcessorOutput {
     const output: ResolvedValueMap = new Map();
 
@@ -1090,12 +1254,10 @@ export class TokenResolver {
       callbacks,
       config,
       objectParsers,
-      linter,
     });
     this.tokens = tokens;
     this.config = config;
     this.objectParsers = objectParsers;
-    this.linter = linter;
 
     const result = this.prefixResolver.resolve();
 
@@ -1152,7 +1314,6 @@ export class TokenResolver {
     const newResolver = this.prefixResolver.clone({
       tokens: updatedTokens,
       callbacks,
-      linter: this.linter,
     });
     const result = newResolver.resolve();
     this.prefixResolver = newResolver;
