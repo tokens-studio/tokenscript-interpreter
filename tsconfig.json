@@ -12,7 +12,7 @@
     "types": [
       "node"
     ],
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "allowImportingTsExtensions": false,
     "isolatedModules": true,
     "moduleDetection": "force",
@@ -21,6 +21,7 @@
     "jsx": "react-jsx",
     "outDir": "./dist",
     "rootDir": "./",
+    "baseUrl": ".",
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,

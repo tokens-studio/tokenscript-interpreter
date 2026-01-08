@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **TypeScript module resolution**: Updated to `bundler` mode for improved compatibility with modern build tools. Added explicit `baseUrl` for cleaner import resolution.
+
 ## [0.18.0] - 2025-12-30
 
 ### Fixed
