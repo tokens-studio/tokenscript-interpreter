@@ -40,8 +40,10 @@ h1 {
   color: #aaa;
 }
 
-.input-field {
+/* Rich Editor Field */
+.editor-field {
   width: 100%;
+  min-height: 2.5rem;
   padding: 0.75rem 1rem;
   font-size: 1.1rem;
   font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
@@ -51,15 +53,110 @@ h1 {
   color: #fff;
   outline: none;
   transition: border-color 0.2s;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
-.input-field:focus {
+.editor-field:focus {
   border-color: #e94560;
 }
 
-.input-field::placeholder {
+/* Placeholder for empty editor */
+.editor-field.ts-editor-empty::before {
+  content: attr(data-placeholder);
   color: #555;
+  pointer-events: none;
 }
+
+/* ===== Tokenscript Editor Token Styles ===== */
+
+.ts-token-reference {
+  color: #4fc3f7;
+  background: rgba(79, 195, 247, 0.15);
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+}
+
+.ts-token-reference.ts-token-partial {
+  color: #ffb74d;
+  background: rgba(255, 183, 77, 0.15);
+  border-bottom: 2px dashed #ffb74d;
+}
+
+.ts-token-string {
+  color: #a5d6a7;
+}
+
+.ts-token-string.ts-token-partial {
+  border-bottom: 2px dashed #a5d6a7;
+}
+
+.ts-token-number {
+  color: #ce93d8;
+}
+
+.ts-token-color {
+  color: #f48fb1;
+  background: rgba(244, 143, 177, 0.15);
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+}
+
+.ts-token-keyword {
+  color: #f48fb1;
+}
+
+.ts-token-function {
+  color: #f48fb1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+}
+
+.ts-token-operator {
+  color: #e94560;
+}
+
+.ts-token-paren {
+  color: #aaa;
+}
+
+.ts-token-comma {
+  color: #aaa;
+}
+
+.ts-token-text {
+  color: #eee;
+}
+
+/* Color Swatch */
+.ts-color-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  vertical-align: middle;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  flex-shrink: 0;
+}
+
+.ts-color-swatch:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+}
+
+.ts-color-swatch-partial {
+  border-style: dashed;
+  border-color: #ffb74d;
+}
+
+/* ===== Output Section ===== */
 
 .output-section {
   background: #16213e;
@@ -72,86 +169,6 @@ h1 {
   font-size: 1rem;
   color: #888;
   margin-bottom: 1rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.highlighted-output {
-  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
-  font-size: 1.1rem;
-  line-height: 1.6;
-  min-height: 2rem;
-  word-break: break-word;
-}
-
-.highlighted-output:empty::before {
-  content: 'Start typing above...';
-  color: #555;
-}
-
-/* Token highlighting styles */
-.token-reference {
-  color: #4fc3f7;
-  background: rgba(79, 195, 247, 0.15);
-  padding: 0.1em 0.3em;
-  border-radius: 3px;
-}
-
-.token-reference-partial {
-  color: #ffb74d;
-  background: rgba(255, 183, 77, 0.15);
-  padding: 0.1em 0.3em;
-  border-radius: 3px;
-  border-bottom: 2px dashed #ffb74d;
-}
-
-.token-string {
-  color: #a5d6a7;
-}
-
-.token-string-partial {
-  color: #a5d6a7;
-  border-bottom: 2px dashed #a5d6a7;
-}
-
-.token-number {
-  color: #ce93d8;
-}
-
-.token-color {
-  color: #f48fb1;
-  background: rgba(244, 143, 177, 0.15);
-  padding: 0.1em 0.3em;
-  border-radius: 3px;
-}
-
-.token-function {
-  color: #f48fb1;
-}
-
-.token-function-partial {
-  color: #f48fb1;
-  border-bottom: 2px dashed #f48fb1;
-}
-
-.token-operator {
-  color: #e94560;
-}
-
-.token-text {
-  color: #eee;
-}
-
-.parse-info {
-  margin-top: 1.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid #0f3460;
-}
-
-.parse-info h3 {
-  font-size: 0.85rem;
-  color: #888;
-  margin-bottom: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -213,56 +230,23 @@ h1 {
   margin-left: 0.1em;
 }
 
-.colors-list {
+.raw-value {
   margin-top: 1rem;
 }
 
-.colors-display {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
-}
-
-.color-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: #1a1a2e;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  border: 1px solid #0f3460;
-}
-
-.color-item.partial {
-  border-style: dashed;
-  border-color: #ffb74d;
-}
-
-.color-swatch {
-  width: 32px;
-  height: 32px;
-  border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  flex-shrink: 0;
-}
-
-.color-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-}
-
-.color-value {
+.raw-value-display {
+  display: block;
   font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
-  font-size: 0.85rem;
-  color: #ce93d8;
+  font-size: 0.9rem;
+  color: #888;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: #1a1a2e;
+  border-radius: 4px;
+  word-break: break-all;
 }
 
-.color-partial-marker {
-  font-size: 0.7rem;
-  color: #ffb74d;
-}
+/* ===== Examples Section ===== */
 
 .examples-section {
   margin-top: 2rem;
