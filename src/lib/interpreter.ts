@@ -92,3 +92,27 @@ export {
   type EvalSuccess,
   evaluateExpression,
 } from "./eval";
+
+// Tolerant Parsing ------------------------------------------------------------
+
+export {
+  // Main API
+  parseTolerantly,
+  tokenizeTolerantly,
+  collectAllReferences,
+  hasPartialNodes,
+  type ReferenceInfo,
+  // Types
+  ParseState,
+  IncompleteType,
+  type IncompleteInfo,
+  type TolerantParseOptions,
+  type TolerantParseResult,
+  // Partial Nodes
+  PartialReferenceNode,
+  PartialStringNode,
+  PartialFunctionCallNode,
+  PartialBinOpNode,
+  PartialUnaryOpNode,
+  PartialParenNode,
+} from "@interpreter/tolerant";

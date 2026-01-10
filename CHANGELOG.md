@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Tolerant parser for incomplete input**: New parsing mode that handles incomplete tokenscript values while users type, enabling real-time editor features.
+  - `parseTolerantly(text)`: Parse incomplete input and return partial AST nodes with metadata
+  - `tokenizeTolerantly(text)`: Tokenize incomplete input including partial tokens
+  - `collectAllReferences(ast)`: Extract all references (complete and partial) from an AST
+  - `hasPartialNodes(ast)`: Check if an AST contains any incomplete nodes
+  - New partial node types: `PartialReferenceNode`, `PartialStringNode`, `PartialFunctionCallNode`, `PartialBinOpNode`, `PartialUnaryOpNode`, `PartialParenNode`
+  - New token types: `PARTIAL_REFERENCE`, `PARTIAL_STRING`
+  - Use cases: syntax highlighting for incomplete references, autocomplete suggestions, live color preview
+
+- **Vue tolerant parser example**: Interactive demo at `examples/tolerant-parser-vue/` showcasing:
+  - Real-time parsing of incomplete expressions
+  - Syntax highlighting with color-coded tokens
+  - Reference extraction with partial/complete status
+  - Live color preview for hex colors and color functions (rgb, hsl, oklch)
+
 - **Agent guidelines documentation**: Added AGENTS.md with project overview, structure, development commands, and common tasks for AI coding assistants.
 
 ### Changed

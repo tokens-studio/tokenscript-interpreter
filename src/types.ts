@@ -66,6 +66,9 @@ export enum TokenType {
   LOGIC_OR = "LOGIC_OR",
   LBLOCK = "LBLOCK",
   RBLOCK = "RBLOCK",
+  // Partial tokens for tolerant parsing
+  PARTIAL_REFERENCE = "PARTIAL_REFERENCE",
+  PARTIAL_STRING = "PARTIAL_STRING",
 }
 
 export interface Token {
