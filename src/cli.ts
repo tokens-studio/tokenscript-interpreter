@@ -8,6 +8,7 @@ import {
 } from "./cli-handlers";
 import { stringifyAsJson } from "./processor/builders/base";
 import { startRepl } from "./repl";
+import type { ReferenceRecord } from "./types";
 
 const program = new Command();
 
@@ -21,10 +22,40 @@ program
   .description("Start interactive REPL mode for TokenScript")
   .option("--schema <uris...>", "Schema URIs to fetch and register")
   .option("--mode <mode>", "Execution mode: inline or script")
+  .option(
+    "--reference <refs...>",
+    "Reference values in key:value format (can be specified multiple times)",
+  )
   .action(async (options) => {
+    // Parse references from key:value format
+    const references: ReferenceRecord = {};
+    if (options.reference) {
+      for (const ref of options.reference) {
+        const colonIndex = ref.indexOf(":");
+        if (colonIndex === -1) {
+          console.error(`Invalid reference format: "${ref}". Expected key:value`);
+          process.exit(1);
+        }
+        const key = ref.slice(0, colonIndex);
+        const value = ref.slice(colonIndex + 1);
+        // Try to parse as JSON, otherwise use as string
+        try {
+          const parsed = JSON.parse(value);
+          // Accept strings, numbers, and arrays of these
+          if (typeof parsed === "string" || typeof parsed === "number" || Array.isArray(parsed)) {
+            references[key] = parsed;
+          } else {
+            references[key] = value;
+          }
+        } catch {
+          references[key] = value;
+        }
+      }
+    }
     await startRepl({
       mode: options.mode === "script" ? "script" : "inline",
       schemas: options.schema,
+      references,
     });
   });
 
