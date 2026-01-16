@@ -268,3 +268,49 @@ export async function handleEvalCommand(
     };
   }
 }
+
+// ============================================================================
+// Reference Parsing
+// ============================================================================
+
+export type ParseReferencesResult =
+  | { success: true; references: ReferenceRecord }
+  | { success: false; error: string };
+
+/**
+ * Parse reference strings in key:value format into a ReferenceRecord.
+ * Values are parsed as JSON when possible (numbers, arrays), otherwise treated as strings.
+ */
+export function parseReferences(refs: string[] | undefined): ParseReferencesResult {
+  const references: ReferenceRecord = {};
+
+  if (!refs) {
+    return { success: true, references };
+  }
+
+  for (const ref of refs) {
+    const colonIndex = ref.indexOf(":");
+    if (colonIndex === -1) {
+      return {
+        success: false,
+        error: `Invalid reference format: "${ref}". Expected key:value`,
+      };
+    }
+    const key = ref.slice(0, colonIndex);
+    const value = ref.slice(colonIndex + 1);
+    // Try to parse as JSON, otherwise use as string
+    try {
+      const parsed = JSON.parse(value);
+      // Accept strings, numbers, and arrays of these
+      if (typeof parsed === "string" || typeof parsed === "number" || Array.isArray(parsed)) {
+        references[key] = parsed;
+      } else {
+        references[key] = value;
+      }
+    } catch {
+      references[key] = value;
+    }
+  }
+
+  return { success: true, references };
+}
