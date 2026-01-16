@@ -1,9 +1,18 @@
 # CLI Reference
 
-## Installation
+## Usage
 
 ```bash
+# Via npx (no install required)
+npx @tokens-studio/tokenscript-interpreter <command>
+
+# Or install globally
 npm install -g @tokens-studio/tokenscript-interpreter
+tokenscript <command>
+
+# Or install locally and use via npx
+npm install @tokens-studio/tokenscript-interpreter
+npx tokenscript <command>
 ```
 
 ## Commands

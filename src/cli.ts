@@ -1,3 +1,5 @@
+import { realpathSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { Command } from "commander";
 import packageJson from "../package.json" with { type: "json" };
 import {
@@ -124,6 +126,17 @@ program
 export { program };
 
 // Auto-run only if not in test environment
-if (process.env.NODE_ENV !== "test" && import.meta.url === `file://${process.argv[1]}`) {
+// Use realpathSync to handle symlinks (global npm installs)
+function isMainModule(): boolean {
+  try {
+    const scriptPath = realpathSync(process.argv[1]);
+    const modulePath = realpathSync(fileURLToPath(import.meta.url));
+    return scriptPath === modulePath;
+  } catch {
+    return false;
+  }
+}
+
+if (process.env.NODE_ENV !== "test" && isMainModule()) {
   program.parse();
 }
