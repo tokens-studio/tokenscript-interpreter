@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Standard rounding for `round()` and `round_to()` functions**: Changed from banker's rounding (round half to even) to standard rounding (round half up). `round(2.5)` now returns `3` instead of `2`, matching user expectations.
+
 ## [0.18.1] - 2026-01-16
 
 ### Added

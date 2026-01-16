@@ -226,17 +226,7 @@ export class FunctionsManager extends BaseManager<
         throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
           data: { functionName: "round", expectedType: "number", argumentPosition: "first" },
         });
-      const value = arg.value as number;
-
-      // Implement banker's rounding (round to nearest even) for .5 cases
-      const intPart = Math.floor(value);
-      const fraction = value - intPart;
-
-      if (fraction === 0.5) {
-        return new NumberSymbol(intPart % 2 === 0 ? intPart : intPart + 1);
-      }
-
-      return new NumberSymbol(Math.round(value));
+      return new NumberSymbol(Math.round(arg.value as number));
     });
 
     this.registerFunction("abs", (arg: ISymbolType): NumberSymbol => {
@@ -417,29 +407,11 @@ export class FunctionsManager extends BaseManager<
         const numValue = value.value as number;
 
         if (precisionValue === 0) {
-          const intPart = Math.floor(numValue);
-          const fraction = numValue - intPart;
-
-          if (fraction === 0.5) {
-            return new NumberSymbol(intPart % 2 === 0 ? intPart : intPart + 1);
-          }
-
           return new NumberSymbol(Math.round(numValue));
         }
 
         const factor = 10 ** precisionValue;
-        const scaledValue = numValue * factor;
-        const intPart = Math.floor(scaledValue);
-        const fraction = scaledValue - intPart;
-
-        let roundedScaled: number;
-        if (fraction === 0.5) {
-          roundedScaled = intPart % 2 === 0 ? intPart : intPart + 1;
-        } else {
-          roundedScaled = Math.round(scaledValue);
-        }
-
-        return new NumberSymbol(roundedScaled / factor);
+        return new NumberSymbol(Math.round(numValue * factor) / factor);
       },
     );
 
