@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.19.0] - 2026-01-16
+### Added
+
+- **NumberWithUnit support for math functions**: `round()`, `floor()`, `ceil()`, `abs()`, and `round_to()` now accept values with units and preserve them in the result. Example: `round(1.5px)` returns `2px`.
 
 ## [0.19.0] - 2026-01-16
 

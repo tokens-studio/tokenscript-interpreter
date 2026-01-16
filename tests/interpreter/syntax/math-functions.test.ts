@@ -545,3 +545,104 @@ describe("Math Functions - Enhanced round_to with Standard Rounding", () => {
     expect(interpreter.symbolTable.get("round_15_5")?.value).toBe(16); // 15.5 -> 16
   });
 });
+
+describe("Math Functions - NumberWithUnit Support", () => {
+  it("should handle round with NumberWithUnit", () => {
+    const text = `
+    variable rounded_px: NumberWithUnit = round(1.5px);
+    variable rounded_rem: NumberWithUnit = round(2.7rem);
+    variable rounded_em: NumberWithUnit = round(3.2em);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    const roundedPx = interpreter.symbolTable.get("rounded_px");
+    const roundedRem = interpreter.symbolTable.get("rounded_rem");
+    const roundedEm = interpreter.symbolTable.get("rounded_em");
+
+    expect(roundedPx?.value).toBe(2);
+    expect(roundedPx?.toString()).toBe("2px");
+    expect(roundedRem?.value).toBe(3);
+    expect(roundedRem?.toString()).toBe("3rem");
+    expect(roundedEm?.value).toBe(3);
+    expect(roundedEm?.toString()).toBe("3em");
+  });
+
+  it("should handle floor with NumberWithUnit", () => {
+    const text = `
+    variable floored_px: NumberWithUnit = floor(1.9px);
+    variable floored_rem: NumberWithUnit = floor(2.1rem);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    const flooredPx = interpreter.symbolTable.get("floored_px");
+    const flooredRem = interpreter.symbolTable.get("floored_rem");
+
+    expect(flooredPx?.value).toBe(1);
+    expect(flooredPx?.toString()).toBe("1px");
+    expect(flooredRem?.value).toBe(2);
+    expect(flooredRem?.toString()).toBe("2rem");
+  });
+
+  it("should handle ceil with NumberWithUnit", () => {
+    const text = `
+    variable ceiled_px: NumberWithUnit = ceil(1.1px);
+    variable ceiled_rem: NumberWithUnit = ceil(2.9rem);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    const ceiledPx = interpreter.symbolTable.get("ceiled_px");
+    const ceiledRem = interpreter.symbolTable.get("ceiled_rem");
+
+    expect(ceiledPx?.value).toBe(2);
+    expect(ceiledPx?.toString()).toBe("2px");
+    expect(ceiledRem?.value).toBe(3);
+    expect(ceiledRem?.toString()).toBe("3rem");
+  });
+
+  it("should handle abs with NumberWithUnit", () => {
+    const text = `
+    variable abs_px: NumberWithUnit = abs(-5px);
+    variable abs_rem: NumberWithUnit = abs(-2.5rem);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    const absPx = interpreter.symbolTable.get("abs_px");
+    const absRem = interpreter.symbolTable.get("abs_rem");
+
+    expect(absPx?.value).toBe(5);
+    expect(absPx?.toString()).toBe("5px");
+    expect(absRem?.value).toBe(2.5);
+    expect(absRem?.toString()).toBe("2.5rem");
+  });
+
+  it("should handle round_to with NumberWithUnit", () => {
+    const text = `
+    variable rounded_px: NumberWithUnit = round_to(1.567px, 2);
+    variable rounded_rem: NumberWithUnit = round_to(2.5rem, 0);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    const roundedPx = interpreter.symbolTable.get("rounded_px");
+    const roundedRem = interpreter.symbolTable.get("rounded_rem");
+
+    expect(roundedPx?.value).toBe(1.57);
+    expect(roundedPx?.toString()).toBe("1.57px");
+    expect(roundedRem?.value).toBe(3);
+    expect(roundedRem?.toString()).toBe("3rem");
+  });
+});
