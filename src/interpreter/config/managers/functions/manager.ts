@@ -221,10 +221,7 @@ export class FunctionsManager extends BaseManager<
       return new NumberSymbol(sum / args.length);
     });
 
-    this.registerFunction("round", (arg: ISymbolType): NumberSymbol | NumberWithUnitSymbol => {
-      if (arg instanceof NumberWithUnitSymbol) {
-        return new NumberWithUnitSymbol(Math.round(arg.value as number), arg.unit);
-      }
+    this.registerFunction("round", (arg: ISymbolType): NumberSymbol => {
       if (!(arg instanceof NumberSymbol))
         throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
           data: { functionName: "round", expectedType: "number", argumentPosition: "first" },
@@ -232,10 +229,7 @@ export class FunctionsManager extends BaseManager<
       return new NumberSymbol(Math.round(arg.value as number));
     });
 
-    this.registerFunction("abs", (arg: ISymbolType): NumberSymbol | NumberWithUnitSymbol => {
-      if (arg instanceof NumberWithUnitSymbol) {
-        return new NumberWithUnitSymbol(Math.abs(arg.value as number), arg.unit);
-      }
+    this.registerFunction("abs", (arg: ISymbolType): NumberSymbol => {
       if (!(arg instanceof NumberSymbol))
         throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
           data: { functionName: "abs", expectedType: "number", argumentPosition: "first" },
@@ -373,10 +367,7 @@ export class FunctionsManager extends BaseManager<
       return new NumberSymbol(Math.log(value) / Math.log(baseValue));
     });
 
-    this.registerFunction("floor", (arg: ISymbolType): NumberSymbol | NumberWithUnitSymbol => {
-      if (arg instanceof NumberWithUnitSymbol) {
-        return new NumberWithUnitSymbol(Math.floor(arg.value as number), arg.unit);
-      }
+    this.registerFunction("floor", (arg: ISymbolType): NumberSymbol => {
       if (!(arg instanceof NumberSymbol))
         throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
           data: { functionName: "floor", expectedType: "number", argumentPosition: "first" },
@@ -384,10 +375,7 @@ export class FunctionsManager extends BaseManager<
       return new NumberSymbol(Math.floor(arg.value as number));
     });
 
-    this.registerFunction("ceil", (arg: ISymbolType): NumberSymbol | NumberWithUnitSymbol => {
-      if (arg instanceof NumberWithUnitSymbol) {
-        return new NumberWithUnitSymbol(Math.ceil(arg.value as number), arg.unit);
-      }
+    this.registerFunction("ceil", (arg: ISymbolType): NumberSymbol => {
       if (!(arg instanceof NumberSymbol))
         throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
           data: { functionName: "ceil", expectedType: "number", argumentPosition: "first" },
@@ -397,9 +385,8 @@ export class FunctionsManager extends BaseManager<
 
     this.registerFunction(
       "round_to",
-      (value: ISymbolType, precision?: ISymbolType): NumberSymbol | NumberWithUnitSymbol => {
-        const isNumberWithUnit = value instanceof NumberWithUnitSymbol;
-        if (!isNumberWithUnit && !(value instanceof NumberSymbol))
+      (value: ISymbolType, precision?: ISymbolType): NumberSymbol => {
+        if (!(value instanceof NumberSymbol))
           throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
             data: { functionName: "round_to", expectedType: "number", argumentPosition: "first" },
           });
@@ -418,19 +405,13 @@ export class FunctionsManager extends BaseManager<
         }
 
         const numValue = value.value as number;
-        let result: number;
 
         if (precisionValue === 0) {
-          result = Math.round(numValue);
-        } else {
-          const factor = 10 ** precisionValue;
-          result = Math.round(numValue * factor) / factor;
+          return new NumberSymbol(Math.round(numValue));
         }
 
-        if (isNumberWithUnit) {
-          return new NumberWithUnitSymbol(result, (value as NumberWithUnitSymbol).unit);
-        }
-        return new NumberSymbol(result);
+        const factor = 10 ** precisionValue;
+        return new NumberSymbol(Math.round(numValue * factor) / factor);
       },
     );
 
