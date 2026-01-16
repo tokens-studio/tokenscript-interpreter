@@ -148,7 +148,7 @@ describe("Math Functions - Rounding", () => {
     expect(ceilResult?.value).toBe(4);
   });
 
-  it("should implement banker's rounding (round half to even)", () => {
+  it("should implement standard rounding (round half up)", () => {
     const text = `
     variable round_2_5: Number = round(2.5);
     variable round_3_5: Number = round(3.5);
@@ -162,13 +162,13 @@ describe("Math Functions - Rounding", () => {
     const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
-    // Banker's rounding: .5 rounds to nearest even number
-    expect(interpreter.symbolTable.get("round_2_5")?.value).toBe(2); // 2.5 -> 2 (even)
-    expect(interpreter.symbolTable.get("round_3_5")?.value).toBe(4); // 3.5 -> 4 (even)
-    expect(interpreter.symbolTable.get("round_4_5")?.value).toBe(4); // 4.5 -> 4 (even)
-    expect(interpreter.symbolTable.get("round_5_5")?.value).toBe(6); // 5.5 -> 6 (even)
-    expect(interpreter.symbolTable.get("round_neg_2_5")?.value).toBe(-2); // -2.5 -> -2 (even)
-    expect(interpreter.symbolTable.get("round_neg_3_5")?.value).toBe(-4); // -3.5 -> -4 (even)
+    // Standard rounding: .5 rounds away from zero
+    expect(interpreter.symbolTable.get("round_2_5")?.value).toBe(3); // 2.5 -> 3
+    expect(interpreter.symbolTable.get("round_3_5")?.value).toBe(4); // 3.5 -> 4
+    expect(interpreter.symbolTable.get("round_4_5")?.value).toBe(5); // 4.5 -> 5
+    expect(interpreter.symbolTable.get("round_5_5")?.value).toBe(6); // 5.5 -> 6
+    expect(interpreter.symbolTable.get("round_neg_2_5")?.value).toBe(-2); // -2.5 -> -2 (JS rounds toward +infinity)
+    expect(interpreter.symbolTable.get("round_neg_3_5")?.value).toBe(-3); // -3.5 -> -3 (JS rounds toward +infinity)
   });
 });
 
@@ -275,7 +275,7 @@ describe("Math Functions - round_to", () => {
 
     expect(result1?.value).toBe(-4);
     expect(result2?.value).toBe(-2);
-    expect(result3?.value).toBe(-2); // -1.5 rounds to -2 (banker's rounding to nearest even)
+    expect(result3?.value).toBe(-1); // -1.5 rounds to -1 (JS Math.round rounds toward +infinity)
   });
 
   it("should handle round_to function with precision and negative numbers", () => {
@@ -506,8 +506,8 @@ describe("Math Functions - Logarithmic", () => {
   });
 });
 
-describe("Math Functions - Enhanced round_to with Banker's Rounding", () => {
-  it("should use banker's rounding for precision cases", () => {
+describe("Math Functions - Enhanced round_to with Standard Rounding", () => {
+  it("should use standard rounding for precision cases", () => {
     const text = `
     variable round_2_25: Number = round_to(2.25, 1);
     variable round_2_35: Number = round_to(2.35, 1);
@@ -519,14 +519,14 @@ describe("Math Functions - Enhanced round_to with Banker's Rounding", () => {
     const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
-    // Banker's rounding: .5 rounds to nearest even number
-    expect(interpreter.symbolTable.get("round_2_25")?.value).toBe(2.2); // 2.25 -> 2.2 (even)
-    expect(interpreter.symbolTable.get("round_2_35")?.value).toBe(2.4); // 2.35 -> 2.4 (even)
-    expect(interpreter.symbolTable.get("round_2_45")?.value).toBe(2.4); // 2.45 -> 2.4 (even)
-    expect(interpreter.symbolTable.get("round_2_55")?.value).toBe(2.6); // 2.55 -> 2.6 (even)
+    // Standard rounding: .5 rounds up (away from zero for positive numbers)
+    expect(interpreter.symbolTable.get("round_2_25")?.value).toBe(2.3); // 2.25 -> 2.3
+    expect(interpreter.symbolTable.get("round_2_35")?.value).toBe(2.4); // 2.35 -> 2.4
+    expect(interpreter.symbolTable.get("round_2_45")?.value).toBe(2.5); // 2.45 -> 2.5
+    expect(interpreter.symbolTable.get("round_2_55")?.value).toBe(2.6); // 2.55 -> 2.6
   });
 
-  it("should use banker's rounding for integer precision", () => {
+  it("should use standard rounding for integer precision", () => {
     const text = `
     variable round_12_5: Number = round_to(12.5, 0);
     variable round_13_5: Number = round_to(13.5, 0);
@@ -538,10 +538,10 @@ describe("Math Functions - Enhanced round_to with Banker's Rounding", () => {
     const interpreter = new Interpreter(parser);
     interpreter.interpret();
 
-    // Banker's rounding: .5 rounds to nearest even number
-    expect(interpreter.symbolTable.get("round_12_5")?.value).toBe(12); // 12.5 -> 12 (even)
-    expect(interpreter.symbolTable.get("round_13_5")?.value).toBe(14); // 13.5 -> 14 (even)
-    expect(interpreter.symbolTable.get("round_14_5")?.value).toBe(14); // 14.5 -> 14 (even)
-    expect(interpreter.symbolTable.get("round_15_5")?.value).toBe(16); // 15.5 -> 16 (even)
+    // Standard rounding: .5 rounds up
+    expect(interpreter.symbolTable.get("round_12_5")?.value).toBe(13); // 12.5 -> 13
+    expect(interpreter.symbolTable.get("round_13_5")?.value).toBe(14); // 13.5 -> 14
+    expect(interpreter.symbolTable.get("round_14_5")?.value).toBe(15); // 14.5 -> 15
+    expect(interpreter.symbolTable.get("round_15_5")?.value).toBe(16); // 15.5 -> 16
   });
 });
