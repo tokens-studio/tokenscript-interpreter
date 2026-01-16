@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.1] - 2026-01-16
+
 ### Added
 
 - **Agent guidelines documentation**: Added AGENTS.md with project overview, structure, development commands, and common tasks for AI coding assistants.
