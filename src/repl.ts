@@ -13,16 +13,17 @@ export type ReplMode = "inline" | "script";
 export interface ReplOptions {
   mode?: ReplMode;
   schemas?: string[];
+  references?: ReferenceRecord;
 }
 
 /**
  * Start interactive REPL mode for TokenScript
  */
 export async function startRepl(options: ReplOptions = {}): Promise<void> {
-  const { mode = "inline", schemas } = options;
+  const { mode = "inline", schemas, references: initialReferences } = options;
 
   const config = await fetchAndRegisterSchemas(schemas ?? []);
-  const references: ReferenceRecord = {};
+  const references: ReferenceRecord = { ...initialReferences };
   let scriptLines: string[] = [];
 
   console.log(

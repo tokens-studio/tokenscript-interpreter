@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Agent guidelines documentation**: Added AGENTS.md with project overview, structure, development commands, and common tasks for AI coding assistants.
+- **REPL reference injection**: Pass initial variable references to the REPL via `--reference="key:value"` flag. Supports strings, numbers, and JSON arrays. Multiple references can be passed.
 
 ### Changed
 

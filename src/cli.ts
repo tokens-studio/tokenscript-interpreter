@@ -1,9 +1,12 @@
+import { realpathSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { Command } from "commander";
 import packageJson from "../package.json" with { type: "json" };
 import {
   handleEvalCommand,
   handleInspectCommand,
   handleProcessCommand,
+  parseReferences,
   printCliResult,
 } from "./cli-handlers";
 import { stringifyAsJson } from "./processor/builders/base";
@@ -21,10 +24,20 @@ program
   .description("Start interactive REPL mode for TokenScript")
   .option("--schema <uris...>", "Schema URIs to fetch and register")
   .option("--mode <mode>", "Execution mode: inline or script")
+  .option(
+    "--reference <refs...>",
+    "Reference values in key:value format (can be specified multiple times)",
+  )
   .action(async (options) => {
+    const result = parseReferences(options.reference);
+    if (!result.success) {
+      console.error(result.error);
+      process.exit(1);
+    }
     await startRepl({
       mode: options.mode === "script" ? "script" : "inline",
       schemas: options.schema,
+      references: result.references,
     });
   });
 
@@ -113,6 +126,17 @@ program
 export { program };
 
 // Auto-run only if not in test environment
-if (process.env.NODE_ENV !== "test" && import.meta.url === `file://${process.argv[1]}`) {
+// Use realpathSync to handle symlinks (global npm installs)
+function isMainModule(): boolean {
+  try {
+    const scriptPath = realpathSync(process.argv[1]);
+    const modulePath = realpathSync(fileURLToPath(import.meta.url));
+    return scriptPath === modulePath;
+  } catch {
+    return false;
+  }
+}
+
+if (process.env.NODE_ENV !== "test" && isMainModule()) {
   program.parse();
 }
