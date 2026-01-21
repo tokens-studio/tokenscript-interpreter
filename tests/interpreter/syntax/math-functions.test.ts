@@ -729,7 +729,6 @@ describe("Math Functions - Inverse Hyperbolic", () => {
     const parser1 = new Parser(lexer1);
     const interpreter1 = new Interpreter(parser1);
 
-<<<<<<< Updated upstream
     expect(() => interpreter1.interpret()).toThrow(InterpreterError);
 
     try {
@@ -740,20 +739,6 @@ describe("Math Functions - Inverse Hyperbolic", () => {
       expect((error as InterpreterError).data.functionName).toBe("atanh");
     }
 
-=======
-    let caughtError1: unknown;
-    try {
-      interpreter1.interpret();
-    } catch (error) {
-      caughtError1 = error;
-    }
-
-    expect(caughtError1).toBeInstanceOf(InterpreterError);
-    expect((caughtError1 as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
-    expect((caughtError1 as InterpreterError).data.functionName).toBe("atanh");
-
-    // Test atanh(-1) - out of range
->>>>>>> Stashed changes
     const text2 = `variable invalid: Number = atanh(-1);`;
     const lexer2 = new Lexer(text2);
     const parser2 = new Parser(lexer2);
@@ -831,7 +816,6 @@ describe("Math Functions - Logarithmic Extended", () => {
     const parser1 = new Parser(lexer1);
     const interpreter1 = new Interpreter(parser1);
 
-<<<<<<< Updated upstream
     expect(() => interpreter1.interpret()).toThrow(InterpreterError);
 
     try {
@@ -842,20 +826,6 @@ describe("Math Functions - Logarithmic Extended", () => {
       expect((error as InterpreterError).data.functionName).toBe("ln");
     }
 
-=======
-    let caughtError1: unknown;
-    try {
-      interpreter1.interpret();
-    } catch (error) {
-      caughtError1 = error;
-    }
-
-    expect(caughtError1).toBeInstanceOf(InterpreterError);
-    expect((caughtError1 as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
-    expect((caughtError1 as InterpreterError).data.functionName).toBe("ln");
-
-    // Test ln(-1) - argument must be positive
->>>>>>> Stashed changes
     const text2 = `variable invalid: Number = ln(-1);`;
     const lexer2 = new Lexer(text2);
     const parser2 = new Parser(lexer2);
