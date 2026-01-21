@@ -471,9 +471,9 @@ export class FunctionsManager extends BaseManager<
           data: { functionName: "log1p", expectedType: "number", argumentPosition: "first" },
         });
       const value = arg.value as number;
-      if (value <= -1)
+      if (value < -1)
         throw new InterpreterError(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE, {
-          data: { functionName: "log1p", constraint: "greater than -1" },
+          data: { functionName: "log1p", constraint: "greater than or equal to -1" },
         });
       return new NumberSymbol(Math.log1p(value));
     });

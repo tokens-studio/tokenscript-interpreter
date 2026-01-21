@@ -901,28 +901,32 @@ describe("Math Functions - Logarithmic Extended", () => {
     expect(interpreter.symbolTable.get("log1p_small")?.value).toBeCloseTo(0.00009999500033, 8);
   });
 
-  it("should throw error for log1p with invalid argument", () => {
-    const text1 = `variable invalid: Number = log1p(-1);`;
-    const lexer1 = new Lexer(text1);
-    const parser1 = new Parser(lexer1);
-    const interpreter1 = new Interpreter(parser1);
+  it("should handle log1p at boundary value -1 (returns -Infinity)", () => {
+    const text = `variable log1p_neg1: Number = log1p(-1);`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
 
-    expect(() => interpreter1.interpret()).toThrow(InterpreterError);
+    // log1p(-1) = ln(0) = -Infinity is mathematically valid
+    expect(interpreter.symbolTable.get("log1p_neg1")?.value).toBe(Number.NEGATIVE_INFINITY);
+  });
+
+  it("should throw error for log1p with invalid argument (less than -1)", () => {
+    const text = `variable invalid: Number = log1p(-2);`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+
+    expect(() => interpreter.interpret()).toThrow(InterpreterError);
 
     try {
-      interpreter1.interpret();
+      interpreter.interpret();
     } catch (error) {
       expect(error).toBeInstanceOf(InterpreterError);
       expect((error as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
       expect((error as InterpreterError).data.functionName).toBe("log1p");
     }
-
-    const text2 = `variable invalid: Number = log1p(-2);`;
-    const lexer2 = new Lexer(text2);
-    const parser2 = new Parser(lexer2);
-    const interpreter2 = new Interpreter(parser2);
-
-    expect(() => interpreter2.interpret()).toThrow(InterpreterError);
   });
 });
 
