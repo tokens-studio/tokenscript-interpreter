@@ -877,18 +877,16 @@ describe("Math Functions - Logarithmic Extended", () => {
     const parser = new Parser(lexer);
     const interpreter = new Interpreter(parser);
 
-    let error: unknown;
-
+    let caughtError: unknown;
     try {
       interpreter.interpret();
-    } catch (err) {
-      error = err;
+    } catch (error) {
+      caughtError = error;
     }
 
-    expect(error).toBeInstanceOf(InterpreterError);
-    const interpreterError = error as InterpreterError;
-    expect(interpreterError.code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
-    expect(interpreterError.data.functionName).toBe("log2");
+    expect(caughtError).toBeInstanceOf(InterpreterError);
+    expect((caughtError as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
+    expect((caughtError as InterpreterError).data.functionName).toBe("log2");
   });
 
   it("should handle log1p function", () => {
