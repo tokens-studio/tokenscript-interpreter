@@ -686,15 +686,16 @@ describe("Math Functions - Inverse Hyperbolic", () => {
     const parser = new Parser(lexer);
     const interpreter = new Interpreter(parser);
 
-    expect(() => interpreter.interpret()).toThrow(InterpreterError);
-
+    let caughtError: unknown;
     try {
       interpreter.interpret();
     } catch (error) {
-      expect(error).toBeInstanceOf(InterpreterError);
-      expect((error as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
-      expect((error as InterpreterError).data.functionName).toBe("acosh");
+      caughtError = error;
     }
+
+    expect(caughtError).toBeInstanceOf(InterpreterError);
+    expect((caughtError as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
+    expect((caughtError as InterpreterError).data.functionName).toBe("acosh");
   });
 
   it("should handle atanh function", () => {
@@ -719,15 +720,16 @@ describe("Math Functions - Inverse Hyperbolic", () => {
     const parser1 = new Parser(lexer1);
     const interpreter1 = new Interpreter(parser1);
 
-    expect(() => interpreter1.interpret()).toThrow(InterpreterError);
-
+    let error1: unknown;
     try {
       interpreter1.interpret();
     } catch (error) {
-      expect(error).toBeInstanceOf(InterpreterError);
-      expect((error as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
-      expect((error as InterpreterError).data.functionName).toBe("atanh");
+      error1 = error;
     }
+
+    expect(error1).toBeInstanceOf(InterpreterError);
+    expect((error1 as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
+    expect((error1 as InterpreterError).data.functionName).toBe("atanh");
 
     const text2 = `variable invalid: Number = atanh(-1);`;
     const lexer2 = new Lexer(text2);
@@ -796,15 +798,16 @@ describe("Math Functions - Logarithmic Extended", () => {
     const parser1 = new Parser(lexer1);
     const interpreter1 = new Interpreter(parser1);
 
-    expect(() => interpreter1.interpret()).toThrow(InterpreterError);
-
+    let error1: unknown;
     try {
       interpreter1.interpret();
     } catch (error) {
-      expect(error).toBeInstanceOf(InterpreterError);
-      expect((error as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
-      expect((error as InterpreterError).data.functionName).toBe("ln");
+      error1 = error;
     }
+
+    expect(error1).toBeInstanceOf(InterpreterError);
+    expect((error1 as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
+    expect((error1 as InterpreterError).data.functionName).toBe("ln");
 
     const text2 = `variable invalid: Number = ln(-1);`;
     const lexer2 = new Lexer(text2);
@@ -838,15 +841,16 @@ describe("Math Functions - Logarithmic Extended", () => {
     const parser = new Parser(lexer);
     const interpreter = new Interpreter(parser);
 
-    expect(() => interpreter.interpret()).toThrow(InterpreterError);
-
+    let caughtError: unknown;
     try {
       interpreter.interpret();
     } catch (error) {
-      expect(error).toBeInstanceOf(InterpreterError);
-      expect((error as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
-      expect((error as InterpreterError).data.functionName).toBe("log10");
+      caughtError = error;
     }
+
+    expect(caughtError).toBeInstanceOf(InterpreterError);
+    expect((caughtError as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
+    expect((caughtError as InterpreterError).data.functionName).toBe("log10");
   });
 
   it("should handle log2 function", () => {
@@ -873,15 +877,18 @@ describe("Math Functions - Logarithmic Extended", () => {
     const parser = new Parser(lexer);
     const interpreter = new Interpreter(parser);
 
-    expect(() => interpreter.interpret()).toThrow(InterpreterError);
+    let error: unknown;
 
     try {
       interpreter.interpret();
-    } catch (error) {
-      expect(error).toBeInstanceOf(InterpreterError);
-      expect((error as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
-      expect((error as InterpreterError).data.functionName).toBe("log2");
+    } catch (err) {
+      error = err;
     }
+
+    expect(error).toBeInstanceOf(InterpreterError);
+    const interpreterError = error as InterpreterError;
+    expect(interpreterError.code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
+    expect(interpreterError.data.functionName).toBe("log2");
   });
 
   it("should handle log1p function", () => {
@@ -918,15 +925,16 @@ describe("Math Functions - Logarithmic Extended", () => {
     const parser = new Parser(lexer);
     const interpreter = new Interpreter(parser);
 
-    expect(() => interpreter.interpret()).toThrow(InterpreterError);
-
+    let caughtError: unknown;
     try {
       interpreter.interpret();
     } catch (error) {
-      expect(error).toBeInstanceOf(InterpreterError);
-      expect((error as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
-      expect((error as InterpreterError).data.functionName).toBe("log1p");
+      caughtError = error;
     }
+
+    expect(caughtError).toBeInstanceOf(InterpreterError);
+    expect((caughtError as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
+    expect((caughtError as InterpreterError).data.functionName).toBe("log1p");
   });
 });
 
@@ -1142,14 +1150,15 @@ describe("Math Functions - Remainder", () => {
     const parser = new Parser(lexer);
     const interpreter = new Interpreter(parser);
 
-    expect(() => interpreter.interpret()).toThrow(InterpreterError);
-
+    let caughtError: unknown;
     try {
       interpreter.interpret();
     } catch (error) {
-      expect(error).toBeInstanceOf(InterpreterError);
-      expect((error as InterpreterError).code).toBe(FunctionsErrorCode.DIVISION_BY_ZERO);
-      expect((error as InterpreterError).data.functionName).toBe("remainder");
+      caughtError = error;
     }
+
+    expect(caughtError).toBeInstanceOf(InterpreterError);
+    expect((caughtError as InterpreterError).code).toBe(FunctionsErrorCode.DIVISION_BY_ZERO);
+    expect((caughtError as InterpreterError).data.functionName).toBe("remainder");
   });
 });
