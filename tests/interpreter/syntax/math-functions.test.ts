@@ -415,15 +415,16 @@ describe("Math Functions - Inverse Trigonometric", () => {
     const parser = new Parser(lexer);
     const interpreter = new Interpreter(parser);
 
-    expect(() => interpreter.interpret()).toThrow(InterpreterError);
-
+    let caughtError: unknown;
     try {
       interpreter.interpret();
     } catch (error) {
-      expect(error).toBeInstanceOf(InterpreterError);
-      expect((error as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
-      expect((error as InterpreterError).data.functionName).toBe("asin");
+      caughtError = error;
     }
+
+    expect(caughtError).toBeInstanceOf(InterpreterError);
+    expect((caughtError as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
+    expect((caughtError as InterpreterError).data.functionName).toBe("asin");
   });
 });
 
@@ -461,48 +462,56 @@ describe("Math Functions - Logarithmic", () => {
   });
 
   it("should throw error for invalid logarithm arguments", () => {
+    // Test log(0) - argument out of range
     const text1 = `variable invalid: Number = log(0);`;
-    const text2 = `variable invalid: Number = log(-1);`;
-    const text3 = `variable invalid: Number = log(10, 1);`;
-
     const lexer1 = new Lexer(text1);
     const parser1 = new Parser(lexer1);
     const interpreter1 = new Interpreter(parser1);
-    expect(() => interpreter1.interpret()).toThrow(InterpreterError);
 
+    let caughtError1: unknown;
     try {
       interpreter1.interpret();
     } catch (error) {
-      expect(error).toBeInstanceOf(InterpreterError);
-      expect((error as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
-      expect((error as InterpreterError).data.functionName).toBe("log");
+      caughtError1 = error;
     }
 
+    expect(caughtError1).toBeInstanceOf(InterpreterError);
+    expect((caughtError1 as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
+    expect((caughtError1 as InterpreterError).data.functionName).toBe("log");
+
+    // Test log(-1) - argument out of range
+    const text2 = `variable invalid: Number = log(-1);`;
     const lexer2 = new Lexer(text2);
     const parser2 = new Parser(lexer2);
     const interpreter2 = new Interpreter(parser2);
-    expect(() => interpreter2.interpret()).toThrow(InterpreterError);
 
+    let caughtError2: unknown;
     try {
       interpreter2.interpret();
     } catch (error) {
-      expect(error).toBeInstanceOf(InterpreterError);
-      expect((error as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
-      expect((error as InterpreterError).data.functionName).toBe("log");
+      caughtError2 = error;
     }
 
+    expect(caughtError2).toBeInstanceOf(InterpreterError);
+    expect((caughtError2 as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
+    expect((caughtError2 as InterpreterError).data.functionName).toBe("log");
+
+    // Test log(10, 1) - invalid base
+    const text3 = `variable invalid: Number = log(10, 1);`;
     const lexer3 = new Lexer(text3);
     const parser3 = new Parser(lexer3);
     const interpreter3 = new Interpreter(parser3);
-    expect(() => interpreter3.interpret()).toThrow(InterpreterError);
 
+    let caughtError3: unknown;
     try {
       interpreter3.interpret();
     } catch (error) {
-      expect(error).toBeInstanceOf(InterpreterError);
-      expect((error as InterpreterError).code).toBe(FunctionsErrorCode.INVALID_BASE);
-      expect((error as InterpreterError).data.functionName).toBe("log");
+      caughtError3 = error;
     }
+
+    expect(caughtError3).toBeInstanceOf(InterpreterError);
+    expect((caughtError3 as InterpreterError).code).toBe(FunctionsErrorCode.INVALID_BASE);
+    expect((caughtError3 as InterpreterError).data.functionName).toBe("log");
   });
 });
 
@@ -714,11 +723,13 @@ describe("Math Functions - Inverse Hyperbolic", () => {
   });
 
   it("should throw error for atanh with invalid range", () => {
+    // Test atanh(1) - out of range (must be between -1 and 1 exclusive)
     const text1 = `variable invalid: Number = atanh(1);`;
     const lexer1 = new Lexer(text1);
     const parser1 = new Parser(lexer1);
     const interpreter1 = new Interpreter(parser1);
 
+<<<<<<< Updated upstream
     expect(() => interpreter1.interpret()).toThrow(InterpreterError);
 
     try {
@@ -729,12 +740,35 @@ describe("Math Functions - Inverse Hyperbolic", () => {
       expect((error as InterpreterError).data.functionName).toBe("atanh");
     }
 
+=======
+    let caughtError1: unknown;
+    try {
+      interpreter1.interpret();
+    } catch (error) {
+      caughtError1 = error;
+    }
+
+    expect(caughtError1).toBeInstanceOf(InterpreterError);
+    expect((caughtError1 as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
+    expect((caughtError1 as InterpreterError).data.functionName).toBe("atanh");
+
+    // Test atanh(-1) - out of range
+>>>>>>> Stashed changes
     const text2 = `variable invalid: Number = atanh(-1);`;
     const lexer2 = new Lexer(text2);
     const parser2 = new Parser(lexer2);
     const interpreter2 = new Interpreter(parser2);
 
-    expect(() => interpreter2.interpret()).toThrow(InterpreterError);
+    let caughtError2: unknown;
+    try {
+      interpreter2.interpret();
+    } catch (error) {
+      caughtError2 = error;
+    }
+
+    expect(caughtError2).toBeInstanceOf(InterpreterError);
+    expect((caughtError2 as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
+    expect((caughtError2 as InterpreterError).data.functionName).toBe("atanh");
   });
 });
 
@@ -791,11 +825,13 @@ describe("Math Functions - Logarithmic Extended", () => {
   });
 
   it("should throw error for ln with invalid argument", () => {
+    // Test ln(0) - argument must be positive
     const text1 = `variable invalid: Number = ln(0);`;
     const lexer1 = new Lexer(text1);
     const parser1 = new Parser(lexer1);
     const interpreter1 = new Interpreter(parser1);
 
+<<<<<<< Updated upstream
     expect(() => interpreter1.interpret()).toThrow(InterpreterError);
 
     try {
@@ -806,12 +842,35 @@ describe("Math Functions - Logarithmic Extended", () => {
       expect((error as InterpreterError).data.functionName).toBe("ln");
     }
 
+=======
+    let caughtError1: unknown;
+    try {
+      interpreter1.interpret();
+    } catch (error) {
+      caughtError1 = error;
+    }
+
+    expect(caughtError1).toBeInstanceOf(InterpreterError);
+    expect((caughtError1 as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
+    expect((caughtError1 as InterpreterError).data.functionName).toBe("ln");
+
+    // Test ln(-1) - argument must be positive
+>>>>>>> Stashed changes
     const text2 = `variable invalid: Number = ln(-1);`;
     const lexer2 = new Lexer(text2);
     const parser2 = new Parser(lexer2);
     const interpreter2 = new Interpreter(parser2);
 
-    expect(() => interpreter2.interpret()).toThrow(InterpreterError);
+    let caughtError2: unknown;
+    try {
+      interpreter2.interpret();
+    } catch (error) {
+      caughtError2 = error;
+    }
+
+    expect(caughtError2).toBeInstanceOf(InterpreterError);
+    expect((caughtError2 as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
+    expect((caughtError2 as InterpreterError).data.functionName).toBe("ln");
   });
 
   it("should handle log10 function", () => {
@@ -986,11 +1045,12 @@ describe("Math Functions - Sign", () => {
     expect(interpreter.symbolTable.get("sign_zero")?.value).toBe(0);
   });
 
-  it("should handle sign with NumberWithUnit", () => {
+  it("should handle sign with NumberWithUnit (returns unitless)", () => {
+    // Sign is mathematically dimensionless, so it always returns a unitless number
     const text = `
-    variable sign_px: NumberWithUnit = sign(-5px);
-    variable sign_rem: NumberWithUnit = sign(3rem);
-    variable sign_em: NumberWithUnit = sign(0em);
+    variable sign_px: Number = sign(-5px);
+    variable sign_rem: Number = sign(3rem);
+    variable sign_em: Number = sign(0em);
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
@@ -1002,11 +1062,11 @@ describe("Math Functions - Sign", () => {
     const signEm = interpreter.symbolTable.get("sign_em");
 
     expect(signPx?.value).toBe(-1);
-    expect(signPx?.toString()).toBe("-1px");
+    expect(signPx?.toString()).toBe("-1");
     expect(signRem?.value).toBe(1);
-    expect(signRem?.toString()).toBe("1rem");
+    expect(signRem?.toString()).toBe("1");
     expect(signEm?.value).toBe(0);
-    expect(signEm?.toString()).toBe("0em");
+    expect(signEm?.toString()).toBe("0");
   });
 });
 
@@ -1151,5 +1211,356 @@ describe("Math Functions - Remainder", () => {
       expect((error as InterpreterError).code).toBe(FunctionsErrorCode.DIVISION_BY_ZERO);
       expect((error as InterpreterError).data.functionName).toBe("remainder");
     }
+  });
+});
+
+describe("Math Functions - Error Handling Edge Cases", () => {
+  it("should throw error for hypot with zero arguments", () => {
+    const text = `variable invalid: Number = hypot();`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+
+    let caughtError: unknown;
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      caughtError = error;
+    }
+
+    expect(caughtError).toBeInstanceOf(InterpreterError);
+    expect((caughtError as InterpreterError).code).toBe(FunctionsErrorCode.REQUIRES_MIN_ARGUMENTS);
+    expect((caughtError as InterpreterError).data.functionName).toBe("hypot");
+  });
+
+  it("should throw error for asinh with non-numeric argument", () => {
+    const text = `variable invalid: Number = asinh("not a number");`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+
+    let caughtError: unknown;
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      caughtError = error;
+    }
+
+    expect(caughtError).toBeInstanceOf(InterpreterError);
+    expect((caughtError as InterpreterError).code).toBe(FunctionsErrorCode.EXPECTS_NUMBER_ARGUMENTS);
+    expect((caughtError as InterpreterError).data.functionName).toBe("asinh");
+  });
+
+  it("should throw error for acosh with non-numeric argument", () => {
+    const text = `variable invalid: Number = acosh("not a number");`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+
+    let caughtError: unknown;
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      caughtError = error;
+    }
+
+    expect(caughtError).toBeInstanceOf(InterpreterError);
+    expect((caughtError as InterpreterError).code).toBe(FunctionsErrorCode.EXPECTS_NUMBER_ARGUMENTS);
+    expect((caughtError as InterpreterError).data.functionName).toBe("acosh");
+  });
+
+  it("should throw error for atanh with non-numeric argument", () => {
+    const text = `variable invalid: Number = atanh("not a number");`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+
+    let caughtError: unknown;
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      caughtError = error;
+    }
+
+    expect(caughtError).toBeInstanceOf(InterpreterError);
+    expect((caughtError as InterpreterError).code).toBe(FunctionsErrorCode.EXPECTS_NUMBER_ARGUMENTS);
+    expect((caughtError as InterpreterError).data.functionName).toBe("atanh");
+  });
+
+  it("should throw error for exp with non-numeric argument", () => {
+    const text = `variable invalid: Number = exp("not a number");`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+
+    let caughtError: unknown;
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      caughtError = error;
+    }
+
+    expect(caughtError).toBeInstanceOf(InterpreterError);
+    expect((caughtError as InterpreterError).code).toBe(FunctionsErrorCode.EXPECTS_NUMBER_ARGUMENTS);
+    expect((caughtError as InterpreterError).data.functionName).toBe("exp");
+  });
+
+  it("should throw error for expm1 with non-numeric argument", () => {
+    const text = `variable invalid: Number = expm1("not a number");`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+
+    let caughtError: unknown;
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      caughtError = error;
+    }
+
+    expect(caughtError).toBeInstanceOf(InterpreterError);
+    expect((caughtError as InterpreterError).code).toBe(FunctionsErrorCode.EXPECTS_NUMBER_ARGUMENTS);
+    expect((caughtError as InterpreterError).data.functionName).toBe("expm1");
+  });
+
+  it("should throw error for ln with non-numeric argument", () => {
+    const text = `variable invalid: Number = ln("not a number");`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+
+    let caughtError: unknown;
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      caughtError = error;
+    }
+
+    expect(caughtError).toBeInstanceOf(InterpreterError);
+    expect((caughtError as InterpreterError).code).toBe(FunctionsErrorCode.EXPECTS_NUMBER_ARGUMENTS);
+    expect((caughtError as InterpreterError).data.functionName).toBe("ln");
+  });
+
+  it("should throw error for log10 with non-numeric argument", () => {
+    const text = `variable invalid: Number = log10("not a number");`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+
+    let caughtError: unknown;
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      caughtError = error;
+    }
+
+    expect(caughtError).toBeInstanceOf(InterpreterError);
+    expect((caughtError as InterpreterError).code).toBe(FunctionsErrorCode.EXPECTS_NUMBER_ARGUMENTS);
+    expect((caughtError as InterpreterError).data.functionName).toBe("log10");
+  });
+
+  it("should throw error for log2 with non-numeric argument", () => {
+    const text = `variable invalid: Number = log2("not a number");`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+
+    let caughtError: unknown;
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      caughtError = error;
+    }
+
+    expect(caughtError).toBeInstanceOf(InterpreterError);
+    expect((caughtError as InterpreterError).code).toBe(FunctionsErrorCode.EXPECTS_NUMBER_ARGUMENTS);
+    expect((caughtError as InterpreterError).data.functionName).toBe("log2");
+  });
+
+  it("should throw error for log1p with non-numeric argument", () => {
+    const text = `variable invalid: Number = log1p("not a number");`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+
+    let caughtError: unknown;
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      caughtError = error;
+    }
+
+    expect(caughtError).toBeInstanceOf(InterpreterError);
+    expect((caughtError as InterpreterError).code).toBe(FunctionsErrorCode.EXPECTS_NUMBER_ARGUMENTS);
+    expect((caughtError as InterpreterError).data.functionName).toBe("log1p");
+  });
+
+  it("should throw error for cbrt with non-numeric argument", () => {
+    const text = `variable invalid: Number = cbrt("not a number");`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+
+    let caughtError: unknown;
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      caughtError = error;
+    }
+
+    expect(caughtError).toBeInstanceOf(InterpreterError);
+    expect((caughtError as InterpreterError).code).toBe(FunctionsErrorCode.EXPECTS_NUMBER_ARGUMENTS);
+    expect((caughtError as InterpreterError).data.functionName).toBe("cbrt");
+  });
+
+  it("should throw error for sign with non-numeric argument", () => {
+    const text = `variable invalid: Number = sign("not a number");`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+
+    let caughtError: unknown;
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      caughtError = error;
+    }
+
+    expect(caughtError).toBeInstanceOf(InterpreterError);
+    expect((caughtError as InterpreterError).code).toBe(FunctionsErrorCode.EXPECTS_NUMBER_ARGUMENTS);
+    expect((caughtError as InterpreterError).data.functionName).toBe("sign");
+  });
+
+  it("should throw error for trunc with non-numeric argument", () => {
+    const text = `variable invalid: Number = trunc("not a number");`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+
+    let caughtError: unknown;
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      caughtError = error;
+    }
+
+    expect(caughtError).toBeInstanceOf(InterpreterError);
+    expect((caughtError as InterpreterError).code).toBe(FunctionsErrorCode.EXPECTS_NUMBER_ARGUMENTS);
+    expect((caughtError as InterpreterError).data.functionName).toBe("trunc");
+  });
+
+  it("should throw error for hypot with non-numeric argument", () => {
+    const text = `variable invalid: Number = hypot(3, "not a number");`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+
+    let caughtError: unknown;
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      caughtError = error;
+    }
+
+    expect(caughtError).toBeInstanceOf(InterpreterError);
+    expect((caughtError as InterpreterError).code).toBe(FunctionsErrorCode.EXPECTS_NUMBER_ARGUMENTS);
+    expect((caughtError as InterpreterError).data.functionName).toBe("hypot");
+  });
+
+  it("should throw error for remainder with non-numeric argument", () => {
+    const text = `variable invalid: Number = remainder("not a number", 3);`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+
+    let caughtError: unknown;
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      caughtError = error;
+    }
+
+    expect(caughtError).toBeInstanceOf(InterpreterError);
+    expect((caughtError as InterpreterError).code).toBe(FunctionsErrorCode.EXPECTS_NUMBER_ARGUMENTS);
+    expect((caughtError as InterpreterError).data.functionName).toBe("remainder");
+  });
+});
+
+describe("Math Functions - NumberWithUnit Support for New Functions", () => {
+  it("should handle inverse hyperbolic functions with NumberWithUnit (returns unitless)", () => {
+    const text = `
+    variable asinh_px: Number = asinh(2px);
+    variable acosh_px: Number = acosh(2px);
+    variable atanh_px: Number = atanh(0.5px);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    // These functions accept NumberWithUnit but return unitless results
+    expect(interpreter.symbolTable.get("asinh_px")?.value).toBeCloseTo(Math.asinh(2), 5);
+    expect(interpreter.symbolTable.get("acosh_px")?.value).toBeCloseTo(Math.acosh(2), 5);
+    expect(interpreter.symbolTable.get("atanh_px")?.value).toBeCloseTo(Math.atanh(0.5), 5);
+  });
+
+  it("should handle exponential functions with NumberWithUnit (returns unitless)", () => {
+    const text = `
+    variable exp_px: Number = exp(1px);
+    variable expm1_px: Number = expm1(1px);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("exp_px")?.value).toBeCloseTo(Math.E, 5);
+    expect(interpreter.symbolTable.get("expm1_px")?.value).toBeCloseTo(Math.E - 1, 5);
+  });
+
+  it("should handle logarithmic functions with NumberWithUnit (returns unitless)", () => {
+    const text = `
+    variable ln_px: Number = ln(10px);
+    variable log10_px: Number = log10(100px);
+    variable log2_px: Number = log2(8px);
+    variable log1p_px: Number = log1p(1px);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("ln_px")?.value).toBeCloseTo(Math.log(10), 5);
+    expect(interpreter.symbolTable.get("log10_px")?.value).toBeCloseTo(2, 5);
+    expect(interpreter.symbolTable.get("log2_px")?.value).toBeCloseTo(3, 5);
+    expect(interpreter.symbolTable.get("log1p_px")?.value).toBeCloseTo(Math.log(2), 5);
+  });
+
+  it("should handle hypot with NumberWithUnit arguments (returns unitless)", () => {
+    const text = `
+    variable hypot_px: Number = hypot(3px, 4px);
+    variable hypot_mixed: Number = hypot(3px, 4);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("hypot_px")?.value).toBeCloseTo(5, 5);
+    expect(interpreter.symbolTable.get("hypot_mixed")?.value).toBeCloseTo(5, 5);
+  });
+
+  it("should handle remainder with NumberWithUnit arguments (returns unitless)", () => {
+    const text = `
+    variable rem_px: Number = remainder(7px, 3px);
+    variable rem_mixed: Number = remainder(10px, 4);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("rem_px")?.value).toBe(1);
+    expect(interpreter.symbolTable.get("rem_mixed")?.value).toBe(2);
   });
 });
