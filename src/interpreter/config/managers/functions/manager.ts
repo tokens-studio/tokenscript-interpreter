@@ -344,6 +344,41 @@ export class FunctionsManager extends BaseManager<
       return new NumberSymbol(Math.atan2(y.value as number, x.value as number));
     });
 
+    // Inverse hyperbolic functions
+    this.registerFunction("asinh", (arg: ISymbolType): NumberSymbol => {
+      if (!(arg instanceof NumberSymbol))
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+          data: { functionName: "asinh", expectedType: "number", argumentPosition: "first" },
+        });
+      return new NumberSymbol(Math.asinh(arg.value as number));
+    });
+
+    this.registerFunction("acosh", (arg: ISymbolType): NumberSymbol => {
+      if (!(arg instanceof NumberSymbol))
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+          data: { functionName: "acosh", expectedType: "number", argumentPosition: "first" },
+        });
+      const value = arg.value as number;
+      if (value < 1)
+        throw new InterpreterError(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE, {
+          data: { functionName: "acosh", constraint: "greater than or equal to 1" },
+        });
+      return new NumberSymbol(Math.acosh(value));
+    });
+
+    this.registerFunction("atanh", (arg: ISymbolType): NumberSymbol => {
+      if (!(arg instanceof NumberSymbol))
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+          data: { functionName: "atanh", expectedType: "number", argumentPosition: "first" },
+        });
+      const value = arg.value as number;
+      if (value <= -1 || value >= 1)
+        throw new InterpreterError(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE, {
+          data: { functionName: "atanh", constraint: "between -1 and 1 (exclusive)" },
+        });
+      return new NumberSymbol(Math.atanh(value));
+    });
+
     // Logarithmic functions
     this.registerFunction("log", (arg: ISymbolType, base?: ISymbolType): NumberSymbol => {
       if (!(arg instanceof NumberSymbol))
@@ -371,6 +406,76 @@ export class FunctionsManager extends BaseManager<
         });
 
       return new NumberSymbol(Math.log(value) / Math.log(baseValue));
+    });
+
+    // Exponential functions
+    this.registerFunction("exp", (arg: ISymbolType): NumberSymbol => {
+      if (!(arg instanceof NumberSymbol))
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+          data: { functionName: "exp", expectedType: "number", argumentPosition: "first" },
+        });
+      return new NumberSymbol(Math.exp(arg.value as number));
+    });
+
+    this.registerFunction("expm1", (arg: ISymbolType): NumberSymbol => {
+      if (!(arg instanceof NumberSymbol))
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+          data: { functionName: "expm1", expectedType: "number", argumentPosition: "first" },
+        });
+      return new NumberSymbol(Math.expm1(arg.value as number));
+    });
+
+    // Extended logarithmic functions
+    this.registerFunction("ln", (arg: ISymbolType): NumberSymbol => {
+      if (!(arg instanceof NumberSymbol))
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+          data: { functionName: "ln", expectedType: "number", argumentPosition: "first" },
+        });
+      const value = arg.value as number;
+      if (value <= 0)
+        throw new InterpreterError(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE, {
+          data: { functionName: "ln", constraint: "positive" },
+        });
+      return new NumberSymbol(Math.log(value));
+    });
+
+    this.registerFunction("log10", (arg: ISymbolType): NumberSymbol => {
+      if (!(arg instanceof NumberSymbol))
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+          data: { functionName: "log10", expectedType: "number", argumentPosition: "first" },
+        });
+      const value = arg.value as number;
+      if (value <= 0)
+        throw new InterpreterError(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE, {
+          data: { functionName: "log10", constraint: "positive" },
+        });
+      return new NumberSymbol(Math.log10(value));
+    });
+
+    this.registerFunction("log2", (arg: ISymbolType): NumberSymbol => {
+      if (!(arg instanceof NumberSymbol))
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+          data: { functionName: "log2", expectedType: "number", argumentPosition: "first" },
+        });
+      const value = arg.value as number;
+      if (value <= 0)
+        throw new InterpreterError(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE, {
+          data: { functionName: "log2", constraint: "positive" },
+        });
+      return new NumberSymbol(Math.log2(value));
+    });
+
+    this.registerFunction("log1p", (arg: ISymbolType): NumberSymbol => {
+      if (!(arg instanceof NumberSymbol))
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+          data: { functionName: "log1p", expectedType: "number", argumentPosition: "first" },
+        });
+      const value = arg.value as number;
+      if (value <= -1)
+        throw new InterpreterError(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE, {
+          data: { functionName: "log1p", constraint: "greater than -1" },
+        });
+      return new NumberSymbol(Math.log1p(value));
     });
 
     this.registerFunction("floor", (arg: ISymbolType): NumberSymbol | NumberWithUnitSymbol => {
@@ -433,6 +538,87 @@ export class FunctionsManager extends BaseManager<
         return new NumberSymbol(result);
       },
     );
+
+    // Cube root with NumberWithUnit support
+    this.registerFunction("cbrt", (arg: ISymbolType): NumberSymbol | NumberWithUnitSymbol => {
+      if (arg instanceof NumberWithUnitSymbol) {
+        return new NumberWithUnitSymbol(Math.cbrt(arg.value as number), arg.unit);
+      }
+      if (!(arg instanceof NumberSymbol))
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+          data: { functionName: "cbrt", expectedType: "number", argumentPosition: "first" },
+        });
+      return new NumberSymbol(Math.cbrt(arg.value as number));
+    });
+
+    // Sign with NumberWithUnit support
+    this.registerFunction("sign", (arg: ISymbolType): NumberSymbol | NumberWithUnitSymbol => {
+      if (arg instanceof NumberWithUnitSymbol) {
+        return new NumberWithUnitSymbol(Math.sign(arg.value as number), arg.unit);
+      }
+      if (!(arg instanceof NumberSymbol))
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+          data: { functionName: "sign", expectedType: "number", argumentPosition: "first" },
+        });
+      return new NumberSymbol(Math.sign(arg.value as number));
+    });
+
+    // Truncate with NumberWithUnit support
+    this.registerFunction("trunc", (arg: ISymbolType): NumberSymbol | NumberWithUnitSymbol => {
+      if (arg instanceof NumberWithUnitSymbol) {
+        return new NumberWithUnitSymbol(Math.trunc(arg.value as number), arg.unit);
+      }
+      if (!(arg instanceof NumberSymbol))
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+          data: { functionName: "trunc", expectedType: "number", argumentPosition: "first" },
+        });
+      return new NumberSymbol(Math.trunc(arg.value as number));
+    });
+
+    // Hypot (magnitude of n-dimensional vector)
+    this.registerFunction("hypot", (...args: ISymbolType[]): NumberSymbol => {
+      if (args.length === 0)
+        throw new InterpreterError(FunctionsErrorCode.REQUIRES_MIN_ARGUMENTS, {
+          data: { functionName: "hypot", minArgs: 1 },
+        });
+      const nums = args.map((arg) => {
+        if (arg instanceof NumberSymbol) return arg.value as number;
+        if (arg instanceof NumberWithUnitSymbol) return arg.value as number;
+        if (typeof arg.value === "number") return arg.value as number;
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_NUMBER_ARGUMENTS, {
+          data: { functionName: "hypot" },
+        });
+      });
+      return new NumberSymbol(Math.hypot(...nums));
+    });
+
+    // Remainder (JS % operator, differs from mod for negative numbers)
+    this.registerFunction("remainder", (a: ISymbolType, b: ISymbolType): NumberSymbol => {
+      let aVal: number, bVal: number;
+
+      if (a instanceof NumberSymbol) aVal = a.value as number;
+      else if (a instanceof NumberWithUnitSymbol) aVal = a.value as number;
+      else if (typeof a.value === "number") aVal = a.value as number;
+      else
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_NUMBER_ARGUMENTS, {
+          data: { functionName: "remainder" },
+        });
+
+      if (b instanceof NumberSymbol) bVal = b.value as number;
+      else if (b instanceof NumberWithUnitSymbol) bVal = b.value as number;
+      else if (typeof b.value === "number") bVal = b.value as number;
+      else
+        throw new InterpreterError(FunctionsErrorCode.EXPECTS_NUMBER_ARGUMENTS, {
+          data: { functionName: "remainder" },
+        });
+
+      if (bVal === 0)
+        throw new InterpreterError(FunctionsErrorCode.DIVISION_BY_ZERO, {
+          data: { functionName: "remainder" },
+        });
+
+      return new NumberSymbol(aVal % bVal);
+    });
 
     // Utility functions
     this.registerFunction("linear-gradient", (...args: ISymbolType[]): StringSymbol => {

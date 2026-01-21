@@ -646,3 +646,506 @@ describe("Math Functions - NumberWithUnit Support", () => {
     expect(roundedRem?.toString()).toBe("3rem");
   });
 });
+
+describe("Math Functions - Inverse Hyperbolic", () => {
+  it("should handle asinh function", () => {
+    const text = `
+    variable asinh_0: Number = asinh(0);
+    variable asinh_1: Number = asinh(1);
+    variable asinh_neg1: Number = asinh(-1);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("asinh_0")?.value).toBeCloseTo(0, 5);
+    expect(interpreter.symbolTable.get("asinh_1")?.value).toBeCloseTo(0.881373587, 5);
+    expect(interpreter.symbolTable.get("asinh_neg1")?.value).toBeCloseTo(-0.881373587, 5);
+  });
+
+  it("should handle acosh function", () => {
+    const text = `
+    variable acosh_1: Number = acosh(1);
+    variable acosh_2: Number = acosh(2);
+    variable acosh_10: Number = acosh(10);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("acosh_1")?.value).toBeCloseTo(0, 5);
+    expect(interpreter.symbolTable.get("acosh_2")?.value).toBeCloseTo(1.316957897, 5);
+    expect(interpreter.symbolTable.get("acosh_10")?.value).toBeCloseTo(2.993222846, 5);
+  });
+
+  it("should throw error for acosh with invalid range", () => {
+    const text = `variable invalid: Number = acosh(0.5);`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+
+    expect(() => interpreter.interpret()).toThrow(InterpreterError);
+
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      expect(error).toBeInstanceOf(InterpreterError);
+      expect((error as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
+      expect((error as InterpreterError).data.functionName).toBe("acosh");
+    }
+  });
+
+  it("should handle atanh function", () => {
+    const text = `
+    variable atanh_0: Number = atanh(0);
+    variable atanh_half: Number = atanh(0.5);
+    variable atanh_neg_half: Number = atanh(-0.5);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("atanh_0")?.value).toBeCloseTo(0, 5);
+    expect(interpreter.symbolTable.get("atanh_half")?.value).toBeCloseTo(0.549306144, 5);
+    expect(interpreter.symbolTable.get("atanh_neg_half")?.value).toBeCloseTo(-0.549306144, 5);
+  });
+
+  it("should throw error for atanh with invalid range", () => {
+    const text1 = `variable invalid: Number = atanh(1);`;
+    const lexer1 = new Lexer(text1);
+    const parser1 = new Parser(lexer1);
+    const interpreter1 = new Interpreter(parser1);
+
+    expect(() => interpreter1.interpret()).toThrow(InterpreterError);
+
+    try {
+      interpreter1.interpret();
+    } catch (error) {
+      expect(error).toBeInstanceOf(InterpreterError);
+      expect((error as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
+      expect((error as InterpreterError).data.functionName).toBe("atanh");
+    }
+
+    const text2 = `variable invalid: Number = atanh(-1);`;
+    const lexer2 = new Lexer(text2);
+    const parser2 = new Parser(lexer2);
+    const interpreter2 = new Interpreter(parser2);
+
+    expect(() => interpreter2.interpret()).toThrow(InterpreterError);
+  });
+});
+
+describe("Math Functions - Exponential", () => {
+  it("should handle exp function", () => {
+    const text = `
+    variable exp_0: Number = exp(0);
+    variable exp_1: Number = exp(1);
+    variable exp_neg1: Number = exp(-1);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("exp_0")?.value).toBeCloseTo(1, 5);
+    expect(interpreter.symbolTable.get("exp_1")?.value).toBeCloseTo(Math.E, 5);
+    expect(interpreter.symbolTable.get("exp_neg1")?.value).toBeCloseTo(1 / Math.E, 5);
+  });
+
+  it("should handle expm1 function", () => {
+    const text = `
+    variable expm1_0: Number = expm1(0);
+    variable expm1_1: Number = expm1(1);
+    variable expm1_small: Number = expm1(0.0001);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("expm1_0")?.value).toBeCloseTo(0, 5);
+    expect(interpreter.symbolTable.get("expm1_1")?.value).toBeCloseTo(Math.E - 1, 5);
+    // expm1 is more accurate than exp(x)-1 for small x
+    expect(interpreter.symbolTable.get("expm1_small")?.value).toBeCloseTo(0.00010000500017, 8);
+  });
+});
+
+describe("Math Functions - Logarithmic Extended", () => {
+  it("should handle ln function (natural logarithm)", () => {
+    const text = `
+    variable ln_1: Number = ln(1);
+    variable ln_e: Number = ln(2.718281828);
+    variable ln_10: Number = ln(10);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("ln_1")?.value).toBeCloseTo(0, 5);
+    expect(interpreter.symbolTable.get("ln_e")?.value).toBeCloseTo(1, 5);
+    expect(interpreter.symbolTable.get("ln_10")?.value).toBeCloseTo(Math.log(10), 5);
+  });
+
+  it("should throw error for ln with invalid argument", () => {
+    const text1 = `variable invalid: Number = ln(0);`;
+    const lexer1 = new Lexer(text1);
+    const parser1 = new Parser(lexer1);
+    const interpreter1 = new Interpreter(parser1);
+
+    expect(() => interpreter1.interpret()).toThrow(InterpreterError);
+
+    try {
+      interpreter1.interpret();
+    } catch (error) {
+      expect(error).toBeInstanceOf(InterpreterError);
+      expect((error as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
+      expect((error as InterpreterError).data.functionName).toBe("ln");
+    }
+
+    const text2 = `variable invalid: Number = ln(-1);`;
+    const lexer2 = new Lexer(text2);
+    const parser2 = new Parser(lexer2);
+    const interpreter2 = new Interpreter(parser2);
+
+    expect(() => interpreter2.interpret()).toThrow(InterpreterError);
+  });
+
+  it("should handle log10 function", () => {
+    const text = `
+    variable log10_1: Number = log10(1);
+    variable log10_10: Number = log10(10);
+    variable log10_100: Number = log10(100);
+    variable log10_1000: Number = log10(1000);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("log10_1")?.value).toBeCloseTo(0, 5);
+    expect(interpreter.symbolTable.get("log10_10")?.value).toBeCloseTo(1, 5);
+    expect(interpreter.symbolTable.get("log10_100")?.value).toBeCloseTo(2, 5);
+    expect(interpreter.symbolTable.get("log10_1000")?.value).toBeCloseTo(3, 5);
+  });
+
+  it("should throw error for log10 with invalid argument", () => {
+    const text = `variable invalid: Number = log10(0);`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+
+    expect(() => interpreter.interpret()).toThrow(InterpreterError);
+
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      expect(error).toBeInstanceOf(InterpreterError);
+      expect((error as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
+      expect((error as InterpreterError).data.functionName).toBe("log10");
+    }
+  });
+
+  it("should handle log2 function", () => {
+    const text = `
+    variable log2_1: Number = log2(1);
+    variable log2_2: Number = log2(2);
+    variable log2_8: Number = log2(8);
+    variable log2_1024: Number = log2(1024);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("log2_1")?.value).toBeCloseTo(0, 5);
+    expect(interpreter.symbolTable.get("log2_2")?.value).toBeCloseTo(1, 5);
+    expect(interpreter.symbolTable.get("log2_8")?.value).toBeCloseTo(3, 5);
+    expect(interpreter.symbolTable.get("log2_1024")?.value).toBeCloseTo(10, 5);
+  });
+
+  it("should throw error for log2 with invalid argument", () => {
+    const text = `variable invalid: Number = log2(-5);`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+
+    expect(() => interpreter.interpret()).toThrow(InterpreterError);
+
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      expect(error).toBeInstanceOf(InterpreterError);
+      expect((error as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
+      expect((error as InterpreterError).data.functionName).toBe("log2");
+    }
+  });
+
+  it("should handle log1p function", () => {
+    const text = `
+    variable log1p_0: Number = log1p(0);
+    variable log1p_e_minus_1: Number = log1p(1.718281828);
+    variable log1p_small: Number = log1p(0.0001);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("log1p_0")?.value).toBeCloseTo(0, 5);
+    expect(interpreter.symbolTable.get("log1p_e_minus_1")?.value).toBeCloseTo(1, 5);
+    // log1p is more accurate than log(1+x) for small x
+    expect(interpreter.symbolTable.get("log1p_small")?.value).toBeCloseTo(0.00009999500033, 8);
+  });
+
+  it("should throw error for log1p with invalid argument", () => {
+    const text1 = `variable invalid: Number = log1p(-1);`;
+    const lexer1 = new Lexer(text1);
+    const parser1 = new Parser(lexer1);
+    const interpreter1 = new Interpreter(parser1);
+
+    expect(() => interpreter1.interpret()).toThrow(InterpreterError);
+
+    try {
+      interpreter1.interpret();
+    } catch (error) {
+      expect(error).toBeInstanceOf(InterpreterError);
+      expect((error as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
+      expect((error as InterpreterError).data.functionName).toBe("log1p");
+    }
+
+    const text2 = `variable invalid: Number = log1p(-2);`;
+    const lexer2 = new Lexer(text2);
+    const parser2 = new Parser(lexer2);
+    const interpreter2 = new Interpreter(parser2);
+
+    expect(() => interpreter2.interpret()).toThrow(InterpreterError);
+  });
+});
+
+describe("Math Functions - Cube Root", () => {
+  it("should handle cbrt function", () => {
+    const text = `
+    variable cbrt_8: Number = cbrt(8);
+    variable cbrt_27: Number = cbrt(27);
+    variable cbrt_neg8: Number = cbrt(-8);
+    variable cbrt_0: Number = cbrt(0);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("cbrt_8")?.value).toBeCloseTo(2, 5);
+    expect(interpreter.symbolTable.get("cbrt_27")?.value).toBeCloseTo(3, 5);
+    expect(interpreter.symbolTable.get("cbrt_neg8")?.value).toBeCloseTo(-2, 5);
+    expect(interpreter.symbolTable.get("cbrt_0")?.value).toBeCloseTo(0, 5);
+  });
+
+  it("should handle cbrt with NumberWithUnit", () => {
+    const text = `
+    variable cbrt_px: NumberWithUnit = cbrt(8px);
+    variable cbrt_rem: NumberWithUnit = cbrt(27rem);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    const cbrtPx = interpreter.symbolTable.get("cbrt_px");
+    const cbrtRem = interpreter.symbolTable.get("cbrt_rem");
+
+    expect(cbrtPx?.value).toBeCloseTo(2, 5);
+    expect(cbrtPx?.toString()).toBe("2px");
+    expect(cbrtRem?.value).toBeCloseTo(3, 5);
+    expect(cbrtRem?.toString()).toBe("3rem");
+  });
+});
+
+describe("Math Functions - Sign", () => {
+  it("should handle sign function", () => {
+    const text = `
+    variable sign_pos: Number = sign(42);
+    variable sign_neg: Number = sign(-42);
+    variable sign_zero: Number = sign(0);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("sign_pos")?.value).toBe(1);
+    expect(interpreter.symbolTable.get("sign_neg")?.value).toBe(-1);
+    expect(interpreter.symbolTable.get("sign_zero")?.value).toBe(0);
+  });
+
+  it("should handle sign with NumberWithUnit", () => {
+    const text = `
+    variable sign_px: NumberWithUnit = sign(-5px);
+    variable sign_rem: NumberWithUnit = sign(3rem);
+    variable sign_em: NumberWithUnit = sign(0em);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    const signPx = interpreter.symbolTable.get("sign_px");
+    const signRem = interpreter.symbolTable.get("sign_rem");
+    const signEm = interpreter.symbolTable.get("sign_em");
+
+    expect(signPx?.value).toBe(-1);
+    expect(signPx?.toString()).toBe("-1px");
+    expect(signRem?.value).toBe(1);
+    expect(signRem?.toString()).toBe("1rem");
+    expect(signEm?.value).toBe(0);
+    expect(signEm?.toString()).toBe("0em");
+  });
+});
+
+describe("Math Functions - Truncate", () => {
+  it("should handle trunc function", () => {
+    const text = `
+    variable trunc_pos: Number = trunc(3.7);
+    variable trunc_neg: Number = trunc(-3.7);
+    variable trunc_small: Number = trunc(0.9);
+    variable trunc_neg_small: Number = trunc(-0.9);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("trunc_pos")?.value).toBe(3);
+    expect(interpreter.symbolTable.get("trunc_neg")?.value).toBe(-3);
+    expect(interpreter.symbolTable.get("trunc_small")?.value).toBe(0);
+    // Math.trunc(-0.9) returns -0 in JavaScript
+    expect(Object.is(interpreter.symbolTable.get("trunc_neg_small")?.value, -0)).toBe(true);
+  });
+
+  it("should handle trunc with NumberWithUnit", () => {
+    const text = `
+    variable trunc_px: NumberWithUnit = trunc(3.7px);
+    variable trunc_rem: NumberWithUnit = trunc(-2.3rem);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    const truncPx = interpreter.symbolTable.get("trunc_px");
+    const truncRem = interpreter.symbolTable.get("trunc_rem");
+
+    expect(truncPx?.value).toBe(3);
+    expect(truncPx?.toString()).toBe("3px");
+    expect(truncRem?.value).toBe(-2);
+    expect(truncRem?.toString()).toBe("-2rem");
+  });
+});
+
+describe("Math Functions - Hypot", () => {
+  it("should handle hypot with two arguments", () => {
+    const text = `
+    variable hypot_3_4: Number = hypot(3, 4);
+    variable hypot_5_12: Number = hypot(5, 12);
+    variable hypot_1_1: Number = hypot(1, 1);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("hypot_3_4")?.value).toBeCloseTo(5, 5);
+    expect(interpreter.symbolTable.get("hypot_5_12")?.value).toBeCloseTo(13, 5);
+    expect(interpreter.symbolTable.get("hypot_1_1")?.value).toBeCloseTo(Math.sqrt(2), 5);
+  });
+
+  it("should handle hypot with multiple arguments", () => {
+    const text = `
+    variable hypot_1_2_2: Number = hypot(1, 2, 2);
+    variable hypot_3_args: Number = hypot(3, 4, 12);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("hypot_1_2_2")?.value).toBeCloseTo(3, 5);
+    expect(interpreter.symbolTable.get("hypot_3_args")?.value).toBeCloseTo(13, 5);
+  });
+
+  it("should handle hypot with single argument", () => {
+    const text = `
+    variable hypot_5: Number = hypot(5);
+    variable hypot_neg: Number = hypot(-3);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("hypot_5")?.value).toBeCloseTo(5, 5);
+    expect(interpreter.symbolTable.get("hypot_neg")?.value).toBeCloseTo(3, 5);
+  });
+});
+
+describe("Math Functions - Remainder", () => {
+  it("should handle remainder function", () => {
+    const text = `
+    variable rem_7_3: Number = remainder(7, 3);
+    variable rem_10_4: Number = remainder(10, 4);
+    variable rem_9_3: Number = remainder(9, 3);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("rem_7_3")?.value).toBe(1);
+    expect(interpreter.symbolTable.get("rem_10_4")?.value).toBe(2);
+    expect(interpreter.symbolTable.get("rem_9_3")?.value).toBe(0);
+  });
+
+  it("should differ from mod for negative numbers", () => {
+    const text = `
+    variable rem_neg7_3: Number = remainder(-7, 3);
+    variable mod_neg7_3: Number = mod(-7, 3);
+    variable rem_7_neg3: Number = remainder(7, -3);
+    variable mod_7_neg3: Number = mod(7, -3);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    // remainder uses JS % operator directly: -7 % 3 = -1
+    expect(interpreter.symbolTable.get("rem_neg7_3")?.value).toBe(-1);
+    // mod returns positive: ((-7 % 3) + 3) % 3 = 2
+    expect(interpreter.symbolTable.get("mod_neg7_3")?.value).toBe(2);
+
+    // remainder: 7 % -3 = 1
+    expect(interpreter.symbolTable.get("rem_7_neg3")?.value).toBe(1);
+    // mod: ((7 % -3) + -3) % -3 = -2
+    expect(interpreter.symbolTable.get("mod_7_neg3")?.value).toBe(-2);
+  });
+
+  it("should throw error for remainder with zero divisor", () => {
+    const text = `variable invalid: Number = remainder(5, 0);`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+
+    expect(() => interpreter.interpret()).toThrow(InterpreterError);
+
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      expect(error).toBeInstanceOf(InterpreterError);
+      expect((error as InterpreterError).code).toBe(FunctionsErrorCode.DIVISION_BY_ZERO);
+      expect((error as InterpreterError).data.functionName).toBe("remainder");
+    }
+  });
+});
