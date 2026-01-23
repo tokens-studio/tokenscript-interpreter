@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Advanced math functions**: Trigonometric (`sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `atan2`), hyperbolic (`sinh`, `cosh`, `tanh`, `asinh`, `acosh`, `atanh`), logarithmic (`log`, `ln`, `log10`, `log2`, `log1p`), and additional utilities (`pow`, `mod`, `remainder`, `cbrt`, `sign`, `trunc`, `exp`, `expm1`, `hypot`, `average`, `pi`)
+- **Unit preservation across all math functions**: Operations like `pow(2px, 3)` now return `8px`, maintaining units as metadata throughout calculations
+
+### Changed
+
+- **Refactored math functions**: Extracted to composable pure functions with shared helpers (`over`, `overTwo`, `overMany`) for consistent behavior
+- **`min`/`max` now require at least 1 argument**: Previously accepted 0 arguments returning `Infinity`/`-Infinity`
+
 ## [0.20.0] - 2026-01-16
 
 ### Added
