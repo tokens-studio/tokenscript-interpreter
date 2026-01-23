@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.21.0] - 2026-01-23
+
 ### Added
 
 - **Advanced math functions**: Trigonometric (`sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `atan2`), hyperbolic (`sinh`, `cosh`, `tanh`, `asinh`, `acosh`, `atanh`), logarithmic (`log`, `ln`, `log10`, `log2`, `log1p`), and additional utilities (`pow`, `mod`, `remainder`, `cbrt`, `sign`, `trunc`, `exp`, `expm1`, `hypot`, `average`, `pi`)
