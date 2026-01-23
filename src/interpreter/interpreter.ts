@@ -100,6 +100,10 @@ export class Interpreter {
     return this.references.get(key);
   }
 
+  public setReference(key: string, value: ISymbolType): void {
+    this.references.set(key, value);
+  }
+
   // Utilities -------------------------------------------------------------------
 
   public setAst(ast: ASTNode | null): void {

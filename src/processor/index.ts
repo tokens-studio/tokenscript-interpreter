@@ -13,7 +13,6 @@ export {
   type TokenDataMap,
 } from "./builders";
 export { createDependencyError } from "./errors";
-export * as linter from "./linter";
 export {
   defaultObjectParsers,
   numberWithUnitParser,
@@ -51,3 +50,5 @@ export type {
   ProcessResult,
   ProcessSetsOptions,
 } from "./types";
+export type { ValidationIssue } from "./validator";
+export { ValidationSeverity } from "./validator";

@@ -2,31 +2,34 @@
 // For Node.js file-based processing, use:
 // import { processTokensFromFiles } from "@tokens-studio/tokenscript-interpreter/processor-node";
 
+export type {
+  BuildTokensOptions,
+  CreateTokenParams,
+  CreateTokenResult,
+  DeleteTokenParams,
+  DeleteTokenResult,
+  FlattenCallback,
+  IssuesMap,
+  ProcessorOutput,
+  ProcessorResult,
+  ResolveIssue,
+  TokenBuilder,
+  TokenDataMap,
+  TokenOperationResult,
+  UpdateTokenParams,
+  UpdateTokenResult,
+  ValidationIssue,
+} from "@src/processor";
 export {
-  type BuildTokensOptions,
   buildTokens,
-  type CreateTokenParams,
-  type CreateTokenResult,
-  type DeleteTokenParams,
-  type DeleteTokenResult,
-  type FlattenCallback,
   flattenChildrenMap,
   flattenChildrenObject,
   getAffectedTokens,
   getBrokenReferences,
   getModifiedDependants,
   getRenamedReferences,
-  type IssuesMap,
-  linter,
-  type ProcessorOutput,
-  type ProcessorResult,
-  type ResolveIssue,
-  type TokenBuilder,
-  type TokenDataMap,
-  type TokenOperationResult,
   TokenResolver,
-  type UpdateTokenParams,
-  type UpdateTokenResult,
+  ValidationSeverity,
 } from "@src/processor";
 export * as builders from "@src/processor/builders";
 export { processTokenSets, processTokens } from "@src/processor/process";

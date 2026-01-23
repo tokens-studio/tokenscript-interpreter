@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **TokenScript-based token validation**: New `TokenManager` for registering token type schemas with validation scripts written in TokenScript. Supports nested validation for composite types (typography, shadow) with path-based error reporting.
+
+### Breaking Changes
+
+- **Replaced hardcoded linter with dynamic validation**: Removed the TypeScript-based linter system with CSS/Penpot presets. Validation is now driven by TokenScript schemas that can be registered at runtime.
+
+### Removed
+
+- **Linter module**: Removed `src/processor/linter/` and all preset validators. Use TokenScript validation schemas instead.
+
 ## [0.21.0] - 2026-01-23
 
 ### Added
