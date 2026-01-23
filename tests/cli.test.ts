@@ -61,8 +61,8 @@ describe("CLI Functionality", () => {
       const interpreter = new Interpreter(ast!, {});
       const result = interpreter.interpret();
 
-      // Note: min function currently returns just the number, not with unit
-      expect(result?.toString()).toBe("5");
+      // min function preserves unit from first NumberWithUnitSymbol argument
+      expect(result?.toString()).toBe("5px");
     });
   });
 
