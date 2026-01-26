@@ -156,7 +156,11 @@ export const mathFunctions: Record<string, FunctionImpl> = {
 
   max: (...args: ISymbolType[]) => overMany(args, (nums) => Math.max(...nums), "max", 1),
 
-  clamp: (value: ISymbolType, min: ISymbolType, max: ISymbolType): NumberSymbol | NumberWithUnitSymbol => {
+  clamp: (
+    value: ISymbolType,
+    min: ISymbolType,
+    max: ISymbolType,
+  ): NumberSymbol | NumberWithUnitSymbol => {
     const valueNum = extractNumber(value, "clamp");
     const minNum = extractNumber(min, "clamp");
     const maxNum = extractNumber(max, "clamp");
