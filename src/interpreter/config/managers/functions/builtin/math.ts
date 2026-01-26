@@ -156,6 +156,25 @@ export const mathFunctions: Record<string, FunctionImpl> = {
 
   max: (...args: ISymbolType[]) => overMany(args, (nums) => Math.max(...nums), "max", 1),
 
+  clamp: (value: ISymbolType, min: ISymbolType, max: ISymbolType): NumberSymbol | NumberWithUnitSymbol => {
+    const valueNum = extractNumber(value, "clamp");
+    const minNum = extractNumber(min, "clamp");
+    const maxNum = extractNumber(max, "clamp");
+
+    if (minNum > maxNum) {
+      throw new InterpreterError(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE, {
+        data: { functionName: "clamp", constraint: "min must be less than or equal to max" },
+      });
+    }
+
+    const result = Math.min(Math.max(valueNum, minNum), maxNum);
+
+    if (value instanceof NumberWithUnitSymbol) {
+      return new NumberWithUnitSymbol(result, value.unit);
+    }
+    return new NumberSymbol(result);
+  },
+
   mod: (a: ISymbolType, b: ISymbolType) =>
     overTwo(
       a,

@@ -1544,3 +1544,165 @@ describe("Math Functions - NumberWithUnit Support for New Functions", () => {
     expect(interpreter.symbolTable.get("rem_mixed")?.value).toBe(2);
   });
 });
+
+describe("Math Functions - Clamp", () => {
+  it("should return value when within range", () => {
+    const text = `
+    variable clamped1: Number = clamp(5, 0, 10);
+    variable clamped2: Number = clamp(3, 0, 10);
+    variable clamped3: Number = clamp(7, 0, 10);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("clamped1")?.value).toBe(5);
+    expect(interpreter.symbolTable.get("clamped2")?.value).toBe(3);
+    expect(interpreter.symbolTable.get("clamped3")?.value).toBe(7);
+  });
+
+  it("should return min when value is below range", () => {
+    const text = `
+    variable clamped1: Number = clamp(-5, 0, 10);
+    variable clamped2: Number = clamp(-10, 0, 10);
+    variable clamped3: Number = clamp(-1, 0, 10);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("clamped1")?.value).toBe(0);
+    expect(interpreter.symbolTable.get("clamped2")?.value).toBe(0);
+    expect(interpreter.symbolTable.get("clamped3")?.value).toBe(0);
+  });
+
+  it("should return max when value is above range", () => {
+    const text = `
+    variable clamped1: Number = clamp(15, 0, 10);
+    variable clamped2: Number = clamp(100, 0, 10);
+    variable clamped3: Number = clamp(11, 0, 10);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("clamped1")?.value).toBe(10);
+    expect(interpreter.symbolTable.get("clamped2")?.value).toBe(10);
+    expect(interpreter.symbolTable.get("clamped3")?.value).toBe(10);
+  });
+
+  it("should handle edge cases at boundaries", () => {
+    const text = `
+    variable clamped_min: Number = clamp(0, 0, 10);
+    variable clamped_max: Number = clamp(10, 0, 10);
+    variable clamped_mid: Number = clamp(5, 0, 10);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("clamped_min")?.value).toBe(0);
+    expect(interpreter.symbolTable.get("clamped_max")?.value).toBe(10);
+    expect(interpreter.symbolTable.get("clamped_mid")?.value).toBe(5);
+  });
+
+  it("should handle negative ranges", () => {
+    const text = `
+    variable clamped1: Number = clamp(0, -10, -5);
+    variable clamped2: Number = clamp(-7, -10, -5);
+    variable clamped3: Number = clamp(-15, -10, -5);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("clamped1")?.value).toBe(-5);
+    expect(interpreter.symbolTable.get("clamped2")?.value).toBe(-7);
+    expect(interpreter.symbolTable.get("clamped3")?.value).toBe(-10);
+  });
+
+  it("should handle NumberWithUnit and preserve unit", () => {
+    const text = `
+    variable clamped_px: NumberWithUnit = clamp(15px, 0px, 10px);
+    variable clamped_rem: NumberWithUnit = clamp(-5rem, 0rem, 10rem);
+    variable clamped_em: NumberWithUnit = clamp(5em, 0em, 10em);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    const clampedPx = interpreter.symbolTable.get("clamped_px");
+    const clampedRem = interpreter.symbolTable.get("clamped_rem");
+    const clampedEm = interpreter.symbolTable.get("clamped_em");
+
+    expect(clampedPx?.value).toBe(10);
+    expect(clampedPx?.toString()).toBe("10px");
+    expect(clampedRem?.value).toBe(0);
+    expect(clampedRem?.toString()).toBe("0rem");
+    expect(clampedEm?.value).toBe(5);
+    expect(clampedEm?.toString()).toBe("5em");
+  });
+
+  it("should handle mixed Number and NumberWithUnit args", () => {
+    const text = `
+    variable clamped_mixed1: NumberWithUnit = clamp(15px, 0, 10);
+    variable clamped_mixed2: NumberWithUnit = clamp(-5rem, 0, 10);
+    variable clamped_mixed3: NumberWithUnit = clamp(7em, 0, 10);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    const clampedMixed1 = interpreter.symbolTable.get("clamped_mixed1");
+    const clampedMixed2 = interpreter.symbolTable.get("clamped_mixed2");
+    const clampedMixed3 = interpreter.symbolTable.get("clamped_mixed3");
+
+    expect(clampedMixed1?.value).toBe(10);
+    expect(clampedMixed1?.toString()).toBe("10px");
+    expect(clampedMixed2?.value).toBe(0);
+    expect(clampedMixed2?.toString()).toBe("0rem");
+    expect(clampedMixed3?.value).toBe(7);
+    expect(clampedMixed3?.toString()).toBe("7em");
+  });
+
+  it("should throw error when min > max", () => {
+    const text = `variable invalid: Number = clamp(5, 10, 0);`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+
+    expect(() => interpreter.interpret()).toThrow(InterpreterError);
+
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      expect(error).toBeInstanceOf(InterpreterError);
+      expect((error as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
+      expect((error as InterpreterError).data.functionName).toBe("clamp");
+    }
+  });
+
+  it("should throw error for non-number arguments", () => {
+    const text = `variable invalid: Number = clamp("5", 0, 10);`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+
+    expect(() => interpreter.interpret()).toThrow(InterpreterError);
+
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      expect(error).toBeInstanceOf(InterpreterError);
+      expect((error as InterpreterError).code).toBe(FunctionsErrorCode.EXPECTS_NUMBER_ARGUMENTS);
+      expect((error as InterpreterError).data.functionName).toBe("clamp");
+    }
+  });
+});
