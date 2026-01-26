@@ -167,7 +167,7 @@ export const mathFunctions: Record<string, FunctionImpl> = {
 
     if (minNum > maxNum) {
       throw new InterpreterError(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE, {
-        data: { functionName: "clamp", constraint: "min must be less than or equal to max" },
+        data: { functionName: "clamp", constraint: "min <= max" },
       });
     }
 
