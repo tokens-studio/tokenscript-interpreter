@@ -179,7 +179,10 @@ export const mathFunctions: Record<string, FunctionImpl> = {
   floor: (arg: ISymbolType) => over(arg, Math.floor, "floor"),
   ceil: (arg: ISymbolType) => over(arg, Math.ceil, "ceil"),
   cbrt: (arg: ISymbolType) => over(arg, Math.cbrt, "cbrt"),
-  sign: (arg: ISymbolType) => over(arg, Math.sign, "sign"),
+  sign: (arg: ISymbolType): NumberSymbol => {
+    const value = extractNumber(arg, "sign");
+    return new NumberSymbol(Math.sign(value));
+  },
   trunc: (arg: ISymbolType) => over(arg, Math.trunc, "trunc"),
   exp: (arg: ISymbolType) => over(arg, Math.exp, "exp"),
   expm1: (arg: ISymbolType) => over(arg, Math.expm1, "expm1"),
@@ -338,6 +341,27 @@ export const mathFunctions: Record<string, FunctionImpl> = {
       });
     }
     return over(arg, Math.log1p, "log1p");
+  },
+
+  // Factorial function
+  factorial: (arg: ISymbolType): NumberSymbol => {
+    if (!(arg instanceof NumberSymbol)) {
+      throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+        data: { functionName: "factorial", expectedType: "number", argumentPosition: "first" },
+      });
+    }
+    const n = arg.value as number;
+    if (n < 0 || !Number.isInteger(n)) {
+      throw new InterpreterError(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE, {
+        data: { functionName: "factorial", constraint: "non-negative integer" },
+      });
+    }
+
+    let result = 1;
+    for (let i = 2; i <= n; i++) {
+      result *= i;
+    }
+    return new NumberSymbol(result);
   },
 
   // Constants

@@ -656,6 +656,202 @@ describe("Math Functions - NumberWithUnit Support", () => {
   });
 });
 
+describe("Math Functions - Factorial", () => {
+  it("should compute factorial of small positive integers", () => {
+    const text = `
+    variable fact_0: Number = factorial(0);
+    variable fact_1: Number = factorial(1);
+    variable fact_5: Number = factorial(5);
+    variable fact_7: Number = factorial(7);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("fact_0")?.value).toBe(1);
+    expect(interpreter.symbolTable.get("fact_1")?.value).toBe(1);
+    expect(interpreter.symbolTable.get("fact_5")?.value).toBe(120);
+    expect(interpreter.symbolTable.get("fact_7")?.value).toBe(5040);
+  });
+
+  it("should return 1 for factorial(0)", () => {
+    const text = `variable fact_zero: Number = factorial(0);`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("fact_zero")?.value).toBe(1);
+  });
+
+  it("should handle larger factorials", () => {
+    const text = `
+    variable fact_10: Number = factorial(10);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("fact_10")?.value).toBe(3628800);
+  });
+
+  it("should throw error for negative numbers", () => {
+    const text = `variable invalid: Number = factorial(-1);`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+
+    expect(() => interpreter.interpret()).toThrow(InterpreterError);
+
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      expect(error).toBeInstanceOf(InterpreterError);
+      expect((error as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
+      expect((error as InterpreterError).data.functionName).toBe("factorial");
+    }
+  });
+
+  it("should throw error for non-integer input", () => {
+    const text = `variable invalid: Number = factorial(3.5);`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+
+    expect(() => interpreter.interpret()).toThrow(InterpreterError);
+
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      expect(error).toBeInstanceOf(InterpreterError);
+      expect((error as InterpreterError).code).toBe(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE);
+      expect((error as InterpreterError).data.functionName).toBe("factorial");
+    }
+  });
+
+  it("should throw error for non-number arguments", () => {
+    const text = `variable invalid: Number = factorial("5");`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+
+    expect(() => interpreter.interpret()).toThrow(InterpreterError);
+
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      expect(error).toBeInstanceOf(InterpreterError);
+      expect((error as InterpreterError).code).toBe(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT);
+      expect((error as InterpreterError).data.functionName).toBe("factorial");
+    }
+  });
+});
+
+describe("Math Functions - Sign", () => {
+  it("should return 1 for positive numbers", () => {
+    const text = `
+    variable sign_pos1: Number = sign(5);
+    variable sign_pos2: Number = sign(0.5);
+    variable sign_pos3: Number = sign(100);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("sign_pos1")?.value).toBe(1);
+    expect(interpreter.symbolTable.get("sign_pos2")?.value).toBe(1);
+    expect(interpreter.symbolTable.get("sign_pos3")?.value).toBe(1);
+  });
+
+  it("should return -1 for negative numbers", () => {
+    const text = `
+    variable sign_neg1: Number = sign(-5);
+    variable sign_neg2: Number = sign(-0.5);
+    variable sign_neg3: Number = sign(-100);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("sign_neg1")?.value).toBe(-1);
+    expect(interpreter.symbolTable.get("sign_neg2")?.value).toBe(-1);
+    expect(interpreter.symbolTable.get("sign_neg3")?.value).toBe(-1);
+  });
+
+  it("should return 0 for zero", () => {
+    const text = `variable sign_zero: Number = sign(0);`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("sign_zero")?.value).toBe(0);
+  });
+
+  it("should handle NumberWithUnit - positive", () => {
+    const text = `
+    variable sign_px: Number = sign(5px);
+    variable sign_rem: Number = sign(2.5rem);
+    variable sign_em: Number = sign(100em);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("sign_px")?.value).toBe(1);
+    expect(interpreter.symbolTable.get("sign_rem")?.value).toBe(1);
+    expect(interpreter.symbolTable.get("sign_em")?.value).toBe(1);
+  });
+
+  it("should handle NumberWithUnit - negative", () => {
+    const text = `
+    variable sign_neg_px: Number = sign(-5px);
+    variable sign_neg_rem: Number = sign(-2.5rem);
+    variable sign_neg_em: Number = sign(-100em);
+    `;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("sign_neg_px")?.value).toBe(-1);
+    expect(interpreter.symbolTable.get("sign_neg_rem")?.value).toBe(-1);
+    expect(interpreter.symbolTable.get("sign_neg_em")?.value).toBe(-1);
+  });
+
+  it("should handle NumberWithUnit - zero", () => {
+    const text = `variable sign_zero_px: Number = sign(0px);`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+    interpreter.interpret();
+
+    expect(interpreter.symbolTable.get("sign_zero_px")?.value).toBe(0);
+  });
+
+  it("should throw error for non-number arguments", () => {
+    const text = `variable invalid: Number = sign("test");`;
+    const lexer = new Lexer(text);
+    const parser = new Parser(lexer);
+    const interpreter = new Interpreter(parser);
+
+    expect(() => interpreter.interpret()).toThrow(InterpreterError);
+
+    try {
+      interpreter.interpret();
+    } catch (error) {
+      expect(error).toBeInstanceOf(InterpreterError);
+      expect((error as InterpreterError).code).toBe(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT);
+      expect((error as InterpreterError).data.functionName).toBe("sign");
+    }
+  });
+});
+
 describe("Math Functions - Inverse Hyperbolic", () => {
   it("should handle asinh function", () => {
     const text = `
@@ -1015,11 +1211,11 @@ describe("Math Functions - Sign", () => {
     expect(interpreter.symbolTable.get("sign_zero")?.value).toBe(0);
   });
 
-  it("should handle sign with NumberWithUnit (preserves unit)", () => {
+  it("should handle sign with NumberWithUnit (returns NumberSymbol)", () => {
     const text = `
-    variable sign_px: NumberWithUnit = sign(-5px);
-    variable sign_rem: NumberWithUnit = sign(3rem);
-    variable sign_em: NumberWithUnit = sign(0em);
+    variable sign_px: Number = sign(-5px);
+    variable sign_rem: Number = sign(3rem);
+    variable sign_em: Number = sign(0em);
     `;
     const lexer = new Lexer(text);
     const parser = new Parser(lexer);
@@ -1031,11 +1227,11 @@ describe("Math Functions - Sign", () => {
     const signEm = interpreter.symbolTable.get("sign_em");
 
     expect(signPx?.value).toBe(-1);
-    expect(signPx?.toString()).toBe("-1px");
+    expect(signPx?.toString()).toBe("-1");
     expect(signRem?.value).toBe(1);
-    expect(signRem?.toString()).toBe("1rem");
+    expect(signRem?.toString()).toBe("1");
     expect(signEm?.value).toBe(0);
-    expect(signEm?.toString()).toBe("0em");
+    expect(signEm?.toString()).toBe("0");
   });
 });
 
