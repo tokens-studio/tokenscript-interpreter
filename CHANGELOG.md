@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.22.0] - 2026-01-27
+
 ### Added
 
 - **Token metadata**: Attach arbitrary metadata to tokens via `$metadata` field. Metadata is preserved as a reference through the processing pipeline and during symbol cloning, enabling external tracking (e.g., token IDs, source information) without affecting TokenScript evaluation.
