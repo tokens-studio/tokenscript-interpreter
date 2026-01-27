@@ -608,7 +608,13 @@ class PrefixResolver {
       // No string fields to resolve, token is ready
       // Create TokenSymbol and store it in both resolved and reference cache
       const tokenType = tokenData.$type || "unknown";
-      const tokenSymbol = createTokenSymbol(tokenValue, tokenType, this.config, this.objectParsers);
+      const tokenSymbol = createTokenSymbol(
+        tokenValue,
+        tokenType,
+        this.config,
+        this.objectParsers,
+        tokenData.$metadata,
+      );
       this.resolved.set(tokenName, tokenSymbol);
       this.referenceCache.set(tokenName, tokenSymbol);
 
@@ -912,6 +918,7 @@ class PrefixResolver {
         tokenType,
         this.config,
         this.objectParsers,
+        tokenData.$metadata,
       );
       this.resolved.set(tokenName, tokenSymbol);
       this.referenceCache.set(tokenName, tokenSymbol);

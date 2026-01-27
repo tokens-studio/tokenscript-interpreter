@@ -81,9 +81,23 @@ export interface ASTNode {
   nodeType: string;
 }
 
+/**
+ * Metadata attached to a symbol that is preserved across cloning operations.
+ * This data is not accessible to the tokenscript language itself and is intended
+ * for external use (e.g., storing token IDs for tracing).
+ */
+export type SymbolMetadata = Record<string, unknown>;
+
 export interface ISymbolType {
   type: string;
   value: any;
+
+  /**
+   * Optional metadata attached to this symbol.
+   * This is a reference that is preserved (not cloned) during deepCopy/cloneIfMutable operations.
+   * It is not accessible to the tokenscript language and is intended for external use.
+   */
+  metadata?: SymbolMetadata;
 
   cloneIfMutable(): ISymbolType;
   deepCopy(): ISymbolType;

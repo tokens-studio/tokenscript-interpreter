@@ -1,3 +1,4 @@
+import type { SymbolMetadata } from "@src/types";
 import { getKeyAlt, isObject, isString } from "@/src/interpreter/utils/type";
 
 /**
@@ -6,6 +7,12 @@ import { getKeyAlt, isObject, isString } from "@/src/interpreter/utils/type";
 export interface TokenData {
   $value: unknown;
   $type?: string;
+  /**
+   * Optional metadata attached to the token.
+   * This is passed through to the TokenSymbol and preserved during cloning.
+   * Not accessible to the tokenscript language.
+   */
+  $metadata?: SymbolMetadata;
 }
 
 export function getTokenValue(data: string | TokenData): unknown {
@@ -50,11 +57,13 @@ export function flattenTokensObject(
       const tokenValue = getKeyAlt(["$value", "value"], objValue);
 
       if (tokenValue !== undefined) {
-        // Capture $type if present
+        // Capture $type and $metadata if present
         const tokenType = objValue.$type;
+        const tokenMetadata = objValue.$metadata as SymbolMetadata | undefined;
         const tokenData: TokenData = {
           $value: tokenValue,
           ...(tokenType !== undefined && { $type: String(tokenType) }),
+          ...(tokenMetadata !== undefined && { $metadata: tokenMetadata }),
         };
         result.set(path, tokenData);
       }
@@ -81,9 +90,11 @@ export function normalizeToTokenData(value: unknown): TokenData {
   }
   if (isObject(value) && "$value" in value) {
     const obj = value as Record<string, unknown>;
+    const metadata = obj.$metadata as SymbolMetadata | undefined;
     return {
       $value: obj.$value,
       ...(isString(obj.$type) && { $type: obj.$type }),
+      ...(metadata !== undefined && { $metadata: metadata }),
     };
   }
   return { $value: value };
