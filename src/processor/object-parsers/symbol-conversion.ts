@@ -7,7 +7,7 @@ import {
   TokenSymbol,
 } from "@interpreter/symbols";
 import { isArray, isObject } from "@interpreter/utils/type";
-import type { ISymbolType } from "@src/types";
+import type { ISymbolType, SymbolMetadata } from "@src/types";
 import { defaultObjectParsers, type ObjectParser } from ".";
 
 export function parseValueToSymbol(
@@ -36,21 +36,22 @@ export function createTokenSymbol(
   tokenType: string = "unknown",
   config?: Config,
   parsers: ObjectParser[] = defaultObjectParsers,
+  metadata?: SymbolMetadata,
 ): TokenSymbol {
   if (isObject(value)) {
     const symbolMap: Record<string, ISymbolType> = {};
     for (const [key, val] of Object.entries(value)) {
       symbolMap[key] = parseValueToSymbol(val, config, parsers) as ISymbolType;
     }
-    return new TokenSymbol(tokenType, symbolMap, config);
+    return new TokenSymbol(tokenType, symbolMap, config, metadata);
   }
 
   if (isArray(value)) {
     const symbolArray = value.map((val) => parseValueToSymbol(val, config, parsers) as ISymbolType);
-    return new TokenSymbol(tokenType, symbolArray, config);
+    return new TokenSymbol(tokenType, symbolArray, config, metadata);
   }
 
-  return new TokenSymbol(tokenType, value as Record<string, any>, config);
+  return new TokenSymbol(tokenType, value as Record<string, any>, config, metadata);
 }
 
 /**
@@ -136,6 +137,7 @@ export function createTokenSymbolFromResolvedFields(
   tokenType: string = "unknown",
   config?: Config,
   parsers: ObjectParser[] = defaultObjectParsers,
+  metadata?: SymbolMetadata,
 ): TokenSymbol {
   if (isObject(originalValue)) {
     const symbolMap: Record<string, ISymbolType> = {};
@@ -149,7 +151,7 @@ export function createTokenSymbolFromResolvedFields(
         parsers,
       );
     }
-    return new TokenSymbol(tokenType, symbolMap, config);
+    return new TokenSymbol(tokenType, symbolMap, config, metadata);
   }
 
   if (isArray(originalValue)) {
@@ -160,9 +162,9 @@ export function createTokenSymbolFromResolvedFields(
         buildValueFromResolvedFields(fieldPath, originalValue[i], resolvedFields, config, parsers),
       );
     }
-    return new TokenSymbol(tokenType, symbolArray, config);
+    return new TokenSymbol(tokenType, symbolArray, config, metadata);
   }
 
   // Fallback for other types
-  return new TokenSymbol(tokenType, originalValue as Record<string, any>, config);
+  return new TokenSymbol(tokenType, originalValue as Record<string, any>, config, metadata);
 }

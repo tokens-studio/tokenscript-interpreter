@@ -1,4 +1,4 @@
-import { type ISymbolType, SupportedFormats } from "@src/types";
+import { type ISymbolType, SupportedFormats, type SymbolMetadata } from "@src/types";
 import type { Config } from "./config/config";
 import { InterpreterError, SymbolsErrorCode } from "./errors";
 import { ensureValidAlpha, isValidHex } from "./utils/color";
@@ -1342,11 +1342,19 @@ export class TokenSymbol extends BaseSymbolType {
 
   public subType: string;
   public value: TokenValue;
+  /**
+   * Optional metadata attached to this token.
+   * This is a reference that is preserved (not cloned) during deepCopy/cloneIfMutable operations.
+   * It is not accessible to the tokenscript language and is intended for external use
+   * (e.g., storing token IDs for tracing).
+   */
+  public metadata?: SymbolMetadata;
 
   constructor(
     subType: string,
     value: TokenValue | Record<string, ISymbolType> | TokenSymbol | null,
     config?: Config,
+    metadata?: SymbolMetadata,
   ) {
     let safeValue: TokenValue;
     if (value instanceof TokenSymbol) {
@@ -1368,6 +1376,7 @@ export class TokenSymbol extends BaseSymbolType {
     super(safeValue, config);
     this.value = safeValue;
     this.subType = subType;
+    this.metadata = metadata;
   }
 
   validValue(val: any): boolean {
@@ -1506,9 +1515,14 @@ export class TokenSymbol extends BaseSymbolType {
 
   deepCopy(): TokenSymbol {
     if (isMap(this.value)) {
-      return new TokenSymbol(this.subType, DictionaryImpl.deepCopy(this.value), this.config);
+      return new TokenSymbol(
+        this.subType,
+        DictionaryImpl.deepCopy(this.value),
+        this.config,
+        this.metadata,
+      );
     }
-    return new TokenSymbol(this.subType, ListImpl.deepCopy(this.value), this.config);
+    return new TokenSymbol(this.subType, ListImpl.deepCopy(this.value), this.config, this.metadata);
   }
 
   cloneIfMutable(): TokenSymbol {
