@@ -292,4 +292,92 @@ describe("Color Alpha - Direct Access", () => {
       expect(result.value).toBe(null);
     });
   });
+
+  describe("Alpha extraction from hex8 colors", () => {
+    it("should extract alpha from hex8 color literal", () => {
+      const interpreter = createInterpreter(
+        `
+        variable color: Color.Hex = #FF000080;
+        return color.alpha;
+      `,
+        {},
+        config,
+      );
+
+      const result = interpreter.interpret();
+      // 0x80 = 128, 128/255 ≈ 0.502
+      expect(result.value).toBeCloseTo(128 / 255, 5);
+    });
+
+    it("should extract alpha from hex4 color literal", () => {
+      const interpreter = createInterpreter(
+        `
+        variable color: Color.Hex = #F008;
+        return color.alpha;
+      `,
+        {},
+        config,
+      );
+
+      const result = interpreter.interpret();
+      // 0x88 = 136, 136/255 ≈ 0.533
+      expect(result.value).toBeCloseTo(136 / 255, 5);
+    });
+
+    it("should extract full opacity from hex8 with FF alpha", () => {
+      const interpreter = createInterpreter(
+        `
+        variable color: Color.Hex = #FF0000FF;
+        return color.alpha;
+      `,
+        {},
+        config,
+      );
+
+      const result = interpreter.interpret();
+      expect(result.value).toBe(1);
+    });
+
+    it("should extract zero alpha from hex8 with 00 alpha", () => {
+      const interpreter = createInterpreter(
+        `
+        variable color: Color.Hex = #FF000000;
+        return color.alpha;
+      `,
+        {},
+        config,
+      );
+
+      const result = interpreter.interpret();
+      expect(result.value).toBe(0);
+    });
+
+    it("should have null alpha for hex6 colors (no alpha specified)", () => {
+      const interpreter = createInterpreter(
+        `
+        variable color: Color.Hex = #FF0000;
+        return color.alpha;
+      `,
+        {},
+        config,
+      );
+
+      const result = interpreter.interpret();
+      expect(result.value).toBe(null);
+    });
+
+    it("should have null alpha for hex3 colors (no alpha specified)", () => {
+      const interpreter = createInterpreter(
+        `
+        variable color: Color.Hex = #F00;
+        return color.alpha;
+      `,
+        {},
+        config,
+      );
+
+      const result = interpreter.interpret();
+      expect(result.value).toBe(null);
+    });
+  });
 });

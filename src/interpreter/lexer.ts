@@ -238,10 +238,11 @@ export class Lexer {
       result += this.currentChar;
       this.advance();
     }
-    if (result.length !== 4 && result.length !== 7) {
+    // Support #RGB (4), #RGBA (5), #RRGGBB (7), #RRGGBBAA (9)
+    if (result.length !== 4 && result.length !== 5 && result.length !== 7 && result.length !== 9) {
       this.error(LexerErrorCode.INVALID_HEX_COLOR_FORMAT, {
         value: result,
-        expectedLength: "#RGB or #RRGGBB",
+        expectedLength: "#RGB, #RGBA, #RRGGBB, or #RRGGBBAA",
       });
     }
     return {
