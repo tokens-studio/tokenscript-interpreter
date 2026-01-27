@@ -89,6 +89,19 @@ describe("ColorSymbol", () => {
       expect(result.value).toBe("#ff0000");
     });
 
+    it("should convert hex color with alpha to hex8 string", () => {
+      const color = new ColorSymbol("#ff0000", "hex", 0.5);
+      const result = color.toStringSymbol();
+      expect(result).toBeInstanceOf(StringSymbol);
+      expect(result.value).toBe("#ff000080");
+    });
+
+    it("should expand hex3 with alpha to hex8", () => {
+      const color = new ColorSymbol("#F00", "hex", 0.5);
+      const result = color.toStringSymbol();
+      expect(result.value).toBe("#FF000080");
+    });
+
     it("should convert dynamic color to object string", () => {
       const colorValue = {
         red: new StringSymbol("255"),
@@ -266,6 +279,21 @@ describe("ColorSymbol", () => {
     it("should return string representation", () => {
       const color = new ColorSymbol("#ff0000");
       expect(color.toString()).toBe("#ff0000");
+    });
+
+    it("should return hex8 format when hex color has alpha", () => {
+      const color = new ColorSymbol("#ff0000", "hex", 0.5);
+      expect(color.toString()).toBe("#ff000080");
+    });
+
+    it("should return hex8 format with full opacity", () => {
+      const color = new ColorSymbol("#ff0000", "hex", 1);
+      expect(color.toString()).toBe("#ff0000ff");
+    });
+
+    it("should expand hex3 to hex8 when alpha is present", () => {
+      const color = new ColorSymbol("#F00", "hex", 0.5);
+      expect(color.toString()).toBe("#FF000080");
     });
   });
 

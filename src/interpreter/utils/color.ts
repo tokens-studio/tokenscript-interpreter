@@ -1,4 +1,4 @@
-import { ColorErrorCode, InterpreterError } from "../errors";
+import { ColorErrorCode, InterpreterError, SymbolsErrorCode } from "../errors";
 import { isString } from "./type";
 
 export function isValidHex(value: string): boolean {
@@ -32,7 +32,7 @@ export function isValidHex(value: string): boolean {
  */
 export function parseHexWithAlpha(value: string): { color: string; alpha: number | null } {
   if (!isValidHex(value)) {
-    throw new InterpreterError(ColorErrorCode.INVALID_HEX_COLOR, {
+    throw new InterpreterError(SymbolsErrorCode.INVALID_HEX_COLOR, {
       data: { value },
     });
   }
@@ -82,4 +82,23 @@ export function ensureValidAlpha(alpha: number | null): void {
 
 export function isTransparent(alpha: number | null): alpha is number {
   return alpha !== null && alpha < 1;
+}
+
+/**
+ * Formats a hex color with alpha as hex8 format (#RRGGBBAA).
+ * Expands hex3 (#RGB) to hex6 (#RRGGBB) before appending alpha.
+ */
+export function formatHex8(hexColor: string, alpha: number): string {
+  const alphaHex = Math.round(alpha * 255)
+    .toString(16)
+    .padStart(2, "0");
+
+  // Expand 3-char hex to 6-char if needed
+  let hex6 = hexColor;
+  if (hexColor.length === 4) {
+    // #RGB -> #RRGGBB
+    hex6 = `#${hexColor[1]}${hexColor[1]}${hexColor[2]}${hexColor[2]}${hexColor[3]}${hexColor[3]}`;
+  }
+
+  return `${hex6}${alphaHex}`;
 }

@@ -7,7 +7,7 @@ import {
 } from "@interpreter/errors";
 import { parseExpression } from "@interpreter/parser";
 import { ColorSymbol, type dynamicColorValue, typeEquals } from "@interpreter/symbols";
-import { ensureValidAlpha, isTransparent } from "@interpreter/utils/color";
+import { ensureValidAlpha, formatHex8, isTransparent } from "@interpreter/utils/color";
 import { Interpreter } from "@src/lib";
 import type { ISymbolType } from "@src/types";
 import { buildSchemaUri, parseVersionString } from "@src/utils/schema-uri";
@@ -397,7 +397,10 @@ ${spec}`,
     const { decimalPlaces = 2, removeTrailingZeros = true } = opts;
 
     if (typeof color.value === "string") {
-      // For hex colors, return the hex string (no alpha in output for now)
+      // For hex colors with alpha, output hex8 format
+      if (color.alpha !== null) {
+        return formatHex8(color.value, color.alpha);
+      }
       return color.value;
     }
 

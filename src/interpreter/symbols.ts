@@ -1,7 +1,7 @@
 import { type ISymbolType, SupportedFormats, type SymbolMetadata } from "@src/types";
 import type { Config } from "./config/config";
 import { InterpreterError, SymbolsErrorCode } from "./errors";
-import { ensureValidAlpha, isValidHex } from "./utils/color";
+import { ensureValidAlpha, formatHex8, isValidHex } from "./utils/color";
 import { capitalize } from "./utils/string";
 import {
   isArray,
@@ -1641,6 +1641,10 @@ export class ColorSymbol extends BaseSymbolType {
       return new StringSymbol(formatObjectEntries(this.value), this.config);
     }
     if (isString(this.value)) {
+      // For hex colors with alpha, output hex8 format
+      if (this.isHex() && this.alpha !== null) {
+        return new StringSymbol(formatHex8(this.value, this.alpha), this.config);
+      }
       return new StringSymbol(this.value, this.config);
     }
     return new StringSymbol("", this.config);

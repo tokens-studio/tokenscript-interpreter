@@ -35,8 +35,8 @@ describe("Color Objects - Hex Color Literals", () => {
     const result = interpreter.interpret();
 
     expect(result).toBeDefined();
-    // hex4 gets expanded to hex6
-    expect(result?.toString()).toBe("#FF5533");
+    // hex4 gets expanded to hex6, alpha preserved in hex8 output
+    expect(result?.toString()).toBe("#FF553388");
     // alpha should be extracted (0x88 / 255 ≈ 0.533)
     expect((result as any).alpha).toBeCloseTo(136 / 255, 5);
   });
@@ -50,7 +50,8 @@ describe("Color Objects - Hex Color Literals", () => {
     const result = interpreter.interpret();
 
     expect(result).toBeDefined();
-    expect(result?.toString()).toBe("#FF5733");
+    // hex8 output preserves alpha
+    expect(result?.toString()).toBe("#FF573380");
     // alpha should be extracted (0x80 / 255 ≈ 0.502)
     expect((result as any).alpha).toBeCloseTo(128 / 255, 5);
   });
@@ -64,7 +65,8 @@ describe("Color Objects - Hex Color Literals", () => {
     const result = interpreter.interpret();
 
     expect(result).toBeDefined();
-    expect(result?.toString()).toBe("#FF5733");
+    // hex8 output includes alpha even when fully opaque
+    expect(result?.toString()).toBe("#FF5733ff");
     expect((result as any).alpha).toBe(1);
   });
 
@@ -77,7 +79,8 @@ describe("Color Objects - Hex Color Literals", () => {
     const result = interpreter.interpret();
 
     expect(result).toBeDefined();
-    expect(result?.toString()).toBe("#FF5733");
+    // hex8 output includes alpha even when fully transparent
+    expect(result?.toString()).toBe("#FF573300");
     expect((result as any).alpha).toBe(0);
   });
 
