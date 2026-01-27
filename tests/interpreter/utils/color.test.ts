@@ -1,4 +1,4 @@
-import { isValidHex, parseHexWithAlpha } from "@src/interpreter/utils/color";
+import { formatHex8, isValidHex, parseHexWithAlpha } from "@src/interpreter/utils/color";
 import { describe, expect, it } from "vitest";
 
 describe("Color Utils", () => {
@@ -135,6 +135,37 @@ describe("Color Utils", () => {
         expect(() => parseHexWithAlpha("#GG0000")).toThrow();
         expect(() => parseHexWithAlpha("#12")).toThrow();
       });
+    });
+  });
+
+  describe("formatHex8", () => {
+    it("should format hex6 with full opacity", () => {
+      expect(formatHex8("#FF0000", 1)).toBe("#FF0000ff");
+    });
+
+    it("should format hex6 with half opacity", () => {
+      expect(formatHex8("#FF0000", 0.5)).toBe("#FF000080");
+    });
+
+    it("should format hex6 with zero opacity", () => {
+      expect(formatHex8("#FF0000", 0)).toBe("#FF000000");
+    });
+
+    it("should expand hex3 to hex6 before appending alpha", () => {
+      expect(formatHex8("#F00", 1)).toBe("#FF0000ff");
+      expect(formatHex8("#abc", 0.5)).toBe("#aabbcc80");
+    });
+
+    it("should handle various alpha values", () => {
+      // 40% = 102/255 ≈ 0.4, rounds to 102 = 0x66
+      expect(formatHex8("#00FF00", 102 / 255)).toBe("#00FF0066");
+    });
+
+    it("should roundtrip with parseHexWithAlpha", () => {
+      const original = "#FF000080";
+      const parsed = parseHexWithAlpha(original);
+      const formatted = formatHex8(parsed.color, parsed.alpha!);
+      expect(formatted.toLowerCase()).toBe(original.toLowerCase());
     });
   });
 });

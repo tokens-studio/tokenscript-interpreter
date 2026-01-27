@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Hex color alpha preservation in string output**: Colors with alpha now output hex8 format (`#RRGGBBAA`) when converted to string, preserving the alpha channel instead of losing it
+
 ## [0.23.0] - 2026-01-27
 
 ## [0.22.0] - 2026-01-27
