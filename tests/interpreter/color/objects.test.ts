@@ -26,6 +26,61 @@ describe("Color Objects - Hex Color Literals", () => {
     expect(result?.toString()).toBe("#F53");
   });
 
+  it("should handle hex4 color literals (with alpha)", () => {
+    const text = `
+      variable color: Color = #F538;
+      return color;
+    `;
+    const interpreter = createInterpreter(text);
+    const result = interpreter.interpret();
+
+    expect(result).toBeDefined();
+    // hex4 gets expanded to hex6
+    expect(result?.toString()).toBe("#FF5533");
+    // alpha should be extracted (0x88 / 255 ≈ 0.533)
+    expect((result as any).alpha).toBeCloseTo(136 / 255, 5);
+  });
+
+  it("should handle hex8 color literals (with alpha)", () => {
+    const text = `
+      variable color: Color = #FF573380;
+      return color;
+    `;
+    const interpreter = createInterpreter(text);
+    const result = interpreter.interpret();
+
+    expect(result).toBeDefined();
+    expect(result?.toString()).toBe("#FF5733");
+    // alpha should be extracted (0x80 / 255 ≈ 0.502)
+    expect((result as any).alpha).toBeCloseTo(128 / 255, 5);
+  });
+
+  it("should handle fully opaque hex8 color", () => {
+    const text = `
+      variable color: Color = #FF5733FF;
+      return color;
+    `;
+    const interpreter = createInterpreter(text);
+    const result = interpreter.interpret();
+
+    expect(result).toBeDefined();
+    expect(result?.toString()).toBe("#FF5733");
+    expect((result as any).alpha).toBe(1);
+  });
+
+  it("should handle fully transparent hex8 color", () => {
+    const text = `
+      variable color: Color = #FF573300;
+      return color;
+    `;
+    const interpreter = createInterpreter(text);
+    const result = interpreter.interpret();
+
+    expect(result).toBeDefined();
+    expect(result?.toString()).toBe("#FF5733");
+    expect((result as any).alpha).toBe(0);
+  });
+
   it("should handle hex colors in expressions", () => {
     const text = `
       variable primary: Color = #FF0000;

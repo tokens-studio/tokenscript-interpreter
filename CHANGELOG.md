@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Token metadata**: Attach arbitrary metadata to tokens via `$metadata` field. Metadata is preserved as a reference through the processing pipeline and during symbol cloning, enabling external tracking (e.g., token IDs, source information) without affecting TokenScript evaluation.
 - **TokenScript-based token validation**: New `TokenManager` for registering token type schemas with validation scripts written in TokenScript. Supports nested validation for composite types (typography, shadow) with path-based error reporting.
+- **Hex color alpha channel support**: Parse hex colors with alpha in `#RGBA` and `#RRGGBBAA` formats. Alpha is extracted and accessible via the `.alpha` property on color symbols.
 
 ### Breaking Changes
 

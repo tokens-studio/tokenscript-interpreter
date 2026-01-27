@@ -128,6 +128,16 @@ describe("Lexer", () => {
     expect(lexer.nextToken()).toMatchObject({ type: TokenType.HEX_COLOR, value: "#F0A", line: 1 });
   });
 
+  it("should tokenize a hex4 color (with alpha)", () => {
+    const lexer = new Lexer("#F0A8");
+    expect(lexer.nextToken()).toMatchObject({ type: TokenType.HEX_COLOR, value: "#F0A8", line: 1 });
+  });
+
+  it("should tokenize a hex8 color (with alpha)", () => {
+    const lexer = new Lexer("#FF00AA80");
+    expect(lexer.nextToken()).toMatchObject({ type: TokenType.HEX_COLOR, value: "#FF00AA80", line: 1 });
+  });
+
   it("should tokenize assignment", () => {
     const lexer = new Lexer("x = 10");
     expect(lexer.nextToken()).toMatchObject({ type: TokenType.STRING, value: "x", line: 1 });

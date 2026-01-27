@@ -46,6 +46,7 @@ import {
   typeName,
 } from "./symbols";
 import { SymbolTable } from "./symbolTable";
+import { parseHexWithAlpha } from "./utils/color";
 
 class ReturnSignal {
   constructor(public value: ISymbolType | null) {}
@@ -287,7 +288,8 @@ export class Interpreter {
   }
 
   private visitHexColorNode(node: HexColorNode): ColorSymbol {
-    return new ColorSymbol(node.value, "Hex", null, this.config);
+    const { color, alpha } = parseHexWithAlpha(node.value);
+    return new ColorSymbol(color, "Hex", alpha, this.config);
   }
 
   private visitBooleanNode(node: BooleanNode): BooleanSymbol {
