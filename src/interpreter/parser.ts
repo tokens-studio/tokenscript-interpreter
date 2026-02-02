@@ -91,6 +91,29 @@ export class Parser {
     return this.lexer.peekTokens(n);
   }
 
+  /**
+   * Check if the current token can be treated as an identifier.
+   * FORMAT tokens (like 's', 'ms') are valid identifiers in most contexts
+   * (variable names, attribute names, type names).
+   */
+  private isIdentifierToken(token: Token = this.currentToken): boolean {
+    return token.type === TokenType.STRING || token.type === TokenType.FORMAT;
+  }
+
+  /**
+   * Eat an identifier token (STRING or FORMAT).
+   * FORMAT tokens can be valid identifiers in contexts like variable names,
+   * attribute names, and type names.
+   */
+  private eatIdentifier(): Token {
+    if (this.isIdentifierToken()) {
+      const token = this.currentToken;
+      this.eat(this.currentToken.type);
+      return token;
+    }
+    this.error(ParserErrorCode.UNEXPECTED_TOKEN, { token: String(this.currentToken.value) });
+  }
+
   private error(code: ParserErrorCode, data?: Record<string, unknown>): never {
     const message = data?.message ? String(data.message) : undefined;
     const formattedMessage = this.formatError(
@@ -116,13 +139,13 @@ export class Parser {
   }
 
   private typeDeclaration(): TypeDeclNode {
-    const baseTypeToken = this.eat(TokenType.STRING);
+    const baseTypeToken = this.eatIdentifier();
     const baseType = new IdentifierNode(baseTypeToken);
 
     const subTypes: IdentifierNode[] = [];
     while (this.currentToken.type === TokenType.DOT) {
       this.eat(TokenType.DOT);
-      const subTypeToken = this.eat(TokenType.STRING);
+      const subTypeToken = this.eatIdentifier();
       subTypes.push(new IdentifierNode(subTypeToken));
     }
     return new TypeDeclNode(baseType, subTypes, baseTypeToken);
@@ -168,15 +191,15 @@ export class Parser {
         case ReservedKeyword.VARIABLE:
           return this.assignVariable();
       }
-    } else if (this.currentToken.type === TokenType.STRING) {
-      // Look ahead to check the token sequence
+    } else if (this.isIdentifierToken()) {
+      // Look ahead to check the token sequence for property reassignment (e.g., output.s = ...)
       const nextTokens = this.peekTokens(4); // Get next 4 tokens
       if (nextTokens !== null) {
         for (let i = 0; i < nextTokens.length - 1; i += 2) {
-          if (nextTokens[i].type === TokenType.DOT && nextTokens[i + 1].type === TokenType.STRING) {
+          if (nextTokens[i].type === TokenType.DOT && this.isIdentifierToken(nextTokens[i + 1])) {
             if (i + 2 < nextTokens.length && nextTokens[i + 2].type === TokenType.ASSIGN) {
               const name = this.currentToken;
-              this.eat(TokenType.STRING);
+              this.eat(this.currentToken.type);
               return this.reassignVariable(name);
             }
           }
@@ -196,7 +219,7 @@ export class Parser {
   private assignVariable(): AssignNode {
     const token = this.eat(TokenType.RESERVED_KEYWORD);
 
-    const varNameToken = this.eat(TokenType.STRING);
+    const varNameToken = this.eatIdentifier();
     const varName = new IdentifierNode(varNameToken);
     this.eat(TokenType.COLON);
 
@@ -212,14 +235,14 @@ export class Parser {
   }
 
   private reassignVariable(nameToken?: Token): ReassignNode {
-    const varNameToken = nameToken || this.eat(TokenType.STRING);
+    const varNameToken = nameToken || this.eatIdentifier();
     let name: IdentifierNode | IdentifierNode[] = new IdentifierNode(varNameToken);
 
     if (this.currentToken.type === TokenType.DOT) {
       const names: IdentifierNode[] = [new IdentifierNode(varNameToken)];
       while (this.currentToken.type === TokenType.DOT) {
         this.eat(TokenType.DOT);
-        const propertyToken = this.eat(TokenType.STRING);
+        const propertyToken = this.eatIdentifier();
         names.push(new IdentifierNode(propertyToken));
       }
       name = names;
@@ -497,10 +520,11 @@ export class Parser {
     }
 
     // Identifier or function call
-    if (token.type === TokenType.STRING) {
-      this.eat(TokenType.STRING);
+    // FORMAT tokens (like 's', 'ms') can be used as identifiers/function names
+    if (this.isIdentifierToken(token)) {
+      this.eat(token.type);
       let node: ASTNode;
-      // After `eat(STRING)`, currentToken is updated.
+      // After eating the identifier, currentToken is updated.
       // This comparison (this.currentToken.type as TokenType) === TokenType.LPAREN is valid.
       if ((this.currentToken.type as TokenType) === TokenType.LPAREN) {
         // Function call
@@ -526,13 +550,14 @@ export class Parser {
     let node = leftNode;
     while (this.currentToken.type === TokenType.DOT) {
       this.eat(TokenType.DOT);
-      // @ts-expect-error - typescript bug with overlap?
-      if (this.currentToken.type === TokenType.STRING) {
+      // Accept STRING or FORMAT as valid identifier in attribute position
+      // FORMAT tokens (like 's', 'ms') can still be valid attribute names
+      if (this.isIdentifierToken()) {
         const nextToken = this.lexer.peekToken();
         if (nextToken && nextToken.type === TokenType.LPAREN) {
           // It's a method call
           const methodName = this.currentToken.value as string;
-          this.eat(TokenType.STRING);
+          this.eat(this.currentToken.type);
           node = new AttributeAccessNode(
             node,
             this.functionCall({ ...this.currentToken, value: methodName } as Token),
@@ -540,7 +565,7 @@ export class Parser {
         } else {
           // It's a property access
           const attrToken = this.currentToken;
-          this.eat(TokenType.STRING);
+          this.eat(this.currentToken.type);
           node = new AttributeAccessNode(node, new IdentifierNode(attrToken));
         }
       }

@@ -23,6 +23,9 @@ export enum SupportedFormats {
   MM = "mm",
   DEG = "deg",
   PERCENTAGE = "%",
+  // Time units
+  S = "s",
+  MS = "ms",
 }
 
 export enum ReservedKeyword {

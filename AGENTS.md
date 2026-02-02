@@ -76,6 +76,14 @@ npm run format
 - **Interpreter**: Core engine that evaluates token expressions
 - **References**: Token values can reference other tokens using `{token-name}` syntax
 
+## Language Documentation
+
+Key language features and edge cases are documented in `docs/tokenscript/`:
+
+- [Implicit Lists and Strings](docs/tokenscript/implicit-lists-and-strings.md) - How unquoted values and whitespace-separated expressions work
+- [Math Functions](docs/tokenscript/math.md) - Mathematical operations and functions
+- [Format/Unit Parsing Edge Cases](docs/tokenscript/edge-cases/format-unit-parsing.md) - How unit suffixes (px, s, ms) interact with implicit lists
+
 ## Common Tasks
 
 ### Adding a new interpreter feature
@@ -98,3 +106,11 @@ The processor pipeline is in `src/processor/`. It handles:
 - Reference resolution
 - Schema application
 - Output generation
+
+### Adding a new format unit
+
+To add a new unit keyword (like `s` for seconds):
+
+1. Add to `SupportedFormats` enum in `src/types.ts`
+2. The lexer handles adjacency checking automatically
+3. See [Format/Unit Parsing Edge Cases](docs/tokenscript/edge-cases/format-unit-parsing.md) for details
