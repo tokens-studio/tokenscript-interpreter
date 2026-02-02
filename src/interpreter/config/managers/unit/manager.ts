@@ -182,6 +182,18 @@ export class UnitManager extends BaseManager<
     return this.unitKeywords.get(keyword.toUpperCase());
   }
 
+  /**
+   * Get all registered unit keywords (lowercase).
+   * Used by the Lexer to recognize custom unit formats.
+   */
+  public getFormatKeywords(): Set<string> {
+    const keywords = new Set<string>();
+    for (const spec of this.specs.values()) {
+      keywords.add(spec.keyword.toLowerCase());
+    }
+    return keywords;
+  }
+
   public convertTo(unit: NumberWithUnitSymbol, targetUri: uriType): NumberWithUnitSymbol {
     const sourceUri = this.getUriByKeyword(unit.unit);
     if (!sourceUri) {

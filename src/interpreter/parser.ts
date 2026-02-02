@@ -15,6 +15,7 @@ import {
   ListNode,
   NullNode,
   NumNode,
+  NumberWithPossibleUnitNode,
   ReassignNode,
   ReferenceNode,
   ReturnNode,
@@ -342,7 +343,44 @@ export class Parser {
 
     if (elements.length === 1) return elements[0];
 
-    return new ImplicitListNode(elements, token);
+    const node = new ImplicitListNode(elements, token);
+
+    // Check for possible unit expression: adjacent [Number, Identifier] pattern
+    // e.g., "3s", "3.3ms", "-5s"
+    node.possibleUnitExpression = this.isPossibleUnitExpression(elements);
+
+    return node;
+  }
+
+  /**
+   * Check if two elements are adjacent (no whitespace between them).
+   * Used to detect possible unit expressions like "3s", "3.3ms", "-1.1x".
+   */
+  private isPossibleUnitExpression(elements: ASTNode[]): boolean {
+    if (elements.length !== 2) {
+      return false;
+    }
+
+    const [first, second] = elements;
+    const firstEndPos = this.getExpressionEndPos(first);
+    const secondStartPos = second.token?.pos;
+
+    if (firstEndPos === undefined || secondStartPos === undefined) {
+      return false;
+    }
+
+    return firstEndPos === secondStartPos;
+  }
+
+  /**
+   * Get the rightmost end position of an expression.
+   * For UnaryOpNode, returns the inner expression's end position.
+   */
+  private getExpressionEndPos(node: ASTNode): number | undefined {
+    if (node instanceof UnaryOpNode) {
+      return this.getExpressionEndPos(node.expr);
+    }
+    return node.token?.endPos;
   }
 
   // factor ((COMMA) factor)
@@ -427,11 +465,26 @@ export class Parser {
   }
 
   private number(): ASTNode {
-    const node = new NumNode(this.currentToken);
+    const numToken = this.currentToken;
+    const node = new NumNode(numToken);
     this.eat(TokenType.NUMBER);
+
+    // Check for built-in FORMAT (e.g., px, rem)
     if (this.currentToken.type === TokenType.FORMAT) {
       return this.format(node);
     }
+
+    // Check for adjacent STRING that might be a unit (e.g., "3s", "3.3ms")
+    // Adjacent means no whitespace: NUMBER.endPos === STRING.pos
+    if (
+      this.currentToken.type === TokenType.STRING &&
+      numToken.endPos === this.currentToken.pos
+    ) {
+      const unitIdentifier = this.currentToken.value as string;
+      this.eat(TokenType.STRING);
+      return new NumberWithPossibleUnitNode(node, unitIdentifier, numToken);
+    }
+
     return node;
   }
 
@@ -582,8 +635,15 @@ export interface ParseExpressionResult {
   ast: ASTNode | null;
 }
 
-export function parseExpression(text: string): ParseExpressionResult {
-  const lexer = new Lexer(text);
+export interface ParseExpressionOptions {
+  /**
+   * Additional format keywords to recognize (e.g., custom unit keywords like "s", "ms").
+   */
+  formatKeywords?: Set<string>;
+}
+
+export function parseExpression(text: string, options?: ParseExpressionOptions): ParseExpressionResult {
+  const lexer = new Lexer(text, { formatKeywords: options?.formatKeywords });
   const parser = new Parser(lexer);
   const ast = parser.parse();
 

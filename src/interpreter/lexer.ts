@@ -12,16 +12,26 @@ for (const val of Object.values(ReservedKeyword) as string[]) {
   RESERVED_KEYWORD_STRINGS[val.toLowerCase()] = val as ReservedKeyword;
 }
 
+export interface LexerOptions {
+  /**
+   * Additional format keywords to recognize (e.g., custom unit keywords like "s", "ms").
+   * These are checked in addition to the built-in SupportedFormats.
+   */
+  formatKeywords?: Set<string>;
+}
+
 export class Lexer {
   private text: string;
   private currentChar: string | null;
   private pos = 0;
   private line = 1;
   private column = 1;
+  private formatKeywords: Set<string>;
 
-  constructor(text: string) {
+  constructor(text: string, options?: LexerOptions) {
     this.text = text;
     this.currentChar = this.text[this.pos];
+    this.formatKeywords = options?.formatKeywords ?? new Set();
   }
 
   private error(code: LexerErrorCode, data?: Record<string, unknown>): never {
@@ -149,11 +159,23 @@ export class Lexer {
       };
     }
 
+    // Check built-in formats first
     const format = SUPPORTED_FORMAT_STRINGS[normalizedResult];
     if (format) {
       return {
         type: TokenType.FORMAT,
         value: format,
+        line: this.line,
+        pos: startPos,
+        endPos: this.pos,
+      };
+    }
+
+    // Check dynamic format keywords (e.g., custom unit keywords like "s", "ms")
+    if (this.formatKeywords.has(normalizedResult)) {
+      return {
+        type: TokenType.FORMAT,
+        value: result, // Preserve original case
         line: this.line,
         pos: startPos,
         endPos: this.pos,

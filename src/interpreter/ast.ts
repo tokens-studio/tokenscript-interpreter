@@ -65,6 +65,12 @@ export class ListNode implements ASTNode {
 export class ImplicitListNode extends ListNode {
   override nodeType = "ImplicitListNode";
   public isImplicit = true;
+  /**
+   * When true, this implicit list might represent a number with unit (e.g., "3s", "3.3ms").
+   * This is set by the parser when it detects an adjacent [Number, Identifier] pattern.
+   * The interpreter checks if the identifier is a registered unit keyword.
+   */
+  public possibleUnitExpression = false;
   constructor(
     public elements: ASTNode[],
     public token?: Token,
@@ -137,6 +143,21 @@ export class ElementWithUnitNode implements ASTNode {
   ) {
     this.unit = unitTokenValue;
   }
+}
+
+/**
+ * Represents a number followed by an adjacent identifier that might be a unit.
+ * Created by the parser when it detects NUMBER immediately followed by STRING (no whitespace).
+ * The interpreter checks if the identifier is a registered unit keyword.
+ * e.g., "3s", "3.3ms", "-5s"
+ */
+export class NumberWithPossibleUnitNode implements ASTNode {
+  nodeType = "NumberWithPossibleUnitNode";
+  constructor(
+    public numNode: NumNode,
+    public unitIdentifier: string,
+    public token?: Token,
+  ) {}
 }
 
 export class AssignNode implements ASTNode {
@@ -301,6 +322,8 @@ export function walkAST(node: ASTNode, onVisit: (node: ASTNode) => void): void {
     }
   } else if (node instanceof ElementWithUnitNode) {
     walkAST(node.astNode, onVisit);
+  } else if (node instanceof NumberWithPossibleUnitNode) {
+    walkAST(node.numNode, onVisit);
   } else if (node instanceof AssignNode) {
     if (node.assignmentExpr) {
       walkAST(node.assignmentExpr, onVisit);

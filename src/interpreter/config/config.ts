@@ -106,6 +106,14 @@ export class Config {
     });
   }
 
+  /**
+   * Get all format keywords that should be recognized by the Lexer.
+   * This includes custom unit keywords registered with the UnitManager.
+   */
+  getFormatKeywords(): Set<string> {
+    return this.unitManager.getFormatKeywords();
+  }
+
   registerSchemas(
     schemas: Array<{
       uri: string;

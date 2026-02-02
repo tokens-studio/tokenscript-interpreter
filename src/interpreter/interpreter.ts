@@ -19,6 +19,7 @@ import {
   type ListNode,
   type NullNode,
   type NumNode,
+  NumberWithPossibleUnitNode,
   type ReassignNode,
   type ReferenceNode,
   type ReturnNode,
@@ -145,18 +146,42 @@ export class Interpreter {
   }
 
   private visitBinOpNode(node: BinOpNode): ISymbolType {
-    const left = this.visit(node.left) as ISymbolType;
-    const right = this.visit(node.right) as ISymbolType;
-
     const opVal = node.opToken.value as string;
     const opType = node.opToken.type;
+
+    // Special handling for arithmetic with NumberWithPossibleUnitNode that has invalid unit
+    // e.g., "1 + 1unknown" should evaluate to "2 unknown" (arithmetic then implicit list)
+    const mathImpl = operations.MATH_IMPLEMENTATIONS[opVal];
+    if (mathImpl && node.right instanceof NumberWithPossibleUnitNode) {
+      const unitSpec = this.config.unitManager.getSpecByKeyword(node.right.unitIdentifier);
+      if (!unitSpec) {
+        // Invalid unit - perform arithmetic on the numeric part, keep identifier as string
+        const left = this.visit(node.left) as ISymbolType;
+        const rightNum = new NumberSymbol(node.right.numNode.value, this.config);
+
+        if (
+          (left instanceof NumberSymbol || left instanceof NumberWithUnitSymbol) &&
+          rightNum instanceof NumberSymbol
+        ) {
+          const result = mathImpl(left, rightNum, this.config);
+          // Return implicit list of [result, identifier]
+          return new ListSymbol(
+            [result, new StringSymbol(node.right.unitIdentifier, this.config)],
+            true, // isImplicit
+            this.config,
+          );
+        }
+      }
+    }
+
+    const left = this.visit(node.left) as ISymbolType;
+    const right = this.visit(node.right) as ISymbolType;
 
     const logicalBooleanImpl = operations.LOGICAL_BOOLEAN_IMPLEMENTATIONS[opVal];
     if (logicalBooleanImpl) {
       return logicalBooleanImpl(left, right);
     }
 
-    const mathImpl = operations.MATH_IMPLEMENTATIONS[opVal];
     if (mathImpl) {
       if (
         !(
@@ -272,6 +297,23 @@ export class Interpreter {
 
   private visitImplicitListNode(node: ImplicitListNode): ListSymbol {
     return this.visitListNode(node);
+  }
+
+  private visitNumberWithPossibleUnitNode(node: NumberWithPossibleUnitNode): NumberWithUnitSymbol | ListSymbol {
+    const unitKeyword = node.unitIdentifier;
+    const unitSpec = this.config.unitManager.getSpecByKeyword(unitKeyword);
+
+    if (unitSpec) {
+      // It's a valid unit - convert to NumberWithUnitSymbol
+      return new NumberWithUnitSymbol(node.numNode.value, unitKeyword, this.config);
+    }
+
+    // Not a valid unit - return as implicit list (e.g., "3foo" -> "3 foo")
+    return new ListSymbol(
+      [new NumberSymbol(node.numNode.value, this.config), new StringSymbol(unitKeyword, this.config)],
+      true, // isImplicit
+      this.config,
+    );
   }
 
   private visitReferenceNode(node: ReferenceNode): ISymbolType {
