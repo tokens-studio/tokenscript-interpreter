@@ -758,20 +758,20 @@ describe("Math Functions - Sign", () => {
     expect(vars.sign_zero?.value).toBe(0);
   });
 
-  it("should handle sign with NumberWithUnit (preserves unit)", () => {
+  it("should return Number even with NumberWithUnit input", () => {
     const text = `
-    variable sign_px: NumberWithUnit = sign(-5px);
-    variable sign_rem: NumberWithUnit = sign(3rem);
-    variable sign_em: NumberWithUnit = sign(0em);
+    variable sign_px: Number = sign(-5px);
+    variable sign_rem: Number = sign(3rem);
+    variable sign_em: Number = sign(0em);
     `;
     const vars = interpretAndGetVariables(text, ["sign_px", "sign_rem", "sign_em"]);
 
     expect(vars.sign_px?.value).toBe(-1);
-    expect(vars.sign_px?.toString()).toBe("-1px");
+    expect(vars.sign_px?.toString()).toBe("-1");
     expect(vars.sign_rem?.value).toBe(1);
-    expect(vars.sign_rem?.toString()).toBe("1rem");
+    expect(vars.sign_rem?.toString()).toBe("1");
     expect(vars.sign_em?.value).toBe(0);
-    expect(vars.sign_em?.toString()).toBe("0em");
+    expect(vars.sign_em?.toString()).toBe("0");
   });
 });
 
