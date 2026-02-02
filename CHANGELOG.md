@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.24.0] - 2026-02-02
 
+## [0.24.0] - 2026-02-02
+
 ### Added
 
 - **Time units (`s`, `ms`)**: Support for seconds and milliseconds in expressions. Use `3s` for 3 seconds, `500ms` for 500 milliseconds. Arithmetic works as expected: `3s + 2s` → `5s`.
