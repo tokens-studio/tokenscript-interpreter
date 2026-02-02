@@ -18,10 +18,28 @@ export class Lexer {
   private pos = 0;
   private line = 1;
   private column = 1;
+  /**
+   * Track the last NUMBER, RPAREN, or REFERENCE token for FORMAT adjacency detection.
+   * FORMAT tokens (units like 'px', 's', 'ms') are only valid when immediately adjacent
+   * to these tokens (no whitespace). This prevents conflicts where unit keywords
+   * could be confused with identifiers (e.g., 's' for saturation vs seconds).
+   *
+   * @see docs/tokenscript/edge-cases/format-unit-parsing.md
+   */
+  private _lastUnitableToken: Token | null = null;
 
   constructor(text: string) {
     this.text = text;
     this.currentChar = this.text[this.pos];
+  }
+
+  /**
+   * Check if a FORMAT token (unit suffix) is valid at the given position.
+   * FORMAT is only valid when immediately adjacent to a NUMBER or RPAREN.
+   * e.g., '3s' (number with unit), '(3px + 4px)rem' (unit conversion)
+   */
+  private isValidFormatPosition(startPos: number): boolean {
+    return this._lastUnitableToken !== null && this._lastUnitableToken.endPos === startPos;
   }
 
   private error(code: LexerErrorCode, data?: Record<string, unknown>): never {
@@ -88,13 +106,16 @@ export class Lexer {
       this.advance();
     }
 
-    return {
+    const token: Token = {
       type: TokenType.NUMBER,
       value: result,
       line: this.line,
       pos: startPos,
       endPos: this.pos,
     };
+    // Track for FORMAT adjacency detection (e.g., '3s', '3.5ms')
+    this._lastUnitableToken = token;
+    return token;
   }
 
   // Python like isdigit, that allows numbers starting with '.'
@@ -149,8 +170,11 @@ export class Lexer {
       };
     }
 
+    // FORMAT tokens (units like 'px', 's', 'ms') are only valid immediately after NUMBER or RPAREN
+    // e.g., '3s' (number with unit), '(3px + 4px)rem' (unit conversion)
+    // In other contexts (with whitespace or other tokens between), treat as STRING (identifier)
     const format = SUPPORTED_FORMAT_STRINGS[normalizedResult];
-    if (format) {
+    if (format && this.isValidFormatPosition(startPos)) {
       return {
         type: TokenType.FORMAT,
         value: format,
@@ -170,7 +194,6 @@ export class Lexer {
   }
 
   private reference(): Token {
-    const _startPos = this.pos;
     this.eat("{");
 
     const refStartPos = this.pos;
@@ -197,13 +220,17 @@ export class Lexer {
 
     const refEndPos = this.pos;
     this.eat("}");
-    return {
+
+    const token: Token = {
       type: TokenType.REFERENCE,
       value: result,
       line: this.line,
       pos: refStartPos,
       endPos: refEndPos,
     };
+    // Track for FORMAT adjacency - use actual position after closing brace
+    this._lastUnitableToken = { ...token, endPos: this.pos };
+    return token;
   }
 
   private explicitString(quoteType: string): Token {
@@ -393,13 +420,16 @@ export class Lexer {
       if (this.currentChar === ")") {
         const startPos = this.pos;
         this.eat(")");
-        return {
+        const token: Token = {
           type: TokenType.RPAREN,
           value: ")",
           line: this.line,
           pos: startPos,
           endPos: this.pos,
         };
+        // Track for FORMAT adjacency detection (e.g., '(3px + 4px)rem')
+        this._lastUnitableToken = token;
+        return token;
       }
       if (this.currentChar === ",") {
         const startPos = this.pos;
