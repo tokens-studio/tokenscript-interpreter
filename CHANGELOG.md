@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`sign()` function returns Number**: The `sign()` function now always returns a plain `Number` instead of preserving the input unit. This matches the mathematical behavior where sign indicates direction (-1, 0, 1), not a measurement.
+
 ## [0.23.1] - 2026-01-27
 
 ### Fixed
