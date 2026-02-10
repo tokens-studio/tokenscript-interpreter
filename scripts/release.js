@@ -39,7 +39,7 @@ function exec(command, options = {}) {
 }
 
 function hasUncommittedChanges() {
-  const status = exec("git status --porcelain", { silent: true });
+  const status = exec("git status --porcelain -uno", { silent: true });
   return status.length > 0;
 }
 
