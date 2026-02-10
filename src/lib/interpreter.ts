@@ -53,6 +53,10 @@ export {
   type UnitSpecification,
   UnitSpecificationSchema,
 } from "@interpreter/config/managers/unit/schema";
+export {
+  type ConstantsSpecification,
+  ConstantsSpecificationSchema,
+} from "@interpreter/config/managers/constants/schema";
 export * from "@interpreter/errors";
 
 // Interpreter Core ------------------------------------------------------------

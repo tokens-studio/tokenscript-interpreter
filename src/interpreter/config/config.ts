@@ -3,6 +3,7 @@ import { ConfigErrorCode, InterpreterError } from "../errors";
 import { basicSymbolTypes, ColorSymbol } from "../symbols";
 import { ColorManager } from "./managers/color/manager";
 import type { ColorSpecification } from "./managers/color/schema";
+import type { ConstantsSpecification } from "./managers/constants/schema";
 import { FunctionsManager } from "./managers/functions/manager";
 import type { FunctionSpecification } from "./managers/functions/schema";
 import { TokenManager } from "./managers/token/manager";
@@ -31,6 +32,7 @@ export class Config {
   public unitManager: UnitManager;
   public functionsManager: FunctionsManager;
   public tokenManager: TokenManager;
+  private _inlineConstants: Map<string, string | number | boolean> = new Map();
 
   constructor(options?: ConfigOptions) {
     this.languageOptions = {
@@ -96,6 +98,10 @@ export class Config {
     return !!basicSymbolTypes[lowerBaseType];
   }
 
+  get inlineConstants(): Map<string, string | number | boolean> {
+    return this._inlineConstants;
+  }
+
   clone(): Config {
     return new Config({
       languageOptions: { ...this.languageOptions },
@@ -109,7 +115,7 @@ export class Config {
   registerSchemas(
     schemas: Array<{
       uri: string;
-      schema: ColorSpecification | FunctionSpecification | TokenSpecification;
+      schema: ColorSpecification | FunctionSpecification | TokenSpecification | ConstantsSpecification;
     }>,
   ): Config {
     for (const { uri, schema } of schemas) {
@@ -126,6 +132,14 @@ export class Config {
         case "token":
           this.tokenManager.register(uri, schema as TokenSpecification);
           break;
+        case "constants": {
+          const spec = schema as ConstantsSpecification;
+          if (!spec.inline) break;
+          for (const [key, value] of Object.entries(spec.values)) {
+            this._inlineConstants.set(key, value);
+          }
+          break;
+        }
       }
     }
     return this;
