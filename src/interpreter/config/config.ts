@@ -115,7 +115,11 @@ export class Config {
   registerSchemas(
     schemas: Array<{
       uri: string;
-      schema: ColorSpecification | FunctionSpecification | TokenSpecification | ConstantsSpecification;
+      schema:
+        | ColorSpecification
+        | FunctionSpecification
+        | TokenSpecification
+        | ConstantsSpecification;
     }>,
   ): Config {
     for (const { uri, schema } of schemas) {

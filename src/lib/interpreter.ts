@@ -43,6 +43,10 @@ export {
   type ColorSpecification,
   ColorSpecificationSchema,
 } from "@interpreter/config/managers/color/schema";
+export {
+  type ConstantsSpecification,
+  ConstantsSpecificationSchema,
+} from "@interpreter/config/managers/constants/schema";
 export { FunctionsManager } from "@interpreter/config/managers/functions/manager";
 export {
   type FunctionSpecification,
@@ -53,10 +57,6 @@ export {
   type UnitSpecification,
   UnitSpecificationSchema,
 } from "@interpreter/config/managers/unit/schema";
-export {
-  type ConstantsSpecification,
-  ConstantsSpecificationSchema,
-} from "@interpreter/config/managers/constants/schema";
 export * from "@interpreter/errors";
 
 // Interpreter Core ------------------------------------------------------------
