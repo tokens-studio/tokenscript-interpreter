@@ -28,6 +28,9 @@ export const messages: MessageMap = {
   [LexerErrorCode.EXPECTED_CHARACTER]: (data) =>
     `Expected character ${data.expected} got ${data.got}`,
 
+  [LexerErrorCode.MULTIPLE_DECIMAL_POINTS]: (data) =>
+    `Invalid number '${data.value}': multiple decimal points.`,
+
   // Parser errors
   [ParserErrorCode.UNEXPECTED_TOKEN]: (data) => `Unexpected token: ${data.token}`,
 

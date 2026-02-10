@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.25.1] - 2026-02-10
+
+### Fixed
+
+- **Multiple decimal points in numbers**: Expressions like `3.3.3.33` now throw an error instead of being silently split into an implicit list of decimals
+
 ## [0.25.0] - 2026-02-10
 
 ### Added

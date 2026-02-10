@@ -62,6 +62,15 @@ npm run format
 - Prefer functional programming patterns where appropriate
 - Keep functions small and focused
 
+## Error Handling
+
+Never throw raw string errors. Always use the structured error system:
+
+1. Add an error code to the appropriate enum in `src/interpreter/errors/codes/` (e.g. `LexerErrorCode`, `ParserErrorCode`)
+2. Add the typed error data interface in the same file
+3. Add the human-readable message in `src/interpreter/errors/messages/en.ts`
+4. Throw using the domain-specific error class (e.g. `LexerError`, `ParserError`, `InterpreterError`)
+
 ## Testing Guidelines
 
 - Tests are located in `tests/` directory, mirroring `src/` structure

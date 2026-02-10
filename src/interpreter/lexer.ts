@@ -107,8 +107,9 @@ export class Lexer {
       // Only allow one decimal point per number
       if (this.currentChar === ".") {
         if (hasDecimalPoint) {
-          // Second decimal point - stop here, let the DOT be a separate token
-          break;
+          this.error(LexerErrorCode.MULTIPLE_DECIMAL_POINTS, {
+            value: result + this.currentChar,
+          });
         }
         hasDecimalPoint = true;
       }
