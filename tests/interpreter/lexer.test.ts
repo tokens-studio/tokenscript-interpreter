@@ -281,4 +281,84 @@ describe("Lexer", () => {
       }).toThrow();
     });
   });
+
+  describe("Multiple decimal points (subcomma digits)", () => {
+    it("should tokenize 3.3.3.33 as multiple numbers (implicit list)", () => {
+      const lexer = new Lexer("3.3.3.33");
+      const tokens = [];
+      let token = lexer.nextToken();
+      while (token.type !== TokenType.EOF) {
+        tokens.push({ type: token.type, value: token.value });
+        token = lexer.nextToken();
+      }
+      // Each dot-preceded digit sequence becomes a number starting with 0.
+      // This is consistent with ".5" → "0.5" behavior
+      expect(tokens).toEqual([
+        { type: TokenType.NUMBER, value: "3.3" },
+        { type: TokenType.NUMBER, value: "0.3" },
+        { type: TokenType.NUMBER, value: "0.33" },
+      ]);
+    });
+
+    it("should tokenize 1.2.3.4.5 as multiple numbers", () => {
+      const lexer = new Lexer("1.2.3.4.5");
+      const tokens = [];
+      let token = lexer.nextToken();
+      while (token.type !== TokenType.EOF) {
+        tokens.push({ type: token.type, value: token.value });
+        token = lexer.nextToken();
+      }
+      expect(tokens).toEqual([
+        { type: TokenType.NUMBER, value: "1.2" },
+        { type: TokenType.NUMBER, value: "0.3" },
+        { type: TokenType.NUMBER, value: "0.4" },
+        { type: TokenType.NUMBER, value: "0.5" },
+      ]);
+    });
+
+    it("should tokenize 3.3.3 as two numbers", () => {
+      const lexer = new Lexer("3.3.3");
+      const tokens = [];
+      let token = lexer.nextToken();
+      while (token.type !== TokenType.EOF) {
+        tokens.push({ type: token.type, value: token.value });
+        token = lexer.nextToken();
+      }
+      expect(tokens).toEqual([
+        { type: TokenType.NUMBER, value: "3.3" },
+        { type: TokenType.NUMBER, value: "0.3" },
+      ]);
+    });
+
+    it("should tokenize .5.6 as two numbers", () => {
+      const lexer = new Lexer(".5.6");
+      const tokens = [];
+      let token = lexer.nextToken();
+      while (token.type !== TokenType.EOF) {
+        tokens.push({ type: token.type, value: token.value });
+        token = lexer.nextToken();
+      }
+      expect(tokens).toEqual([
+        { type: TokenType.NUMBER, value: "0.5" },
+        { type: TokenType.NUMBER, value: "0.6" },
+      ]);
+    });
+
+    it("should NOT consume multiple dots as part of a number - no infinite loop", () => {
+      const lexer = new Lexer("123.456.789");
+      const tokens = [];
+      let token = lexer.nextToken();
+      let iterations = 0;
+      while (token.type !== TokenType.EOF && iterations < 100) {
+        tokens.push({ type: token.type, value: token.value });
+        token = lexer.nextToken();
+        iterations++;
+      }
+      expect(iterations).toBeLessThan(100);
+      expect(tokens).toEqual([
+        { type: TokenType.NUMBER, value: "123.456" },
+        { type: TokenType.NUMBER, value: "0.789" },
+      ]);
+    });
+  });
 });
