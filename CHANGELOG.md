@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.25.0] - 2026-02-10
+
 ### Added
 
 - **Constants schema type**: New `"constants"` schema type for registering named constants (e.g., CSS color names like `red` → `#FF0000`). Constants with `inline: true` are injected into the symbol table and resolve as bare identifiers during token `$value` evaluation, without leaking into function/color/unit scripts. Multiple constants schemas merge, and `Config.clone()` isolates them. String values are parsed through the interpreter so `"#FF0000"` becomes a `ColorSymbol`, numbers stay as `NumberSymbol`, etc.
