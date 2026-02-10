@@ -12,21 +12,31 @@ import type { ASTNodeMap, RefPath, ResolvedValueMap, TokenResult, TokenResultMap
  * Handles token interpretation and dependency error checking.
  * Manages the interpreter instance and AST execution.
  */
+export interface TokenInterpreterOptions {
+  /** Whether to inject inline constants into the symbol table before evaluation. Defaults to true. */
+  inlineConstants?: boolean;
+}
+
 export class TokenInterpreter {
   private readonly interpreter: Interpreter;
   private readonly astNodes: ASTNodeMap = new Map();
   private readonly parsedConstants: Map<string, ISymbolType> = new Map();
+  private readonly inlineConstantsEnabled: boolean;
 
   constructor(
     private readonly referenceCache: ResolvedValueMap,
     private readonly config?: Config,
+    options?: TokenInterpreterOptions,
   ) {
+    this.inlineConstantsEnabled = options?.inlineConstants ?? true;
     this.interpreter = new Interpreter(null, {
       references: this.referenceCache as Map<string, any>,
       config: this.config,
     });
 
-    this.parseConstants();
+    if (this.inlineConstantsEnabled) {
+      this.parseConstants();
+    }
   }
 
   private parseConstants(): void {
@@ -82,7 +92,9 @@ export class TokenInterpreter {
   interpretTokenWithAST(_tokenName: RefPath, ast: ASTNode): TokenResult {
     try {
       this.interpreter.resetSymbolTable();
-      this.injectConstants();
+      if (this.inlineConstantsEnabled) {
+        this.injectConstants();
+      }
       this.interpreter.setAst(ast);
       return this.interpreter.interpret();
     } catch (error) {
