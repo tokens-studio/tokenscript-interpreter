@@ -73,6 +73,7 @@ npm run format
 
 - **Tokens**: Design token data with `$value` and `$type` properties
 - **Schemas**: Custom functions that define token transformations
+- **Constants**: Named values (e.g., CSS color names) injected as bare identifiers during token evaluation
 - **Interpreter**: Core engine that evaluates token expressions
 - **References**: Token values can reference other tokens using `{token-name}` syntax
 
@@ -83,6 +84,10 @@ Key language features and edge cases are documented in `docs/tokenscript/`:
 - [Implicit Lists and Strings](docs/tokenscript/implicit-lists-and-strings.md) - How unquoted values and whitespace-separated expressions work
 - [Math Functions](docs/tokenscript/math.md) - Mathematical operations and functions
 - [Format/Unit Parsing Edge Cases](docs/tokenscript/edge-cases/format-unit-parsing.md) - How unit suffixes (px, s, ms) interact with implicit lists
+
+Schema features:
+
+- [Constants](docs/constants.md) - Named constants injected as bare identifiers during token evaluation
 
 ## Common Tasks
 
