@@ -120,6 +120,10 @@ export class Interpreter {
     return this.symbolTable.get(name);
   }
 
+  public setSymbol(name: string, value: ISymbolType): void {
+    this.symbolTable.set(name, value);
+  }
+
   public coerceValue(
     constructorSymbol: ISymbolType,
     valueSymbol: ISymbolType,

@@ -2,7 +2,8 @@ import type { ASTNode } from "@interpreter/ast";
 import type { Config } from "@interpreter/config";
 import { isLanguageError, ProcessorError, ProcessorErrorCode } from "@interpreter/errors";
 import { Interpreter } from "@interpreter/interpreter";
-import { DictionarySymbol } from "@interpreter/symbols";
+import { parseExpression } from "@interpreter/parser";
+import { DictionarySymbol, jsValueToSymbolType } from "@interpreter/symbols";
 import type { ISymbolType } from "@src/types";
 import { createDependencyError } from "../errors";
 import type { ASTNodeMap, RefPath, ResolvedValueMap, TokenResult, TokenResultMap } from "./types";
@@ -11,18 +12,63 @@ import type { ASTNodeMap, RefPath, ResolvedValueMap, TokenResult, TokenResultMap
  * Handles token interpretation and dependency error checking.
  * Manages the interpreter instance and AST execution.
  */
+export interface TokenInterpreterOptions {
+  /** Whether to inject inline constants into the symbol table before evaluation. Defaults to true. */
+  inlineConstants?: boolean;
+}
+
 export class TokenInterpreter {
   private readonly interpreter: Interpreter;
   private readonly astNodes: ASTNodeMap = new Map();
+  private readonly parsedConstants: Map<string, ISymbolType> = new Map();
+  private readonly inlineConstantsEnabled: boolean;
 
   constructor(
     private readonly referenceCache: ResolvedValueMap,
     private readonly config?: Config,
+    options?: TokenInterpreterOptions,
   ) {
+    this.inlineConstantsEnabled = options?.inlineConstants ?? true;
     this.interpreter = new Interpreter(null, {
       references: this.referenceCache as Map<string, any>,
       config: this.config,
     });
+
+    if (this.inlineConstantsEnabled) {
+      this.parseConstants();
+    }
+  }
+
+  private parseConstants(): void {
+    if (!this.config) return;
+
+    for (const [name, rawValue] of this.config.inlineConstants) {
+      if (typeof rawValue === "string") {
+        try {
+          const { ast } = parseExpression(rawValue);
+          if (ast) {
+            const tempInterpreter = new Interpreter(ast, { config: this.config });
+            const result = tempInterpreter.interpret();
+            if (result !== null && typeof result !== "string") {
+              this.parsedConstants.set(name, result);
+            } else if (typeof result === "string") {
+              this.parsedConstants.set(name, jsValueToSymbolType(result, this.config));
+            }
+          }
+        } catch {
+          // If parsing fails, store as string symbol
+          this.parsedConstants.set(name, jsValueToSymbolType(rawValue, this.config));
+        }
+      } else {
+        this.parsedConstants.set(name, jsValueToSymbolType(rawValue, this.config));
+      }
+    }
+  }
+
+  private injectConstants(): void {
+    for (const [name, value] of this.parsedConstants) {
+      this.interpreter.setSymbol(name, value.cloneIfMutable());
+    }
   }
 
   setTokenAST(tokenName: RefPath, ast: ASTNode): void {
@@ -46,6 +92,9 @@ export class TokenInterpreter {
   interpretTokenWithAST(_tokenName: RefPath, ast: ASTNode): TokenResult {
     try {
       this.interpreter.resetSymbolTable();
+      if (this.inlineConstantsEnabled) {
+        this.injectConstants();
+      }
       this.interpreter.setAst(ast);
       return this.interpreter.interpret();
     } catch (error) {
