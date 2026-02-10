@@ -5,6 +5,7 @@ export enum LexerErrorCode {
   EMPTY_VARIABLE_NAME = "LEXER_EMPTY_VARIABLE_NAME",
   INVALID_HEX_COLOR_FORMAT = "LEXER_INVALID_HEX_COLOR_FORMAT",
   EXPECTED_CHARACTER = "LEXER_EXPECTED_CHARACTER",
+  MULTIPLE_DECIMAL_POINTS = "LEXER_MULTIPLE_DECIMAL_POINTS",
 }
 
 export interface LexerErrorData {
@@ -25,5 +26,8 @@ export interface LexerErrorData {
   [LexerErrorCode.EXPECTED_CHARACTER]: {
     expected: string;
     got: string | null;
+  };
+  [LexerErrorCode.MULTIPLE_DECIMAL_POINTS]: {
+    value: string;
   };
 }

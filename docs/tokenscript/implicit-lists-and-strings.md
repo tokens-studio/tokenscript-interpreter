@@ -68,6 +68,22 @@ The difference matters when mixing with operators:
 
 ## Edge Cases and Pitfalls
 
+### Multiple Decimal Points
+
+Numbers with more than one decimal point are invalid and will throw an error:
+
+```
+3.3.3       → ERROR: multiple decimal points
+1.2.3.4     → ERROR: multiple decimal points
+.5.6        → ERROR: multiple decimal points
+```
+
+**Solution:** Use commas or spaces to separate decimal numbers:
+```
+3.3, 0.3            → [3.3, 0.3]     // explicit list
+3.3 0.3             → [3.3, 0.3]     // implicit list
+```
+
 ### Strings Starting with Numbers
 
 Unlike CSS (which disallows unquoted identifiers starting with numbers), Tokenscript allows them but they become implicit lists:

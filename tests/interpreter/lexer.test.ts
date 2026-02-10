@@ -281,4 +281,41 @@ describe("Lexer", () => {
       }).toThrow();
     });
   });
+
+  describe("Multiple decimal points (subcomma digits)", () => {
+    it("should throw on 3.3.3.33", () => {
+      const lexer = new Lexer("3.3.3.33");
+      expect(() => {
+        lexer.nextToken();
+      }).toThrow("multiple decimal points");
+    });
+
+    it("should throw on 1.2.3.4.5", () => {
+      const lexer = new Lexer("1.2.3.4.5");
+      expect(() => {
+        lexer.nextToken();
+      }).toThrow("multiple decimal points");
+    });
+
+    it("should throw on 3.3.3", () => {
+      const lexer = new Lexer("3.3.3");
+      expect(() => {
+        lexer.nextToken();
+      }).toThrow("multiple decimal points");
+    });
+
+    it("should throw on .5.6", () => {
+      const lexer = new Lexer(".5.6");
+      expect(() => {
+        lexer.nextToken();
+      }).toThrow("multiple decimal points");
+    });
+
+    it("should throw on 123.456.789", () => {
+      const lexer = new Lexer("123.456.789");
+      expect(() => {
+        lexer.nextToken();
+      }).toThrow("multiple decimal points");
+    });
+  });
 });

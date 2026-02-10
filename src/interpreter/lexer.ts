@@ -96,12 +96,23 @@ export class Lexer {
   private number(): Token {
     const startPos = this.pos;
     let result = "";
+    let hasDecimalPoint = false;
+
     // Prepend 0 to digits like ".5"
     if (this.currentChar === ".") {
       result += "0";
     }
 
     while (isNumber(this.currentChar) || this.currentChar === ".") {
+      // Only allow one decimal point per number
+      if (this.currentChar === ".") {
+        if (hasDecimalPoint) {
+          this.error(LexerErrorCode.MULTIPLE_DECIMAL_POINTS, {
+            value: result + this.currentChar,
+          });
+        }
+        hasDecimalPoint = true;
+      }
       result += this.currentChar;
       this.advance();
     }
