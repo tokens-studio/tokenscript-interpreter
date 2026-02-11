@@ -246,6 +246,44 @@ h1 {
   word-break: break-all;
 }
 
+/* ===== Eval Result Section ===== */
+
+.eval-section {
+  margin-top: 1rem;
+}
+
+.eval-error {
+  background: rgba(233, 69, 96, 0.1);
+  border: 1px solid #e94560;
+  border-radius: 6px;
+  padding: 0.75rem;
+}
+
+.eval-error code {
+  color: #e94560;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+  font-size: 0.9rem;
+}
+
+.eval-success {
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid #4caf50;
+  border-radius: 6px;
+  padding: 0.75rem;
+}
+
+.eval-success code {
+  color: #4caf50;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+  font-size: 0.9rem;
+}
+
+.eval-type {
+  color: #888;
+  font-size: 0.8rem;
+  margin-left: 0.5rem;
+}
+
 /* ===== Examples Section ===== */
 
 .examples-section {

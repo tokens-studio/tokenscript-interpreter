@@ -3,11 +3,16 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import {
   parseTolerantly,
   collectAllReferences,
+  evaluateExpression,
   ParseState,
   type TolerantParseResult,
   type ReferenceInfo,
+  type EvalResult,
 } from '@tokens-studio/tokenscript-interpreter/interpreter'
+import { makeConfig } from '../schemas.js'
 import { TokenscriptEditor } from './editor'
+
+const config = makeConfig()
 
 const editorRef = ref<HTMLDivElement>()
 const editor = ref<TokenscriptEditor>()
@@ -24,6 +29,11 @@ const references = computed<ReferenceInfo[]>(() => {
 })
 
 const isComplete = computed(() => parseResult.value?.state === ParseState.COMPLETE)
+
+const evalResult = computed<EvalResult | null>(() => {
+  if (!input.value || !isComplete.value) return null
+  return evaluateExpression(input.value, { config })
+})
 
 onMounted(() => {
   if (editorRef.value) {
@@ -51,6 +61,9 @@ const examples = [
   'rgb(100, 150, 200)',
   'hsl(200, 80',
   '{color} + {size',
+  'rgba(12 12 12)',
+  '1 + red',
+  '{missing}',
 ]
 
 function setExample(example: string) {
@@ -110,6 +123,18 @@ function setExample(example: string) {
       <div class="raw-value">
         <div class="info-label">Raw Value</div>
         <code class="raw-value-display">{{ input || '(empty)' }}</code>
+      </div>
+
+      <div v-if="evalResult" class="eval-section">
+        <div v-if="!evalResult.success" class="eval-error">
+          <div class="info-label">Evaluation Error</div>
+          <code>{{ evalResult.error.originalMessage }}</code>
+        </div>
+        <div v-else class="eval-success">
+          <div class="info-label">Result</div>
+          <code>{{ evalResult.resultString }}</code>
+          <span class="eval-type">{{ evalResult.type }}</span>
+        </div>
       </div>
     </div>
 
