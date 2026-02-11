@@ -44,6 +44,9 @@ export const messages: MessageMap = {
 
   [ParserErrorCode.UNEXPECTED_END]: "Unexpected end of input",
 
+  [ParserErrorCode.TOLERANT_REQUIRES_INLINE]:
+    "Tolerant mode only supports inline expressions. Use parse(true) for tolerant parsing.",
+
   // Interpreter errors
   [InterpreterErrorCode.UNKNOWN_NODE_TYPE]: (data) =>
     `No visit method for AST node type: ${data.nodeType}`,

@@ -326,6 +326,15 @@ export class Parser {
       this.currentToken.type === TokenType.LOGIC_OR
     ) {
       const token = this.eat(this.currentToken.type);
+      // In tolerant mode, handle EOF after operator
+      if (this.tolerant && (this.currentToken.type as TokenType) === TokenType.EOF) {
+        this.incompleteInfo.push({
+          type: IncompleteType.MISSING_OPERAND,
+          startPos: token.pos,
+          endPos: token.endPos,
+        });
+        return new PartialBinOpNode(node, token);
+      }
       node = new BinOpNode(node, token, this.logicTerm());
     }
     return node;
@@ -742,18 +751,19 @@ export class Parser {
   }
 
   public parse(inlineMode = false): ASTNode | null {
+    if (this.tolerant && !inlineMode) {
+      this.error(ParserErrorCode.TOLERANT_REQUIRES_INLINE);
+    }
+
     if (this.currentToken.type === TokenType.EOF) return null;
 
     if (inlineMode) return this.listExpr();
 
     const node = this.statementsList();
     if ((this.currentToken.type as TokenType) !== TokenType.EOF) {
-      // In tolerant mode, don't throw for trailing tokens
-      if (!this.tolerant) {
-        this.error(ParserErrorCode.INVALID_SYNTAX, {
-          message: "Unexpected token at the end of input.",
-        });
-      }
+      this.error(ParserErrorCode.INVALID_SYNTAX, {
+        message: "Unexpected token at the end of input.",
+      });
     }
     return node;
   }

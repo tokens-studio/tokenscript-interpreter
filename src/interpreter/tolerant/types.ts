@@ -22,8 +22,6 @@ export enum IncompleteType {
   UNCLOSED_FUNCTION = "unclosed_function",
   /** Missing right operand in binary operation like 1 + */
   MISSING_OPERAND = "missing_operand",
-  /** Missing closing ] in block like [ */
-  UNCLOSED_BLOCK = "unclosed_block",
 }
 
 /**
@@ -54,14 +52,3 @@ export interface TolerantParseResult {
   tokens: Token[];
 }
 
-/**
- * Options for tolerant parsing
- */
-export interface TolerantParseOptions {
-  /**
-   * If true, parse in inline mode (single expression).
-   * If false, parse in statement mode (multiple statements).
-   * Default: true
-   */
-  inlineMode?: boolean;
-}

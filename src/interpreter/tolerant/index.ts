@@ -16,7 +16,7 @@ import { ReferenceNode } from "../ast";
 import { Lexer } from "../lexer";
 import { Parser } from "../parser";
 import { PartialReferenceNode } from "./partial-nodes";
-import { ParseState, type TolerantParseOptions, type TolerantParseResult } from "./types";
+import { ParseState, type TolerantParseResult } from "./types";
 
 export * from "./partial-nodes";
 // Re-export types and partial nodes
@@ -26,7 +26,6 @@ export * from "./types";
  * Parse tokenscript input tolerantly, returning partial AST nodes for incomplete input.
  *
  * @param text - The tokenscript text to parse
- * @param options - Parsing options
  * @returns Parse result containing AST, state, and incomplete info
  *
  * @example
@@ -42,13 +41,12 @@ export * from "./types";
  * // result2.ast will be a PartialFunctionCallNode
  * ```
  */
-export function parseTolerantly(text: string, options?: TolerantParseOptions): TolerantParseResult {
-  const inlineMode = options?.inlineMode ?? true;
+export function parseTolerantly(text: string): TolerantParseResult {
   const lexer = new Lexer(text, { tolerant: true });
   const parser = new Parser(lexer, { tolerant: true });
 
   try {
-    const ast = parser.parse(inlineMode);
+    const ast = parser.parse(true);
     const incomplete = parser.getIncomplete();
 
     return {
@@ -160,25 +158,7 @@ function walkASTForReferences(node: ASTNode, refs: ReferenceInfo[]): void {
     }
   }
   if (anyNode.astNode) walkASTForReferences(anyNode.astNode, refs);
-  if (anyNode.statements) {
-    if (Array.isArray(anyNode.statements)) {
-      for (const stmt of anyNode.statements) {
-        walkASTForReferences(stmt, refs);
-      }
-    } else {
-      walkASTForReferences(anyNode.statements, refs);
-    }
-  }
-  if (anyNode.condition) walkASTForReferences(anyNode.condition, refs);
-  if (anyNode.body) walkASTForReferences(anyNode.body, refs);
   if (anyNode.value?.nodeType) walkASTForReferences(anyNode.value, refs);
-  if (anyNode.assignmentExpr) walkASTForReferences(anyNode.assignmentExpr, refs);
-  if (anyNode.conditions) {
-    for (const cond of anyNode.conditions) {
-      walkASTForReferences(cond, refs);
-    }
-  }
-  if (anyNode.elseBody) walkASTForReferences(anyNode.elseBody, refs);
 }
 
 /**

@@ -134,6 +134,22 @@ describe("Tolerant Parser", () => {
         expect(result.state).toBe(ParseState.INCOMPLETE);
         expect(result.ast).toBeInstanceOf(PartialBinOpNode);
       });
+
+      it("should parse incomplete logical AND as PartialBinOpNode", () => {
+        const result = parseTolerantly("1 &&");
+
+        expect(result.state).toBe(ParseState.INCOMPLETE);
+        expect(result.incomplete).toHaveLength(1);
+        expect(result.incomplete[0].type).toBe(IncompleteType.MISSING_OPERAND);
+        expect(result.ast).toBeInstanceOf(PartialBinOpNode);
+      });
+
+      it("should parse incomplete logical OR as PartialBinOpNode", () => {
+        const result = parseTolerantly("true ||");
+
+        expect(result.state).toBe(ParseState.INCOMPLETE);
+        expect(result.ast).toBeInstanceOf(PartialBinOpNode);
+      });
     });
 
     describe("Partial Unary Operations", () => {

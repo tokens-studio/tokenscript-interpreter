@@ -116,7 +116,6 @@ export {
   // Main API
   parseTolerantly,
   type ReferenceInfo,
-  type TolerantParseOptions,
   type TolerantParseResult,
   tokenizeTolerantly,
 } from "@interpreter/tolerant";
