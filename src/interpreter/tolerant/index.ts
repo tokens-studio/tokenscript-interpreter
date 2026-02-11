@@ -12,7 +12,7 @@
  */
 
 import type { ASTNode, Token } from "@src/types";
-import { ReferenceNode } from "../ast";
+import { ReferenceNode, walkAST } from "../ast";
 import { Lexer } from "../lexer";
 import { Parser } from "../parser";
 import { PartialReferenceNode } from "./partial-nodes";
@@ -116,49 +116,14 @@ export function collectAllReferences(ast: ASTNode | null): ReferenceInfo[] {
   if (!ast) return [];
 
   const refs: ReferenceInfo[] = [];
-  walkASTForReferences(ast, refs);
+  walkAST(ast, (node) => {
+    if (node instanceof ReferenceNode) {
+      refs.push({ name: node.value, isPartial: false, node });
+    } else if (node instanceof PartialReferenceNode) {
+      refs.push({ name: node.partialValue, isPartial: true, node });
+    }
+  });
   return refs;
-}
-
-/**
- * Helper function to walk AST and collect references
- */
-function walkASTForReferences(node: ASTNode, refs: ReferenceInfo[]): void {
-  if (!node) return;
-
-  if (node instanceof ReferenceNode) {
-    refs.push({
-      name: node.value,
-      isPartial: false,
-      node,
-    });
-  } else if (node instanceof PartialReferenceNode) {
-    refs.push({
-      name: node.partialValue,
-      isPartial: true,
-      node,
-    });
-  }
-
-  // Walk child nodes based on node type
-  // Using duck typing to avoid importing all node types
-  const anyNode = node as any;
-
-  if (anyNode.left) walkASTForReferences(anyNode.left, refs);
-  if (anyNode.right) walkASTForReferences(anyNode.right, refs);
-  if (anyNode.expr) walkASTForReferences(anyNode.expr, refs);
-  if (anyNode.elements) {
-    for (const element of anyNode.elements) {
-      walkASTForReferences(element, refs);
-    }
-  }
-  if (anyNode.args) {
-    for (const arg of anyNode.args) {
-      walkASTForReferences(arg, refs);
-    }
-  }
-  if (anyNode.astNode) walkASTForReferences(anyNode.astNode, refs);
-  if (anyNode.value?.nodeType) walkASTForReferences(anyNode.value, refs);
 }
 
 /**
@@ -167,35 +132,11 @@ function walkASTForReferences(node: ASTNode, refs: ReferenceInfo[]): void {
 export function hasPartialNodes(ast: ASTNode | null): boolean {
   if (!ast) return false;
 
-  const nodeType = ast.nodeType;
-  if (
-    nodeType === "PartialReferenceNode" ||
-    nodeType === "PartialStringNode" ||
-    nodeType === "PartialFunctionCallNode" ||
-    nodeType === "PartialBinOpNode" ||
-    nodeType === "PartialUnaryOpNode" ||
-    nodeType === "PartialParenNode"
-  ) {
-    return true;
-  }
-
-  // Walk child nodes
-  const anyNode = ast as any;
-
-  if (anyNode.left && hasPartialNodes(anyNode.left)) return true;
-  if (anyNode.right && hasPartialNodes(anyNode.right)) return true;
-  if (anyNode.expr && hasPartialNodes(anyNode.expr)) return true;
-  if (anyNode.elements) {
-    for (const element of anyNode.elements) {
-      if (hasPartialNodes(element)) return true;
+  let found = false;
+  walkAST(ast, (node) => {
+    if (node.nodeType.startsWith("Partial")) {
+      found = true;
     }
-  }
-  if (anyNode.args) {
-    for (const arg of anyNode.args) {
-      if (hasPartialNodes(arg)) return true;
-    }
-  }
-  if (anyNode.astNode && hasPartialNodes(anyNode.astNode)) return true;
-
-  return false;
+  });
+  return found;
 }
