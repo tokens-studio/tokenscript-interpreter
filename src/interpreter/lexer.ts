@@ -351,7 +351,9 @@ export class Lexer {
   }
 
   private collectToken(token: Token): Token {
-    this.collectedTokens.push(token);
+    if (this.tolerant) {
+      this.collectedTokens.push(token);
+    }
     return token;
   }
 
@@ -677,8 +679,7 @@ export class Lexer {
       pos: this.pos,
       endPos: this.pos,
     };
-    this.collectedTokens.push(eofToken);
-    return eofToken;
+    return this.collectToken(eofToken);
   }
 
   /**
