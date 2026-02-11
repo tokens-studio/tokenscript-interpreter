@@ -4,15 +4,34 @@ import {
   parseTolerantly,
   collectAllReferences,
   evaluateExpression,
+  NumberWithUnitSymbol,
   ParseState,
   type TolerantParseResult,
   type ReferenceInfo,
   type EvalResult,
+  type ReferenceRecord,
 } from "@tokens-studio/tokenscript-interpreter/interpreter";
 import { makeConfig } from "../schemas.js";
 import { TokenscriptEditor } from "./editor";
 
 const config = makeConfig();
+
+const px = (n: number) => new NumberWithUnitSymbol(n, 'px');
+
+const tokens: ReferenceRecord = {
+  'colors.primary': '#6366F1',
+  'colors.secondary': '#EC4899',
+  'colors.accent': '#F59E0B',
+  'colors.background': '#1A1A2E',
+  'colors.text': '#E2E8F0',
+  'spacing.sm': px(8),
+  'spacing.md': px(16),
+  'spacing.lg': px(32),
+  'font.size.base': px(16),
+  'font.size.lg': px(24),
+  'border.radius': px(8),
+  'opacity.muted': 0.6,
+};
 
 const editorRef = ref<HTMLDivElement>();
 const editor = ref<TokenscriptEditor>();
@@ -34,7 +53,7 @@ const isComplete = computed(
 
 const evalResult = computed<EvalResult | null>(() => {
   if (!input.value || !isComplete.value) return null;
-  return evaluateExpression(input.value, { config });
+  return evaluateExpression(input.value, { config, references: tokens });
 });
 
 const editorState = computed(() => {
@@ -47,7 +66,7 @@ onMounted(() => {
     editor.value = new TokenscriptEditor({
       element: editorRef.value,
       initialValue: input.value,
-      placeholder: "Try typing: {color.primary} or #FF5733",
+      placeholder: "Try typing: {colors.primary} or #FF5733",
       renderColorSwatch: true,
       onChange: (value, _result) => {
         input.value = value;
@@ -61,14 +80,15 @@ onUnmounted(() => {
 });
 
 const examples = [
-  "{foo} {color.",
+  "{colors.primary}",
+  "{colors.secondary}",
+  "lighten({colors.primary}, 20)",
+  "mix({colors.primary}, {colors.secondary}, 50)",
+  "{spacing.md} * 2",
+  "{font.size.base}",
   "#FF5733",
-  "#F0",
-  "rgb(255, 128",
   "rgb(100, 150, 200)",
-  "hsl(200, 80",
-  "{color} + {size",
-  "rgba(12 12 12)",
+  "{colors.",
   "1 + red",
   "{missing}",
 ];
