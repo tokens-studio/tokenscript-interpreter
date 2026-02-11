@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import {
   parseTolerantly,
   collectAllReferences,
@@ -8,83 +8,88 @@ import {
   type TolerantParseResult,
   type ReferenceInfo,
   type EvalResult,
-} from '@tokens-studio/tokenscript-interpreter/interpreter'
-import { makeConfig } from '../schemas.js'
-import { TokenscriptEditor } from './editor'
+} from "@tokens-studio/tokenscript-interpreter/interpreter";
+import { makeConfig } from "../schemas.js";
+import { TokenscriptEditor } from "./editor";
 
-const config = makeConfig()
+const config = makeConfig();
 
-const editorRef = ref<HTMLDivElement>()
-const editor = ref<TokenscriptEditor>()
-const input = ref('')
+const editorRef = ref<HTMLDivElement>();
+const editor = ref<TokenscriptEditor>();
+const input = ref("");
 
 const parseResult = computed<TolerantParseResult | null>(() => {
-  if (!input.value) return null
-  return parseTolerantly(input.value)
-})
+  if (!input.value) return null;
+  return parseTolerantly(input.value);
+});
 
 const references = computed<ReferenceInfo[]>(() => {
-  if (!parseResult.value?.ast) return []
-  return collectAllReferences(parseResult.value.ast)
-})
+  if (!parseResult.value?.ast) return [];
+  return collectAllReferences(parseResult.value.ast);
+});
 
-const isComplete = computed(() => parseResult.value?.state === ParseState.COMPLETE)
+const isComplete = computed(
+  () => parseResult.value?.state === ParseState.COMPLETE,
+);
 
 const evalResult = computed<EvalResult | null>(() => {
-  if (!input.value || !isComplete.value) return null
-  return evaluateExpression(input.value, { config })
-})
+  if (!input.value || !isComplete.value) return null;
+  return evaluateExpression(input.value, { config });
+});
+
+const editorState = computed(() => {
+  if (!evalResult.value) return '';
+  return evalResult.value.success ? 'editor-success' : 'editor-error';
+});
 
 onMounted(() => {
   if (editorRef.value) {
     editor.value = new TokenscriptEditor({
       element: editorRef.value,
       initialValue: input.value,
-      placeholder: 'Try typing: {color.primary} or #FF5733',
+      placeholder: "Try typing: {color.primary} or #FF5733",
       renderColorSwatch: true,
       onChange: (value, _result) => {
-        input.value = value
-      }
-    })
+        input.value = value;
+      },
+    });
   }
-})
+});
 
 onUnmounted(() => {
-  editor.value?.destroy()
-})
+  editor.value?.destroy();
+});
 
 const examples = [
-  '{foo} {color.',
-  '#FF5733',
-  '#F0',
-  'rgb(255, 128',
-  'rgb(100, 150, 200)',
-  'hsl(200, 80',
-  '{color} + {size',
-  'rgba(12 12 12)',
-  '1 + red',
-  '{missing}',
-]
+  "{foo} {color.",
+  "#FF5733",
+  "#F0",
+  "rgb(255, 128",
+  "rgb(100, 150, 200)",
+  "hsl(200, 80",
+  "{color} + {size",
+  "rgba(12 12 12)",
+  "1 + red",
+  "{missing}",
+];
 
 function setExample(example: string) {
-  input.value = example
-  editor.value?.setValue(example)
+  input.value = example;
+  editor.value?.setValue(example);
 }
 </script>
 
 <template>
   <div class="container">
-    <h1>Tolerant Parser Demo</h1>
+    <h1>Tokenscript Input</h1>
     <p class="subtitle">
-      Type tokenscript expressions with rich inline highlighting and color swatches
+      Type tokenscript expressions with rich inline highlighting and color
+      swatches
     </p>
 
     <div class="input-section">
       <label for="expression">Expression</label>
-      <div
-        ref="editorRef"
-        class="editor-field"
-      ></div>
+      <div ref="editorRef" class="editor-field" :class="editorState"></div>
     </div>
 
     <div v-if="parseResult" class="output-section">
@@ -92,8 +97,11 @@ function setExample(example: string) {
       <div class="info-grid">
         <div class="info-item">
           <div class="info-label">State</div>
-          <div class="info-value" :class="isComplete ? 'complete' : 'incomplete'">
-            {{ isComplete ? 'Complete' : 'Incomplete' }}
+          <div
+            class="info-value"
+            :class="isComplete ? 'complete' : 'incomplete'"
+          >
+            {{ isComplete ? "Complete" : "Incomplete" }}
           </div>
         </div>
         <div class="info-item">
@@ -122,7 +130,7 @@ function setExample(example: string) {
 
       <div class="raw-value">
         <div class="info-label">Raw Value</div>
-        <code class="raw-value-display">{{ input || '(empty)' }}</code>
+        <code class="raw-value-display">{{ input || "(empty)" }}</code>
       </div>
 
       <div v-if="evalResult" class="eval-section">
