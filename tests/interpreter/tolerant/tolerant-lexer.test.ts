@@ -141,6 +141,35 @@ describe("Tolerant Lexer", () => {
       const tokens = lexer.getAllTokens();
       expect(tokens).toHaveLength(4); // REFERENCE, OPERATION, REFERENCE, EOF
     });
+
+    it("should not duplicate tokens when peekToken is called", () => {
+      const lexer = new Lexer("{a} + {b}", { tolerant: true });
+
+      lexer.nextToken(); // REFERENCE {a}
+      lexer.peekToken(); // peek at OPERATION (should not add to collected)
+      lexer.nextToken(); // OPERATION +
+      lexer.peekToken(); // peek at REFERENCE {b} (should not add to collected)
+      lexer.nextToken(); // REFERENCE {b}
+      lexer.nextToken(); // EOF
+
+      const tokens = lexer.getAllTokens();
+      expect(tokens).toHaveLength(4); // REFERENCE, OPERATION, REFERENCE, EOF
+    });
+
+    it("should not duplicate tokens when peekTokens is called", () => {
+      const lexer = new Lexer("1 + 2 * 3", { tolerant: true });
+
+      lexer.nextToken(); // NUMBER 1
+      lexer.peekTokens(3); // peek ahead (should not add to collected)
+      lexer.nextToken(); // OPERATION +
+      lexer.nextToken(); // NUMBER 2
+      lexer.nextToken(); // OPERATION *
+      lexer.nextToken(); // NUMBER 3
+      lexer.nextToken(); // EOF
+
+      const tokens = lexer.getAllTokens();
+      expect(tokens).toHaveLength(6); // NUMBER, OPERATION, NUMBER, OPERATION, NUMBER, EOF
+    });
   });
 
   describe("Invalid characters in tolerant mode", () => {

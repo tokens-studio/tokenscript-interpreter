@@ -711,14 +711,16 @@ export class Lexer {
     const savedChar = this.currentChar;
     const savedLine = this.line;
     const savedColumn = this.column;
+    const savedCollectedLength = this.collectedTokens.length;
 
     const nextToken = this.nextToken();
 
-    // Restore state
+    // Restore state (including collectedTokens to avoid duplicates in tolerant mode)
     this.pos = savedPos;
     this.currentChar = savedChar;
     this.line = savedLine;
     this.column = savedColumn;
+    this.collectedTokens.length = savedCollectedLength;
 
     return nextToken.type === TokenType.EOF ? null : nextToken;
   }
@@ -729,6 +731,7 @@ export class Lexer {
     const savedChar = this.currentChar;
     const savedLine = this.line;
     const savedColumn = this.column;
+    const savedCollectedLength = this.collectedTokens.length;
 
     const tokens: Token[] = [];
     for (let i = 0; i < n; i++) {
@@ -739,11 +742,12 @@ export class Lexer {
       tokens.push(token);
     }
 
-    // Restore state
+    // Restore state (including collectedTokens to avoid duplicates in tolerant mode)
     this.pos = savedPos;
     this.currentChar = savedChar;
     this.line = savedLine;
     this.column = savedColumn;
+    this.collectedTokens.length = savedCollectedLength;
 
     return tokens.length > 0 ? tokens : null;
   }

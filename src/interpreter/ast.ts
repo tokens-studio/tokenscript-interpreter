@@ -337,7 +337,7 @@ export function walkAST(node: ASTNode, onVisit: (node: ASTNode) => void): void {
     }
   } else if (node instanceof AttributeAccessNode) {
     walkAST(node.left, onVisit);
-    if (node.right instanceof FunctionCallNode) {
+    if (node.right instanceof FunctionCallNode || node.right instanceof PartialFunctionCallNode) {
       walkAST(node.right, onVisit);
     }
   }

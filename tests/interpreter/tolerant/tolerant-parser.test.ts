@@ -1,4 +1,4 @@
-import { ReferenceNode } from "@interpreter/ast";
+import { ReferenceNode, walkAST } from "@interpreter/ast";
 import {
   collectAllReferences,
   hasPartialNodes,
@@ -322,6 +322,21 @@ describe("Tolerant Parser", () => {
         const incompleteRef = result.incomplete.find((i) => i.type === IncompleteType.UNCLOSED_REFERENCE);
         expect(incompleteRef).toBeDefined();
         expect(incompleteRef?.partialValue).toBe("foo");
+      });
+    });
+
+    describe("walkAST with partial nodes", () => {
+      it("should walk partial function call args inside attribute access", () => {
+        const result = parseTolerantly("{ref}.method(1, {col");
+        const visited: string[] = [];
+
+        if (result.ast) {
+          walkAST(result.ast, (node) => {
+            visited.push(node.nodeType);
+          });
+        }
+
+        expect(visited).toContain("PartialFunctionCallNode");
       });
     });
   });
