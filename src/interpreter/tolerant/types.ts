@@ -51,4 +51,3 @@ export interface TolerantParseResult {
   /** All tokens parsed (including partial tokens) */
   tokens: Token[];
 }
-
