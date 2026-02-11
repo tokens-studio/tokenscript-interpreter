@@ -12,9 +12,12 @@ describe("evaluateExpression", () => {
     }
   });
 
-  it("should handle error on empty expression", () => {
+  it("should return null for empty expression", () => {
     const result = evaluateExpression("");
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.result).toBeNull();
+    }
   });
 
   it("should evaluate with references", () => {

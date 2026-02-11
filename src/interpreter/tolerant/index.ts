@@ -43,9 +43,9 @@ export * from "./types";
  */
 export function parseTolerantly(text: string): TolerantParseResult {
   const lexer = new Lexer(text, { tolerant: true });
-  const parser = new Parser(lexer, { tolerant: true });
 
   try {
+    const parser = new Parser(lexer, { tolerant: true });
     const ast = parser.parse(true);
     const incomplete = parser.getIncomplete();
 
@@ -61,7 +61,7 @@ export function parseTolerantly(text: string): TolerantParseResult {
     return {
       ast: null,
       state: ParseState.INCOMPLETE,
-      incomplete: parser.getIncomplete(),
+      incomplete: [],
       tokens: lexer.getAllTokens(),
     };
   }

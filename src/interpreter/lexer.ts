@@ -43,7 +43,7 @@ export class Lexer {
 
   constructor(text: string, options?: LexerOptions) {
     this.text = text;
-    this.currentChar = this.text[this.pos];
+    this.currentChar = this.pos < this.text.length ? this.text[this.pos] : null;
     this.tolerant = options?.tolerant ?? false;
   }
 
