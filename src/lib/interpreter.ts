@@ -100,16 +100,17 @@ export {
 // Tolerant Parsing ------------------------------------------------------------
 
 export {
+  // Utilities
   collectAllReferences,
   hasPartialNodes,
+  // Types
   type IncompleteInfo,
   IncompleteType,
-  // Types
   ParseState,
+  // Partial Nodes
   PartialBinOpNode,
   PartialFunctionCallNode,
   PartialParenNode,
-  // Partial Nodes
   PartialReferenceNode,
   PartialStringNode,
   PartialUnaryOpNode,
