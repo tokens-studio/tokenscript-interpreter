@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Fault-tolerant parser for editor support**: Inline-mode parser that gracefully handles incomplete expressions, enabling real-time syntax highlighting, autocomplete, and live preview
+  - `parseTolerantly()` / `tokenizeTolerantly()` for partial input
+  - Partial AST node types for incomplete references, strings, function calls, binary ops, unary ops, and parenthesized expressions
+  - `collectAllReferences()` / `hasPartialNodes()` / `walkAST()` utilities
+  - Trailing dot detection for property/method autocomplete triggers
+- **Vue tolerant parser demo**: Interactive example at `examples/tolerant-parser-vue/` with syntax highlighting, reference extraction, and live color preview
+
+### Fixed
+
+- Lexer crash on empty string input
+- Lexer `peek()` returning `undefined` instead of `null` for out-of-bounds access
+- Upgraded vitest to v4 to resolve minimatch vulnerability
+
 ## [0.26.0] - 2026-02-10
 
 ## [0.26.0] - 2026-02-10
@@ -86,21 +101,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.18.1] - 2026-01-16
 
 ### Added
-
-- **Tolerant parser for incomplete input**: New parsing mode that handles incomplete tokenscript values while users type, enabling real-time editor features.
-  - `parseTolerantly(text)`: Parse incomplete input and return partial AST nodes with metadata
-  - `tokenizeTolerantly(text)`: Tokenize incomplete input including partial tokens
-  - `collectAllReferences(ast)`: Extract all references (complete and partial) from an AST
-  - `hasPartialNodes(ast)`: Check if an AST contains any incomplete nodes
-  - New partial node types: `PartialReferenceNode`, `PartialStringNode`, `PartialFunctionCallNode`, `PartialBinOpNode`, `PartialUnaryOpNode`, `PartialParenNode`
-  - New token types: `PARTIAL_REFERENCE`, `PARTIAL_STRING`
-  - Use cases: syntax highlighting for incomplete references, autocomplete suggestions, live color preview
-
-- **Vue tolerant parser example**: Interactive demo at `examples/tolerant-parser-vue/` showcasing:
-  - Real-time parsing of incomplete expressions
-  - Syntax highlighting with color-coded tokens
-  - Reference extraction with partial/complete status
-  - Live color preview for hex colors and color functions (rgb, hsl, oklch)
 
 - **Agent guidelines documentation**: Added AGENTS.md with project overview, structure, development commands, and common tasks for AI coding assistants.
 - **REPL reference injection**: Pass initial variable references to the REPL via `--reference="key:value"` flag. Supports strings, numbers, and JSON arrays. Multiple references can be passed.
