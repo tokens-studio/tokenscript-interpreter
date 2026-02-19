@@ -86,6 +86,18 @@ describe("Tolerant Parser", () => {
 
         const partialStr = result.ast as PartialStringNode;
         expect(partialStr.partialValue).toBe("hello");
+        expect(partialStr.quoteType).toBe('"');
+      });
+
+      it("should preserve single-quote type on partial string", () => {
+        const result = parseTolerantly("'hello");
+
+        expect(result.state).toBe(ParseState.INCOMPLETE);
+        expect(result.ast).toBeInstanceOf(PartialStringNode);
+
+        const partialStr = result.ast as PartialStringNode;
+        expect(partialStr.partialValue).toBe("hello");
+        expect(partialStr.quoteType).toBe("'");
       });
     });
 
@@ -185,6 +197,24 @@ describe("Tolerant Parser", () => {
 
         expect(result.state).toBe(ParseState.INCOMPLETE);
         expect(result.ast).toBeInstanceOf(PartialParenNode);
+      });
+    });
+
+    describe("Trailing Dot", () => {
+      it("should detect trailing dot on reference", () => {
+        const result = parseTolerantly("{ref}.");
+
+        expect(result.state).toBe(ParseState.INCOMPLETE);
+        expect(result.incomplete).toHaveLength(1);
+        expect(result.incomplete[0].type).toBe(IncompleteType.TRAILING_DOT);
+      });
+
+      it("should detect trailing dot on identifier", () => {
+        const result = parseTolerantly("foo.");
+
+        expect(result.state).toBe(ParseState.INCOMPLETE);
+        expect(result.incomplete).toHaveLength(1);
+        expect(result.incomplete[0].type).toBe(IncompleteType.TRAILING_DOT);
       });
     });
 
