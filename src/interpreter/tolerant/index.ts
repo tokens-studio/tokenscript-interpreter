@@ -18,8 +18,8 @@ import { Parser } from "../parser";
 import { PartialReferenceNode } from "./partial-nodes";
 import { ParseState, type TolerantParseResult } from "./types";
 
-export * from "./partial-nodes";
 // Re-export types and partial nodes
+export * from "./partial-nodes";
 export * from "./types";
 
 /**
@@ -55,14 +55,15 @@ export function parseTolerantly(text: string): TolerantParseResult {
       incomplete,
       tokens: lexer.getAllTokens(),
     };
-  } catch {
+  } catch (e) {
     // Even in tolerant mode, some errors might slip through
-    // Return what we have so far
+    // Return what we have so far, with the error attached for debugging
     return {
       ast: null,
       state: ParseState.INCOMPLETE,
       incomplete: [],
       tokens: lexer.getAllTokens(),
+      error: e instanceof Error ? e : new Error(String(e)),
     };
   }
 }
@@ -126,17 +127,23 @@ export function collectAllReferences(ast: ASTNode | null): ReferenceInfo[] {
   return refs;
 }
 
+const PARTIAL_FOUND = Symbol("PARTIAL_FOUND");
+
 /**
  * Check if an AST contains any partial/incomplete nodes
  */
 export function hasPartialNodes(ast: ASTNode | null): boolean {
   if (!ast) return false;
 
-  let found = false;
-  walkAST(ast, (node) => {
-    if (node.nodeType.startsWith("Partial")) {
-      found = true;
-    }
-  });
-  return found;
+  try {
+    walkAST(ast, (node) => {
+      if (node.nodeType.startsWith("Partial")) {
+        throw PARTIAL_FOUND;
+      }
+    });
+    return false;
+  } catch (e) {
+    if (e === PARTIAL_FOUND) return true;
+    throw e;
+  }
 }

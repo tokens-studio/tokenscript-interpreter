@@ -62,6 +62,23 @@ export class Parser {
   }
 
   /**
+   * In tolerant mode, check if the current token is EOF after consuming an operator.
+   * If so, record the incomplete info and return a PartialBinOpNode.
+   * Returns null if not at EOF or not in tolerant mode.
+   */
+  private tryRecoverMissingOperand(left: ASTNode, opToken: Token): PartialBinOpNode | null {
+    if (this.tolerant && this.currentToken.type === TokenType.EOF) {
+      this.incompleteInfo.push({
+        type: IncompleteType.MISSING_OPERAND,
+        startPos: opToken.pos,
+        endPos: opToken.endPos,
+      });
+      return new PartialBinOpNode(left, opToken);
+    }
+    return null;
+  }
+
+  /**
    * Check if the parser encountered any incomplete constructs
    */
   public hasIncomplete(): boolean {
@@ -326,15 +343,8 @@ export class Parser {
       this.currentToken.type === TokenType.LOGIC_OR
     ) {
       const token = this.eat(this.currentToken.type);
-      // In tolerant mode, handle EOF after operator
-      if (this.tolerant && (this.currentToken.type as TokenType) === TokenType.EOF) {
-        this.incompleteInfo.push({
-          type: IncompleteType.MISSING_OPERAND,
-          startPos: token.pos,
-          endPos: token.endPos,
-        });
-        return new PartialBinOpNode(node, token);
-      }
+      const partial = this.tryRecoverMissingOperand(node, token);
+      if (partial) return partial;
       node = new BinOpNode(node, token, this.logicTerm());
     }
     return node;
@@ -455,15 +465,8 @@ export class Parser {
         this.currentToken.value === Operations.SUBTRACT)
     ) {
       const token = this.eat(TokenType.OPERATION);
-      // In tolerant mode, handle EOF after operator
-      if (this.tolerant && (this.currentToken.type as TokenType) === TokenType.EOF) {
-        this.incompleteInfo.push({
-          type: IncompleteType.MISSING_OPERAND,
-          startPos: token.pos,
-          endPos: token.endPos,
-        });
-        return new PartialBinOpNode(node, token);
-      }
+      const partial = this.tryRecoverMissingOperand(node, token);
+      if (partial) return partial;
       node = new BinOpNode(node, token, this.comparison());
     }
     return node;
@@ -481,15 +484,8 @@ export class Parser {
       this.currentToken.type === TokenType.IS_LT_EQ
     ) {
       const token = this.eat(this.currentToken.type);
-      // In tolerant mode, handle EOF after operator
-      if (this.tolerant && (this.currentToken.type as TokenType) === TokenType.EOF) {
-        this.incompleteInfo.push({
-          type: IncompleteType.MISSING_OPERAND,
-          startPos: token.pos,
-          endPos: token.endPos,
-        });
-        return new PartialBinOpNode(node, token);
-      }
+      const partial = this.tryRecoverMissingOperand(node, token);
+      if (partial) return partial;
       node = new BinOpNode(node, token, this.term());
     }
     return node;
@@ -504,15 +500,8 @@ export class Parser {
         this.currentToken.value === Operations.DIVIDE)
     ) {
       const token = this.eat(TokenType.OPERATION);
-      // In tolerant mode, handle EOF after operator
-      if (this.tolerant && (this.currentToken.type as TokenType) === TokenType.EOF) {
-        this.incompleteInfo.push({
-          type: IncompleteType.MISSING_OPERAND,
-          startPos: token.pos,
-          endPos: token.endPos,
-        });
-        return new PartialBinOpNode(node, token);
-      }
+      const partial = this.tryRecoverMissingOperand(node, token);
+      if (partial) return partial;
       node = new BinOpNode(node, token, this.power());
     }
     return node;
@@ -526,15 +515,8 @@ export class Parser {
       this.currentToken.value === Operations.POWER
     ) {
       const token = this.eat(TokenType.OPERATION);
-      // In tolerant mode, handle EOF after operator
-      if (this.tolerant && (this.currentToken.type as TokenType) === TokenType.EOF) {
-        this.incompleteInfo.push({
-          type: IncompleteType.MISSING_OPERAND,
-          startPos: token.pos,
-          endPos: token.endPos,
-        });
-        return new PartialBinOpNode(node, token);
-      }
+      const partial = this.tryRecoverMissingOperand(node, token);
+      if (partial) return partial;
       node = new BinOpNode(node, token, this.factor());
     }
     return node;
@@ -575,7 +557,6 @@ export class Parser {
         token.value === Operations.LOGIC_NOT)
     ) {
       this.eat(TokenType.OPERATION);
-      // In tolerant mode, handle EOF after unary operator
       if (this.tolerant && this.currentToken.type === TokenType.EOF) {
         this.incompleteInfo.push({
           type: IncompleteType.MISSING_OPERAND,
@@ -658,13 +639,15 @@ export class Parser {
     // Handle partial string tokens
     if (token.type === TokenType.PARTIAL_STRING) {
       this.eat(TokenType.PARTIAL_STRING);
+      const sourceText = this.lexer.getSourceInfo().text;
+      const quoteType = sourceText[token.pos] ?? '"';
       this.incompleteInfo.push({
         type: IncompleteType.UNCLOSED_STRING,
         startPos: token.pos,
         endPos: token.endPos,
         partialValue: token.value,
       });
-      return new PartialStringNode(token.value, '"', token);
+      return new PartialStringNode(token.value, quoteType, token);
     }
 
     // Identifier or function call
@@ -713,10 +696,7 @@ export class Parser {
           const methodName = this.currentToken.value as string;
           this.eat(this.currentToken.type);
           const funcCall = this.functionCall({ ...this.currentToken, value: methodName } as Token);
-          node = new AttributeAccessNode(
-            node,
-            funcCall as FunctionCallNode | PartialFunctionCallNode,
-          );
+          node = new AttributeAccessNode(node, funcCall);
         } else {
           // It's a property access
           const attrToken = this.currentToken;
@@ -728,7 +708,7 @@ export class Parser {
     return node;
   }
 
-  private functionCall(functionName: Token): ASTNode {
+  private functionCall(functionName: Token): FunctionCallNode | PartialFunctionCallNode {
     this.eat(TokenType.LPAREN);
     const args: ASTNode[] = [];
     while (this.currentToken.type !== TokenType.RPAREN) {

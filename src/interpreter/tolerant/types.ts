@@ -50,4 +50,6 @@ export interface TolerantParseResult {
   incomplete: IncompleteInfo[];
   /** All tokens parsed (including partial tokens) */
   tokens: Token[];
+  /** Error that occurred during parsing, if any slipped through tolerant mode */
+  error?: Error;
 }

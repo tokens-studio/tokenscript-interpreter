@@ -48,13 +48,13 @@ export class PartialFunctionCallNode implements ASTNode {
  */
 export class PartialBinOpNode implements ASTNode {
   nodeType = "PartialBinOpNode";
+  public token: Token;
 
   constructor(
     /** The left operand */
     public left: ASTNode,
     /** The operator token */
     public opToken: Token,
-    public token?: Token,
   ) {
     this.token = opToken;
   }
@@ -69,11 +69,11 @@ export class PartialBinOpNode implements ASTNode {
  */
 export class PartialUnaryOpNode implements ASTNode {
   nodeType = "PartialUnaryOpNode";
+  public token: Token;
 
   constructor(
     /** The operator token */
     public opToken: Token,
-    public token?: Token,
   ) {
     this.token = opToken;
   }
