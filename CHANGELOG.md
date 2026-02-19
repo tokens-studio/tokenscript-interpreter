@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.27.0] - 2026-02-19
+
 ### Added
 
 - **Fault-tolerant parser for editor support**: Inline-mode parser that gracefully handles incomplete expressions, enabling real-time syntax highlighting, autocomplete, and live preview
