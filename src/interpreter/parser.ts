@@ -688,7 +688,9 @@ export class Parser {
     while (this.currentToken.type === TokenType.DOT) {
       const dotToken = this.eat(TokenType.DOT);
       // In tolerant mode, handle trailing dot without property name
-      if (this.tolerant && this.currentToken.type === TokenType.EOF) {
+      // Cast needed: TS narrows currentToken.type after the while(DOT) guard,
+      // but eat() replaces currentToken so it can now be EOF.
+      if (this.tolerant && (this.currentToken.type as TokenType) === TokenType.EOF) {
         this.incompleteInfo.push({
           type: IncompleteType.TRAILING_DOT,
           startPos: dotToken.pos,
