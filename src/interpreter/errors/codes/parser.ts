@@ -4,6 +4,7 @@ export enum ParserErrorCode {
   UNEXPECTED_END = "PARSER_UNEXPECTED_END",
   CONDITION_MUST_BE_BOOLEAN = "PARSER_CONDITION_MUST_BE_BOOLEAN",
   INVALID_SYNTAX = "PARSER_INVALID_SYNTAX",
+  TOLERANT_REQUIRES_INLINE = "PARSER_TOLERANT_REQUIRES_INLINE",
 }
 
 export interface ParserErrorData {
@@ -19,4 +20,5 @@ export interface ParserErrorData {
     message?: string;
   };
   [ParserErrorCode.UNEXPECTED_END]: Record<string, never>;
+  [ParserErrorCode.TOLERANT_REQUIRES_INLINE]: Record<string, never>;
 }

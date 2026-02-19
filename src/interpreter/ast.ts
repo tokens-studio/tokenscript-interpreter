@@ -1,4 +1,10 @@
 import type { ASTNode, Operations, SupportedFormats, Token, TokenType } from "@src/types";
+import {
+  PartialBinOpNode,
+  PartialFunctionCallNode,
+  PartialParenNode,
+  PartialUnaryOpNode,
+} from "./tolerant/partial-nodes";
 
 // Re-export ASTNode for external consumers
 export type { ASTNode } from "@src/types";
@@ -257,9 +263,10 @@ export class StatementListNode implements ASTNode {
 export class AttributeAccessNode implements ASTNode {
   nodeType = "AttributeAccessNode";
   // 'left' is the object, 'right' is the attribute (IdentifierNode) or method (FunctionCallNode)
+  // In tolerant mode, 'right' may also be a PartialFunctionCallNode
   constructor(
     public left: ASTNode,
-    public right: IdentifierNode | FunctionCallNode,
+    public right: IdentifierNode | FunctionCallNode | PartialFunctionCallNode,
     public token?: Token,
   ) {}
 }
@@ -330,9 +337,21 @@ export function walkAST(node: ASTNode, onVisit: (node: ASTNode) => void): void {
     }
   } else if (node instanceof AttributeAccessNode) {
     walkAST(node.left, onVisit);
-    if (node.right instanceof FunctionCallNode) {
+    if (node.right instanceof FunctionCallNode || node.right instanceof PartialFunctionCallNode) {
       walkAST(node.right, onVisit);
     }
+  }
+  // Handle partial nodes from tolerant parsing
+  else if (node instanceof PartialBinOpNode) {
+    walkAST(node.left, onVisit);
+  } else if (node instanceof PartialUnaryOpNode) {
+    // No child nodes to walk
+  } else if (node instanceof PartialFunctionCallNode) {
+    for (const arg of node.args) {
+      walkAST(arg, onVisit);
+    }
+  } else if (node instanceof PartialParenNode) {
+    walkAST(node.expr, onVisit);
   }
 }
 

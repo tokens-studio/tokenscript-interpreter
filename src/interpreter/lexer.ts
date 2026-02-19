@@ -12,6 +12,17 @@ for (const val of Object.values(ReservedKeyword) as string[]) {
   RESERVED_KEYWORD_STRINGS[val.toLowerCase()] = val as ReservedKeyword;
 }
 
+/**
+ * Options for the Lexer
+ */
+export interface LexerOptions {
+  /**
+   * If true, the lexer will not throw errors on incomplete input.
+   * Instead, it will return partial tokens where appropriate.
+   */
+  tolerant?: boolean;
+}
+
 export class Lexer {
   private text: string;
   private currentChar: string | null;
@@ -27,10 +38,13 @@ export class Lexer {
    * @see docs/tokenscript/edge-cases/format-unit-parsing.md
    */
   private _lastUnitableToken: Token | null = null;
+  private tolerant: boolean;
+  private collectedTokens: Token[] = [];
 
-  constructor(text: string) {
+  constructor(text: string, options?: LexerOptions) {
     this.text = text;
-    this.currentChar = this.text[this.pos];
+    this.currentChar = this.pos < this.text.length ? this.text[this.pos] : null;
+    this.tolerant = options?.tolerant ?? false;
   }
 
   /**
@@ -71,7 +85,7 @@ export class Lexer {
   }
 
   private peek(n = 1): string | null {
-    return this.text[this.pos + n];
+    return this.text[this.pos + n] ?? null;
   }
 
   private skipWhitespace(): void {
@@ -211,6 +225,10 @@ export class Lexer {
     let result = "";
     while (this.currentChar !== null && this.currentChar !== "}") {
       if (this.currentChar === "{") {
+        if (this.tolerant) {
+          // In tolerant mode, treat nested { as end of partial reference
+          break;
+        }
         this.error(LexerErrorCode.UNTERMINATED_REFERENCE, {});
       }
       if (isSpace(this.currentChar)) {
@@ -222,10 +240,30 @@ export class Lexer {
     }
 
     if (this.currentChar === null) {
+      if (this.tolerant) {
+        // In tolerant mode, return a partial reference token
+        return {
+          type: TokenType.PARTIAL_REFERENCE,
+          value: result,
+          line: this.line,
+          pos: refStartPos,
+          endPos: this.pos,
+        };
+      }
       this.error(LexerErrorCode.UNTERMINATED_REFERENCE, {});
     }
 
     if (result === "") {
+      if (this.tolerant) {
+        // In tolerant mode, return empty partial reference
+        return {
+          type: TokenType.PARTIAL_REFERENCE,
+          value: "",
+          line: this.line,
+          pos: refStartPos,
+          endPos: this.pos,
+        };
+      }
       this.error(LexerErrorCode.EMPTY_VARIABLE_NAME, {});
     }
 
@@ -255,6 +293,16 @@ export class Lexer {
     }
 
     if (this.currentChar === null) {
+      if (this.tolerant) {
+        // In tolerant mode, return a partial string token
+        return {
+          type: TokenType.PARTIAL_STRING,
+          value: result,
+          line: this.line,
+          pos: startPos,
+          endPos: this.pos,
+        };
+      }
       this.error(LexerErrorCode.UNTERMINATED_STRING, { quoteType });
     }
 
@@ -278,6 +326,16 @@ export class Lexer {
     }
     // Support #RGB (4), #RGBA (5), #RRGGBB (7), #RRGGBBAA (9)
     if (result.length !== 4 && result.length !== 5 && result.length !== 7 && result.length !== 9) {
+      if (this.tolerant) {
+        // In tolerant mode, accept partial hex colors
+        return {
+          type: TokenType.HEX_COLOR,
+          value: result,
+          line: this.line,
+          pos: startPos,
+          endPos: this.pos,
+        };
+      }
       this.error(LexerErrorCode.INVALID_HEX_COLOR_FORMAT, {
         value: result,
         expectedLength: "#RGB, #RGBA, #RRGGBB, or #RRGGBBAA",
@@ -292,6 +350,13 @@ export class Lexer {
     };
   }
 
+  private collectToken(token: Token): Token {
+    if (this.tolerant) {
+      this.collectedTokens.push(token);
+    }
+    return token;
+  }
+
   public nextToken(): Token {
     while (this.currentChar !== null) {
       this.skipWhitespace();
@@ -303,130 +368,130 @@ export class Lexer {
       }
 
       if (this.isDigit()) {
-        return this.number();
+        return this.collectToken(this.number());
       }
 
       if (this.currentChar === "'" || this.currentChar === '"') {
-        return this.explicitString(this.currentChar);
+        return this.collectToken(this.explicitString(this.currentChar));
       }
 
       if (this.isValidIdentifierStart(this.currentChar)) {
-        return this.stringElement();
+        return this.collectToken(this.stringElement());
       }
 
       if (this.currentChar === "{") {
-        return this.reference();
+        return this.collectToken(this.reference());
       }
       if (this.currentChar === "[") {
         const startPos = this.pos;
         this.eat("[");
-        return {
+        return this.collectToken({
           type: TokenType.LBLOCK,
           value: "[",
           line: this.line,
           pos: startPos,
           endPos: this.pos,
-        };
+        });
       }
       if (this.currentChar === "]") {
         const startPos = this.pos;
         this.eat("]");
-        return {
+        return this.collectToken({
           type: TokenType.RBLOCK,
           value: "]",
           line: this.line,
           pos: startPos,
           endPos: this.pos,
-        };
+        });
       }
       if (this.currentChar === "!" && this.peek() === "=") {
         const startPos = this.pos;
         this.eat("!");
         this.eat("=");
-        return {
+        return this.collectToken({
           type: TokenType.IS_NOT_EQ,
           value: "!=",
           line: this.line,
           pos: startPos,
           endPos: this.pos,
-        };
+        });
       }
       if (this.currentChar === "+") {
         const startPos = this.pos;
         this.eat("+");
-        return {
+        return this.collectToken({
           type: TokenType.OPERATION,
           value: Operations.ADD,
           line: this.line,
           pos: startPos,
           endPos: this.pos,
-        };
+        });
       }
       if (this.currentChar === "-") {
         const startPos = this.pos;
         this.eat("-");
-        return {
+        return this.collectToken({
           type: TokenType.OPERATION,
           value: Operations.SUBTRACT,
           line: this.line,
           pos: startPos,
           endPos: this.pos,
-        };
+        });
       }
       if (this.currentChar === "*") {
         const startPos = this.pos;
         this.eat("*");
-        return {
+        return this.collectToken({
           type: TokenType.OPERATION,
           value: Operations.MULTIPLY,
           line: this.line,
           pos: startPos,
           endPos: this.pos,
-        };
+        });
       }
       if (this.currentChar === "/") {
         const startPos = this.pos;
         this.eat("/");
-        return {
+        return this.collectToken({
           type: TokenType.OPERATION,
           value: Operations.DIVIDE,
           line: this.line,
           pos: startPos,
           endPos: this.pos,
-        };
+        });
       }
       if (this.currentChar === "^") {
         const startPos = this.pos;
         this.eat("^");
-        return {
+        return this.collectToken({
           type: TokenType.OPERATION,
           value: Operations.POWER,
           line: this.line,
           pos: startPos,
           endPos: this.pos,
-        };
+        });
       }
       if (this.currentChar === "!") {
         const startPos = this.pos;
         this.eat("!");
-        return {
+        return this.collectToken({
           type: TokenType.OPERATION,
           value: Operations.LOGIC_NOT,
           line: this.line,
           pos: startPos,
           endPos: this.pos,
-        };
+        });
       }
       if (this.currentChar === "(") {
         const startPos = this.pos;
         this.eat("(");
-        return {
+        return this.collectToken({
           type: TokenType.LPAREN,
           value: "(",
           line: this.line,
           pos: startPos,
           endPos: this.pos,
-        };
+        });
       }
       if (this.currentChar === ")") {
         const startPos = this.pos;
@@ -440,168 +505,204 @@ export class Lexer {
         };
         // Track for FORMAT adjacency detection (e.g., '(3px + 4px)rem')
         this._lastUnitableToken = token;
-        return token;
+        return this.collectToken(token);
       }
       if (this.currentChar === ",") {
         const startPos = this.pos;
         this.eat(",");
-        return {
+        return this.collectToken({
           type: TokenType.COMMA,
           value: ",",
           line: this.line,
           pos: startPos,
           endPos: this.pos,
-        };
+        });
       }
       if (this.currentChar === ".") {
         if (this.peek() !== null && isNumber(this.peek())) {
-          return this.number();
+          return this.collectToken(this.number());
         }
         const startPos = this.pos;
         this.eat(".");
-        return {
+        return this.collectToken({
           type: TokenType.DOT,
           value: ".",
           line: this.line,
           pos: startPos,
           endPos: this.pos,
-        };
+        });
       }
       if (this.currentChar === "#") {
-        return this.hexColor();
+        return this.collectToken(this.hexColor());
       }
       if (this.currentChar === "%") {
         const startPos = this.pos;
         this.eat("%");
-        return {
+        return this.collectToken({
           type: TokenType.FORMAT,
           value: SupportedFormats.PERCENTAGE,
           line: this.line,
           pos: startPos,
           endPos: this.pos,
-        };
+        });
       }
       if (this.currentChar === "=") {
         const startPos = this.pos;
         if (this.peek() === "=") {
           this.eat("=");
           this.eat("=");
-          return {
+          return this.collectToken({
             type: TokenType.IS_EQ,
             value: "==",
             line: this.line,
             pos: startPos,
             endPos: this.pos,
-          };
+          });
         }
         this.eat("=");
-        return {
+        return this.collectToken({
           type: TokenType.ASSIGN,
           value: "=",
           line: this.line,
           pos: startPos,
           endPos: this.pos,
-        };
+        });
       }
       if (this.currentChar === ">") {
         const startPos = this.pos;
         if (this.peek() === "=") {
           this.eat(">");
           this.eat("=");
-          return {
+          return this.collectToken({
             type: TokenType.IS_GT_EQ,
             value: ">=",
             line: this.line,
             pos: startPos,
             endPos: this.pos,
-          };
+          });
         }
         this.eat(">");
-        return {
+        return this.collectToken({
           type: TokenType.IS_GT,
           value: ">",
           line: this.line,
           pos: startPos,
           endPos: this.pos,
-        };
+        });
       }
       if (this.currentChar === "<") {
         const startPos = this.pos;
         if (this.peek() === "=") {
           this.eat("<");
           this.eat("=");
-          return {
+          return this.collectToken({
             type: TokenType.IS_LT_EQ,
             value: "<=",
             line: this.line,
             pos: startPos,
             endPos: this.pos,
-          };
+          });
         }
         this.eat("<");
-        return {
+        return this.collectToken({
           type: TokenType.IS_LT,
           value: "<",
           line: this.line,
           pos: startPos,
           endPos: this.pos,
-        };
+        });
       }
       if (this.currentChar === ";") {
         const startPos = this.pos;
         this.eat(";");
-        return {
+        return this.collectToken({
           type: TokenType.SEMICOLON,
           value: ";",
           line: this.line,
           pos: startPos,
           endPos: this.pos,
-        };
+        });
       }
       if (this.currentChar === "&" && this.peek() === "&") {
         const startPos = this.pos;
         this.eat("&");
         this.eat("&");
-        return {
+        return this.collectToken({
           type: TokenType.LOGIC_AND,
           value: Operations.LOGIC_AND,
           line: this.line,
           pos: startPos,
           endPos: this.pos,
-        };
+        });
       }
       if (this.currentChar === "|" && this.peek() === "|") {
         const startPos = this.pos;
         this.eat("|");
         this.eat("|");
-        return {
+        return this.collectToken({
           type: TokenType.LOGIC_OR,
           value: Operations.LOGIC_OR,
           line: this.line,
           pos: startPos,
           endPos: this.pos,
-        };
+        });
       }
       if (this.currentChar === ":") {
         const startPos = this.pos;
         this.eat(":");
-        return {
+        return this.collectToken({
           type: TokenType.COLON,
           value: ":",
           line: this.line,
           pos: startPos,
           endPos: this.pos,
-        };
+        });
       }
 
       // If we reach here, the character is not valid
+      if (this.tolerant) {
+        // In tolerant mode, skip invalid characters
+        this.advance();
+        // Continue to next iteration to try to find a valid token
+        continue;
+      }
       const char = this.currentChar === null ? "end of input" : this.currentChar;
       this.error(LexerErrorCode.INVALID_CHARACTER, {
         char,
         position: this.pos,
       });
     }
-    return { type: TokenType.EOF, value: null, line: this.line, pos: this.pos, endPos: this.pos };
+    const eofToken: Token = {
+      type: TokenType.EOF,
+      value: null,
+      line: this.line,
+      pos: this.pos,
+      endPos: this.pos,
+    };
+    return this.collectToken(eofToken);
+  }
+
+  /**
+   * Get all tokens that have been collected during tokenization.
+   * This is useful for tolerant parsing to get all tokens including partial ones.
+   */
+  public getAllTokens(): Token[] {
+    return [...this.collectedTokens];
+  }
+
+  /**
+   * Tokenize the entire input and return all tokens.
+   * This is a convenience method for tolerant parsing.
+   */
+  public tokenizeAll(): Token[] {
+    const tokens: Token[] = [];
+    let token = this.nextToken();
+    while (token.type !== TokenType.EOF) {
+      tokens.push(token);
+      token = this.nextToken();
+    }
+    tokens.push(token); // Include EOF
+    return tokens;
   }
 
   peekToken(): Token | null {
@@ -610,14 +711,16 @@ export class Lexer {
     const savedChar = this.currentChar;
     const savedLine = this.line;
     const savedColumn = this.column;
+    const savedCollectedLength = this.collectedTokens.length;
 
     const nextToken = this.nextToken();
 
-    // Restore state
+    // Restore state (including collectedTokens to avoid duplicates in tolerant mode)
     this.pos = savedPos;
     this.currentChar = savedChar;
     this.line = savedLine;
     this.column = savedColumn;
+    this.collectedTokens.length = savedCollectedLength;
 
     return nextToken.type === TokenType.EOF ? null : nextToken;
   }
@@ -628,6 +731,7 @@ export class Lexer {
     const savedChar = this.currentChar;
     const savedLine = this.line;
     const savedColumn = this.column;
+    const savedCollectedLength = this.collectedTokens.length;
 
     const tokens: Token[] = [];
     for (let i = 0; i < n; i++) {
@@ -638,11 +742,12 @@ export class Lexer {
       tokens.push(token);
     }
 
-    // Restore state
+    // Restore state (including collectedTokens to avoid duplicates in tolerant mode)
     this.pos = savedPos;
     this.currentChar = savedChar;
     this.line = savedLine;
     this.column = savedColumn;
+    this.collectedTokens.length = savedCollectedLength;
 
     return tokens.length > 0 ? tokens : null;
   }

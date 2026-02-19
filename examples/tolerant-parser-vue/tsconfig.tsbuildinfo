@@ -1,0 +1,1 @@
+{"root":["./src/main.ts","./src/vite-env.d.ts","./src/editor/TokenscriptEditor.ts","./src/editor/index.ts","./src/editor/render.ts","./src/editor/selection.ts","./src/editor/types.ts","./src/App.vue"],"version":"5.9.3"}

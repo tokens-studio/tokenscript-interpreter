@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Fault-tolerant parser for editor support**: Inline-mode parser that gracefully handles incomplete expressions, enabling real-time syntax highlighting, autocomplete, and live preview
+  - `parseTolerantly()` / `tokenizeTolerantly()` for partial input
+  - Partial AST node types for incomplete references, strings, function calls, binary ops, unary ops, and parenthesized expressions
+  - `collectAllReferences()` / `hasPartialNodes()` / `walkAST()` utilities
+  - Trailing dot detection for property/method autocomplete triggers
+- **Vue tolerant parser demo**: Interactive example at `examples/tolerant-parser-vue/` with syntax highlighting, reference extraction, and live color preview
+
+### Fixed
+
+- Lexer crash on empty string input
+- Lexer `peek()` returning `undefined` instead of `null` for out-of-bounds access
+- Upgraded vitest to v4 to resolve minimatch vulnerability
+
 ## [0.26.0] - 2026-02-10
 
 ## [0.26.0] - 2026-02-10
