@@ -22,6 +22,8 @@ export enum IncompleteType {
   UNCLOSED_FUNCTION = "unclosed_function",
   /** Missing right operand in binary operation like 1 + */
   MISSING_OPERAND = "missing_operand",
+  /** Trailing dot without property name like {ref}. */
+  TRAILING_DOT = "trailing_dot",
 }
 
 /**

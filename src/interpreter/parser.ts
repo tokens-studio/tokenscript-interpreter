@@ -686,7 +686,16 @@ export class Parser {
   private attributeAccess(leftNode: ASTNode): ASTNode {
     let node = leftNode;
     while (this.currentToken.type === TokenType.DOT) {
-      this.eat(TokenType.DOT);
+      const dotToken = this.eat(TokenType.DOT);
+      // In tolerant mode, handle trailing dot without property name
+      if (this.tolerant && this.currentToken.type === TokenType.EOF) {
+        this.incompleteInfo.push({
+          type: IncompleteType.TRAILING_DOT,
+          startPos: dotToken.pos,
+          endPos: dotToken.endPos,
+        });
+        break;
+      }
       // Accept STRING or FORMAT as valid identifier in attribute position
       // FORMAT tokens (like 's', 'ms') can still be valid attribute names
       if (this.isIdentifierToken()) {
