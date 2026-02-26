@@ -19,7 +19,7 @@ import {
 } from "@interpreter/symbols";
 import { renameReferences } from "@interpreter/utils/references";
 import { isArray, isBoolean, isNull, isNumber, isObject, isString } from "@interpreter/utils/type";
-import { UNINTERPRETED_KEYWORDS } from "@src/types";
+import { type ISymbolType, UNINTERPRETED_KEYWORDS } from "@src/types";
 import { createDependencyError } from "../errors";
 import {
   createTokenSymbol,
@@ -91,7 +91,7 @@ function collectTypeValidationIssues(
     return [];
   }
 
-  const validationResults = config.tokenManager.validate(tokenType, valueToValidate as any);
+  const validationResults = config.tokenManager.validate(tokenType, valueToValidate as ISymbolType);
 
   const issues: ValidationIssue[] = [];
   for (const result of validationResults) {

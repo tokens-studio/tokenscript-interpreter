@@ -162,7 +162,6 @@ result.issues; // [{ code: "...", severity: "warning", message: "Token validatio
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `value` | `unknown` | — | The expression to resolve. |
 | `type` | `string` | — | Token type for validation (e.g. `"color"`, `"dimension"`). |
 | `validate` | `boolean` | `false` | Enable type validation on the resolved value. Requires `type`. |
 
