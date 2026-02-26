@@ -57,11 +57,6 @@ export type UpdateTokenParams = TokenOperationBase & {
   tokenData?: TokenData;
   tokenPathRenamed?: RefPath;
   updateReferences?: boolean;
-  /** When true, only the changed token is excluded from cache seeding —
-   *  all other tokens (including dependents) are warm-started from the
-   *  previous cache. This is a performance optimization that avoids
-   *  the BFS graph traversal to compute the full dirty set. */
-  skipDependents?: boolean;
 };
 
 export type DeleteTokenParams = TokenOperationBase;

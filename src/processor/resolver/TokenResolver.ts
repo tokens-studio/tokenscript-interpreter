@@ -1309,7 +1309,6 @@ export class TokenResolver {
     updatedTokens: TokenDataMap,
     callbacks: ProcessorCallbacks,
     changedTokenPath?: string,
-    skipDependents?: boolean,
   ): ProcessorResult {
     if (!this.prefixResolver) {
       throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
@@ -1318,17 +1317,11 @@ export class TokenResolver {
     // Use the dependency graph to find tokens affected by the change.
     // Only unaffected tokens get their cached values seeded — affected tokens
     // (and deleted tokens) must be re-resolved from scratch.
-    // When skipDependents is true, only the changed token itself is dirty —
-    // all other tokens (including dependents) resolve from cache.
     let dirtyTokens: Set<string> | null = null;
     if (changedTokenPath) {
-      if (skipDependents) {
-        dirtyTokens = new Set([changedTokenPath]);
-      } else {
-        const graph = this.prefixResolver.getGraph();
-        const { tokens: affected } = getTokenDependencyGraph(changedTokenPath, graph);
-        dirtyTokens = affected;
-      }
+      const graph = this.prefixResolver.getGraph();
+      const { tokens: affected } = getTokenDependencyGraph(changedTokenPath, graph);
+      dirtyTokens = affected;
     }
 
     const newResolver = this.prefixResolver.clone({
@@ -1352,7 +1345,7 @@ export class TokenResolver {
   public updateToken(params: UpdateTokenParams): UpdateTokenResult {
     this.ensureInitialized();
 
-    const { tokenPath, tokenData, tokenPathRenamed, updateReferences = false, skipDependents = false } = params;
+    const { tokenPath, tokenData, tokenPathRenamed, updateReferences = false } = params;
     const prevPath = this.normalizeTokenPath(tokenPath);
     const newPath = tokenPathRenamed?.trim();
 
@@ -1432,7 +1425,7 @@ export class TokenResolver {
     this.tokens = updatedTokens;
 
     const { output, callbacks } = this.createOutputCallbacks();
-    const resolverResult = this.rebuildResolver(updatedTokens, callbacks, prevPath, skipDependents);
+    const resolverResult = this.rebuildResolver(updatedTokens, callbacks, prevPath);
 
     if (!this.prefixResolver) {
       throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
