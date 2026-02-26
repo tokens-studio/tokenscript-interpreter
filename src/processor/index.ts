@@ -43,6 +43,8 @@ export type {
   TokenOperationResult,
   UpdateTokenParams,
   UpdateTokenResult,
+  ResolveValueParams,
+  ResolveValueResult,
 } from "./resolver/types";
 export type {
   ProcessFilesOptions,

@@ -45,6 +45,8 @@ import type {
   RefPath,
   ResolvedValueMap,
   ResolveIssue,
+  ResolveValueParams,
+  ResolveValueResult,
   TokenDataMap,
   TokenInputMap,
   TokenResult,
@@ -1519,5 +1521,57 @@ export class TokenResolver {
       issues: resolverResult.issues,
       dependants: { graph: subgraph },
     };
+  }
+
+  /**
+   * Resolve a single value expression against the existing warm cache.
+   * No cloning, no graph rebuild, no re-parsing of other tokens.
+   * Use this for lightweight preview resolution (e.g. live form input).
+   */
+  public resolveValue(params: ResolveValueParams): ResolveValueResult {
+    this.ensureInitialized();
+
+    if (!this.prefixResolver) {
+      throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
+    }
+
+    const { value } = params;
+    const issues: ResolveIssue[] = [];
+
+    if (value === undefined || value === null || value === "") {
+      return { resolved: null, issues };
+    }
+
+    const valueStr = String(value);
+
+    // Parse the expression — LanguageErrors are thrown on syntax errors
+    let ast: ASTNode | null = null;
+    try {
+      const result = parseExpression(valueStr);
+      ast = result.ast;
+    } catch (error) {
+      if (isLanguageError(error)) {
+        issues.push(error);
+        return { resolved: null, issues };
+      }
+      throw error;
+    }
+
+    if (!ast) {
+      return { resolved: valueStr, issues };
+    }
+
+    // Interpret against the warm reference cache — no clone, no rebuild
+    const tokenInterpreter = this.prefixResolver.getTokenInterpreter();
+    const resolved = tokenInterpreter.interpretTokenWithAST("__preview__", ast);
+
+    if (resolved instanceof Error) {
+      if (isLanguageError(resolved)) {
+        issues.push(resolved);
+      }
+      return { resolved: null, issues };
+    }
+
+    return { resolved, issues };
   }
 }
