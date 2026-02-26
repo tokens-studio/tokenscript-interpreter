@@ -73,7 +73,6 @@ const result = resolver.updateToken({
 | `tokenData` | `TokenData` | — | New token data. Omit to keep existing data (useful for rename-only). |
 | `tokenPathRenamed` | `string` | — | New path for the token. |
 | `updateReferences` | `boolean` | `false` | Rewrite references in dependent tokens when renaming. |
-| `skipDependents` | `boolean` | `false` | Performance optimization: seeds all non-changed tokens from the previous cache, avoiding the BFS graph traversal to compute the dirty set. All tokens are still re-resolved. |
 
 ## deleteToken
 
