@@ -57,6 +57,9 @@ export type UpdateTokenParams = TokenOperationBase & {
   tokenData?: TokenData;
   tokenPathRenamed?: RefPath;
   updateReferences?: boolean;
+  /** Skip re-resolution of dependent tokens. Useful for preview-only scenarios
+   *  where only the changed token's resolved value is needed. */
+  skipDependents?: boolean;
 };
 
 export type DeleteTokenParams = TokenOperationBase;
