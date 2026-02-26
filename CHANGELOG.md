@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.28.0] - 2026-02-26
 
+## [0.28.0] - 2026-02-26
+
 ### Added
 
 - **`resolveValue()` method on TokenResolver**: Lightweight expression resolution against the warm cache without cloning or rebuilding the dependency graph. Intended for live preview scenarios (e.g. form inputs) where full CRUD overhead is unnecessary.
