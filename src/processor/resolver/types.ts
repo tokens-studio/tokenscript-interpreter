@@ -57,8 +57,10 @@ export type UpdateTokenParams = TokenOperationBase & {
   tokenData?: TokenData;
   tokenPathRenamed?: RefPath;
   updateReferences?: boolean;
-  /** Skip re-resolution of dependent tokens. Useful for preview-only scenarios
-   *  where only the changed token's resolved value is needed. */
+  /** When true, only the changed token is excluded from cache seeding —
+   *  all other tokens (including dependents) are warm-started from the
+   *  previous cache. This is a performance optimization that avoids
+   *  the BFS graph traversal to compute the full dirty set. */
   skipDependents?: boolean;
 };
 
@@ -88,8 +90,6 @@ export type DeleteTokenResult = TokenOperationResult;
 export type ResolveValueParams = {
   /** The raw token value expression to resolve (e.g. "{baseColors.red}", "16 * 2", "#ff0000") */
   value: unknown;
-  /** Token type hint for type-aware resolution (e.g. "color", "dimension") */
-  type?: string;
 };
 
 export type ResolveValueResult = {

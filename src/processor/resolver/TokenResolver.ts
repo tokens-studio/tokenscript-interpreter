@@ -1527,6 +1527,16 @@ export class TokenResolver {
    * Resolve a single value expression against the existing warm cache.
    * No cloning, no graph rebuild, no re-parsing of other tokens.
    * Use this for lightweight preview resolution (e.g. live form input).
+   *
+   * **Important:** This method reads from the resolver's current cache and
+   * shares its interpreter instance. It is intended for development-time
+   * previews only. Callers that need isolation (e.g. speculative resolution
+   * that must not observe or affect other operations) should clone the
+   * `TokenResolver` first via `build()` on a copy of the token map.
+   *
+   * Must not be called concurrently with `updateToken`, `createToken`,
+   * or `deleteToken` — those methods rebuild the internal resolver and
+   * the shared interpreter state would conflict.
    */
   public resolveValue(params: ResolveValueParams): ResolveValueResult {
     this.ensureInitialized();
@@ -1563,7 +1573,7 @@ export class TokenResolver {
 
     // Interpret against the warm reference cache — no clone, no rebuild
     const tokenInterpreter = this.prefixResolver.getTokenInterpreter();
-    const resolved = tokenInterpreter.interpretTokenWithAST("__preview__", ast);
+    const resolved = tokenInterpreter.interpretTokenWithAST("\0__preview__", ast);
 
     if (resolved instanceof Error) {
       if (isLanguageError(resolved)) {
