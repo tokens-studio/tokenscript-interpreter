@@ -146,6 +146,25 @@ result.resolved?.toString(); // "25"
 result.issues;               // ResolveIssue[] — flat array, not a Map
 ```
 
+### Validation
+
+Pass `type` and `validate: true` to validate the resolved value against a registered token type spec. Validation issues are appended to the `issues` array alongside any parse/resolution errors.
+
+```typescript
+const result = resolver.resolveValue({
+  value: "not-a-color",
+  type: "color",
+  validate: true,
+});
+
+result.issues; // [{ code: "...", severity: "warning", message: "Token validation failed: ..." }]
+```
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `type` | `string` | — | Token type for validation (e.g. `"color"`, `"dimension"`). |
+| `validate` | `boolean` | `false` | Enable type validation on the resolved value. Requires `type`. |
+
 ### Characteristics
 
 - **No rebuild**: Evaluates against the warm reference cache. No cloning, no graph rebuild, no re-parsing of other tokens.
