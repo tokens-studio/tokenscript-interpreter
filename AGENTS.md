@@ -96,6 +96,10 @@ Key language features and edge cases are documented in `docs/tokenscript/`:
 - [Inline Mode](docs/tokenscript/inline-mode.md) - The expression-only subset used for token `$value` fields
 - [Tolerant Parser](docs/tolerant-parser.md) - Fault-tolerant parsing for editors, autocomplete, and live preview
 
+Processor:
+
+- [Token Resolver CRUD](docs/token-resolver-crud.md) - Incremental token operations (create, update, delete, resolveValue)
+
 Schema features:
 
 - [Constants](docs/constants.md) - Named constants injected as bare identifiers during token evaluation
