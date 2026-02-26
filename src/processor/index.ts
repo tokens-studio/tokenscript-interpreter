@@ -40,11 +40,11 @@ export type {
   DeleteTokenResult,
   IssuesMap,
   ResolveIssue,
+  ResolveValueParams,
+  ResolveValueResult,
   TokenOperationResult,
   UpdateTokenParams,
   UpdateTokenResult,
-  ResolveValueParams,
-  ResolveValueResult,
 } from "./resolver/types";
 export type {
   ProcessFilesOptions,

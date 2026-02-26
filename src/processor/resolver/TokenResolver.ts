@@ -1333,7 +1333,7 @@ export class TokenResolver {
     const newCache = newResolver.getReferenceCache();
     for (const [tokenName, value] of oldCache) {
       if (!updatedTokens.has(tokenName)) continue; // deleted token
-      if (dirtyTokens && dirtyTokens.has(tokenName)) continue; // affected by change
+      if (dirtyTokens?.has(tokenName)) continue; // affected by change
       newCache.set(tokenName, value);
     }
 
