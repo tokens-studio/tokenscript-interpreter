@@ -81,3 +81,15 @@ export type UpdateTokenResult = TokenOperationResult & {
 };
 
 export type DeleteTokenResult = TokenOperationResult;
+
+export type ResolveValueParams = {
+  /** The raw token value expression to resolve (e.g. "{baseColors.red}", "16 * 2", "#ff0000") */
+  value: unknown;
+};
+
+export type ResolveValueResult = {
+  /** The resolved value (ISymbolType, string, Error, etc.) */
+  resolved: InterpreterResult;
+  /** Resolution issues (parse errors, missing references, etc.) */
+  issues: ResolveIssue[];
+};

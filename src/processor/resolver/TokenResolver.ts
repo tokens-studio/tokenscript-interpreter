@@ -45,6 +45,8 @@ import type {
   RefPath,
   ResolvedValueMap,
   ResolveIssue,
+  ResolveValueParams,
+  ResolveValueResult,
   TokenDataMap,
   TokenInputMap,
   TokenResult,
@@ -1306,14 +1308,35 @@ export class TokenResolver {
   private rebuildResolver(
     updatedTokens: TokenDataMap,
     callbacks: ProcessorCallbacks,
+    changedTokenPath?: string,
   ): ProcessorResult {
     if (!this.prefixResolver) {
       throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
     }
+
+    // Use the dependency graph to find tokens affected by the change.
+    // Only unaffected tokens get their cached values seeded — affected tokens
+    // (and deleted tokens) must be re-resolved from scratch.
+    let dirtyTokens: Set<string> | null = null;
+    if (changedTokenPath) {
+      const graph = this.prefixResolver.getGraph();
+      const { tokens: affected } = getTokenDependencyGraph(changedTokenPath, graph);
+      dirtyTokens = affected;
+    }
+
     const newResolver = this.prefixResolver.clone({
       tokens: updatedTokens,
       callbacks,
     });
+
+    const oldCache = this.prefixResolver.getReferenceCache();
+    const newCache = newResolver.getReferenceCache();
+    for (const [tokenName, value] of oldCache) {
+      if (!updatedTokens.has(tokenName)) continue; // deleted token
+      if (dirtyTokens?.has(tokenName)) continue; // affected by change
+      newCache.set(tokenName, value);
+    }
+
     const result = newResolver.resolve();
     this.prefixResolver = newResolver;
     return result;
@@ -1402,7 +1425,7 @@ export class TokenResolver {
     this.tokens = updatedTokens;
 
     const { output, callbacks } = this.createOutputCallbacks();
-    const resolverResult = this.rebuildResolver(updatedTokens, callbacks);
+    const resolverResult = this.rebuildResolver(updatedTokens, callbacks, prevPath);
 
     if (!this.prefixResolver) {
       throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
@@ -1437,7 +1460,7 @@ export class TokenResolver {
     this.tokens = updatedTokens;
 
     const { output, callbacks } = this.createOutputCallbacks();
-    const resolverResult = this.rebuildResolver(updatedTokens, callbacks);
+    const resolverResult = this.rebuildResolver(updatedTokens, callbacks, normalizedTokenPath);
 
     if (!this.prefixResolver) {
       throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
@@ -1484,12 +1507,74 @@ export class TokenResolver {
     this.tokens = updatedTokens;
 
     const { output, callbacks } = this.createOutputCallbacks();
-    const resolverResult = this.rebuildResolver(updatedTokens, callbacks);
+    const resolverResult = this.rebuildResolver(updatedTokens, callbacks, normalizedTokenPath);
 
     return {
       tokens: output,
       issues: resolverResult.issues,
       dependants: { graph: subgraph },
     };
+  }
+
+  /**
+   * Resolve a single value expression against the existing warm cache.
+   * No cloning, no graph rebuild, no re-parsing of other tokens.
+   * Use this for lightweight preview resolution (e.g. live form input).
+   *
+   * **Important:** This method reads from the resolver's current cache and
+   * shares its interpreter instance. It is intended for development-time
+   * previews only. Callers that need isolation (e.g. speculative resolution
+   * that must not observe or affect other operations) should clone the
+   * `TokenResolver` first via `build()` on a copy of the token map.
+   *
+   * Must not be called concurrently with `updateToken`, `createToken`,
+   * or `deleteToken` — those methods rebuild the internal resolver and
+   * the shared interpreter state would conflict.
+   */
+  public resolveValue(params: ResolveValueParams): ResolveValueResult {
+    this.ensureInitialized();
+
+    if (!this.prefixResolver) {
+      throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
+    }
+
+    const { value } = params;
+    const issues: ResolveIssue[] = [];
+
+    if (value === undefined || value === null || value === "") {
+      return { resolved: null, issues };
+    }
+
+    const valueStr = String(value);
+
+    // Parse the expression — LanguageErrors are thrown on syntax errors
+    let ast: ASTNode | null = null;
+    try {
+      const result = parseExpression(valueStr);
+      ast = result.ast;
+    } catch (error) {
+      if (isLanguageError(error)) {
+        issues.push(error);
+        return { resolved: null, issues };
+      }
+      throw error;
+    }
+
+    if (!ast) {
+      return { resolved: valueStr, issues };
+    }
+
+    // Interpret against the warm reference cache — no clone, no rebuild
+    const tokenInterpreter = this.prefixResolver.getTokenInterpreter();
+    const resolved = tokenInterpreter.interpretTokenWithAST("\0__preview__", ast);
+
+    if (resolved instanceof Error) {
+      if (isLanguageError(resolved)) {
+        issues.push(resolved);
+      }
+      return { resolved: null, issues };
+    }
+
+    return { resolved, issues };
   }
 }

@@ -40,6 +40,8 @@ export type {
   DeleteTokenResult,
   IssuesMap,
   ResolveIssue,
+  ResolveValueParams,
+  ResolveValueResult,
   TokenOperationResult,
   UpdateTokenParams,
   UpdateTokenResult,
