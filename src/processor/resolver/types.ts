@@ -85,6 +85,10 @@ export type DeleteTokenResult = TokenOperationResult;
 export type ResolveValueParams = {
   /** The raw token value expression to resolve (e.g. "{baseColors.red}", "16 * 2", "#ff0000") */
   value: unknown;
+  /** Token type used for validation (e.g. "color", "dimension"). Only used when `validate` is true. */
+  type?: string;
+  /** When true, validate the resolved value against the token `type`. Defaults to false. */
+  validate?: boolean;
 };
 
 export type ResolveValueResult = {

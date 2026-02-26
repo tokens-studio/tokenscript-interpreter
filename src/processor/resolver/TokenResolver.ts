@@ -57,6 +57,64 @@ import type {
 } from "./types";
 
 /**
+ * Validate a resolved value against a registered token type spec.
+ * Returns an array of ValidationIssue for any failures.
+ *
+ * Shared between PrefixResolver (full resolution) and TokenResolver.resolveValue
+ * (lightweight preview resolution).
+ */
+function collectTypeValidationIssues(
+  config: Config | undefined,
+  tokenName: RefPath,
+  tokenType: string,
+  value: InterpreterResult,
+): ValidationIssue[] {
+  if (!config?.tokenManager) return [];
+  if (!config.tokenManager.getSpecByType(tokenType)) return [];
+
+  if (value === null || typeof value === "string") return [];
+
+  let valueToValidate: ListSymbol | DictionarySymbol | typeof value;
+
+  if (value instanceof TokenSymbol) {
+    const innerValue = value.value;
+    if (Array.isArray(innerValue)) {
+      valueToValidate = new ListSymbol(innerValue, false, config);
+    } else if (innerValue instanceof Map) {
+      valueToValidate = new DictionarySymbol(innerValue, config);
+    } else {
+      valueToValidate = value;
+    }
+  } else if (typeof value === "object" && value !== null && "type" in value) {
+    valueToValidate = value;
+  } else {
+    return [];
+  }
+
+  const validationResults = config.tokenManager.validate(tokenType, valueToValidate as any);
+
+  const issues: ValidationIssue[] = [];
+  for (const result of validationResults) {
+    if (!result.valid && result.error) {
+      const isNested = result.path && result.path.length > 0;
+      issues.push({
+        code: result.error,
+        severity: ValidationSeverity.WARNING,
+        message: isNested
+          ? `Validation failed at ${result.path?.join(".")}: ${result.error}`
+          : `Token validation failed: ${result.error}`,
+        tokenName,
+        path: result.path,
+        data: isNested
+          ? { tokenType: result.tokenType, parentTokenType: tokenType }
+          : { tokenType },
+      });
+    }
+  }
+  return issues;
+}
+
+/**
  * Parse a field path string into an array of path segments.
  * E.g., "[0].blur" -> [0, "blur"]
  * E.g., "offsetX" -> ["offsetX"]
@@ -356,67 +414,14 @@ class PrefixResolver {
     this.validateTokenType(tokenName, tokenType, value);
   }
 
-  /**
-   * Validate token value against its registered type validation function.
-   * Handles both top-level and nested validation errors.
-   */
   private validateTokenType(
     tokenName: RefPath,
     tokenType: string | undefined,
     value: InterpreterResult,
   ): void {
-    if (!tokenType || !this.config?.tokenManager) return;
-
-    // Early return if no spec registered for this token type
-    if (!this.config.tokenManager.getSpecByType(tokenType)) return;
-
-    if (value === null || typeof value === "string") return;
-
-    // Get the value to validate
-    // For TokenSymbol with complex types (shadow), extract inner value (Array or Map)
-    // For simple types (color, borderRadius), use the value directly
-    let valueToValidate: ListSymbol | DictionarySymbol | typeof value;
-
-    if (value instanceof TokenSymbol) {
-      const innerValue = value.value;
-
-      if (Array.isArray(innerValue)) {
-        // List-type tokens (e.g., shadow) - wrap in ListSymbol
-        valueToValidate = new ListSymbol(innerValue, false, this.config);
-      } else if (innerValue instanceof Map) {
-        // Object-type tokens - wrap in DictionarySymbol
-        valueToValidate = new DictionarySymbol(innerValue, this.config);
-      } else {
-        // Simple value inside TokenSymbol - shouldn't happen often
-        valueToValidate = value;
-      }
-    } else if (typeof value === "object" && value !== null && "type" in value) {
-      // Direct symbol value (e.g., NumberWithUnitSymbol, ColorSymbol)
-      valueToValidate = value;
-    } else {
-      return;
-    }
-
-    // validate() returns an array of results - each failed result becomes an issue
-    const validationResults = this.config.tokenManager.validate(tokenType, valueToValidate as any);
-
-    for (const result of validationResults) {
-      if (!result.valid && result.error) {
-        const isNested = result.path && result.path.length > 0;
-        const issue: ValidationIssue = {
-          code: result.error,
-          severity: ValidationSeverity.WARNING,
-          message: isNested
-            ? `Validation failed at ${result.path?.join(".")}: ${result.error}`
-            : `Token validation failed: ${result.error}`,
-          tokenName,
-          path: result.path,
-          data: isNested
-            ? { tokenType: result.tokenType, parentTokenType: tokenType }
-            : { tokenType },
-        };
-        this.addIssue(tokenName, issue);
-      }
+    if (!tokenType) return;
+    for (const issue of collectTypeValidationIssues(this.config, tokenName, tokenType, value)) {
+      this.addIssue(tokenName, issue);
     }
   }
 
@@ -1538,7 +1543,7 @@ export class TokenResolver {
       throw new ProcessorError(ProcessorErrorCode.RESOLVER_NOT_INITIALIZED);
     }
 
-    const { value } = params;
+    const { value, type, validate } = params;
     const issues: ResolveIssue[] = [];
 
     if (value === undefined || value === null || value === "") {
@@ -1573,6 +1578,10 @@ export class TokenResolver {
         issues.push(resolved);
       }
       return { resolved: null, issues };
+    }
+
+    if (validate && type) {
+      issues.push(...collectTypeValidationIssues(this.config, "\0__preview__", type, resolved));
     }
 
     return { resolved, issues };

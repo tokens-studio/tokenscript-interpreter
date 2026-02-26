@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Opt-in type validation for `resolveValue()`**: Pass `type` and `validate: true` to validate the resolved value against a registered token type spec, returning validation issues alongside the result. Useful for live preview validation without full CRUD overhead.
+
 ## [0.28.0] - 2026-02-26
 
 ## [0.28.0] - 2026-02-26
