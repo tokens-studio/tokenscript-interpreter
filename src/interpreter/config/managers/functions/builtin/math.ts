@@ -15,6 +15,11 @@ type FunctionImpl = (...args: ISymbolType[]) => ISymbolType;
  * Accepts NumberSymbol, NumberWithUnitSymbol, or any symbol with a numeric value.
  */
 function extractNumber(arg: ISymbolType, functionName: string): number {
+  if (arg === undefined || arg === null) {
+    throw new InterpreterError(FunctionsErrorCode.EXPECTS_NUMBER_ARGUMENTS, {
+      data: { functionName },
+    });
+  }
   if (arg instanceof NumberSymbol) return arg.value as number;
   if (arg instanceof NumberWithUnitSymbol) return arg.value as number;
   if (typeof arg.value === "number") return arg.value as number;
