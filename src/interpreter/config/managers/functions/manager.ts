@@ -218,4 +218,8 @@ export class FunctionsManager extends BaseManager<
   public getFunctionNames(): string[] {
     return Array.from(this.functionMap.keys());
   }
+
+  public getFunctionSchemas(): Map<string, FunctionSpecification> {
+    return this.specs;
+  }
 }

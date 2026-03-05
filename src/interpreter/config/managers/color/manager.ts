@@ -440,4 +440,8 @@ ${spec}`,
 
     return "";
   }
+
+  public getColorSchemas(): Map<string, ColorSpecification> {
+    return this.specs;
+  }
 }
