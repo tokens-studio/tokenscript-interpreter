@@ -230,15 +230,7 @@ export class FunctionsManager extends BaseManager<
    */
   public validateFunctionArgs(name: string, args: ISymbolType[], token?: Token): void {
     const fnName = name.toLowerCase();
-
-    // Find spec by keyword
-    let spec: FunctionSpecification | undefined;
-    for (const [, s] of this.specs) {
-      if (s.keyword.toLowerCase() === fnName) {
-        spec = s;
-        break;
-      }
-    }
+    const spec = this.specs.get(fnName);
 
     if (!spec?.input?.properties) return;
 
