@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.29.1] - 2026-03-05
+
 ### Added
 
 - **Public schema accessors on managers**: `FunctionsManager.getFunctionSchemas()` and `ColorManager.getColorSchemas()` expose the registered specification maps, giving consumers access to metadata like descriptions.
