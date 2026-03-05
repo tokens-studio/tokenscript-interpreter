@@ -314,7 +314,6 @@ export class Interpreter {
     const args = node.args.map((arg) => this.visit(arg) as ISymbolType);
 
     if (this.config.functionsManager.hasFunction(fnName)) {
-      this.config.functionsManager.validateFunctionArgs(fnName, args, node.token);
       const fn = this.config.functionsManager.getFunction(fnName);
       if (fn) {
         return fn(...args);
