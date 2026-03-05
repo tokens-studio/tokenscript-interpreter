@@ -46,6 +46,28 @@ return args.get(0) + args.get(1);`,
   },
 };
 
+const SNAP_FUNCTION: FunctionSpecification = {
+  name: "Snap",
+  type: "function",
+  keyword: "snap",
+  description: "Snaps a value to the nearest interval",
+  input: {
+    type: "object",
+    properties: {
+      value: { type: "number", description: "The value to snap" },
+      interval: { type: "number", description: "The snapping interval" },
+      offset: { type: "number", optional: true, description: "Optional offset" },
+    },
+  },
+  script: {
+    type: "tokenscript",
+    script: `variable args: List = {input};
+variable val: Number = args.get(0);
+variable intv: Number = args.get(1);
+return round_to(val / intv) * intv;`,
+  },
+};
+
 const NO_INPUT_FUNCTION: FunctionSpecification = {
   name: "Always42",
   type: "function",
@@ -122,6 +144,24 @@ describe("Schema function argument validation", () => {
   it("should allow extra arguments beyond what the spec defines", () => {
     const config = createConfigWithSchemas({ uri: "/fn/double/0", schema: DOUBLE_FUNCTION });
     expect(interpretDirect("double(5, 99)", {}, config)).toBe("10");
+  });
+
+  it("should not count optional properties toward minimum args", () => {
+    const config = createConfigWithSchemas({ uri: "/fn/snap/0", schema: SNAP_FUNCTION });
+    // snap has 3 properties but offset is optional, so 2 required
+    expect(interpretDirect("snap(16, 4)", {}, config)).toBe("16");
+  });
+
+  it("should throw when missing required args even with optional properties", () => {
+    const config = createConfigWithSchemas({ uri: "/fn/snap/0", schema: SNAP_FUNCTION });
+
+    try {
+      interpretExpectError("snap(16)", {}, config);
+      expect.unreachable("should have thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(InterpreterError);
+      expect((e as InterpreterError).code).toBe(FunctionsErrorCode.REQUIRES_MIN_ARGUMENTS);
+    }
   });
 });
 

@@ -234,11 +234,13 @@ export class FunctionsManager extends BaseManager<
 
     if (!spec?.input?.properties) return;
 
-    const expectedCount = Object.keys(spec.input.properties).length;
-    if (args.length < expectedCount) {
+    const requiredCount = Object.values(spec.input.properties).filter(
+      (prop: any) => !prop?.optional,
+    ).length;
+    if (args.length < requiredCount) {
       throw new InterpreterError(FunctionsErrorCode.REQUIRES_MIN_ARGUMENTS, {
         token,
-        data: { functionName: name, minArgs: expectedCount },
+        data: { functionName: name, minArgs: requiredCount },
       });
     }
   }
