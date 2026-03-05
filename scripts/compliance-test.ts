@@ -60,6 +60,10 @@ async function main() {
       console.log(`   Path: ${result.path}`);
       console.log(`   Expected: ${result.expectedOutput} (${result.expectedOutputType})`);
       console.log(`   Actual: ${result.actualOutput} (${result.actualOutputType})`);
+      if (result.expectedErrorCode || result.actualErrorCode) {
+        console.log(`   Expected Error Code: ${result.expectedErrorCode ?? "—"}`);
+        console.log(`   Actual Error Code:   ${result.actualErrorCode ?? "—"}`);
+      }
       if (result.error) {
         console.log(`   Error: ${result.error}`);
       }

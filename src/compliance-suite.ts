@@ -13,8 +13,9 @@ import { InterpreterError, type ISymbolType, LexerError, ParserError } from "./l
 interface TestCase {
   name: string;
   input: string;
-  expectedOutput: any;
+  expectedOutput?: any;
   expectedOutputType: string;
+  expectedErrorCode?: string;
   inline: boolean;
   context?: Record<string, any>;
   schemas?: string[];
@@ -25,6 +26,7 @@ interface TestResult extends TestCase {
   status: "passed" | "failed";
   actualOutput: any;
   actualOutputType: string;
+  actualErrorCode?: string;
   error?: Error;
 }
 
@@ -154,6 +156,7 @@ const runTest = (test: TestCase): { interpreter: Interpreter; result: Interprete
 interface ComplianceResult {
   actualOutput: string;
   actualOutputType: string;
+  actualErrorCode?: string;
 }
 
 const interpreterSymbolToComplianceResult = (
@@ -178,10 +181,19 @@ const compareResults = (
   complianceResult: ComplianceResult,
   testCase: TestCase,
 ): "passed" | "failed" => {
-  const isPassing =
-    complianceResult.actualOutput === testCase.expectedOutput &&
-    complianceResult.actualOutputType === testCase.expectedOutputType;
-  return isPassing ? "passed" : "failed";
+  const typeMatches = complianceResult.actualOutputType === testCase.expectedOutputType;
+
+  // When expectedErrorCode is set, match on error code (and type) only
+  if (testCase.expectedErrorCode) {
+    return typeMatches && complianceResult.actualErrorCode === testCase.expectedErrorCode
+      ? "passed"
+      : "failed";
+  }
+
+  // Otherwise match on output value and type
+  return typeMatches && complianceResult.actualOutput === testCase.expectedOutput
+    ? "passed"
+    : "failed";
 };
 
 export async function evaluateStandardCompliance(config: ComplianceConfig) {
@@ -214,6 +226,7 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
           const complianceResult: ComplianceResult = {
             actualOutput: e.originalMessage || "",
             actualOutputType: "Error",
+            actualErrorCode: e.code,
           };
           return {
             ...testCase,
@@ -248,8 +261,10 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
       status,
       actualOutput,
       actualOutputType,
+      actualErrorCode,
       expectedOutput,
       expectedOutputType,
+      expectedErrorCode,
       ...rest
     }) => ({
       name,
@@ -260,8 +275,10 @@ export async function evaluateStandardCompliance(config: ComplianceConfig) {
       input,
       actualOutput,
       actualOutputType,
+      ...(actualErrorCode ? { actualErrorCode } : {}),
       expectedOutput,
       expectedOutputType,
+      ...(expectedErrorCode ? { expectedErrorCode } : {}),
       ...rest,
     }),
   );
