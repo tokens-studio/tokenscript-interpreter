@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.29.2] - 2026-03-05
+
 ### Fixed
 
 - **Function calls with missing arguments now produce structured errors** — schema functions throw `FN_REQUIRES_MIN_ARGUMENTS`, builtin math functions throw `FN_EXPECTS_NUMBER_ARGUMENTS`
