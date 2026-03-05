@@ -34,6 +34,17 @@ export function createInterpreter(text: string, references: Record<string, any> 
 }
 
 /**
+ * Interpret a tokenscript expression directly (without processTokens).
+ * Unlike interpret(), this throws on errors instead of swallowing them.
+ * Use this when testing error conditions or when you need the raw ISymbolType result.
+ */
+export function interpretDirect(text: string, references: Record<string, any> = {}, config?: Config): string {
+  const interpreter = createInterpreter(text, references, config);
+  const result = interpreter.interpret();
+  return result?.toString() ?? "";
+}
+
+/**
  * Interpret and expect an error to be thrown
  * Use this for error testing instead of interpret()
  */

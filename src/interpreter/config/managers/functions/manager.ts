@@ -8,7 +8,7 @@ import { Interpreter } from "@interpreter/interpreter";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
 import { BooleanSymbol, NumberSymbol, StringSymbol } from "@interpreter/symbols";
-import type { ISymbolType } from "@src/types";
+import type { ISymbolType, Token } from "@src/types";
 import { type } from "arktype";
 import { BaseManager } from "../base-manager";
 
@@ -221,5 +221,33 @@ export class FunctionsManager extends BaseManager<
 
   public getFunctionSchemas(): Map<string, FunctionSpecification> {
     return this.specs;
+  }
+
+  /**
+   * Validate that a function call has the correct number of arguments
+   * based on its schema spec. Only validates schema-registered functions
+   * (not builtins which handle their own argument validation).
+   */
+  public validateFunctionArgs(name: string, args: ISymbolType[], token?: Token): void {
+    const fnName = name.toLowerCase();
+
+    // Find spec by keyword
+    let spec: FunctionSpecification | undefined;
+    for (const [, s] of this.specs) {
+      if (s.keyword.toLowerCase() === fnName) {
+        spec = s;
+        break;
+      }
+    }
+
+    if (!spec?.input?.properties) return;
+
+    const expectedCount = Object.keys(spec.input.properties).length;
+    if (args.length < expectedCount) {
+      throw new InterpreterError(FunctionsErrorCode.REQUIRES_MIN_ARGUMENTS, {
+        token,
+        data: { functionName: name, minArgs: expectedCount },
+      });
+    }
   }
 }
