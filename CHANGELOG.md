@@ -9,7 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Schema functions called with missing arguments now throw `FN_REQUIRES_MIN_ARGUMENTS`** based on the function spec's input properties count. Builtin math functions also guard against undefined args with `FN_EXPECTS_NUMBER_ARGUMENTS`.
+- **Function calls with missing arguments now produce structured errors** — schema functions throw `FN_REQUIRES_MIN_ARGUMENTS`, builtin math functions throw `FN_EXPECTS_NUMBER_ARGUMENTS`
+
+### Added
+
+- **Compliance suite supports `expectedErrorCode`** — error tests can now match on error code instead of message text
 
 ## [0.29.1] - 2026-03-05
 
