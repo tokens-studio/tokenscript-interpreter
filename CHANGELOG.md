@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.31.0] - 2026-03-26
 
+## [0.31.0] - 2026-03-26
+
 ### Added
 
 - **`for...in` loop with auto-collect** — iterate over lists and collect each iteration's result into a new list: `for x in [1, 2, 3] [x * 10;]` → `10, 20, 30`
