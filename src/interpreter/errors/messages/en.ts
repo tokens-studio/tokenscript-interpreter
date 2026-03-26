@@ -117,6 +117,15 @@ export const messages: MessageMap = {
 
   [InterpreterErrorCode.IF_CONDITION_NOT_BOOLEAN]: "If/elif condition must be a boolean.",
 
+  [InterpreterErrorCode.FOR_EACH_NOT_LIST]: (data) =>
+    `for...in requires a List, got ${data.actualType}.`,
+
+  [InterpreterErrorCode.FOR_EACH_VARIABLE_SHADOW]: (data) =>
+    `for...in variable '${data.name}' shadows an existing variable in this scope.`,
+
+  [InterpreterErrorCode.FOR_EACH_DUPLICATE_VARS]: (data) =>
+    `for...in item and index variables must have different names, both are '${data.name}'.`,
+
   [InterpreterErrorCode.UNKNOWN_ERROR]: "An unknown error occurred during interpretation.",
 
   // Operations errors

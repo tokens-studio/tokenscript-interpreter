@@ -18,6 +18,10 @@ export class SymbolTable {
     return !!this.symbols[name.toLowerCase()];
   }
 
+  delete(name: string): void {
+    delete this.symbols[name.toLowerCase()];
+  }
+
   reset(): void {
     this.symbols = {};
   }

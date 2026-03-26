@@ -64,11 +64,6 @@ describe("evaluateExpression", () => {
     }
   });
 
-  it("should handle error on unsupported syntax", () => {
-    const result = evaluateExpression("[1, 2, 3]");
-    expect(result.success).toBe(false);
-  });
-
   it("should disallow statements by default", () => {
     const result = evaluateExpression("variable x = 5; x + 1");
     expect(result.success).toBe(false);

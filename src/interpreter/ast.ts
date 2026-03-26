@@ -225,6 +225,17 @@ export class WhileNode implements ASTNode {
   ) {}
 }
 
+export class ForEachNode implements ASTNode {
+  nodeType = "ForEachNode";
+  constructor(
+    public itemVar: string,
+    public indexVar: string | null,
+    public collection: ASTNode,
+    public body: StatementListNode,
+    public token?: Token,
+  ) {}
+}
+
 export class IfConditionNode implements ASTNode {
   nodeType = "IfConditionNode";
   constructor(
@@ -318,6 +329,9 @@ export function walkAST(node: ASTNode, onVisit: (node: ASTNode) => void): void {
     walkAST(node.expr, onVisit);
   } else if (node instanceof WhileNode) {
     walkAST(node.condition, onVisit);
+    walkAST(node.body, onVisit);
+  } else if (node instanceof ForEachNode) {
+    walkAST(node.collection, onVisit);
     walkAST(node.body, onVisit);
   } else if (node instanceof IfConditionNode) {
     walkAST(node.condition, onVisit);

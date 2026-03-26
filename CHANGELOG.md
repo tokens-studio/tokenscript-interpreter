@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.31.0] - 2026-03-26
+
+### Added
+
+- **`for...in` loop with auto-collect** — iterate over lists and collect each iteration's result into a new list: `for x in [1, 2, 3] [x * 10;]` → `10, 20, 30`
+- **Index variable support** — optional second binding: `for val, idx in list [val + idx;]`
+- **`range()` builtin** — `range(count)` and `range(start, end)` for generating integer sequences
+- **Explicit list literal syntax `[a, b, c]`** — bracket-delimited list expressions, matching Go interpreter parity
+- **Loop variable scoping** — item/index variables are cleaned up after the loop; shadowing outer variables is an error (ADR-005)
+- **`return` propagation in loop body** — `return` inside a `for...in` body exits the entire expression
+
 ## [0.30.0] - 2026-03-05
 
 ## [0.29.2] - 2026-03-05

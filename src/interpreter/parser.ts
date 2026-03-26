@@ -6,6 +6,7 @@ import {
   BlockNode,
   BooleanNode,
   ElementWithUnitNode,
+  ForEachNode,
   FunctionCallNode,
   HexColorNode,
   IdentifierNode,
@@ -241,6 +242,8 @@ export class Parser {
           return this.returnStatement();
         case ReservedKeyword.WHILE:
           return this.whileStatement();
+        case ReservedKeyword.FOR:
+          return this.forStatement();
         case ReservedKeyword.IF:
           return this.ifStatement();
         case ReservedKeyword.VARIABLE:
@@ -378,6 +381,62 @@ export class Parser {
     return new WhileNode(condition, body.statements as StatementListNode, whileToken);
   }
 
+  private forStatement(): ForEachNode {
+    const forToken = this.eat(TokenType.RESERVED_KEYWORD); // 'for'
+
+    // First identifier: item variable
+    if (!this.isIdentifierToken()) {
+      throw new ParserError(ParserErrorCode.EXPECTED_TOKEN_TYPE, {
+        token: this.currentToken,
+        data: { expectedType: "identifier", actualType: this.currentToken.type },
+      });
+    }
+    const firstVar = this.currentToken.value as string;
+    this.eat(this.currentToken.type);
+
+    // Check for comma → item, index
+    let indexVar: string | null = null;
+    if (this.currentToken.type === TokenType.COMMA) {
+      this.eat(TokenType.COMMA);
+      if (!this.isIdentifierToken()) {
+        throw new ParserError(ParserErrorCode.EXPECTED_TOKEN_TYPE, {
+          token: this.currentToken,
+          data: { expectedType: "identifier", actualType: this.currentToken.type },
+        });
+      }
+      indexVar = this.currentToken.value as string;
+      this.eat(this.currentToken.type);
+    }
+
+    // Expect contextual 'in' — parsed as STRING token with value "in"
+    if (!this.isIdentifierToken() || this.currentToken.value !== "in") {
+      throw new ParserError(ParserErrorCode.EXPECTED_TOKEN_TYPE, {
+        token: this.currentToken,
+        data: { expectedType: "'in'", actualType: this.currentToken.value },
+      });
+    }
+    this.eat(this.currentToken.type);
+
+    // Parse collection expression (e.g., [1, 2, 3], range(3), myList).
+    const collection = this.expr();
+
+    // Parse body block
+    const body = this.block();
+
+    // Consume optional trailing semicolon
+    if (this.currentToken.type === TokenType.SEMICOLON) {
+      this.eat(TokenType.SEMICOLON);
+    }
+
+    return new ForEachNode(
+      firstVar,
+      indexVar,
+      collection,
+      body.statements as StatementListNode,
+      forToken,
+    );
+  }
+
   private ifStatement(): IfNode {
     const ifToken = this.eat(TokenType.RESERVED_KEYWORD); // 'if'
     this.eat(TokenType.LPAREN);
@@ -418,6 +477,25 @@ export class Parser {
     const statements = this.statementsList() as StatementListNode;
     this.eat(TokenType.RBLOCK);
     return new BlockNode(statements);
+  }
+
+  // Explicit list literal: [expr, expr, ...]
+  private explicitList(): ListNode {
+    const token = this.currentToken;
+    this.eat(TokenType.LBLOCK);
+
+    const elements: ASTNode[] = [];
+
+    if (this.currentToken.type !== TokenType.RBLOCK) {
+      elements.push(this.expr());
+      while (this.currentToken.type === TokenType.COMMA) {
+        this.eat(TokenType.COMMA);
+        elements.push(this.expr());
+      }
+    }
+
+    this.eat(TokenType.RBLOCK);
+    return new ListNode(elements, token);
   }
 
   // implicit_list_expr : factor ((COMMA) factor)*
@@ -548,6 +626,11 @@ export class Parser {
   //        | HEX_COLOR
   private factor(): ASTNode {
     const token = this.currentToken;
+
+    // Explicit list literal: [expr, expr, ...]
+    if (token.type === TokenType.LBLOCK) {
+      return this.explicitList();
+    }
 
     // Handle unary operators
     if (
