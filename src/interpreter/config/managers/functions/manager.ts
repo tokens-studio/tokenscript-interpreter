@@ -175,7 +175,10 @@ export class FunctionsManager extends BaseManager<
         const v = args[0].value as number;
         if (v !== Math.trunc(v) || Number.isNaN(v) || !Number.isFinite(v) || v < 0 || v > 1e6) {
           throw new InterpreterError(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE, {
-            data: { functionName: "range", constraint: `count must be a non-negative integer <= 1000000, got ${v}` },
+            data: {
+              functionName: "range",
+              constraint: `count must be a non-negative integer <= 1000000, got ${v}`,
+            },
           });
         }
         start = 0;
@@ -194,14 +197,27 @@ export class FunctionsManager extends BaseManager<
         }
         const sv = args[0].value as number;
         const ev = args[1].value as number;
-        if (sv !== Math.trunc(sv) || ev !== Math.trunc(ev) || Number.isNaN(sv) || Number.isNaN(ev) || !Number.isFinite(sv) || !Number.isFinite(ev)) {
+        if (
+          sv !== Math.trunc(sv) ||
+          ev !== Math.trunc(ev) ||
+          Number.isNaN(sv) ||
+          Number.isNaN(ev) ||
+          !Number.isFinite(sv) ||
+          !Number.isFinite(ev)
+        ) {
           throw new InterpreterError(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE, {
-            data: { functionName: "range", constraint: `arguments must be integers, got ${sv} and ${ev}` },
+            data: {
+              functionName: "range",
+              constraint: `arguments must be integers, got ${sv} and ${ev}`,
+            },
           });
         }
         if (ev - sv > 1e6) {
           throw new InterpreterError(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE, {
-            data: { functionName: "range", constraint: `size exceeds limit (1000000), got ${ev - sv}` },
+            data: {
+              functionName: "range",
+              constraint: `size exceeds limit (1000000), got ${ev - sv}`,
+            },
           });
         }
         start = sv;

@@ -1,10 +1,5 @@
 import { InterpreterError } from "@interpreter/errors";
-import {
-  createInterpreter,
-  interpretAndGetVariable,
-  interpretDirect,
-  interpretExpectError,
-} from "@tests/interpreter/test-helpers";
+import { createInterpreter, interpretAndGetVariable, interpretDirect, interpretExpectError } from "@tests/interpreter/test-helpers";
 import { describe, expect, it } from "vitest";
 
 describe("for...in loop", () => {
@@ -92,9 +87,7 @@ describe("for...in loop", () => {
     });
 
     it("should error when item and index have the same name", () => {
-      expect(() =>
-        interpretExpectError(`for x, x in range(2) [x;]`),
-      ).toThrow(InterpreterError);
+      expect(() => interpretExpectError(`for x, x in range(2) [x;]`)).toThrow(InterpreterError);
     });
 
     it("should allow reassigning outer variables from for body", () => {
@@ -119,15 +112,11 @@ describe("for...in loop", () => {
 
   describe("error cases", () => {
     it("should error when collection is not a list (number)", () => {
-      expect(() =>
-        interpretExpectError(`for x in 42 [x;]`),
-      ).toThrow(InterpreterError);
+      expect(() => interpretExpectError(`for x in 42 [x;]`)).toThrow(InterpreterError);
     });
 
     it("should error when collection is a string", () => {
-      expect(() =>
-        interpretExpectError(`for c in "hello" [c;]`),
-      ).toThrow(InterpreterError);
+      expect(() => interpretExpectError(`for c in "hello" [c;]`)).toThrow(InterpreterError);
     });
   });
 
@@ -195,15 +184,11 @@ describe("range() builtin", () => {
   });
 
   it("range(-1) should error (negative count)", () => {
-    expect(() =>
-      interpretExpectError(`range(-1)`),
-    ).toThrow();
+    expect(() => interpretExpectError(`range(-1)`)).toThrow();
   });
 
   it("range(1.5) should error (non-integer)", () => {
-    expect(() =>
-      interpretExpectError(`range(1.5)`),
-    ).toThrow();
+    expect(() => interpretExpectError(`range(1.5)`)).toThrow();
   });
 
   describe("for...in + range integration", () => {
@@ -253,10 +238,7 @@ describe("list literal [a, b, c]", () => {
   });
 
   it("should be assignable to a variable", () => {
-    const result = interpretAndGetVariable(
-      `variable items: List = [1, 2, 3];`,
-      "items",
-    );
+    const result = interpretAndGetVariable(`variable items: List = [1, 2, 3];`, "items");
     expect(result?.toString()).toBe("1, 2, 3");
   });
 

@@ -11,6 +11,7 @@ import {
   type BinOpNode,
   type BooleanNode,
   type ElementWithUnitNode,
+  type ForEachNode,
   FunctionCallNode,
   type HexColorNode,
   IdentifierNode,
@@ -26,7 +27,6 @@ import {
   type StringNode,
   type UnaryOpNode,
   type WhileNode,
-  type ForEachNode,
 } from "./ast";
 import { Config } from "./config/config";
 import { InterpreterError, InterpreterErrorCode } from "./errors";

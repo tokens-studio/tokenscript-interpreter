@@ -64,7 +64,6 @@ describe("evaluateExpression", () => {
     }
   });
 
-
   it("should disallow statements by default", () => {
     const result = evaluateExpression("variable x = 5; x + 1");
     expect(result.success).toBe(false);

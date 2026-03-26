@@ -6,6 +6,7 @@ import {
   BlockNode,
   BooleanNode,
   ElementWithUnitNode,
+  ForEachNode,
   FunctionCallNode,
   HexColorNode,
   IdentifierNode,
@@ -23,7 +24,6 @@ import {
   TypeDeclNode,
   UnaryOpNode,
   WhileNode,
-  ForEachNode,
 } from "./ast";
 import { ParserError, ParserErrorCode } from "./errors";
 import { Lexer } from "./lexer";
@@ -428,7 +428,13 @@ export class Parser {
       this.eat(TokenType.SEMICOLON);
     }
 
-    return new ForEachNode(firstVar, indexVar, collection, body.statements as StatementListNode, forToken);
+    return new ForEachNode(
+      firstVar,
+      indexVar,
+      collection,
+      body.statements as StatementListNode,
+      forToken,
+    );
   }
 
   private ifStatement(): IfNode {
