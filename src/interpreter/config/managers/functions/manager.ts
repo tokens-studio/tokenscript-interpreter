@@ -7,7 +7,7 @@ import {
 import { Interpreter } from "@interpreter/interpreter";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
-import { BooleanSymbol, NumberSymbol, StringSymbol } from "@interpreter/symbols";
+import { BooleanSymbol, ListSymbol, NumberSymbol, StringSymbol } from "@interpreter/symbols";
 import type { ISymbolType, Token } from "@src/types";
 import { type } from "arktype";
 import { BaseManager } from "../base-manager";
@@ -152,6 +152,71 @@ export class FunctionsManager extends BaseManager<
 
     this.registerFunction("is_color", (arg: ISymbolType): BooleanSymbol => {
       return new BooleanSymbol(arg.type === "Color");
+    });
+
+    // range(count) or range(start, end) — generate list of integers
+    this.registerFunction("range", (...args: ISymbolType[]): ListSymbol => {
+      if (args.length < 1 || args.length > 2) {
+        throw new InterpreterError(FunctionsErrorCode.REQUIRES_MIN_ARGUMENTS, {
+          data: { functionName: "range", minArgs: 1 },
+        });
+      }
+
+      let start: number;
+      let end: number;
+
+      if (args.length === 1) {
+        // range(count) → [0, 1, ..., count-1]
+        if (!(args[0] instanceof NumberSymbol)) {
+          throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+            data: { functionName: "range", expectedType: "Number", argumentPosition: "first" },
+          });
+        }
+        const v = args[0].value as number;
+        if (v !== Math.trunc(v) || Number.isNaN(v) || !Number.isFinite(v) || v < 0 || v > 1e6) {
+          throw new InterpreterError(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE, {
+            data: { functionName: "range", constraint: `count must be a non-negative integer <= 1000000, got ${v}` },
+          });
+        }
+        start = 0;
+        end = v;
+      } else {
+        // range(start, end) → [start, start+1, ..., end-1]
+        if (!(args[0] instanceof NumberSymbol)) {
+          throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+            data: { functionName: "range", expectedType: "Number", argumentPosition: "first" },
+          });
+        }
+        if (!(args[1] instanceof NumberSymbol)) {
+          throw new InterpreterError(FunctionsErrorCode.EXPECTS_TYPE_ARGUMENT, {
+            data: { functionName: "range", expectedType: "Number", argumentPosition: "second" },
+          });
+        }
+        const sv = args[0].value as number;
+        const ev = args[1].value as number;
+        if (sv !== Math.trunc(sv) || ev !== Math.trunc(ev) || Number.isNaN(sv) || Number.isNaN(ev) || !Number.isFinite(sv) || !Number.isFinite(ev)) {
+          throw new InterpreterError(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE, {
+            data: { functionName: "range", constraint: `arguments must be integers, got ${sv} and ${ev}` },
+          });
+        }
+        if (ev - sv > 1e6) {
+          throw new InterpreterError(FunctionsErrorCode.ARGUMENT_OUT_OF_RANGE, {
+            data: { functionName: "range", constraint: `size exceeds limit (1000000), got ${ev - sv}` },
+          });
+        }
+        start = sv;
+        end = ev;
+      }
+
+      if (end < start) {
+        return new ListSymbol([], false);
+      }
+
+      const elements: NumberSymbol[] = [];
+      for (let i = start; i < end; i++) {
+        elements.push(new NumberSymbol(i));
+      }
+      return new ListSymbol(elements, false);
     });
   }
 

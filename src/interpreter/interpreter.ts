@@ -26,6 +26,7 @@ import {
   type StringNode,
   type UnaryOpNode,
   type WhileNode,
+  type ForEachNode,
 } from "./ast";
 import { Config } from "./config/config";
 import { InterpreterError, InterpreterErrorCode } from "./errors";
@@ -526,6 +527,79 @@ export class Interpreter {
 
       this.visit(node.body);
     }
+  }
+
+  private visitForEachNode(node: ForEachNode): ISymbolType {
+    // ADR-005: check for shadowing — loop variables must not shadow existing variables
+    if (this.symbolTable.isDefined(node.itemVar)) {
+      throw new InterpreterError(InterpreterErrorCode.FOR_EACH_VARIABLE_SHADOW, {
+        token: node.token,
+        data: { name: node.itemVar },
+      });
+    }
+    if (node.indexVar !== null) {
+      if (node.indexVar === node.itemVar) {
+        throw new InterpreterError(InterpreterErrorCode.FOR_EACH_DUPLICATE_VARS, {
+          token: node.token,
+          data: { name: node.itemVar },
+        });
+      }
+      if (this.symbolTable.isDefined(node.indexVar)) {
+        throw new InterpreterError(InterpreterErrorCode.FOR_EACH_VARIABLE_SHADOW, {
+          token: node.token,
+          data: { name: node.indexVar },
+        });
+      }
+    }
+
+    // Evaluate collection
+    const collectionVal = this.visit(node.collection);
+    if (!(collectionVal instanceof ListSymbol)) {
+      throw new InterpreterError(InterpreterErrorCode.FOR_EACH_NOT_LIST, {
+        token: node.token,
+        data: { actualType: collectionVal?.type ?? "null" },
+      });
+    }
+
+    const elements = collectionVal.value as ISymbolType[];
+    const results: ISymbolType[] = [];
+
+    for (let idx = 0; idx < elements.length; idx++) {
+      const item = elements[idx];
+
+      // Bind loop variables
+      this.symbolTable.set(node.itemVar, item);
+      if (node.indexVar !== null) {
+        this.symbolTable.set(node.indexVar, new NumberSymbol(idx, this.config));
+      }
+
+      // Execute body
+      let bodyResult: ISymbolType | null = null;
+      try {
+        bodyResult = this.visit(node.body);
+      } catch (e) {
+        // Catch ReturnSignal — propagate it out after cleanup
+        if (e instanceof ReturnSignal) {
+          // Clean up loop variables
+          this.symbolTable.delete(node.itemVar);
+          if (node.indexVar !== null) {
+            this.symbolTable.delete(node.indexVar);
+          }
+          throw e;
+        }
+        throw e;
+      }
+
+      results.push(bodyResult ?? new NullSymbol(this.config));
+    }
+
+    // Clean up loop variables — they should not leak to outer scope
+    this.symbolTable.delete(node.itemVar);
+    if (node.indexVar !== null) {
+      this.symbolTable.delete(node.indexVar);
+    }
+
+    return new ListSymbol(results, false, this.config);
   }
 
   private visitIfNode(node: IfNode): ISymbolType | null {

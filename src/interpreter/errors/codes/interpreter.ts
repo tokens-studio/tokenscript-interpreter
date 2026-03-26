@@ -37,6 +37,9 @@ export enum InterpreterErrorCode {
   MAX_ITERATIONS_EXCEEDED = "INT_MAX_ITERATIONS_EXCEEDED",
   WHILE_CONDITION_NOT_BOOLEAN = "INT_WHILE_CONDITION_NOT_BOOLEAN",
   IF_CONDITION_NOT_BOOLEAN = "INT_IF_CONDITION_NOT_BOOLEAN",
+  FOR_EACH_NOT_LIST = "INT_FOR_EACH_NOT_LIST",
+  FOR_EACH_VARIABLE_SHADOW = "INT_FOR_EACH_VARIABLE_SHADOW",
+  FOR_EACH_DUPLICATE_VARS = "INT_FOR_EACH_DUPLICATE_VARS",
 
   // Unknown error
   UNKNOWN_ERROR = "INT_UNKNOWN_ERROR",
@@ -127,5 +130,14 @@ export interface InterpreterErrorData {
   [InterpreterErrorCode.MAX_ITERATIONS_EXCEEDED]: Record<string, never>;
   [InterpreterErrorCode.WHILE_CONDITION_NOT_BOOLEAN]: Record<string, never>;
   [InterpreterErrorCode.IF_CONDITION_NOT_BOOLEAN]: Record<string, never>;
+  [InterpreterErrorCode.FOR_EACH_NOT_LIST]: {
+    actualType: string;
+  };
+  [InterpreterErrorCode.FOR_EACH_VARIABLE_SHADOW]: {
+    name: string;
+  };
+  [InterpreterErrorCode.FOR_EACH_DUPLICATE_VARS]: {
+    name: string;
+  };
   [InterpreterErrorCode.UNKNOWN_ERROR]: Record<string, never>;
 }

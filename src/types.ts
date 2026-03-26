@@ -39,6 +39,7 @@ export enum ReservedKeyword {
   ELIF = "elif",
   RETURN = "return",
   VARIABLE = "variable",
+  FOR = "for",
 }
 
 export enum TokenType {
