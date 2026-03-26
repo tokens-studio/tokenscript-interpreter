@@ -15,6 +15,12 @@ describe("for...in loop", () => {
       expect(result?.toString()).toBe("0, 10, 20");
     });
 
+    it("should iterate over a list literal", () => {
+      const interpreter = createInterpreter(`for x in [1, 2, 3] [x * 10;]`);
+      const result = interpreter.interpret();
+      expect(result?.toString()).toBe("10, 20, 30");
+    });
+
     it("should handle single element list", () => {
       const interpreter = createInterpreter(`for x in range(1) [x + 42;]`);
       const result = interpreter.interpret();
@@ -212,5 +218,57 @@ describe("range() builtin", () => {
       const result = interpreter.interpret();
       expect(result?.toString()).toBe("1, 4, 9");
     });
+  });
+});
+
+describe("list literal [a, b, c]", () => {
+  it("should create a list from explicit bracket syntax", () => {
+    const interpreter = createInterpreter(`[1, 2, 3]`);
+    const result = interpreter.interpret();
+    expect(result?.toString()).toBe("1, 2, 3");
+  });
+
+  it("should create an empty list", () => {
+    const interpreter = createInterpreter(`[]`);
+    const result = interpreter.interpret();
+    expect(result?.toString()).toBe("");
+  });
+
+  it("should create a single-element list", () => {
+    const interpreter = createInterpreter(`[42]`);
+    const result = interpreter.interpret();
+    expect(result?.toString()).toBe("42");
+  });
+
+  it("should support expressions inside list literal", () => {
+    const interpreter = createInterpreter(`[1 + 2, 3 * 4, 10 - 5]`);
+    const result = interpreter.interpret();
+    expect(result?.toString()).toBe("3, 12, 5");
+  });
+
+  it("should work with nested list literals", () => {
+    const interpreter = createInterpreter(`[[1, 2], [3, 4]]`);
+    const result = interpreter.interpret();
+    expect(result?.toString()).toBe("1, 2, 3, 4");
+  });
+
+  it("should be assignable to a variable", () => {
+    const result = interpretAndGetVariable(
+      `variable items: List = [1, 2, 3];`,
+      "items",
+    );
+    expect(result?.toString()).toBe("1, 2, 3");
+  });
+
+  it("should work as for...in collection", () => {
+    const interpreter = createInterpreter(`for x in [10, 20, 30] [x + 1;]`);
+    const result = interpreter.interpret();
+    expect(result?.toString()).toBe("11, 21, 31");
+  });
+
+  it("should not break existing block syntax in if/while", () => {
+    const interpreter = createInterpreter(`if (true) [42;]`);
+    const result = interpreter.interpret();
+    expect(result?.toString()).toBe("42");
   });
 });

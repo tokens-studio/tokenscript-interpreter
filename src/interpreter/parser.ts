@@ -417,10 +417,7 @@ export class Parser {
     }
     this.eat(this.currentToken.type);
 
-    // Parse collection expression (e.g., range(3), myList, (1, 2, 3)).
-    // Note: [...] is always a block in TokenScript, not a list literal.
-    // Lists are created via comma separation: 1, 2, 3
-    // So the collection must be a function call, variable, or parenthesized list.
+    // Parse collection expression (e.g., [1, 2, 3], range(3), myList).
     const collection = this.expr();
 
     // Parse body block
@@ -474,6 +471,25 @@ export class Parser {
     const statements = this.statementsList() as StatementListNode;
     this.eat(TokenType.RBLOCK);
     return new BlockNode(statements);
+  }
+
+  // Explicit list literal: [expr, expr, ...]
+  private explicitList(): ListNode {
+    const token = this.currentToken;
+    this.eat(TokenType.LBLOCK);
+
+    const elements: ASTNode[] = [];
+
+    if (this.currentToken.type !== TokenType.RBLOCK) {
+      elements.push(this.expr());
+      while (this.currentToken.type === TokenType.COMMA) {
+        this.eat(TokenType.COMMA);
+        elements.push(this.expr());
+      }
+    }
+
+    this.eat(TokenType.RBLOCK);
+    return new ListNode(elements, token);
   }
 
   // implicit_list_expr : factor ((COMMA) factor)*
@@ -604,6 +620,11 @@ export class Parser {
   //        | HEX_COLOR
   private factor(): ASTNode {
     const token = this.currentToken;
+
+    // Explicit list literal: [expr, expr, ...]
+    if (token.type === TokenType.LBLOCK) {
+      return this.explicitList();
+    }
 
     // Handle unary operators
     if (
