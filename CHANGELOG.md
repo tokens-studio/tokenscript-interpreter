@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Config validation now uses `@tokens-studio/schema-validation`** — the cross-language shared validator replaces the hand-rolled arktype schemas across all five kind managers (token, color, functions, unit, constants). The same parser shape is enforced in lockstep by the Go and Ruby implementations of the library.
+- **Stricter nested-shape validation** — unknown fields on `Property`, `Schema`, `ItemsSpec`, `ScriptBlock`, `Initializer`, and `Conversion` are rejected at parse time, catching field-name typos. Top-level spec fields remain tolerant for forward compatibility with plugin metadata.
+
+### Removed
+
+- **`arktype` dependency** — dropped as a direct dependency.
+
 ## [0.31.0] - 2026-03-26
 
 ## [0.31.0] - 2026-03-26
