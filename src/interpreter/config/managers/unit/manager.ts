@@ -8,9 +8,9 @@ import { parseExpression } from "@interpreter/parser";
 import { NumberSymbol, NumberWithUnitSymbol } from "@interpreter/symbols";
 import { Interpreter } from "@src/lib";
 import { buildSchemaUri, parseVersionString } from "@src/utils/schema-uri";
-import { type } from "arktype";
+import { ZodError } from "@tokens-studio/schema-validation";
 import { BaseManager } from "../base-manager";
-import { specName, type UnitSpecification, UnitSpecificationSchema } from "./schema";
+import { parseUnitSpec, specName, type UnitSpecification } from "./schema";
 
 // Types -----------------------------------------------------------------------
 
@@ -147,20 +147,18 @@ export class UnitManager extends BaseManager<
   public register(uri: uriType, spec: UnitSpecification | string): UnitSpecification {
     let parsedSpec: UnitSpecification;
 
-    if (typeof spec === "string") {
-      const parseResult = UnitSpecificationSchema(JSON.parse(spec));
-      if (parseResult instanceof type.errors) {
-        throw new Error(
-          `Invalid unit specification for URI ${uri}: ${parseResult.summary}\n\nJson:\n${spec}`,
-        );
-      }
-      parsedSpec = parseResult as UnitSpecification;
-    } else {
-      const parseResult = UnitSpecificationSchema(spec);
-      if (parseResult instanceof type.errors) {
-        throw new Error(`Invalid unit specification for URI ${uri}: ${parseResult.summary}`);
-      }
-      parsedSpec = parseResult as UnitSpecification;
+    try {
+      const input = typeof spec === "string" ? JSON.parse(spec) : spec;
+      parsedSpec = parseUnitSpec(input);
+    } catch (err) {
+      const summary =
+        err instanceof ZodError
+          ? err.issues.map((i) => `${i.path.join(".") || "<root>"}: ${i.message}`).join("; ")
+          : err instanceof Error
+            ? err.message
+            : String(err);
+      const jsonSuffix = typeof spec === "string" ? `\n\nJson:\n${spec}` : "";
+      throw new Error(`Invalid unit specification for URI ${uri}: ${summary}${jsonSuffix}`);
     }
 
     this.specs.set(uri, parsedSpec);

@@ -1,66 +1,77 @@
-import { type } from "arktype";
+// Token-kind schema shim.
+//
+// Re-exports the typed shapes from @tokens-studio/schema-validation so that
+// the rest of the interpreter can continue importing from
+// "@interpreter/config/managers/token/schema". The schema-validation
+// package is the cross-language source of truth for the schema language
+// (TS / Go / Ruby).
+//
+// Aliases preserve the historical interpreter names (`SpecProperty`,
+// `SpecItemsType`, `TokenSpecificationSchema`) so consumer code does not
+// have to change.
 
-// Schema ----------------------------------------------------------------------
+import { Token, type z } from "@tokens-studio/schema-validation";
 
-export const validSchemaTypes = ["number", "string", "token", "object", "list"];
+// Types -----------------------------------------------------------------------
 
-// Property type for spec schema
-export interface SpecProperty {
-  type: "number" | "string" | "token" | "object" | "list";
-  url?: string; // For token references
-  properties?: Record<string, SpecProperty>; // For nested objects
-  validations?: Record<string, string>; // Validation scripts
-  items?: SpecItemsType; // For list types - defines the schema for each item
-}
+export type TokenSpecification = Token.TokenSpecification;
 
-// Items schema for list types
-export interface SpecItemsType {
-  type: "object" | "token";
-  url?: string; // For token references (when type is "token")
-  properties?: Record<string, SpecProperty>; // For object items
-}
+/**
+ * A property of a token's structural schema. Historical alias for the
+ * recursive `Property` type from the schema-validation library; the
+ * `z.infer` form is needed because tsup's DTS bundling drops the
+ * type side of the value+type merged export through `* as Token`.
+ */
+export type SpecProperty = z.infer<typeof Token.Property>;
 
-interface SpecSchemaType {
-  type: "object" | "number" | "string" | "list";
-  properties?: Record<string, SpecProperty>;
-  validations?: Record<string, string>;
-  required?: string[];
-  order?: string[];
-  additionalProperties?: boolean;
-  items?: SpecItemsType; // For list types
-}
+/**
+ * The shape of items inside a list-typed property/schema. Historical
+ * alias for the `ItemsSpec` type from the schema-validation library;
+ * see {@link SpecProperty} for why `z.infer` is needed.
+ */
+export type SpecItemsType = z.infer<typeof Token.ItemsSpec>;
 
-// Main ------------------------------------------------------------------------
+// Validation API --------------------------------------------------------------
 
-export interface TokenSpecification {
-  name: string;
-  type: "token";
-  description?: string;
-  url?: string;
-  schema?: SpecSchemaType;
-  /** TokenScript validation script. Receives {input} and should return true or error string. Can be a string (direct script) or object with type and script (built schema). */
-  validation?: string | { type: string; script: string };
-}
+/**
+ * Validate and parse a JSON value as a token specification. Throws a
+ * `ZodError` with a structured field-by-field error report on failure.
+ *
+ * Strictness:
+ *   - Top level: unknown fields are tolerated (silently stripped).
+ *   - Nested shapes (Schema, Property, ItemsSpec, ScriptBlock):
+ *     unknown fields and unsupported enum values fail.
+ */
+export const parseTokenSpec = Token.parseTokenSpec;
 
-// Arktype schemas for validation
+/**
+ * Like `parseTokenSpec` but returns a `{ success, data | error }`
+ * discriminated union instead of throwing.
+ */
+export const safeParseTokenSpec = Token.safeParseTokenSpec;
 
-const SpecSchemaSchema = type({
-  type: "'object' | 'number' | 'string' | 'list'",
-  "properties?": "Record<string, unknown>", // Simplified validation
-  "validations?": "Record<string, string>",
-  "required?": "string[]",
-  "order?": "string[]",
-  "additionalProperties?": "boolean",
-  "items?": "unknown", // For list types - validated at runtime
-});
+/**
+ * Historical compatibility alias for `parseTokenSpec`. Wrap a call in a
+ * `try { ... } catch (err) { ... }` to handle validation failures.
+ *
+ * @deprecated Prefer `parseTokenSpec` / `safeParseTokenSpec`.
+ */
+export const TokenSpecificationSchema = Token.parseTokenSpec;
 
-export const TokenSpecificationSchema = type({
-  name: "string",
-  type: "'token'",
-  "description?": "string",
-  "url?": "string",
-  "schema?": SpecSchemaSchema,
-  "validation?": "string | unknown", // Allow string or object, validated at runtime in manager
-});
+// Constants -------------------------------------------------------------------
 
-export const specName = (spec: TokenSpecification): string => spec.name.toLowerCase();
+/**
+ * The set of valid `type` values for a token schema.
+ *
+ * Mirrored as a plain array for use in error messages and for backwards
+ * compatibility with the previous arktype declaration. Hand-spelled
+ * (rather than reading `.options` off the zod enum) because tsup's DTS
+ * bundling drops the value side of namespaced re-exports — see
+ * {@link SpecProperty} for the same workaround.
+ */
+export const validSchemaTypes = ["number", "string", "token", "object", "list"] as const;
+
+// Helpers ---------------------------------------------------------------------
+
+/** Lowercased lookup name for a token spec. */
+export const specName = Token.specName;

@@ -9,12 +9,12 @@ import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
 import { BooleanSymbol, ListSymbol, NumberSymbol, StringSymbol } from "@interpreter/symbols";
 import type { ISymbolType, Token } from "@src/types";
-import { type } from "arktype";
+import { ZodError } from "@tokens-studio/schema-validation";
 import { BaseManager } from "../base-manager";
 
 import { createSumFunction, mathFunctions } from "./builtin/math";
 
-import { type FunctionSpecification, FunctionSpecificationSchema } from "./schema";
+import { type FunctionSpecification, parseFunctionSpec } from "./schema";
 
 type functionName = string;
 type FunctionImpl = (...args: ISymbolType[]) => ISymbolType;
@@ -47,18 +47,17 @@ export class FunctionsManager extends BaseManager<
   public register(name: functionName, spec: FunctionSpecification | string): FunctionSpecification {
     let parsedSpec: FunctionSpecification;
 
-    if (typeof spec === "string") {
-      const parseResult = FunctionSpecificationSchema(JSON.parse(spec));
-      if (parseResult instanceof type.errors) {
-        throw new Error(`Invalid function specification for ${name}: ${parseResult.summary}`);
-      }
-      parsedSpec = parseResult as FunctionSpecification;
-    } else {
-      const parseResult = FunctionSpecificationSchema(spec);
-      if (parseResult instanceof type.errors) {
-        throw new Error(`Invalid function specification for ${name}: ${parseResult.summary}`);
-      }
-      parsedSpec = parseResult as FunctionSpecification;
+    try {
+      const input = typeof spec === "string" ? JSON.parse(spec) : spec;
+      parsedSpec = parseFunctionSpec(input);
+    } catch (err) {
+      const summary =
+        err instanceof ZodError
+          ? err.issues.map((i) => `${i.path.join(".") || "<root>"}: ${i.message}`).join("; ")
+          : err instanceof Error
+            ? err.message
+            : String(err);
+      throw new Error(`Invalid function specification for ${name}: ${summary}`);
     }
 
     const functionName = parsedSpec.keyword.toLowerCase();

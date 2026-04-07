@@ -1,103 +1,80 @@
-import { type } from "arktype";
-import { isObject } from "@/src/interpreter/utils/type";
+// Color-kind schema shim.
+//
+// Re-exports the typed shapes from @tokens-studio/schema-validation so
+// that the rest of the interpreter can continue importing from
+// "@interpreter/config/managers/color/schema". The schema-validation
+// package is the cross-language source of truth for the schema language
+// (TS / Go / Ruby).
+//
+// Aliases preserve the historical interpreter names (`SpecProperty`,
+// `ColorSpecificationSchema`, `validSchemaTypes`,
+// `MINIMAL_COLOR_SPECIFICATION`) so consumer code does not have to
+// change.
 
-// Utility Schemas -------------------------------------------------------------
+import { Color } from "@tokens-studio/schema-validation";
 
-const ScriptBlockSchema = type({
-  type: "string",
-  script: "string",
-});
+// Types -----------------------------------------------------------------------
 
-// Schema ----------------------------------------------------------------------
+export type ColorSpecification = Color.ColorSpecification;
 
-const InitializerSchema = type({
-  "title?": "string",
-  keyword: "string",
-  "description?": "string",
-  // schema: type({ "...": "unknown" }),
-  script: ScriptBlockSchema,
-});
+/**
+ * A property of a color schema (typically a channel like r/g/b/a).
+ * Historical alias for the `ColorProperty` type from the
+ * schema-validation library.
+ */
+export type SpecProperty = Color.ColorProperty;
 
-const ConversionSchema = type({
-  source: "string",
-  target: "string",
-  "description?": "string",
-  lossless: "boolean",
-  script: ScriptBlockSchema,
-});
+// Validation API --------------------------------------------------------------
 
-export const validSchemaTypes = ["number", "string", "color"];
+/**
+ * Validate and parse a JSON value as a color specification. Throws a
+ * `ZodError` with a structured field-by-field error report on failure.
+ *
+ * Strictness:
+ *   - Top level: unknown fields are tolerated (silently stripped).
+ *   - Nested shapes (ColorSchema, ColorProperty, Initializer, Conversion,
+ *     ColorScriptBlock): unknown fields and unsupported enum values fail.
+ */
+export const parseColorSpec = Color.parseColorSpec;
 
-// Property type for spec schema
-export interface SpecProperty {
-  type: "number" | "string" | "color";
-}
+/**
+ * Like `parseColorSpec` but returns a `{ success, data | error }`
+ * discriminated union instead of throwing.
+ */
+export const safeParseColorSpec = Color.safeParseColorSpec;
 
-interface SpecSchemaType {
-  type: "object";
-  properties: Record<string, SpecProperty>;
-  required?: string[];
-  order?: string[];
-  additionalProperties?: boolean;
-}
+/**
+ * Historical compatibility alias for `parseColorSpec`. Wrap a call in a
+ * `try { ... } catch (err) { ... }` to handle validation failures.
+ *
+ * @deprecated Prefer `parseColorSpec` / `safeParseColorSpec`.
+ */
+export const ColorSpecificationSchema = Color.parseColorSpec;
 
-// Main ------------------------------------------------------------------------
+// Constants -------------------------------------------------------------------
 
-export interface ColorSpecification {
-  name: string;
-  type: "color";
-  description?: string;
-  schema?: SpecSchemaType;
-  initializers: Array<{
-    title?: string;
-    keyword: string;
-    description?: string;
-    script: {
-      type: string;
-      script: string;
-    };
-  }>;
-  conversions: Array<{
-    source: string;
-    target: string;
-    description?: string;
-    lossless: boolean;
-    script: {
-      type: string;
-      script: string;
-    };
-  }>;
-}
+/**
+ * The set of valid `type` values for a color schema property.
+ *
+ * Hand-spelled (rather than reading `.options` off the zod enum)
+ * because tsup's DTS bundling drops the value side of namespaced
+ * re-exports.
+ */
+export const validSchemaTypes = ["number", "string", "color"] as const;
 
-const _SpecPropertySchema = type({
-  type: "'number' | 'string' | 'color'",
-});
+// Helpers ---------------------------------------------------------------------
 
-const SpecSchemaSchema = type({
-  type: "'object'",
-  properties: type("Record<string, unknown>").narrow((v): v is Record<string, SpecProperty> => {
-    if (!isObject(v)) return false;
-    return Object.values(v).every((prop) =>
-      ["number", "string", "color"].includes((prop as any)?.type),
-    );
-  }),
-  "required?": "string[]",
-  "order?": "string[]",
-  "additionalProperties?": "boolean",
-});
+/** Lowercased lookup name for a color spec. */
+export const specName = Color.specName;
 
-export const ColorSpecificationSchema = type({
-  name: "string",
-  type: "'color'",
-  "description?": "string",
-  "schema?": SpecSchemaSchema,
-  initializers: InitializerSchema.array(),
-  conversions: ConversionSchema.array(),
-});
+// Defaults --------------------------------------------------------------------
 
-export const specName = (spec: ColorSpecification): string => spec.name.toLowerCase();
-
-// Minimal viable ColorSpecification for testing and defaults
+/**
+ * Minimal viable ColorSpecification for testing and defaults.
+ *
+ * Always passes `parseColorSpec` — see the schema-minimal regression
+ * test in tests/interpreter/color/schema-minimal.test.ts.
+ */
 export const MINIMAL_COLOR_SPECIFICATION: ColorSpecification = {
   name: "MinimalColor",
   type: "color" as const,

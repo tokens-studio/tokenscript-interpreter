@@ -11,11 +11,11 @@ import { ensureValidAlpha, formatHex8, isTransparent } from "@interpreter/utils/
 import { Interpreter } from "@src/lib";
 import type { ISymbolType } from "@src/types";
 import { buildSchemaUri, parseVersionString } from "@src/utils/schema-uri";
-import { type } from "arktype";
+import { ZodError } from "@tokens-studio/schema-validation";
 import { BaseManager } from "../base-manager";
 import {
   type ColorSpecification,
-  ColorSpecificationSchema,
+  parseColorSpec,
   specName,
   validSchemaTypes,
 } from "./schema";
@@ -149,24 +149,18 @@ export class ColorManager extends BaseManager<ColorSpecification, ColorSymbol, C
   public register(uri: uriType, spec: ColorSpecification | string): ColorSpecification {
     let parsedSpec: ColorSpecification;
 
-    if (typeof spec === "string") {
-      const parseResult = ColorSpecificationSchema(JSON.parse(spec));
-      if (parseResult instanceof type.errors) {
-        throw new Error(
-          `Invalid color specification for URI ${uri}: ${parseResult.summary}
-
-Json:
-${spec}`,
-        );
-      }
-      parsedSpec = parseResult as ColorSpecification;
-    } else {
-      // Validate the object using the schema
-      const parseResult = ColorSpecificationSchema(spec);
-      if (parseResult instanceof type.errors) {
-        throw new Error(`Invalid color specification for URI ${uri}: ${parseResult.summary}`);
-      }
-      parsedSpec = parseResult as ColorSpecification;
+    try {
+      const input = typeof spec === "string" ? JSON.parse(spec) : spec;
+      parsedSpec = parseColorSpec(input);
+    } catch (err) {
+      const summary =
+        err instanceof ZodError
+          ? err.issues.map((i) => `${i.path.join(".") || "<root>"}: ${i.message}`).join("; ")
+          : err instanceof Error
+            ? err.message
+            : String(err);
+      const jsonSuffix = typeof spec === "string" ? `\n\nJson:\n${spec}` : "";
+      throw new Error(`Invalid color specification for URI ${uri}: ${summary}${jsonSuffix}`);
     }
 
     this.specs.set(uri, parsedSpec);

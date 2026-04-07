@@ -1,25 +1,18 @@
-import { ColorSpecificationSchema, MINIMAL_COLOR_SPECIFICATION } from "@interpreter/config/managers/color/schema";
-import { type } from "arktype";
+import {
+  MINIMAL_COLOR_SPECIFICATION,
+  parseColorSpec,
+} from "@interpreter/config/managers/color/schema";
 import { describe, expect, it } from "vitest";
 
 describe("Minimal Color Specification", () => {
-  it("should always be valid according to ColorSpecificationSchema", () => {
+  it("should always be valid according to parseColorSpec", () => {
     // This test ensures that MINIMAL_COLOR_SPECIFICATION is always valid
-    // and can be used as a default template for new color specifications
-    expect(() => {
-      const result = ColorSpecificationSchema(MINIMAL_COLOR_SPECIFICATION);
-      if (result instanceof type.errors) {
-        throw new Error(result.summary);
-      }
-    }).not.toThrow();
+    // and can be used as a default template for new color specifications.
+    expect(() => parseColorSpec(MINIMAL_COLOR_SPECIFICATION)).not.toThrow();
   });
 
   it("should have the expected minimal structure", () => {
-    const result = ColorSpecificationSchema(MINIMAL_COLOR_SPECIFICATION);
-    if (result instanceof type.errors) {
-      throw new Error(result.summary);
-    }
-    const parsed = result;
+    const parsed = parseColorSpec(MINIMAL_COLOR_SPECIFICATION);
 
     // Verify required fields are present
     expect(parsed.name).toBe("MinimalColor");
@@ -40,17 +33,12 @@ describe("Minimal Color Specification", () => {
   });
 
   it("should be serializable to JSON and back", () => {
-    // Ensure the minimal spec can be safely serialized and deserialized
+    // Ensure the minimal spec can be safely serialized and deserialized.
     const jsonString = JSON.stringify(MINIMAL_COLOR_SPECIFICATION);
     const parsed = JSON.parse(jsonString);
 
     // Should still be valid after JSON round-trip
-    expect(() => {
-      const result = ColorSpecificationSchema(parsed);
-      if (result instanceof type.errors) {
-        throw new Error(result.summary);
-      }
-    }).not.toThrow();
+    expect(() => parseColorSpec(parsed)).not.toThrow();
 
     // Should be identical after round-trip
     expect(parsed).toEqual(MINIMAL_COLOR_SPECIFICATION);
