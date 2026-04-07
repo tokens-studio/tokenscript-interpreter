@@ -11,13 +11,19 @@
 // inside the interpreter (Constants are dispatched in
 // `Config.registerSchemas` without separate validation).
 
-import { Constants } from "@tokens-studio/schema-validation";
+import { Constants, type z } from "@tokens-studio/schema-validation";
 
 // Types -----------------------------------------------------------------------
 
 export type ConstantsSpecification = Constants.ConstantsSpecification;
 
 // Validation API --------------------------------------------------------------
+//
+// Explicit type annotations on these re-exports are required because
+// tsup's DTS bundling (rollup-plugin-dts) can't construct a public path
+// for the internal types that transitively appear in the inferred
+// return types of `Constants.parseConstantsSpec` etc. Without the
+// annotation the DTS emit fails with TS4023 / TS2742.
 
 /**
  * Validate and parse a JSON value as a constants specification. Throws
@@ -28,13 +34,16 @@ export type ConstantsSpecification = Constants.ConstantsSpecification;
  *   - `values` entries: must be `string | number | boolean`. Object,
  *     array, and `null` values are rejected.
  */
-export const parseConstantsSpec = Constants.parseConstantsSpec;
+export const parseConstantsSpec: (json: unknown) => ConstantsSpecification =
+	Constants.parseConstantsSpec;
 
 /**
  * Like `parseConstantsSpec` but returns a `{ success, data | error }`
  * discriminated union instead of throwing.
  */
-export const safeParseConstantsSpec = Constants.safeParseConstantsSpec;
+export const safeParseConstantsSpec: (
+	json: unknown,
+) => z.ZodSafeParseResult<ConstantsSpecification> = Constants.safeParseConstantsSpec;
 
 /**
  * Historical compatibility alias for `parseConstantsSpec`. Wrap a call
@@ -42,9 +51,10 @@ export const safeParseConstantsSpec = Constants.safeParseConstantsSpec;
  *
  * @deprecated Prefer `parseConstantsSpec` / `safeParseConstantsSpec`.
  */
-export const ConstantsSpecificationSchema = Constants.parseConstantsSpec;
+export const ConstantsSpecificationSchema: (json: unknown) => ConstantsSpecification =
+	Constants.parseConstantsSpec;
 
 // Helpers ---------------------------------------------------------------------
 
 /** Lowercased lookup name for a constants spec. */
-export const specName = Constants.specName;
+export const specName: (spec: ConstantsSpecification) => string = Constants.specName;

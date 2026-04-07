@@ -146,7 +146,7 @@
   },
   "homepage": "https://github.com/tokens-studio/tokenscript-interpreter#readme",
   "dependencies": {
-    "@tokens-studio/schema-validation": "file:../../studio/studio-on-rails/tokenscript/schema-validation/ts",
+    "@tokens-studio/schema-validation": "^0.1.0",
     "commander": "^14.0.1",
     "readline-sync": "^1.4.10",
     "yauzl": "^3.2.0"

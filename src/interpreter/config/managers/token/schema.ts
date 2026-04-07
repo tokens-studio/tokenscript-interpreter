@@ -32,6 +32,12 @@ export type SpecProperty = z.infer<typeof Token.Property>;
 export type SpecItemsType = z.infer<typeof Token.ItemsSpec>;
 
 // Validation API --------------------------------------------------------------
+//
+// Explicit type annotations on these re-exports are required because
+// tsup's DTS bundling (rollup-plugin-dts) can't construct a public path
+// for the internal `Property` / `ItemsSpec` / zod types that transitively
+// appear in the inferred return types of `Token.parseTokenSpec` etc.
+// Without the annotation the DTS emit fails with TS4023 / TS2742.
 
 /**
  * Validate and parse a JSON value as a token specification. Throws a
@@ -42,13 +48,15 @@ export type SpecItemsType = z.infer<typeof Token.ItemsSpec>;
  *   - Nested shapes (Schema, Property, ItemsSpec, ScriptBlock):
  *     unknown fields and unsupported enum values fail.
  */
-export const parseTokenSpec = Token.parseTokenSpec;
+export const parseTokenSpec: (json: unknown) => TokenSpecification = Token.parseTokenSpec;
 
 /**
  * Like `parseTokenSpec` but returns a `{ success, data | error }`
  * discriminated union instead of throwing.
  */
-export const safeParseTokenSpec = Token.safeParseTokenSpec;
+export const safeParseTokenSpec: (
+	json: unknown,
+) => z.ZodSafeParseResult<TokenSpecification> = Token.safeParseTokenSpec;
 
 /**
  * Historical compatibility alias for `parseTokenSpec`. Wrap a call in a
@@ -56,7 +64,8 @@ export const safeParseTokenSpec = Token.safeParseTokenSpec;
  *
  * @deprecated Prefer `parseTokenSpec` / `safeParseTokenSpec`.
  */
-export const TokenSpecificationSchema = Token.parseTokenSpec;
+export const TokenSpecificationSchema: (json: unknown) => TokenSpecification =
+	Token.parseTokenSpec;
 
 // Constants -------------------------------------------------------------------
 
@@ -74,4 +83,4 @@ export const validSchemaTypes = ["number", "string", "token", "object", "list"] 
 // Helpers ---------------------------------------------------------------------
 
 /** Lowercased lookup name for a token spec. */
-export const specName = Token.specName;
+export const specName: (spec: TokenSpecification) => string = Token.specName;

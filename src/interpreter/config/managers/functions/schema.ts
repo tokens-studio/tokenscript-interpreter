@@ -9,13 +9,19 @@
 // The historical alias `FunctionSpecificationSchema` is preserved for
 // consumer code that still uses the callable form.
 
-import { Fn } from "@tokens-studio/schema-validation";
+import { Fn, type z } from "@tokens-studio/schema-validation";
 
 // Types -----------------------------------------------------------------------
 
 export type FunctionSpecification = Fn.FunctionSpecification;
 
 // Validation API --------------------------------------------------------------
+//
+// Explicit type annotations on these re-exports are required because
+// tsup's DTS bundling (rollup-plugin-dts) can't construct a public path
+// for the internal types that transitively appear in the inferred
+// return types of `Fn.parseFunctionSpec` etc. Without the annotation
+// the DTS emit fails with TS4023 / TS2742.
 
 /**
  * Validate and parse a JSON value as a function specification. Throws a
@@ -26,13 +32,15 @@ export type FunctionSpecification = Fn.FunctionSpecification;
  *   - Nested shapes (FunctionInput, FunctionScriptBlock): unknown
  *     fields are rejected.
  */
-export const parseFunctionSpec = Fn.parseFunctionSpec;
+export const parseFunctionSpec: (json: unknown) => FunctionSpecification = Fn.parseFunctionSpec;
 
 /**
  * Like `parseFunctionSpec` but returns a `{ success, data | error }`
  * discriminated union instead of throwing.
  */
-export const safeParseFunctionSpec = Fn.safeParseFunctionSpec;
+export const safeParseFunctionSpec: (
+	json: unknown,
+) => z.ZodSafeParseResult<FunctionSpecification> = Fn.safeParseFunctionSpec;
 
 /**
  * Historical compatibility alias for `parseFunctionSpec`. Wrap a call in
@@ -40,9 +48,10 @@ export const safeParseFunctionSpec = Fn.safeParseFunctionSpec;
  *
  * @deprecated Prefer `parseFunctionSpec` / `safeParseFunctionSpec`.
  */
-export const FunctionSpecificationSchema = Fn.parseFunctionSpec;
+export const FunctionSpecificationSchema: (json: unknown) => FunctionSpecification =
+	Fn.parseFunctionSpec;
 
 // Helpers ---------------------------------------------------------------------
 
 /** Lowercased lookup name for a function spec. */
-export const specName = Fn.specName;
+export const specName: (spec: FunctionSpecification) => string = Fn.specName;

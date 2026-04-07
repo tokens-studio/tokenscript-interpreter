@@ -11,7 +11,7 @@
 // `MINIMAL_COLOR_SPECIFICATION`) so consumer code does not have to
 // change.
 
-import { Color } from "@tokens-studio/schema-validation";
+import { Color, type z } from "@tokens-studio/schema-validation";
 
 // Types -----------------------------------------------------------------------
 
@@ -25,6 +25,12 @@ export type ColorSpecification = Color.ColorSpecification;
 export type SpecProperty = Color.ColorProperty;
 
 // Validation API --------------------------------------------------------------
+//
+// Explicit type annotations on these re-exports are required because
+// tsup's DTS bundling (rollup-plugin-dts) can't construct a public path
+// for the internal types that transitively appear in the inferred
+// return types of `Color.parseColorSpec` etc. Without the annotation
+// the DTS emit fails with TS4023 / TS2742.
 
 /**
  * Validate and parse a JSON value as a color specification. Throws a
@@ -35,13 +41,15 @@ export type SpecProperty = Color.ColorProperty;
  *   - Nested shapes (ColorSchema, ColorProperty, Initializer, Conversion,
  *     ColorScriptBlock): unknown fields and unsupported enum values fail.
  */
-export const parseColorSpec = Color.parseColorSpec;
+export const parseColorSpec: (json: unknown) => ColorSpecification = Color.parseColorSpec;
 
 /**
  * Like `parseColorSpec` but returns a `{ success, data | error }`
  * discriminated union instead of throwing.
  */
-export const safeParseColorSpec = Color.safeParseColorSpec;
+export const safeParseColorSpec: (
+	json: unknown,
+) => z.ZodSafeParseResult<ColorSpecification> = Color.safeParseColorSpec;
 
 /**
  * Historical compatibility alias for `parseColorSpec`. Wrap a call in a
@@ -49,7 +57,8 @@ export const safeParseColorSpec = Color.safeParseColorSpec;
  *
  * @deprecated Prefer `parseColorSpec` / `safeParseColorSpec`.
  */
-export const ColorSpecificationSchema = Color.parseColorSpec;
+export const ColorSpecificationSchema: (json: unknown) => ColorSpecification =
+	Color.parseColorSpec;
 
 // Constants -------------------------------------------------------------------
 
@@ -65,7 +74,7 @@ export const validSchemaTypes = ["number", "string", "color"] as const;
 // Helpers ---------------------------------------------------------------------
 
 /** Lowercased lookup name for a color spec. */
-export const specName = Color.specName;
+export const specName: (spec: ColorSpecification) => string = Color.specName;
 
 // Defaults --------------------------------------------------------------------
 

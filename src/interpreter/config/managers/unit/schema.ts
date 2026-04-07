@@ -10,7 +10,7 @@
 // `Conversion`, `UnitSpecificationSchema`, `validUnitTypes`) so consumer
 // code does not have to change.
 
-import { Unit } from "@tokens-studio/schema-validation";
+import { Unit, type z } from "@tokens-studio/schema-validation";
 
 // Types -----------------------------------------------------------------------
 
@@ -19,6 +19,12 @@ export type Conversion = Unit.Conversion;
 export type ScriptBlock = Unit.UnitScriptBlock;
 
 // Validation API --------------------------------------------------------------
+//
+// Explicit type annotations on these re-exports are required because
+// tsup's DTS bundling (rollup-plugin-dts) can't construct a public path
+// for the internal types that transitively appear in the inferred
+// return types of `Unit.parseUnitSpec` etc. Without the annotation
+// the DTS emit fails with TS4023 / TS2742.
 
 /**
  * Validate and parse a JSON value as a unit specification. Throws a
@@ -33,13 +39,15 @@ export type ScriptBlock = Unit.UnitScriptBlock;
  * are mathematical and treated as information-preserving. This is a
  * deliberate cross-kind asymmetry with color Conversions.
  */
-export const parseUnitSpec = Unit.parseUnitSpec;
+export const parseUnitSpec: (json: unknown) => UnitSpecification = Unit.parseUnitSpec;
 
 /**
  * Like `parseUnitSpec` but returns a `{ success, data | error }`
  * discriminated union instead of throwing.
  */
-export const safeParseUnitSpec = Unit.safeParseUnitSpec;
+export const safeParseUnitSpec: (
+	json: unknown,
+) => z.ZodSafeParseResult<UnitSpecification> = Unit.safeParseUnitSpec;
 
 /**
  * Historical compatibility alias for `parseUnitSpec`. Wrap a call in a
@@ -47,7 +55,7 @@ export const safeParseUnitSpec = Unit.safeParseUnitSpec;
  *
  * @deprecated Prefer `parseUnitSpec` / `safeParseUnitSpec`.
  */
-export const UnitSpecificationSchema = Unit.parseUnitSpec;
+export const UnitSpecificationSchema: (json: unknown) => UnitSpecification = Unit.parseUnitSpec;
 
 // Constants -------------------------------------------------------------------
 
@@ -63,4 +71,4 @@ export const validUnitTypes = ["absolute", "relative"] as const;
 // Helpers ---------------------------------------------------------------------
 
 /** Lowercased lookup name for a unit spec. */
-export const specName = Unit.specName;
+export const specName: (spec: UnitSpecification) => string = Unit.specName;
