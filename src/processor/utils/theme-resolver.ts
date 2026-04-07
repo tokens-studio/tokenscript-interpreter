@@ -1,38 +1,52 @@
-import { type } from "arktype";
+import { z } from "@tokens-studio/schema-validation";
 import { isObject } from "@/src/interpreter/utils/type";
 
-// Old format
-const SelectedTokenSetsObjectSchema = type("Record<string, 'enabled' | 'source'>");
+/**
+ * Validation for the `$themes.json` file format used by Figma Tokens
+ * Studio. NOT part of the schema language; this is application config
+ * that travels alongside token sets.
+ *
+ * The `$themes.json` data carries many extra fields beyond what this
+ * resolver consumes (`id`, `$figmaStyleReferences`,
+ * `$figmaCollectionVariableIds`, etc. — Figma plugin bookkeeping).
+ * The schemas below are intentionally LOOSE on every object level: in
+ * zod v4 `z.object()` strips unknown keys silently rather than
+ * failing, which matches what real `$themes.json` files need.
+ */
 
-// New format
-const SelectedTokenSetsArraySchema = type({
-  id: "string",
-  status: "'enabled' | 'source'",
-}).array();
+// Old object format: { "core": "enabled", "semantic": "source" }
+const TokenSetStatus = z.enum(["enabled", "source"]);
+const SelectedTokenSetsObjectSchema = z.record(z.string(), TokenSetStatus);
 
-// For validation, we accept either format
-const SelectedTokenSetsSchema = type([
+// New array format: [{ id: "core", status: "enabled" }]
+const SelectedTokenSetsArraySchema = z.array(
+  z.object({
+    id: z.string(),
+    status: TokenSetStatus,
+  }),
+);
+
+// Either format is accepted.
+const SelectedTokenSetsSchema = z.union([
   SelectedTokenSetsObjectSchema,
-  "|",
   SelectedTokenSetsArraySchema,
 ]);
 
-const ThemeSchema = type({
-  name: "string",
+const ThemeSchema = z.object({
+  name: z.string(),
   selectedTokenSets: SelectedTokenSetsSchema,
-  "figmaCollectionId?": "string",
-  "figmaModeId?": "string",
-  "group?": "string",
+  figmaCollectionId: z.string().optional(),
+  figmaModeId: z.string().optional(),
+  group: z.string().optional(),
 });
 
-// Schema for standalone themes array (like $themes.json)
-const ThemesArraySchema = ThemeSchema.array();
+const ThemesArraySchema = z.array(ThemeSchema);
 
-export type ThemesArray = typeof ThemesArraySchema.infer;
-export type Theme = typeof ThemeSchema.infer;
-export type SelectedTokenSets = typeof SelectedTokenSetsSchema.infer;
-export type SelectedTokenSetsObject = typeof SelectedTokenSetsObjectSchema.infer;
-export type SelectedTokenSetsArray = typeof SelectedTokenSetsArraySchema.infer;
+export type ThemesArray = z.infer<typeof ThemesArraySchema>;
+export type Theme = z.infer<typeof ThemeSchema>;
+export type SelectedTokenSets = z.infer<typeof SelectedTokenSetsSchema>;
+export type SelectedTokenSetsObject = z.infer<typeof SelectedTokenSetsObjectSchema>;
+export type SelectedTokenSetsArray = z.infer<typeof SelectedTokenSetsArraySchema>;
 
 /**
  * Selects a theme by name from an array of themes.
@@ -83,10 +97,15 @@ export const selectThemeOrFirst = (themes: ThemesArray, themeName?: string): The
 /**
  * Resolves themes from collected json.
  *
- * Uses arktype to validate the structure:
- * - Each theme must have a 'name' string property
- * - Each theme must have a 'selectedTokenSets' property (any type)
+ * Validates the structure with zod (via the schema-validation
+ * library's `z` re-export):
+ * - Each theme must have a `name` string property
+ * - Each theme must have a `selectedTokenSets` property in either
+ *   the old object format (`{ name: "enabled" | "source" }`) or the
+ *   new array format (`[{ id, status }]`)
  * - Optional properties: figmaCollectionId, figmaModeId, group
+ * - Extra fields are silently passed through (real-world
+ *   `$themes.json` files carry Figma plugin bookkeeping fields).
  *
  * @param jsonFiles - Record of collected jsons from file-collector
  * @returns Tuple of [path, themes array] or undefined if no valid themes found
@@ -98,18 +117,16 @@ export const resolveThemes = (
   if (themesFile) {
     // First try as an object with $themes property
     if (isObject(themesFile) && "$themes" in themesFile) {
-      const themesValue = themesFile.$themes;
-      const validatedThemes = ThemesArraySchema(themesValue);
-
-      if (!(validatedThemes instanceof type.errors)) {
-        return ["$themes", validatedThemes];
+      const inner = ThemesArraySchema.safeParse(themesFile.$themes);
+      if (inner.success) {
+        return ["$themes", inner.data];
       }
     }
 
     // Then try as a direct array of themes
-    const validatedAsArray = ThemesArraySchema(themesFile);
-    if (!(validatedAsArray instanceof type.errors)) {
-      return ["$themes", validatedAsArray];
+    const direct = ThemesArraySchema.safeParse(themesFile);
+    if (direct.success) {
+      return ["$themes", direct.data];
     }
   }
 
