@@ -71,18 +71,6 @@ return relative_darken(yellow, 10);`,
     ],
   },
   {
-    name: "Demo 6: HSL Ramp Function",
-    type: "code",
-    code: `variable yellow: Color = #FF9900;
-variable config: Dictionary;
-config.set("steps", 10);
-
-return hsl_ramp(yellow, config).values();`,
-    dependencies: [
-      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/hsl-ramp/0.1.0/",
-    ],
-  },
-  {
     name: "Demo 7: OKLCH Color Ramp",
     type: "code",
     code: `variable yellow: Color = #FF9900;
@@ -232,17 +220,6 @@ spacing.set("xl", base * 3);
 spacing.set("xxl", base * 4);
 
 return spacing;`,
-  },
-  {
-    name: "Rainbow Color Scale",
-    type: "code",
-    code: `variable config: Dictionary;
-config.set("steps", 10);
-config.set("saturation", 255);
-rainbow_color_scale(config).values();`,
-    dependencies: [
-      "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/schema/test-color-scale-rainbow/0.1.0/",
-    ],
   },
   {
     name: "Contrasting Text Color Finder",

@@ -1,50 +1,73 @@
-import { type } from "arktype";
+// Unit-kind schema shim.
+//
+// Re-exports the typed shapes from @tokens-studio/schema-validation so
+// that the rest of the interpreter can continue importing from
+// "@interpreter/config/managers/unit/schema". The schema-validation
+// package is the cross-language source of truth for the schema language
+// (TS / Go / Ruby).
+//
+// Aliases preserve the historical interpreter names (`ScriptBlock`,
+// `Conversion`, `UnitSpecificationSchema`, `validUnitTypes`) so consumer
+// code does not have to change.
 
-// Script Block Schema
-const ScriptBlockSchema = type({
-  "type?": "string",
-  script: "string",
-});
+import { Unit, type z } from "@tokens-studio/schema-validation";
 
-export interface ScriptBlock {
-  type?: string;
-  script: string;
-}
+// Types -----------------------------------------------------------------------
 
-// Conversion Schema
-const ConversionSchema = type({
-  source: "string",
-  target: "string",
-  script: ScriptBlockSchema,
-  "description?": "string",
-});
+export type UnitSpecification = Unit.UnitSpecification;
+export type Conversion = Unit.Conversion;
+export type ScriptBlock = Unit.UnitScriptBlock;
 
-export interface Conversion {
-  source: string;
-  target: string;
-  script: ScriptBlock;
-  description?: string;
-}
+// Validation API --------------------------------------------------------------
+//
+// Explicit type annotations on these re-exports are required because
+// tsup's DTS bundling (rollup-plugin-dts) can't construct a public path
+// for the internal types that transitively appear in the inferred
+// return types of `Unit.parseUnitSpec` etc. Without the annotation
+// the DTS emit fails with TS4023 / TS2742.
 
-// Unit Specification Schema
-export const UnitSpecificationSchema = type({
-  name: "string",
-  type: "'absolute' | 'relative'",
-  keyword: "string",
-  "description?": "string",
-  "conversions?": ConversionSchema.array(),
-  "to_absolute?": ScriptBlockSchema,
-});
+/**
+ * Validate and parse a JSON value as a unit specification. Throws a
+ * `ZodError` with a structured field-by-field error report on failure.
+ *
+ * Strictness:
+ *   - Top level: unknown fields are tolerated (silently stripped).
+ *   - Nested shapes (Conversion, UnitScriptBlock): unknown fields are
+ *     rejected.
+ *
+ * Note: unit Conversions have NO `lossless` field — unit conversions
+ * are mathematical and treated as information-preserving. This is a
+ * deliberate cross-kind asymmetry with color Conversions.
+ */
+export const parseUnitSpec: (json: unknown) => UnitSpecification = Unit.parseUnitSpec;
 
-export interface UnitSpecification {
-  name: string;
-  type: "absolute" | "relative";
-  keyword: string;
-  description?: string;
-  conversions?: Conversion[];
-  to_absolute?: ScriptBlock;
-}
+/**
+ * Like `parseUnitSpec` but returns a `{ success, data | error }`
+ * discriminated union instead of throwing.
+ */
+export const safeParseUnitSpec: (json: unknown) => z.ZodSafeParseResult<UnitSpecification> =
+  Unit.safeParseUnitSpec;
 
-export const specName = (spec: UnitSpecification): string => spec.name.toLowerCase();
+/**
+ * Historical compatibility alias for `parseUnitSpec`. Wrap a call in a
+ * `try { ... } catch (err) { ... }` to handle validation failures.
+ *
+ * @deprecated Prefer `parseUnitSpec` / `safeParseUnitSpec`.
+ */
+export const UnitSpecificationSchema: (json: unknown) => UnitSpecification = Unit.parseUnitSpec;
 
+// Constants -------------------------------------------------------------------
+
+/**
+ * The set of valid `type` values for a unit specification.
+ *
+ * Hand-spelled because tsup's DTS bundling drops the value side of
+ * namespaced re-exports — `Unit.UnitType` is reachable as a TYPE but
+ * not as the underlying zod enum value.
+ */
 export const validUnitTypes = ["absolute", "relative"] as const;
+
+// Helpers ---------------------------------------------------------------------
+
+/** Lowercased lookup name for a unit spec. */
+export const specName: (spec: UnitSpecification) => string = Unit.specName;

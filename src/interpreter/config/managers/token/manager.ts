@@ -10,14 +10,14 @@ import {
   TokenSymbol,
 } from "@interpreter/symbols";
 import type { ASTNode, ISymbolType } from "@src/types";
-import { type } from "arktype";
+import { ZodError } from "@tokens-studio/schema-validation";
 import { BaseManager } from "../base-manager";
 import {
+  parseTokenSpec,
   type SpecItemsType,
   type SpecProperty,
   specName,
   type TokenSpecification,
-  TokenSpecificationSchema,
 } from "./schema";
 
 type uriType = string;
@@ -80,22 +80,18 @@ export class TokenManager extends BaseManager<TokenSpecification, TokenSymbol, T
   public register(uri: uriType, spec: TokenSpecification | string): TokenSpecification {
     let parsedSpec: TokenSpecification;
 
-    if (typeof spec === "string") {
-      const parseResult = TokenSpecificationSchema(JSON.parse(spec));
-      if (parseResult instanceof type.errors) {
-        throw new Error(
-          `Invalid token specification for URI ${uri}: ${parseResult.summary}
-Json:
-${spec}`,
-        );
-      }
-      parsedSpec = parseResult as TokenSpecification;
-    } else {
-      const parseResult = TokenSpecificationSchema(spec);
-      if (parseResult instanceof type.errors) {
-        throw new Error(`Invalid token specification for URI ${uri}: ${parseResult.summary}`);
-      }
-      parsedSpec = parseResult as TokenSpecification;
+    try {
+      const input = typeof spec === "string" ? JSON.parse(spec) : spec;
+      parsedSpec = parseTokenSpec(input);
+    } catch (err) {
+      const summary =
+        err instanceof ZodError
+          ? err.issues.map((i) => `${i.path.join(".") || "<root>"}: ${i.message}`).join("; ")
+          : err instanceof Error
+            ? err.message
+            : String(err);
+      const jsonSuffix = typeof spec === "string" ? `\nJson:\n${spec}` : "";
+      throw new Error(`Invalid token specification for URI ${uri}: ${summary}${jsonSuffix}`);
     }
 
     this.specs.set(uri, parsedSpec);

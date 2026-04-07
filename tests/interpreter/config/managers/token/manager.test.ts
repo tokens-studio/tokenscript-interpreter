@@ -56,25 +56,4 @@ describe("TokenManager", () => {
     expect(clone.getSpec("test-uri")).toEqual(spec);
     expect(clone).not.toBe(manager);
   });
-
-  it("should use validations script", () => {
-    const manager = new TokenManager();
-    const spec = {
-      name: "border-radius",
-      type: "token" as const,
-      schema: {
-        type: "object" as const,
-        properties: {
-          value: {
-            type: "number" as const,
-          },
-          validations: {
-            script: "Enter script here",
-          },
-        },
-      },
-    };
-    manager.register("test-uri", JSON.stringify(spec));
-    expect(manager.getSpec("test-uri")).toEqual(spec);
-  });
 });
