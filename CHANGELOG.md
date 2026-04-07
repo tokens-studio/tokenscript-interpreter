@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.32.0] - 2026-04-07
+
 ### Changed
 
 - **Config validation now uses `@tokens-studio/schema-validation`** — the cross-language shared validator replaces the hand-rolled arktype schemas across all five kind managers (token, color, functions, unit, constants). The same parser shape is enforced in lockstep by the Go and Ruby implementations of the library.
