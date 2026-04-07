@@ -6,7 +6,6 @@ const TOKENSCRIPT_PRESETS = [
   "Demo 3: HSL Color Variable",
   "Demo 4: Color Ramp Loop",
   "Demo 5: Relative Darken Function",
-  "Demo 6: HSL Ramp Function",
   "Demo 7: OKLCH Color Ramp",
   "Demo 8: Ramp to Hex Values",
   "Demo 9: Mixed Unit Addition",
@@ -16,7 +15,6 @@ const TOKENSCRIPT_PRESETS = [
   "Responsive Font Size (remap)",
   "Opacity from Percentage (remap)",
   "Unit Spacing system",
-  "Rainbow Color Scale",
   "Contrasting Text Color Finder",
 ];
 
