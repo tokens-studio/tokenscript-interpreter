@@ -56,5 +56,4 @@ describe("TokenManager", () => {
     expect(clone.getSpec("test-uri")).toEqual(spec);
     expect(clone).not.toBe(manager);
   });
-
 });

@@ -1,8 +1,5 @@
 import { Config } from "@interpreter/config";
-import {
-  type ColorSpecification,
-  parseColorSpec,
-} from "@interpreter/config/managers/color/schema";
+import { type ColorSpecification, parseColorSpec } from "@interpreter/config/managers/color/schema";
 import {
   type FunctionSpecification,
   parseFunctionSpec,
@@ -88,7 +85,12 @@ function parseTokenScriptSchemaResponse(data: unknown): TokenScriptSchemaRespons
       );
     }
   } catch (err) {
-    const detail = err instanceof ZodError ? summarizeZodError(err) : err instanceof Error ? err.message : String(err);
+    const detail =
+      err instanceof ZodError
+        ? summarizeZodError(err)
+        : err instanceof Error
+          ? err.message
+          : String(err);
     throw new Error(`Invalid schema structure: content: ${detail}`);
   }
 
@@ -143,7 +145,10 @@ export async function fetchTokenScriptSchema(
         throw new Error(`Schema fetch timeout after ${timeout}ms`);
       }
       // Validation errors are already wrapped with "Invalid schema structure".
-      if (error.message.startsWith("Invalid schema structure") || error.message.startsWith("HTTP error")) {
+      if (
+        error.message.startsWith("Invalid schema structure") ||
+        error.message.startsWith("HTTP error")
+      ) {
         throw error;
       }
       throw new Error(`Failed to fetch schema: ${error.message}`);

@@ -35,14 +35,14 @@ export type ConstantsSpecification = Constants.ConstantsSpecification;
  *     array, and `null` values are rejected.
  */
 export const parseConstantsSpec: (json: unknown) => ConstantsSpecification =
-	Constants.parseConstantsSpec;
+  Constants.parseConstantsSpec;
 
 /**
  * Like `parseConstantsSpec` but returns a `{ success, data | error }`
  * discriminated union instead of throwing.
  */
 export const safeParseConstantsSpec: (
-	json: unknown,
+  json: unknown,
 ) => z.ZodSafeParseResult<ConstantsSpecification> = Constants.safeParseConstantsSpec;
 
 /**
@@ -52,7 +52,7 @@ export const safeParseConstantsSpec: (
  * @deprecated Prefer `parseConstantsSpec` / `safeParseConstantsSpec`.
  */
 export const ConstantsSpecificationSchema: (json: unknown) => ConstantsSpecification =
-	Constants.parseConstantsSpec;
+  Constants.parseConstantsSpec;
 
 // Helpers ---------------------------------------------------------------------
 

@@ -45,9 +45,8 @@ export const parseUnitSpec: (json: unknown) => UnitSpecification = Unit.parseUni
  * Like `parseUnitSpec` but returns a `{ success, data | error }`
  * discriminated union instead of throwing.
  */
-export const safeParseUnitSpec: (
-	json: unknown,
-) => z.ZodSafeParseResult<UnitSpecification> = Unit.safeParseUnitSpec;
+export const safeParseUnitSpec: (json: unknown) => z.ZodSafeParseResult<UnitSpecification> =
+  Unit.safeParseUnitSpec;
 
 /**
  * Historical compatibility alias for `parseUnitSpec`. Wrap a call in a

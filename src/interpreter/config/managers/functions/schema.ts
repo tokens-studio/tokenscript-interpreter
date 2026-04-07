@@ -38,9 +38,8 @@ export const parseFunctionSpec: (json: unknown) => FunctionSpecification = Fn.pa
  * Like `parseFunctionSpec` but returns a `{ success, data | error }`
  * discriminated union instead of throwing.
  */
-export const safeParseFunctionSpec: (
-	json: unknown,
-) => z.ZodSafeParseResult<FunctionSpecification> = Fn.safeParseFunctionSpec;
+export const safeParseFunctionSpec: (json: unknown) => z.ZodSafeParseResult<FunctionSpecification> =
+  Fn.safeParseFunctionSpec;
 
 /**
  * Historical compatibility alias for `parseFunctionSpec`. Wrap a call in
@@ -49,7 +48,7 @@ export const safeParseFunctionSpec: (
  * @deprecated Prefer `parseFunctionSpec` / `safeParseFunctionSpec`.
  */
 export const FunctionSpecificationSchema: (json: unknown) => FunctionSpecification =
-	Fn.parseFunctionSpec;
+  Fn.parseFunctionSpec;
 
 // Helpers ---------------------------------------------------------------------
 

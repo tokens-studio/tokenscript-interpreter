@@ -13,12 +13,7 @@ import type { ISymbolType } from "@src/types";
 import { buildSchemaUri, parseVersionString } from "@src/utils/schema-uri";
 import { ZodError } from "@tokens-studio/schema-validation";
 import { BaseManager } from "../base-manager";
-import {
-  type ColorSpecification,
-  parseColorSpec,
-  specName,
-  validSchemaTypes,
-} from "./schema";
+import { type ColorSpecification, parseColorSpec, specName, validSchemaTypes } from "./schema";
 
 // Types -----------------------------------------------------------------------
 

@@ -85,7 +85,11 @@ export class TokenManager extends BaseManager<TokenSpecification, TokenSymbol, T
       parsedSpec = parseTokenSpec(input);
     } catch (err) {
       const summary =
-        err instanceof ZodError ? err.issues.map((i) => `${i.path.join(".") || "<root>"}: ${i.message}`).join("; ") : err instanceof Error ? err.message : String(err);
+        err instanceof ZodError
+          ? err.issues.map((i) => `${i.path.join(".") || "<root>"}: ${i.message}`).join("; ")
+          : err instanceof Error
+            ? err.message
+            : String(err);
       const jsonSuffix = typeof spec === "string" ? `\nJson:\n${spec}` : "";
       throw new Error(`Invalid token specification for URI ${uri}: ${summary}${jsonSuffix}`);
     }

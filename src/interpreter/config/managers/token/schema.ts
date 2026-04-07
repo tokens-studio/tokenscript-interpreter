@@ -54,9 +54,8 @@ export const parseTokenSpec: (json: unknown) => TokenSpecification = Token.parse
  * Like `parseTokenSpec` but returns a `{ success, data | error }`
  * discriminated union instead of throwing.
  */
-export const safeParseTokenSpec: (
-	json: unknown,
-) => z.ZodSafeParseResult<TokenSpecification> = Token.safeParseTokenSpec;
+export const safeParseTokenSpec: (json: unknown) => z.ZodSafeParseResult<TokenSpecification> =
+  Token.safeParseTokenSpec;
 
 /**
  * Historical compatibility alias for `parseTokenSpec`. Wrap a call in a
@@ -64,8 +63,7 @@ export const safeParseTokenSpec: (
  *
  * @deprecated Prefer `parseTokenSpec` / `safeParseTokenSpec`.
  */
-export const TokenSpecificationSchema: (json: unknown) => TokenSpecification =
-	Token.parseTokenSpec;
+export const TokenSpecificationSchema: (json: unknown) => TokenSpecification = Token.parseTokenSpec;
 
 // Constants -------------------------------------------------------------------
 

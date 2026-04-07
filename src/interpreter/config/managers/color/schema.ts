@@ -47,9 +47,8 @@ export const parseColorSpec: (json: unknown) => ColorSpecification = Color.parse
  * Like `parseColorSpec` but returns a `{ success, data | error }`
  * discriminated union instead of throwing.
  */
-export const safeParseColorSpec: (
-	json: unknown,
-) => z.ZodSafeParseResult<ColorSpecification> = Color.safeParseColorSpec;
+export const safeParseColorSpec: (json: unknown) => z.ZodSafeParseResult<ColorSpecification> =
+  Color.safeParseColorSpec;
 
 /**
  * Historical compatibility alias for `parseColorSpec`. Wrap a call in a
@@ -57,8 +56,7 @@ export const safeParseColorSpec: (
  *
  * @deprecated Prefer `parseColorSpec` / `safeParseColorSpec`.
  */
-export const ColorSpecificationSchema: (json: unknown) => ColorSpecification =
-	Color.parseColorSpec;
+export const ColorSpecificationSchema: (json: unknown) => ColorSpecification = Color.parseColorSpec;
 
 // Constants -------------------------------------------------------------------
 

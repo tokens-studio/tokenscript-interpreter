@@ -1,7 +1,4 @@
-import {
-  MINIMAL_COLOR_SPECIFICATION,
-  parseColorSpec,
-} from "@interpreter/config/managers/color/schema";
+import { MINIMAL_COLOR_SPECIFICATION, parseColorSpec } from "@interpreter/config/managers/color/schema";
 import { describe, expect, it } from "vitest";
 
 describe("Minimal Color Specification", () => {
