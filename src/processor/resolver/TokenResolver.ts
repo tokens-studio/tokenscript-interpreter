@@ -632,7 +632,13 @@ class PrefixResolver {
       return;
     }
 
-    // Add string fields as virtual tokens
+    // Add string fields as virtual tokens. While parsing each sub-field we
+    // also collect every external reference it points at so the parent can
+    // expose them directly on its graph node — this is the "referenced tokens"
+    // surface consumers expect from `graph.getNodes().get(parent)`.
+    // Using a Set preserves insertion order and deduplicates refs that appear
+    // in multiple sub-fields (e.g. `{dims.unit}` used for both `top` and `bottom`).
+    const subFieldRefs = new Set<RefPath>();
     for (const [fieldPath, fieldValue] of stringFields) {
       this.subFieldPaths.add(fieldPath);
 
@@ -647,12 +653,22 @@ class PrefixResolver {
         continue;
       }
 
+      for (const ref of parser.requiredReferences) {
+        subFieldRefs.add(ref);
+      }
+
       this.processParsedToken(fieldPath, ast, parser.requiredReferences);
     }
 
-    // Parent token depends on all its sub-fields
+    // The parent's graph node lists the concrete tokens it transitively depends
+    // on — not the internal sub-field virtual paths used to sequence resolution.
+    // This keeps `graph.getNodes().get(parent)` useful for consumers that need
+    // to know which real tokens a composite references.
+    this.graph.addNode(tokenName, Array.from(subFieldRefs));
+
+    // The dependency tracker still walks via sub-fields — they are the units
+    // that must resolve before the parent can be assembled.
     const subFieldDeps = Array.from(stringFields.keys());
-    this.graph.addNode(tokenName, subFieldDeps);
     for (const dep of subFieldDeps) {
       this.dependencyTracker.addTokenDependency(tokenName, dep);
     }

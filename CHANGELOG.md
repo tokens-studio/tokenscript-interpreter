@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Composite tokens now expose transitive references on their dependency graph node** — for a composite `$value` (typography, shadow, border, or any object/array-shaped value), the parent token's entry in `graph.getNodes()` now lists the concrete referenced tokens reached by walking every sub-field. Previously the parent only listed internal sub-field virtual paths, which made it impossible for consumers of `result.graph` to show forward references for composites.
+
 ## [0.32.0] - 2026-04-07
 
 ### Changed
