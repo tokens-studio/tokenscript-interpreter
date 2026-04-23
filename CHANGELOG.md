@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.33.0] - 2026-04-23
+
 ### Added
 
 - **Token name validation** — the resolver now emits an `INVALID_TOKEN_NAME` error for tokens whose names contain spaces, braces, or brackets. Validation is applied per dot-separated segment, matching the Go and Ruby implementations. Exported `validateTokenName` and `validateTokenPath` utilities for external use.
