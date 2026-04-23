@@ -27,6 +27,7 @@ import {
   type ObjectParser,
 } from "../object-parsers";
 import { DependencyGraph } from "../utils/DependencyGraph";
+import { validateTokenPath } from "../utils/name-validation";
 import { extractStringFields } from "../utils/structured-tokens";
 import { getTokenValue, setTokenValue, type TokenData } from "../utils/tokens";
 import type { ValidationIssue } from "../validator";
@@ -551,6 +552,18 @@ class PrefixResolver {
     this.earlyResolved = [];
 
     for (const [tokenName, tokenData] of this.tokens.entries()) {
+      // Validate token name: each dot-separated segment must not contain
+      // spaces, braces, or brackets.
+      if (!validateTokenPath(tokenName)) {
+        this.addIssue(tokenName, {
+          code: "INVALID_TOKEN_NAME",
+          severity: ValidationSeverity.ERROR,
+          message: `token "${tokenName}" contains invalid characters in name (spaces, braces, or brackets are not allowed)`,
+          tokenName,
+          data: { path: tokenName },
+        });
+      }
+
       const tokenValue = getTokenValue(tokenData);
 
       // Handle uninterpreted keywords

@@ -52,5 +52,6 @@ export type {
   ProcessResult,
   ProcessSetsOptions,
 } from "./types";
+export { validateTokenName, validateTokenPath } from "./utils/name-validation";
 export type { ValidationIssue } from "./validator";
 export { ValidationSeverity } from "./validator";

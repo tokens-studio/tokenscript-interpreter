@@ -30,6 +30,8 @@ export {
   getRenamedReferences,
   TokenResolver,
   ValidationSeverity,
+  validateTokenName,
+  validateTokenPath,
 } from "@src/processor";
 export * as builders from "@src/processor/builders";
 export { processTokenSets, processTokens } from "@src/processor/process";
