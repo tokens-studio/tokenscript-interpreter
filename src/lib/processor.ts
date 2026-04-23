@@ -29,6 +29,8 @@ export {
   getModifiedDependants,
   getRenamedReferences,
   TokenResolver,
+  validateTokenName,
+  validateTokenPath,
   ValidationSeverity,
 } from "@src/processor";
 export * as builders from "@src/processor/builders";
