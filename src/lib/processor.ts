@@ -29,9 +29,9 @@ export {
   getModifiedDependants,
   getRenamedReferences,
   TokenResolver,
+  ValidationSeverity,
   validateTokenName,
   validateTokenPath,
-  ValidationSeverity,
 } from "@src/processor";
 export * as builders from "@src/processor/builders";
 export { processTokenSets, processTokens } from "@src/processor/process";

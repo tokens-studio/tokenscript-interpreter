@@ -7,7 +7,7 @@
  * across Go/JS/Ruby regex engines.
  */
 
-const INVALID_TOKEN_NAME_CHARS = /[ \t\n\r\f{}\[\]]/;
+const INVALID_TOKEN_NAME_CHARS = /[ \t\n\r\f{}[\]]/;
 
 /** Returns true if a single name segment is valid: non-empty and contains no whitespace, braces, or brackets. */
 export function validateTokenName(name: string): boolean {

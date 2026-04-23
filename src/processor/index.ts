@@ -31,7 +31,6 @@ export {
   hasIssueWithCode,
   tokenHasIssueWithCode,
 } from "./resolver/issue-helpers";
-export { validateTokenName, validateTokenPath } from "./utils/name-validation";
 export type { ProcessorOutput, ProcessorResult } from "./resolver/TokenResolver";
 export { TokenResolver } from "./resolver/TokenResolver";
 export type {
@@ -53,5 +52,6 @@ export type {
   ProcessResult,
   ProcessSetsOptions,
 } from "./types";
+export { validateTokenName, validateTokenPath } from "./utils/name-validation";
 export type { ValidationIssue } from "./validator";
 export { ValidationSeverity } from "./validator";

@@ -1,8 +1,8 @@
-import { validateTokenName, validateTokenPath } from "@src/processor/utils/name-validation";
 import { TokenResolver } from "@src/processor";
+import { validateTokenName, validateTokenPath } from "@src/processor/utils/name-validation";
+import type { TokenData } from "@src/processor/utils/tokens";
 import { ValidationSeverity } from "@src/processor/validator";
 import { describe, expect, it } from "vitest";
-import type { TokenData } from "@src/processor/utils/tokens";
 
 describe("name-validation", () => {
   describe("validateTokenName", () => {
@@ -78,9 +78,7 @@ describe("name-validation", () => {
       const issues = result.issues?.get("invalid space name");
       expect(issues).toBeDefined();
       expect(issues!.length).toBeGreaterThanOrEqual(1);
-      const nameIssue = issues!.find(
-        (i) => "code" in i && i.code === "INVALID_TOKEN_NAME",
-      );
+      const nameIssue = issues!.find((i) => "code" in i && i.code === "INVALID_TOKEN_NAME");
       expect(nameIssue).toBeDefined();
       expect(nameIssue!).toMatchObject({
         code: "INVALID_TOKEN_NAME",
@@ -90,33 +88,25 @@ describe("name-validation", () => {
 
     it("flags a token with braces in its name", () => {
       const resolver = new TokenResolver();
-      const tokens = new Map<string, TokenData>([
-        ["color{primary}", { $value: "#ff0000", $type: "color" }],
-      ]);
+      const tokens = new Map<string, TokenData>([["color{primary}", { $value: "#ff0000", $type: "color" }]]);
 
       const result = resolver.processTokens(tokens);
 
       const issues = result.issues?.get("color{primary}");
       expect(issues).toBeDefined();
-      const nameIssue = issues!.find(
-        (i) => "code" in i && i.code === "INVALID_TOKEN_NAME",
-      );
+      const nameIssue = issues!.find((i) => "code" in i && i.code === "INVALID_TOKEN_NAME");
       expect(nameIssue).toBeDefined();
     });
 
     it("flags a token with an invalid segment in a dotted path", () => {
       const resolver = new TokenResolver();
-      const tokens = new Map<string, TokenData>([
-        ["color.Bg Color", { $value: "#ff0000", $type: "color" }],
-      ]);
+      const tokens = new Map<string, TokenData>([["color.Bg Color", { $value: "#ff0000", $type: "color" }]]);
 
       const result = resolver.processTokens(tokens);
 
       const issues = result.issues?.get("color.Bg Color");
       expect(issues).toBeDefined();
-      const nameIssue = issues!.find(
-        (i) => "code" in i && i.code === "INVALID_TOKEN_NAME",
-      );
+      const nameIssue = issues!.find((i) => "code" in i && i.code === "INVALID_TOKEN_NAME");
       expect(nameIssue).toBeDefined();
     });
 
