@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.34.0] - 2026-04-30
+
+### Added
+
+- **Template string expressions** — backtick-delimited strings with `${expression}` interpolation for arbitrary expressions and `{ref.path}` for token references. Supports escape sequences (`\{`, `\$`, `` \` ``, `\\`), type validation (rejects lists, dictionaries, and non-hex colors), and tolerant-mode parsing for editor support.
+
 ## [0.33.0] - 2026-04-23
 
 ### Added
