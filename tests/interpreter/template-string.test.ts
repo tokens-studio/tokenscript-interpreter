@@ -1,16 +1,8 @@
-import { TemplateStringNode, ReferenceNode, StringNode, collectReferenceNodes } from "@interpreter/ast";
+import { collectReferenceNodes, ReferenceNode, StringNode, TemplateStringNode } from "@interpreter/ast";
 import { Interpreter } from "@interpreter/interpreter";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
-import {
-  BooleanSymbol,
-  ColorSymbol,
-  DictionarySymbol,
-  ListSymbol,
-  NullSymbol,
-  NumberSymbol,
-  StringSymbol,
-} from "@interpreter/symbols";
+import { ColorSymbol, DictionarySymbol, ListSymbol, NumberSymbol, StringSymbol } from "@interpreter/symbols";
 import { TokenType } from "@src/types";
 import { describe, expect, it } from "vitest";
 
