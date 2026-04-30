@@ -91,6 +91,7 @@ Never throw raw string errors. Always use the structured error system:
 Key language features and edge cases are documented in `docs/tokenscript/`:
 
 - [Implicit Lists and Strings](docs/tokenscript/implicit-lists-and-strings.md) - How unquoted values and whitespace-separated expressions work
+- [Template Strings](docs/tokenscript/template-strings.md) - Backtick syntax with `{ref}` and `${expr}` interpolation
 - [Math Functions](docs/tokenscript/math.md) - Mathematical operations and functions
 - [Format/Unit Parsing Edge Cases](docs/tokenscript/edge-cases/format-unit-parsing.md) - How unit suffixes (px, s, ms) interact with implicit lists
 - [Inline Mode](docs/tokenscript/inline-mode.md) - The expression-only subset used for token `$value` fields

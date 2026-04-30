@@ -29,6 +29,7 @@ Inline mode is the expression-only subset of tokenscript used when evaluating to
 | Implicit (whitespace) lists | `{size} {style} {color}` |
 | Booleans | `true`, `false` |
 | Null | `null` |
+| Template strings | `` `hello {name}, ${1 + 2}` `` |
 
 ## Not supported in inline mode
 
