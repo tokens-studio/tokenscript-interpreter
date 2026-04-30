@@ -46,6 +46,14 @@ export class StringNode implements ASTNode {
   }
 }
 
+export class TemplateStringNode implements ASTNode {
+  nodeType = "TemplateStringNode";
+  constructor(
+    public parts: ASTNode[],
+    public token?: Token,
+  ) {}
+}
+
 export class UnaryOpNode implements ASTNode {
   nodeType = "UnaryOpNode";
   constructor(
@@ -348,6 +356,10 @@ export function walkAST(node: ASTNode, onVisit: (node: ASTNode) => void): void {
   } else if (node instanceof StatementListNode) {
     for (const statement of node.statements) {
       walkAST(statement, onVisit);
+    }
+  } else if (node instanceof TemplateStringNode) {
+    for (const part of node.parts) {
+      walkAST(part, onVisit);
     }
   } else if (node instanceof AttributeAccessNode) {
     walkAST(node.left, onVisit);

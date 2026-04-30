@@ -6,6 +6,7 @@ export enum LexerErrorCode {
   INVALID_HEX_COLOR_FORMAT = "LEXER_INVALID_HEX_COLOR_FORMAT",
   EXPECTED_CHARACTER = "LEXER_EXPECTED_CHARACTER",
   MULTIPLE_DECIMAL_POINTS = "LEXER_MULTIPLE_DECIMAL_POINTS",
+  UNTERMINATED_TEMPLATE_STRING = "LEXER_UNTERMINATED_TEMPLATE_STRING",
 }
 
 export interface LexerErrorData {
@@ -30,4 +31,5 @@ export interface LexerErrorData {
   [LexerErrorCode.MULTIPLE_DECIMAL_POINTS]: {
     value: string;
   };
+  [LexerErrorCode.UNTERMINATED_TEMPLATE_STRING]: Record<string, never>;
 }

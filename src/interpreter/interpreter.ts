@@ -25,6 +25,7 @@ import {
   type ReturnNode,
   type StatementListNode,
   type StringNode,
+  type TemplateStringNode,
   type UnaryOpNode,
   type WhileNode,
 } from "./ast";
@@ -37,6 +38,7 @@ import {
   BooleanSymbol,
   basicSymbolTypes,
   ColorSymbol,
+  DictionarySymbol,
   jsValueToSymbolType,
   ListSymbol,
   NullSymbol,
@@ -195,6 +197,53 @@ export class Interpreter {
 
   private visitStringNode(node: StringNode): StringSymbol {
     return new StringSymbol(node.value, this.config);
+  }
+
+  private visitTemplateStringNode(node: TemplateStringNode): ISymbolType {
+    if (node.parts.length === 0) {
+      return new StringSymbol("", this.config);
+    }
+
+    // Single non-string part: evaluate, validate, and return as-is (preserves type)
+    if (node.parts.length === 1) {
+      const val = this.visit(node.parts[0]) as ISymbolType;
+      this.validateTemplateValue(val, node);
+      return val;
+    }
+
+    // Multiple parts: evaluate each, validate, and concatenate as strings
+    let result = "";
+    for (const part of node.parts) {
+      const val = this.visit(part) as ISymbolType;
+      this.validateTemplateValue(val, node);
+      result += val.toString();
+    }
+    return new StringSymbol(result, this.config);
+  }
+
+  /**
+   * Validate that a value is a primitive type allowed in template string interpolation.
+   * Lists, Dictionaries, and non-hex Colors are rejected.
+   */
+  private validateTemplateValue(val: ISymbolType, node: TemplateStringNode): void {
+    if (val instanceof ListSymbol) {
+      throw new InterpreterError(InterpreterErrorCode.TEMPLATE_INVALID_TYPE, {
+        token: node.token,
+        data: { valueType: "List" },
+      });
+    }
+    if (val instanceof DictionarySymbol) {
+      throw new InterpreterError(InterpreterErrorCode.TEMPLATE_INVALID_TYPE, {
+        token: node.token,
+        data: { valueType: "Dictionary" },
+      });
+    }
+    if (val instanceof ColorSymbol && !val.isHex()) {
+      throw new InterpreterError(InterpreterErrorCode.TEMPLATE_INVALID_TYPE, {
+        token: node.token,
+        data: { valueType: `Color.${val.subType}` },
+      });
+    }
   }
 
   /**
