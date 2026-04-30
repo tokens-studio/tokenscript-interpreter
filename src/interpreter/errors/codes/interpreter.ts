@@ -41,6 +41,9 @@ export enum InterpreterErrorCode {
   FOR_EACH_VARIABLE_SHADOW = "INT_FOR_EACH_VARIABLE_SHADOW",
   FOR_EACH_DUPLICATE_VARS = "INT_FOR_EACH_DUPLICATE_VARS",
 
+  // Template string errors
+  TEMPLATE_INVALID_TYPE = "INT_TEMPLATE_INVALID_TYPE",
+
   // Unknown error
   UNKNOWN_ERROR = "INT_UNKNOWN_ERROR",
 }
@@ -138,6 +141,9 @@ export interface InterpreterErrorData {
   };
   [InterpreterErrorCode.FOR_EACH_DUPLICATE_VARS]: {
     name: string;
+  };
+  [InterpreterErrorCode.TEMPLATE_INVALID_TYPE]: {
+    valueType: string;
   };
   [InterpreterErrorCode.UNKNOWN_ERROR]: Record<string, never>;
 }

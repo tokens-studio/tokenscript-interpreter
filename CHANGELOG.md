@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Template string expressions**: Backtick-delimited strings with interpolation support
+  - Reference interpolation: `` `color is {my.token}` ``
+  - Expression interpolation: `` `result is ${1 + 2}` ``
+  - Escape sequences: `\{`, `\${`, `` \` ``, `\\`
+  - Single expressions preserve their type (colors, numbers with units)
+  - Rejects non-primitive interpolations (lists, dictionaries, non-hex colors)
+
 ## [0.33.0] - 2026-04-23
 
 ### Added

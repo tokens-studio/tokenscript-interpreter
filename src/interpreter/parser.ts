@@ -21,6 +21,7 @@ import {
   ReturnNode,
   StatementListNode,
   StringNode,
+  TemplateStringNode,
   TypeDeclNode,
   UnaryOpNode,
   WhileNode,
@@ -751,6 +752,10 @@ export class Parser {
       node = this.attributeAccess(node);
       return node;
     }
+    if (token.type === TokenType.TEMPLATE_STRING) {
+      return this.templateString();
+    }
+
     if (token.type === TokenType.EXPLICIT_STRING) {
       this.eat(TokenType.EXPLICIT_STRING);
       let node: ASTNode = new StringNode(token);
@@ -822,6 +827,143 @@ export class Parser {
     }
     this.eat(TokenType.RPAREN);
     return new FunctionCallNode(functionName.value as string, args, functionName);
+  }
+
+  /**
+   * Parse a TEMPLATE_STRING token into a TemplateStringNode.
+   * Scans the raw content for:
+   *   - {ref.path} → ReferenceNode
+   *   - ${expression} → parsed sub-expression
+   *   - \{ \${ \` \\ → escaped literals (backslash removed)
+   *   - everything else → literal StringNode segments
+   */
+  private templateString(): ASTNode {
+    const token = this.currentToken;
+    const raw = token.value as string;
+    this.eat(TokenType.TEMPLATE_STRING);
+
+    const parts: ASTNode[] = [];
+    let literal = "";
+    let i = 0;
+
+    const flushLiteral = () => {
+      if (literal.length > 0) {
+        parts.push(new StringNode({ ...token, value: literal }));
+        literal = "";
+      }
+    };
+
+    while (i < raw.length) {
+      const ch = raw[i];
+
+      // Escape sequences: \{ \${ \$ \` \\
+      if (ch === "\\" && i + 1 < raw.length) {
+        const next = raw[i + 1];
+        if (next === "{" || next === "`" || next === "\\") {
+          literal += next;
+          i += 2;
+          continue;
+        }
+        if (next === "$") {
+          if (i + 2 < raw.length && raw[i + 2] === "{") {
+            // \${ → literal "${", prevents expression interpolation
+            literal += "${";
+            i += 3;
+          } else {
+            // \$ → literal "$"
+            literal += "$";
+            i += 2;
+          }
+          continue;
+        }
+      }
+
+      // Expression interpolation: ${...}
+      if (ch === "$" && i + 1 < raw.length && raw[i + 1] === "{") {
+        flushLiteral();
+        // Find matching closing brace (tracking nesting, rejecting backticks)
+        const start = i + 2;
+        let depth = 1;
+        let j = start;
+        while (j < raw.length && depth > 0) {
+          if (raw[j] === "`") {
+            this.error(ParserErrorCode.INVALID_SYNTAX, {
+              message: "Nested template strings are not allowed inside ${...}",
+            });
+          }
+          if (raw[j] === "{") depth++;
+          else if (raw[j] === "}") depth--;
+          if (depth > 0) j++;
+        }
+        if (depth !== 0) {
+          this.error(ParserErrorCode.INVALID_SYNTAX, {
+            message: "Unterminated ${...} in template string",
+          });
+        }
+        const exprStr = raw.slice(start, j);
+        const subLexer = new Lexer(exprStr);
+        const subParser = new Parser(subLexer);
+        const exprNode = subParser.expr();
+        // Collect references from the sub-expression
+        for (const ref of subParser.requiredReferences) {
+          this.requiredReferences.add(ref);
+        }
+        parts.push(exprNode);
+        i = j + 1; // skip past closing }
+        continue;
+      }
+
+      // Reference interpolation: {ref.path}
+      if (ch === "{") {
+        flushLiteral();
+        const start = i + 1;
+        let j = start;
+        while (j < raw.length && raw[j] !== "}") {
+          if (raw[j] === "{") {
+            this.error(ParserErrorCode.INVALID_SYNTAX, {
+              message: "Nested braces in template reference",
+            });
+          }
+          j++;
+        }
+        if (j >= raw.length) {
+          this.error(ParserErrorCode.INVALID_SYNTAX, {
+            message: "Unterminated {ref} in template string",
+          });
+        }
+        let refPath = raw.slice(start, j);
+        // Strip whitespace inside reference (same as lexer behavior)
+        refPath = refPath.replace(/[ \t]/g, "");
+        if (refPath.length === 0) {
+          this.error(ParserErrorCode.INVALID_SYNTAX, {
+            message: "Empty reference in template string",
+          });
+        }
+        this.requiredReferences.add(refPath);
+        parts.push(
+          new ReferenceNode({
+            ...token,
+            type: TokenType.REFERENCE,
+            value: refPath,
+          }),
+        );
+        i = j + 1; // skip past closing }
+        continue;
+      }
+
+      // Regular character
+      literal += ch;
+      i++;
+    }
+
+    flushLiteral();
+
+    // Optimization: if the template has zero interpolations, return a plain StringNode
+    if (parts.length === 1 && parts[0] instanceof StringNode) {
+      return parts[0];
+    }
+
+    return new TemplateStringNode(parts, token);
   }
 
   public parse(inlineMode = false): ASTNode | null {

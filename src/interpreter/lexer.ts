@@ -317,6 +317,56 @@ export class Lexer {
     };
   }
 
+  /**
+   * Read a backtick-delimited template string.
+   * Supports escape sequences: \{ \$ \` \\
+   * The raw content (with escapes preserved) is stored as the token value.
+   * The parser handles splitting into segments.
+   */
+  private templateString(): Token {
+    const startPos = this.pos;
+    this.eat("`");
+
+    let result = "";
+    while (this.currentChar !== null && this.currentChar !== "`") {
+      if (this.currentChar === "\\") {
+        const next = this.peek();
+        if (next === "{" || next === "$" || next === "`" || next === "\\") {
+          result += "\\";
+          result += next;
+          this.advance(); // consume backslash
+          this.advance(); // consume escaped char
+          continue;
+        }
+      }
+      result += this.currentChar;
+      this.advance();
+    }
+
+    if (this.currentChar === null) {
+      if (this.tolerant) {
+        return {
+          type: TokenType.TEMPLATE_STRING,
+          value: result,
+          line: this.line,
+          pos: startPos,
+          endPos: this.pos,
+        };
+      }
+      this.error(LexerErrorCode.UNTERMINATED_TEMPLATE_STRING, {});
+    }
+
+    this.eat("`");
+
+    return {
+      type: TokenType.TEMPLATE_STRING,
+      value: result,
+      line: this.line,
+      pos: startPos,
+      endPos: this.pos,
+    };
+  }
+
   private hexColor(): Token {
     const startPos = this.pos;
     let result = "";
@@ -373,6 +423,10 @@ export class Lexer {
 
       if (this.currentChar === "'" || this.currentChar === '"') {
         return this.collectToken(this.explicitString(this.currentChar));
+      }
+
+      if (this.currentChar === "`") {
+        return this.collectToken(this.templateString());
       }
 
       if (this.isValidIdentifierStart(this.currentChar)) {
