@@ -535,25 +535,9 @@ export class Parser {
     return new ListNode(elements, firstToken);
   }
 
-  // term ((PLUS | MINUS) term)*
+  // comparison ((IS_EQ | IS_NOT_EQ | IS_GT | IS_LT | IS_GT_EQ | IS_LT_EQ) comparison)*
   private logicTerm(): ASTNode {
     let node = this.comparison();
-    while (
-      this.currentToken.type === TokenType.OPERATION &&
-      (this.currentToken.value === Operations.ADD ||
-        this.currentToken.value === Operations.SUBTRACT)
-    ) {
-      const token = this.eat(TokenType.OPERATION);
-      const partial = this.tryRecoverMissingOperand(node, token);
-      if (partial) return partial;
-      node = new BinOpNode(node, token, this.comparison());
-    }
-    return node;
-  }
-
-  // term ((IS_EQ | IS_NOT_EQ | IS_GT | IS_LT | IS_GT_EQ | IS_LT_EQ) term)*
-  private comparison(): ASTNode {
-    let node = this.term();
     while (
       this.currentToken.type === TokenType.IS_EQ ||
       this.currentToken.type === TokenType.IS_NOT_EQ ||
@@ -563,6 +547,23 @@ export class Parser {
       this.currentToken.type === TokenType.IS_LT_EQ
     ) {
       const token = this.eat(this.currentToken.type);
+      const partial = this.tryRecoverMissingOperand(node, token);
+      if (partial) return partial;
+      node = new BinOpNode(node, token, this.comparison());
+    }
+    return node;
+  }
+
+  // term ((ADD | SUBTRACT) term)*
+  // Arithmetic addition/subtraction binds tighter than comparison operators.
+  private comparison(): ASTNode {
+    let node = this.term();
+    while (
+      this.currentToken.type === TokenType.OPERATION &&
+      (this.currentToken.value === Operations.ADD ||
+        this.currentToken.value === Operations.SUBTRACT)
+    ) {
+      const token = this.eat(TokenType.OPERATION);
       const partial = this.tryRecoverMissingOperand(node, token);
       if (partial) return partial;
       node = new BinOpNode(node, token, this.term());
