@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.36.2] - 2026-05-07
+
 ### Fixed
 
 - **Operator precedence** — arithmetic (`+`, `-`) now binds tighter than comparison operators (`==`, `!=`, `>`, `<`, `>=`, `<=`), so expressions like `1 + 2 == 3` are correctly parsed as `(1 + 2) == 3`
