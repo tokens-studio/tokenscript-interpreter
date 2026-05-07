@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Parser: dot-access on all expression types** — list literals (`[1, 2, 3].length()`), parenthesized expressions (`(expr).method()`), hex color literals (`#ff0000.red()`), booleans, and null now support dot-access for method calls and property access. Previously these produced parse errors instead of reaching the interpreter.
+
 ## [0.34.0] - 2026-04-30
 
 ### Added
