@@ -26,6 +26,8 @@ export enum SupportedFormats {
   // Time units
   S = "s",
   MS = "ms",
+  // Font-relative units
+  CH = "ch",
 }
 
 export enum ReservedKeyword {
