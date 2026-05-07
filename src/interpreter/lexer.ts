@@ -118,8 +118,12 @@ export class Lexer {
     }
 
     while (isNumber(this.currentChar) || this.currentChar === ".") {
-      // Only allow one decimal point per number
       if (this.currentChar === ".") {
+        // Dot not followed by a digit is a method-call dot (e.g. 1.to_string())
+        if (!isNumber(this.peek())) {
+          break;
+        }
+        // Second dot followed by a digit is genuinely malformed (e.g. 3.3.3)
         if (hasDecimalPoint) {
           this.error(LexerErrorCode.MULTIPLE_DECIMAL_POINTS, {
             value: result + this.currentChar,

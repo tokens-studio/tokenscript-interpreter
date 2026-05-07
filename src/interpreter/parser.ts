@@ -608,11 +608,12 @@ export class Parser {
   }
 
   private number(): ASTNode {
-    const node = new NumNode(this.currentToken);
+    let node: ASTNode = new NumNode(this.currentToken);
     this.eat(TokenType.NUMBER);
     if (this.currentToken.type === TokenType.FORMAT) {
       return this.format(node);
     }
+    node = this.attributeAccess(node);
     return node;
   }
 
