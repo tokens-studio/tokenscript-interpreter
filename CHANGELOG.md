@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.37.0] - 2026-05-07
+
 ### Fixed
 
 - **Number literal dot-access** — method calls on number literals now work correctly (e.g. `1.to_string()`, `1.42.to_string()`). The lexer no longer consumes the method-call dot as part of the number.
