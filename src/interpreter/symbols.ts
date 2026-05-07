@@ -218,7 +218,10 @@ export const ListImpl = {
   },
 
   get(value: ISymbolType[], indexSymbol: ISymbolType): ISymbolType {
-    const index = indexSymbol.value as number;
+    let index = indexSymbol.value as number;
+    if (index < 0) {
+      index = value.length + index;
+    }
     if (isOutOfBounds(value, index)) {
       throw new InterpreterError(SymbolsErrorCode.INDEX_OUT_OF_RANGE, {
         data: { operation: "get" },
