@@ -224,6 +224,26 @@ describe("Variables - Number Features", () => {
     );
     expect(result?.toString()).toBe("123rem");
   });
+
+  it("should handle integer literal method call (1.to_string())", () => {
+    const result = interpretAndGetVariable(
+      `
+    variable result: String = 1.to_string();
+    `,
+      "result",
+    );
+    expect(result?.toString()).toBe("1");
+  });
+
+  it("should handle decimal literal method call (1.42.to_string())", () => {
+    const result = interpretAndGetVariable(
+      `
+    variable result: String = 1.42.to_string();
+    `,
+      "result",
+    );
+    expect(result?.toString()).toBe("1.42");
+  });
 });
 
 describe("Variables - Boolean Features", () => {
