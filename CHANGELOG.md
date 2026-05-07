@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.36.3] - 2026-05-07
+
 ### Added
 
 - **Negative list indexing** — `list.get(-1)` returns the last element, `list.get(-2)` the second-to-last, etc.
