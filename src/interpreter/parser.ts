@@ -659,12 +659,16 @@ export class Parser {
       (token.value === ReservedKeyword.TRUE || token.value === ReservedKeyword.FALSE)
     ) {
       this.eat(TokenType.RESERVED_KEYWORD);
-      return new BooleanNode(token.value === ReservedKeyword.TRUE, token);
+      let boolNode: ASTNode = new BooleanNode(token.value === ReservedKeyword.TRUE, token);
+      boolNode = this.attributeAccess(boolNode);
+      return boolNode;
     }
 
     if (token.type === TokenType.RESERVED_KEYWORD && token.value === ReservedKeyword.NULL) {
       this.eat(TokenType.RESERVED_KEYWORD);
-      return new NullNode(token);
+      let nullNode: ASTNode = new NullNode(token);
+      nullNode = this.attributeAccess(nullNode);
+      return nullNode;
     }
 
     if (token.type === TokenType.NUMBER) {
@@ -719,7 +723,9 @@ export class Parser {
 
     if (token.type === TokenType.HEX_COLOR) {
       this.eat(TokenType.HEX_COLOR);
-      return new HexColorNode(token);
+      let hexNode: ASTNode = new HexColorNode(token);
+      hexNode = this.attributeAccess(hexNode);
+      return hexNode;
     }
 
     // Handle partial string tokens
