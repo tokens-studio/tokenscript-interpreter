@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.36.4] - 2026-05-07
+
 ### Added
 
 - **Milliseconds (`ms`) and character (`ch`) unit support** — `ms` includes bidirectional conversions to/from seconds; `ch` is available as a font-relative CSS unit
