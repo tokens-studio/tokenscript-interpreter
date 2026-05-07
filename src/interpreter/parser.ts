@@ -630,7 +630,9 @@ export class Parser {
 
     // Explicit list literal: [expr, expr, ...]
     if (token.type === TokenType.LBLOCK) {
-      return this.explicitList();
+      let node: ASTNode = this.explicitList();
+      node = this.attributeAccess(node);
+      return node;
     }
 
     // Handle unary operators
@@ -698,7 +700,7 @@ export class Parser {
       if (this.currentToken.type === TokenType.FORMAT) {
         return this.format(node);
       }
-      return node;
+      return this.attributeAccess(node);
     }
 
     // Handle partial reference tokens
