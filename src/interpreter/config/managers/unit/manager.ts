@@ -26,15 +26,48 @@ const PIXEL_UNIT = buildSchemaUri({
   version: parseVersionString("0"),
 });
 
+const SECONDS_UNIT = buildSchemaUri({
+  category: "core",
+  name: "seconds-unit",
+  version: parseVersionString("0"),
+});
+
 const defaultUnitSpecs: Specs = new Map([
   [
-    buildSchemaUri({ category: "core", name: "seconds-unit", version: parseVersionString("0") }),
+    SECONDS_UNIT,
     {
       name: "seconds",
       type: "absolute",
       keyword: "s",
       description: "A unit of time equal to one second.",
       conversions: [],
+    },
+  ],
+  [
+    buildSchemaUri({ category: "core", name: "ms-unit", version: parseVersionString("0") }),
+    {
+      name: "milliseconds",
+      type: "absolute",
+      keyword: "ms",
+      description: "A unit of time equal to one millisecond.",
+      conversions: [
+        {
+          source: "$self",
+          target: SECONDS_UNIT,
+          script: {
+            script: "return ({input} / 1000)s;",
+          },
+          description: "Convert milliseconds to seconds.",
+        },
+        {
+          source: SECONDS_UNIT,
+          target: "$self",
+          script: {
+            script: "return ({input} * 1000)ms;",
+          },
+          description: "Convert seconds to milliseconds.",
+        },
+      ],
     },
   ],
   [
@@ -84,6 +117,16 @@ const defaultUnitSpecs: Specs = new Map([
       to_absolute: {
         script: "return {other_value} * ({relative_value} / 100);",
       },
+      conversions: [],
+    },
+  ],
+  [
+    buildSchemaUri({ category: "core", name: "ch-unit", version: parseVersionString("0") }),
+    {
+      name: "character",
+      type: "absolute",
+      keyword: "ch",
+      description: "Relative to the width of the '0' character in the element's font.",
       conversions: [],
     },
   ],
