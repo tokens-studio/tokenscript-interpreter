@@ -613,6 +613,13 @@ export class StringSymbol extends BaseSymbolType {
       args: [{ name: "delimiter", type: "String", optional: true }],
       returnType: "List",
     },
+    trim: {
+      function: function (this: StringSymbol) {
+        return this.trim();
+      },
+      args: [],
+      returnType: "String",
+    },
   };
 
   public value: StringValue;
@@ -714,6 +721,11 @@ export class StringSymbol extends BaseSymbolType {
     throw new InterpreterError(SymbolsErrorCode.CANNOT_SPLIT, {
       data: { type: typeof delimiter },
     });
+  }
+
+  trim(): StringSymbol {
+    this.expectSafeValue(this.value);
+    return new StringSymbol(this.value.trim(), this.config);
   }
 
   toJs(_options?: ToJsOptions): StringValue {

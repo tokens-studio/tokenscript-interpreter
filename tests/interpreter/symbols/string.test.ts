@@ -153,6 +153,45 @@ describe("StringSymbol - Unit Tests", () => {
     });
   });
 
+  describe("trim", () => {
+    it("should trim whitespace from both ends", () => {
+      const str = new StringSymbol("  hello  ");
+      const result = str.trim();
+      expect(result).toBeInstanceOf(StringSymbol);
+      expect(result.value).toBe("hello");
+    });
+
+    it("should trim leading whitespace", () => {
+      const str = new StringSymbol("  hello");
+      expect(str.trim().value).toBe("hello");
+    });
+
+    it("should trim trailing whitespace", () => {
+      const str = new StringSymbol("hello  ");
+      expect(str.trim().value).toBe("hello");
+    });
+
+    it("should trim tabs and newlines", () => {
+      const str = new StringSymbol("\t\nhello\n\t");
+      expect(str.trim().value).toBe("hello");
+    });
+
+    it("should return same value for already trimmed string", () => {
+      const str = new StringSymbol("hello");
+      expect(str.trim().value).toBe("hello");
+    });
+
+    it("should return empty string when trimming only whitespace", () => {
+      const str = new StringSymbol("   ");
+      expect(str.trim().value).toBe("");
+    });
+
+    it("should throw error for null value", () => {
+      const str = new StringSymbol(null);
+      expect(() => str.trim()).toThrow(InterpreterError);
+    });
+  });
+
   describe("toString", () => {
     it("should return string representation", () => {
       const str = new StringSymbol("hello");
@@ -301,6 +340,38 @@ describe("String Methods - Length", () => {
 
     expect(vars.len?.value).toBe(5);
     expect(vars.empty_len?.value).toBe(0);
+  });
+});
+
+describe("String Methods - Trim", () => {
+  it("should handle string trim method", () => {
+    const text = `
+    variable text: String = "  hello world  ";
+    variable trimmed: String = text.trim();
+    `;
+    const result = interpretAndGetVariable(text, "trimmed");
+
+    expect(result?.toString()).toBe("hello world");
+  });
+
+  it("should handle trim chained with other methods", () => {
+    const text = `
+    variable text: String = "  hello  ";
+    variable result: String = text.trim().upper();
+    `;
+    const result = interpretAndGetVariable(text, "result");
+
+    expect(result?.toString()).toBe("HELLO");
+  });
+
+  it("should handle trim on already trimmed string", () => {
+    const text = `
+    variable text: String = "hello";
+    variable trimmed: String = text.trim();
+    `;
+    const result = interpretAndGetVariable(text, "trimmed");
+
+    expect(result?.toString()).toBe("hello");
   });
 });
 
