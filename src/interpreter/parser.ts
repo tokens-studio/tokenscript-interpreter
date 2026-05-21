@@ -1,4 +1,4 @@
-import { type ASTNode, Operations, ReservedKeyword, type Token, TokenType } from "@src/types";
+import { type ASTNode, Operations, ReservedKeyword, SCRIPT_ONLY_STATEMENT_KEYWORDS, type Token, TokenType } from "@src/types";
 import {
   AssignNode,
   AttributeAccessNode,
@@ -983,7 +983,26 @@ export class Parser {
 
     if (this.currentToken.type === TokenType.EOF) return null;
 
-    if (inlineMode) return this.listExpr();
+    if (inlineMode) {
+      // Reject script-only keywords immediately — they cannot appear in inline mode.
+      if (
+        this.currentToken.type === TokenType.RESERVED_KEYWORD &&
+        SCRIPT_ONLY_STATEMENT_KEYWORDS.has(this.currentToken.value)
+      ) {
+        this.error(ParserErrorCode.UNALLOWED_INLINE_SYNTAX, {
+          originalError: `Unexpected token: ${this.currentToken.value}`,
+        });
+      }
+      const node = this.listExpr();
+      // Reject unconsumed tokens (e.g. `1 + 2; 3 + 4` — the `; 3 + 4` would
+      // otherwise be silently discarded). Aligns with Go's ParseInline().
+      if (!this.tolerant && (this.currentToken.type as TokenType) !== TokenType.EOF) {
+        this.error(ParserErrorCode.UNEXPECTED_TOKEN, {
+          token: String(this.currentToken.value),
+        });
+      }
+      return node;
+    }
 
     const node = this.statementsList();
     if ((this.currentToken.type as TokenType) !== TokenType.EOF) {
