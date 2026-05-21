@@ -3,6 +3,8 @@ import type { Config } from "@interpreter/config";
 import {
   isLanguageError,
   type LanguageError,
+  ParserError,
+  ParserErrorCode,
   ProcessorError,
   ProcessorErrorCode,
 } from "@interpreter/errors";
@@ -441,9 +443,26 @@ class PrefixResolver {
     // to be parsed as single strings.
     try {
       return parseExpression(value, { mode: "inline" });
-    } catch {
-      // Inline mode fails for values containing statements (variable, if, while, etc.).
-      // Fall back to script mode.
+    } catch (error) {
+      if (error instanceof ParserError) {
+        // Syntax not valid in inline mode (e.g. statements like variable, if, while).
+        // Wrap and fall back to script mode below.
+        const _wrapped = new ParserError(ParserErrorCode.UNALLOWED_INLINE_SYNTAX, {
+          data: { originalError: error.message },
+        });
+      } else {
+        // Non-parser errors (lexer errors, etc.) are genuine failures — propagate.
+        if (isLanguageError(error)) {
+          return this.resolveError(refPath, error, value);
+        }
+        return this.resolveError(
+          refPath,
+          new ProcessorError(ProcessorErrorCode.UNKNOWN_PARSING_ERROR, {
+            data: { error: error instanceof Error ? error.message : String(error) },
+          }),
+          value,
+        );
+      }
     }
 
     try {
