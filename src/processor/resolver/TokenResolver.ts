@@ -21,7 +21,7 @@ import {
 } from "@interpreter/symbols";
 import { renameReferences } from "@interpreter/utils/references";
 import { isArray, isBoolean, isNull, isNumber, isObject, isString } from "@interpreter/utils/type";
-import { type ISymbolType, UNINTERPRETED_KEYWORDS } from "@src/types";
+import { type ISymbolType, SCRIPT_ONLY_STATEMENT_KEYWORDS, UNINTERPRETED_KEYWORDS } from "@src/types";
 import { createDependencyError } from "../errors";
 import {
   createTokenSymbol,
@@ -444,17 +444,17 @@ class PrefixResolver {
     try {
       return parseExpression(value, { mode: "inline" });
     } catch (error) {
-      if (error instanceof ParserError) {
-        // Syntax not valid in inline mode (e.g. statements like variable, if, while).
-        // Wrap and fall back to script mode below.
-        const _wrapped = new ParserError(ParserErrorCode.UNALLOWED_INLINE_SYNTAX, {
-          data: { originalError: error.message },
-        });
+      // Only fall back to script mode when inline mode hit a statement keyword
+      // (variable, if, while, etc.). All other errors are genuine failures.
+      if (
+        error instanceof ParserError &&
+        error.code === ParserErrorCode.UNEXPECTED_TOKEN &&
+        SCRIPT_ONLY_STATEMENT_KEYWORDS.has(error.data?.token as string)
+      ) {
+        // UNALLOWED_INLINE_SYNTAX: expression contains statements, retry in script mode.
+      } else if (isLanguageError(error)) {
+        return this.resolveError(refPath, error, value);
       } else {
-        // Non-parser errors (lexer errors, etc.) are genuine failures — propagate.
-        if (isLanguageError(error)) {
-          return this.resolveError(refPath, error, value);
-        }
         return this.resolveError(
           refPath,
           new ProcessorError(ProcessorErrorCode.UNKNOWN_PARSING_ERROR, {

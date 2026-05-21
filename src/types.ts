@@ -128,6 +128,15 @@ export interface ISymbolType {
   setAttribute?(attributeName: string, value: ISymbolType, config?: Config): void;
 }
 
+/** Reserved keywords that introduce statements — only valid in script mode, not inline mode. */
+export const SCRIPT_ONLY_STATEMENT_KEYWORDS: ReadonlySet<string> = new Set([
+  ReservedKeyword.VARIABLE,
+  ReservedKeyword.IF,
+  ReservedKeyword.WHILE,
+  ReservedKeyword.FOR,
+  ReservedKeyword.RETURN,
+]);
+
 export const UNINTERPRETED_KEYWORDS: string[] = [
   "inside",
   "outside",
