@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.37.1] - 2026-05-21
+
 ### Added
 
 - **`trim()` method on strings** — strips leading and trailing whitespace, supports chaining (e.g. `text.trim().upper()`).
