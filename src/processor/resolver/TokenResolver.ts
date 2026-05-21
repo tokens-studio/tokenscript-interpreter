@@ -446,12 +446,13 @@ class PrefixResolver {
     } catch (error) {
       // Only fall back to script mode when inline mode hit a statement keyword
       // (variable, if, while, etc.). All other errors are genuine failures.
-      if (
+      const isStatementSyntax =
         error instanceof ParserError &&
-        error.code === ParserErrorCode.UNEXPECTED_TOKEN &&
-        SCRIPT_ONLY_STATEMENT_KEYWORDS.has(error.data?.token as string)
-      ) {
-        // UNALLOWED_INLINE_SYNTAX: expression contains statements, retry in script mode.
+        (error.code === ParserErrorCode.UNALLOWED_INLINE_SYNTAX ||
+          (error.code === ParserErrorCode.UNEXPECTED_TOKEN &&
+            SCRIPT_ONLY_STATEMENT_KEYWORDS.has(error.data?.token as string)));
+      if (isStatementSyntax) {
+        // Expression contains statements, retry in script mode.
       } else if (isLanguageError(error)) {
         return this.resolveError(refPath, error, value);
       } else {
