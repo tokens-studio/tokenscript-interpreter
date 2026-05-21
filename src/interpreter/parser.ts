@@ -27,7 +27,7 @@ import {
   WhileNode,
 } from "./ast";
 import { ParserError, ParserErrorCode } from "./errors";
-import { Lexer } from "./lexer";
+import { Lexer, type LexerOptions } from "./lexer";
 import {
   PartialBinOpNode,
   PartialFunctionCallNode,
@@ -1001,10 +1001,20 @@ export interface ParseExpressionResult {
   ast: ASTNode | null;
 }
 
-export function parseExpression(text: string): ParseExpressionResult {
-  const lexer = new Lexer(text);
+export interface ParseExpressionOptions {
+  /** Options passed to the Lexer */
+  lexerOptions?: LexerOptions;
+  /** If true, parse in inline mode (expression-only, no statements) */
+  inlineMode?: boolean;
+}
+
+export function parseExpression(
+  text: string,
+  options?: ParseExpressionOptions,
+): ParseExpressionResult {
+  const lexer = new Lexer(text, options?.lexerOptions);
   const parser = new Parser(lexer);
-  const ast = parser.parse();
+  const ast = parser.parse(options?.inlineMode ?? false);
 
   return {
     lexer,

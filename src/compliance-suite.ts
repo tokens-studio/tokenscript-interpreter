@@ -133,7 +133,7 @@ function transformContextToSymbols(obj: any, config: Config): any {
 }
 
 const runTest = (test: TestCase): { interpreter: Interpreter; result: InterpreterResult } => {
-  const lexer = new Lexer(test.input);
+  const lexer = new Lexer(test.input, test.inline ? { greedyStrings: true } : undefined);
   const parser = new Parser(lexer);
   const ast = parser.parse(test.inline);
 

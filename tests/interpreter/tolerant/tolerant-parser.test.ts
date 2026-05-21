@@ -209,12 +209,14 @@ describe("Tolerant Parser", () => {
         expect(result.incomplete[0].type).toBe(IncompleteType.TRAILING_DOT);
       });
 
-      it("should detect trailing dot on identifier", () => {
+      it("should treat trailing dot on identifier as part of string in greedy mode", () => {
+        // With greedy strings, `foo.` is consumed as STRING("foo.") — a complete parse.
+        // Bare identifier attribute access is not supported in greedy inline mode;
+        // `foo.bar` is just a string value (e.g., dotted path, domain name).
         const result = parseTolerantly("foo.");
 
-        expect(result.state).toBe(ParseState.INCOMPLETE);
-        expect(result.incomplete).toHaveLength(1);
-        expect(result.incomplete[0].type).toBe(IncompleteType.TRAILING_DOT);
+        expect(result.state).toBe(ParseState.COMPLETE);
+        expect(result.incomplete).toHaveLength(0);
       });
     });
 

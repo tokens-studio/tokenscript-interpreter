@@ -21,6 +21,17 @@ export interface LexerOptions {
    * Instead, it will return partial tokens where appropriate.
    */
   tolerant?: boolean;
+
+  /**
+   * If true, unquoted strings consume greedily until whitespace or a
+   * structural delimiter ({, }, (, ), [, ], ",  ', ,, ;).
+   *
+   * This allows values like `http://foo.bar` to be parsed as a single string
+   * instead of being split on `:`, `/`, and `.`.
+   *
+   * Intended for inline mode (token $value parsing) only.
+   */
+  greedyStrings?: boolean;
 }
 
 export class Lexer {
@@ -39,12 +50,14 @@ export class Lexer {
    */
   private _lastUnitableToken: Token | null = null;
   private tolerant: boolean;
+  private greedyStrings: boolean;
   private collectedTokens: Token[] = [];
 
   constructor(text: string, options?: LexerOptions) {
     this.text = text;
     this.currentChar = this.pos < this.text.length ? this.text[this.pos] : null;
     this.tolerant = options?.tolerant ?? false;
+    this.greedyStrings = options?.greedyStrings ?? false;
   }
 
   /**
@@ -177,8 +190,114 @@ export class Lexer {
     );
   }
 
+  /**
+   * Greedy variant of isValidStringElement.
+   * Consumes everything except whitespace and structural delimiters.
+   * Used in inline mode to allow values like `http://foo.bar` as a single string.
+   */
+  private isValidStringElementGreedy(char: string | null): boolean {
+    if (char === null) return false;
+    if (isSpace(char)) return false;
+
+    const cp = char.codePointAt(0) ?? 0;
+
+    // Structural delimiters always end a string
+    switch (cp) {
+      case 0x7b: // {
+      case 0x7d: // }
+      case 0x28: // (
+      case 0x29: // )
+      case 0x5b: // [
+      case 0x5d: // ]
+      case 0x2c: // ,
+      case 0x22: // "
+      case 0x27: // '
+      case 0x3b: // ;
+        return false;
+    }
+
+    return true;
+  }
+
   private stringElement(): Token {
     const startPos = this.pos;
+    const isGreedy = this.greedyStrings;
+
+    // In greedy mode, when adjacent to a number/rparen, try to extract a format
+    // unit first using non-greedy rules. This ensures `10rem^2` is correctly
+    // lexed as NUMBER(10), FORMAT(rem), OP(^), NUMBER(2) rather than
+    // consuming `rem^2` as a single greedy string.
+    if (isGreedy && this.isValidFormatPosition(startPos)) {
+      return this.stringElementNonGreedy(startPos);
+    }
+
+    let result = "";
+    // Track whether the consumed text is a simple identifier (alphanumeric + hyphen + underscore).
+    // Keyword/format lookups only make sense for simple identifiers.
+    let isSimpleIdentifier = true;
+
+    const check = isGreedy
+      ? (c: string | null) => this.isValidStringElementGreedy(c)
+      : (c: string | null) => this.isValidStringElement(c);
+
+    while (check(this.currentChar)) {
+      if (
+        isSimpleIdentifier &&
+        !isAlphaNumeric(this.currentChar) &&
+        this.currentChar !== "-" &&
+        this.currentChar !== "_"
+      ) {
+        isSimpleIdentifier = false;
+      }
+      result += this.currentChar;
+      this.advance();
+    }
+
+    // Only check keywords/formats for simple identifiers
+    // (greedy strings like "http://foo.bar" should never match)
+    if (isSimpleIdentifier) {
+      const normalizedResult = result.toLowerCase();
+
+      const keyword = RESERVED_KEYWORD_STRINGS[normalizedResult];
+      if (keyword) {
+        return {
+          type: TokenType.RESERVED_KEYWORD,
+          value: keyword,
+          line: this.line,
+          pos: startPos,
+          endPos: this.pos,
+        };
+      }
+
+      // FORMAT tokens (units like 'px', 's', 'ms') are only valid immediately after NUMBER or RPAREN
+      // e.g., '3s' (number with unit), '(3px + 4px)rem' (unit conversion)
+      // In other contexts (with whitespace or other tokens between), treat as STRING (identifier)
+      const format = SUPPORTED_FORMAT_STRINGS[normalizedResult];
+      if (format && this.isValidFormatPosition(startPos)) {
+        return {
+          type: TokenType.FORMAT,
+          value: format,
+          line: this.line,
+          pos: startPos,
+          endPos: this.pos,
+        };
+      }
+    }
+
+    return {
+      type: TokenType.STRING,
+      value: result,
+      line: this.line,
+      pos: startPos,
+      endPos: this.pos,
+    };
+  }
+
+  /**
+   * Non-greedy string element parsing, used when in format-adjacent position
+   * so that unit suffixes are correctly extracted even in greedy mode.
+   */
+  private stringElementNonGreedy(startPos: number): Token {
     let result = "";
 
     while (this.isValidStringElement(this.currentChar)) {
@@ -199,9 +318,6 @@ export class Lexer {
       };
     }
 
-    // FORMAT tokens (units like 'px', 's', 'ms') are only valid immediately after NUMBER or RPAREN
-    // e.g., '3s' (number with unit), '(3px + 4px)rem' (unit conversion)
-    // In other contexts (with whitespace or other tokens between), treat as STRING (identifier)
     const format = SUPPORTED_FORMAT_STRINGS[normalizedResult];
     if (format && this.isValidFormatPosition(startPos)) {
       return {
