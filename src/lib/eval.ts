@@ -38,7 +38,7 @@ export function evaluateExpression(expression: string, options: EvalOptions = {}
   const startTime = performance.now();
 
   try {
-    const lexer = new Lexer(expression);
+    const lexer = new Lexer(expression, allowStatements ? { greedyStrings: true } : undefined);
     const parser = new Parser(lexer);
     const ast = parser.parse(allowStatements);
 

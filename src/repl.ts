@@ -130,7 +130,7 @@ export function interpretExpression(
   isInline: boolean,
 ): string | undefined {
   try {
-    const lexer = new Lexer(code);
+    const lexer = new Lexer(code, isInline ? { greedyStrings: true } : undefined);
     const parser = new Parser(lexer);
     const ast = parser.parse(isInline);
 

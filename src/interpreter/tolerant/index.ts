@@ -42,7 +42,7 @@ export * from "./types";
  * ```
  */
 export function parseTolerantly(text: string): TolerantParseResult {
-  const lexer = new Lexer(text, { tolerant: true });
+  const lexer = new Lexer(text, { tolerant: true, greedyStrings: true });
 
   try {
     const parser = new Parser(lexer, { tolerant: true });
@@ -81,7 +81,7 @@ export function parseTolerantly(text: string): TolerantParseResult {
  * ```
  */
 export function tokenizeTolerantly(text: string): Token[] {
-  const lexer = new Lexer(text, { tolerant: true });
+  const lexer = new Lexer(text, { tolerant: true, greedyStrings: true });
   return lexer.tokenizeAll();
 }
 

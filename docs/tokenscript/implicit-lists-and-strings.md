@@ -162,6 +162,36 @@ s               → 5                         // variable reference
 3 + s           → 8                         // variable in expression
 ```
 
+## Greedy Strings in Inline Mode
+
+In inline mode (token `$value` fields), implicit strings use **greedy parsing**: unquoted text consumes all adjacent characters until whitespace or a structural delimiter (`{`, `}`, `(`, `)`, `[`, `]`, `,`, `;`, `"`, `'`).
+
+This means characters like `:`, `/`, `.`, `+`, `=`, `#`, `&`, and `?` are consumed as part of the string when adjacent:
+
+```
+http://example.com       → "http://example.com"        // URL
+foo.bar.baz              → "foo.bar.baz"               // dotted path
+hello:world              → "hello:world"               // namespaced value
+```
+
+Whitespace still separates tokens, so operators with spaces work normally:
+
+```
+foo + bar                → STRING("foo"), OP(+), STRING("bar")
+foo+bar                  → STRING("foo+bar")
+```
+
+Format units adjacent to numbers are still correctly extracted:
+
+```
+3px                      → 3px (unit)
+10rem^2                  → (10rem) ^ 2 = 100rem
+```
+
+> Greedy strings only apply in inline mode. Statement mode (schema/function bodies) uses standard parsing where `:`, `.`, `/` etc. produce separate tokens.
+>
+> See [Inline Mode](./inline-mode.md#greedy-strings) for full details.
+
 ## Best Practices
 
 > **Always Use Explicit Strings When Possible**
@@ -192,7 +222,13 @@ Implicit strings are mainly useful for:
    bold 16px Arial → ["bold", 16px, "Arial"]
    ```
 
-3. **Backward compatibility** - Existing Tokenscript code may rely on implicit strings
+3. **URLs, dotted paths, and namespaced values** (in inline mode)
+   ```
+   http://fonts.example.com  → "http://fonts.example.com"
+   com.example.tokens        → "com.example.tokens"
+   ```
+
+4. **Backward compatibility** - Existing Tokenscript code may rely on implicit strings
 
 ## Examples
 
