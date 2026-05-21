@@ -13,9 +13,7 @@ import type { ReferenceRecord } from "@src/types";
 export interface EvalOptions {
   references?: ReferenceRecord;
   config?: Config;
-  /** @deprecated Use `mode` instead. */
-  allowStatements?: boolean;
-  /** Parsing mode. Defaults to `"inline"`. When `allowStatements` is true, forced to `"script"`. */
+  /** Parsing mode. Defaults to `"script"`. */
   mode?: ParseMode;
 }
 
@@ -36,8 +34,7 @@ export interface EvalError {
 export type EvalResult = EvalSuccess | EvalError;
 
 export function evaluateExpression(expression: string, options: EvalOptions = {}): EvalResult {
-  const { references = {}, config, allowStatements = false } = options;
-  const mode: ParseMode = options.mode ?? (allowStatements ? "script" : "inline");
+  const { references = {}, config, mode = "script" } = options;
   const startTime = performance.now();
 
   try {
