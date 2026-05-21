@@ -252,7 +252,7 @@ export async function handleEvalCommand(
       };
     }
 
-    const evalResult = evaluateExpression(code, { references, config, allowStatements: false });
+    const evalResult = evaluateExpression(code, { references, config, mode: "inline" });
 
     return {
       exitCode: evalResult.success ? 0 : 1,

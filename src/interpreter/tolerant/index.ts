@@ -14,7 +14,7 @@
 import type { ASTNode, Token } from "@src/types";
 import { ReferenceNode, walkAST } from "../ast";
 import { Lexer } from "../lexer";
-import { Parser } from "../parser";
+import { Parser, lexerOptionsForMode } from "../parser";
 import { PartialReferenceNode } from "./partial-nodes";
 import { ParseState, type TolerantParseResult } from "./types";
 
@@ -42,7 +42,7 @@ export * from "./types";
  * ```
  */
 export function parseTolerantly(text: string): TolerantParseResult {
-  const lexer = new Lexer(text, { tolerant: true, greedyStrings: true });
+  const lexer = new Lexer(text, lexerOptionsForMode("inline", { tolerant: true }));
 
   try {
     const parser = new Parser(lexer, { tolerant: true });
@@ -81,7 +81,7 @@ export function parseTolerantly(text: string): TolerantParseResult {
  * ```
  */
 export function tokenizeTolerantly(text: string): Token[] {
-  const lexer = new Lexer(text, { tolerant: true, greedyStrings: true });
+  const lexer = new Lexer(text, lexerOptionsForMode("inline", { tolerant: true }));
   return lexer.tokenizeAll();
 }
 

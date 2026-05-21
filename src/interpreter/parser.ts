@@ -1001,20 +1001,47 @@ export interface ParseExpressionResult {
   ast: ASTNode | null;
 }
 
+/**
+ * Parsing mode — determines how the lexer and parser behave.
+ *
+ * - `"inline"` — Expression-only mode for token `$value` fields.
+ *   Enables greedy strings (URLs, dotted paths parsed as single tokens).
+ *   No statements (variable, if, while, etc.).
+ *
+ * - `"script"` — Full statement mode for schema/function bodies.
+ *   Standard lexing (`:`, `.`, `/` produce separate tokens).
+ */
+export type ParseMode = "inline" | "script";
+
+/**
+ * Derive LexerOptions from a ParseMode, with optional overrides.
+ *
+ * Centralises the coupling between mode and lexer flags so call sites
+ * don't have to manually keep them in sync.
+ */
+export function lexerOptionsForMode(
+  mode: ParseMode,
+  overrides?: Partial<LexerOptions>,
+): LexerOptions {
+  const base: LexerOptions = mode === "inline" ? { greedyStrings: true } : {};
+  return { ...base, ...overrides };
+}
+
 export interface ParseExpressionOptions {
-  /** Options passed to the Lexer */
-  lexerOptions?: LexerOptions;
-  /** If true, parse in inline mode (expression-only, no statements) */
-  inlineMode?: boolean;
+  /** Parsing mode. Defaults to `"script"`. */
+  mode?: ParseMode;
+  /** Extra lexer options merged on top of the mode defaults. */
+  lexerOverrides?: Partial<LexerOptions>;
 }
 
 export function parseExpression(
   text: string,
   options?: ParseExpressionOptions,
 ): ParseExpressionResult {
-  const lexer = new Lexer(text, options?.lexerOptions);
+  const mode = options?.mode ?? "script";
+  const lexer = new Lexer(text, lexerOptionsForMode(mode, options?.lexerOverrides));
   const parser = new Parser(lexer);
-  const ast = parser.parse(options?.inlineMode ?? false);
+  const ast = parser.parse(mode === "inline");
 
   return {
     lexer,

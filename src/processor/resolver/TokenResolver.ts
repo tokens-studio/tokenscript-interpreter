@@ -436,17 +436,14 @@ class PrefixResolver {
   }
 
   private tryParseExpression(refPath: RefPath, value: string): ParseExpressionResult | Error {
-    // Try inline mode with greedy strings first.
+    // Try inline mode first (greedy strings, expression-only).
     // This allows natural values like URLs (http://foo.bar) and dotted paths
     // to be parsed as single strings.
     try {
-      return parseExpression(value, {
-        inlineMode: true,
-        lexerOptions: { greedyStrings: true },
-      });
+      return parseExpression(value, { mode: "inline" });
     } catch {
       // Inline mode fails for values containing statements (variable, if, while, etc.).
-      // Fall back to statement mode without greedy strings.
+      // Fall back to script mode.
     }
 
     try {

@@ -1,14 +1,13 @@
 import { getAssignmentInfo, getReassignmentInfo } from "@interpreter/ast";
 import type { Config } from "@interpreter/config";
 import { Interpreter } from "@interpreter/interpreter";
-import { Lexer } from "@interpreter/lexer";
-import { Parser } from "@interpreter/parser";
+import { type ParseMode, parseExpression } from "@interpreter/parser";
 import { isNone } from "@interpreter/utils/type";
 import type { ReferenceRecord } from "@src/types";
 import { fetchAndRegisterSchemas } from "@src/utils/schema-fetcher";
 import * as readlineSync from "readline-sync";
 
-export type ReplMode = "inline" | "script";
+export type ReplMode = ParseMode;
 
 export interface ReplOptions {
   mode?: ReplMode;
@@ -58,12 +57,12 @@ export async function startRepl(options: ReplOptions = {}): Promise<void> {
 
       let result: string | undefined;
       if (mode === "inline") {
-        result = interpretExpression(input, references, config, true);
+        result = interpretExpression(input, references, config, "inline");
       } else {
         const autoSemiLastLineInput = input.endsWith(";") ? input : `${input};`;
         scriptLines.push(autoSemiLastLineInput);
         const fullScript = scriptLines.join("\n");
-        result = interpretExpression(fullScript, references, config, false);
+        result = interpretExpression(fullScript, references, config, "script");
       }
       if (result) {
         console.log(result);
@@ -127,12 +126,10 @@ export function interpretExpression(
   code: string,
   references: ReferenceRecord,
   config: Config | undefined,
-  isInline: boolean,
+  mode: ParseMode,
 ): string | undefined {
   try {
-    const lexer = new Lexer(code, isInline ? { greedyStrings: true } : undefined);
-    const parser = new Parser(lexer);
-    const ast = parser.parse(isInline);
+    const { ast } = parseExpression(code, { mode });
 
     if (!ast) {
       return "No result (empty input)";

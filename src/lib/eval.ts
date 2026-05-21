@@ -1,8 +1,7 @@
 import type { Config } from "@interpreter/config";
 import type { LanguageError } from "@interpreter/errors";
 import { Interpreter, type InterpreterResult } from "@interpreter/interpreter";
-import { Lexer } from "@interpreter/lexer";
-import { Parser } from "@interpreter/parser";
+import { type ParseMode, parseExpression } from "@interpreter/parser";
 import {
   getResultTypeName,
   isTokenscriptSymbol,
@@ -14,7 +13,10 @@ import type { ReferenceRecord } from "@src/types";
 export interface EvalOptions {
   references?: ReferenceRecord;
   config?: Config;
+  /** @deprecated Use `mode` instead. */
   allowStatements?: boolean;
+  /** Parsing mode. Defaults to `"inline"`. When `allowStatements` is true, forced to `"script"`. */
+  mode?: ParseMode;
 }
 
 export interface EvalSuccess {
@@ -35,12 +37,11 @@ export type EvalResult = EvalSuccess | EvalError;
 
 export function evaluateExpression(expression: string, options: EvalOptions = {}): EvalResult {
   const { references = {}, config, allowStatements = false } = options;
+  const mode: ParseMode = options.mode ?? (allowStatements ? "script" : "inline");
   const startTime = performance.now();
 
   try {
-    const lexer = new Lexer(expression, allowStatements ? { greedyStrings: true } : undefined);
-    const parser = new Parser(lexer);
-    const ast = parser.parse(allowStatements);
+    const { ast } = parseExpression(expression, { mode });
 
     if (!ast) {
       return {
