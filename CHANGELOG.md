@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.37.0] - 2026-05-21
 
+## [0.37.0] - 2026-05-21
+
 ### Added
 
 - **Greedy string parsing in inline mode** — unquoted values like URLs (`http://fonts.example.com`), dotted paths (`com.example.tokens`), and namespaced identifiers (`hello:world`) are now parsed as single strings in token `$value` fields. Characters like `:`, `/`, `.`, `+`, `=`, `#`, `&`, `?` are consumed greedily until whitespace or a structural delimiter. Format units adjacent to numbers (`3px`, `10rem`) are still correctly extracted.
