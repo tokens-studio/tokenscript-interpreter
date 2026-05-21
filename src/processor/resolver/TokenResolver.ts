@@ -3,6 +3,8 @@ import type { Config } from "@interpreter/config";
 import {
   isLanguageError,
   type LanguageError,
+  ParserError,
+  ParserErrorCode,
   ProcessorError,
   ProcessorErrorCode,
 } from "@interpreter/errors";
@@ -19,7 +21,11 @@ import {
 } from "@interpreter/symbols";
 import { renameReferences } from "@interpreter/utils/references";
 import { isArray, isBoolean, isNull, isNumber, isObject, isString } from "@interpreter/utils/type";
-import { type ISymbolType, UNINTERPRETED_KEYWORDS } from "@src/types";
+import {
+  type ISymbolType,
+  SCRIPT_ONLY_STATEMENT_KEYWORDS,
+  UNINTERPRETED_KEYWORDS,
+} from "@src/types";
 import { createDependencyError } from "../errors";
 import {
   createTokenSymbol,
@@ -436,6 +442,34 @@ class PrefixResolver {
   }
 
   private tryParseExpression(refPath: RefPath, value: string): ParseExpressionResult | Error {
+    // Try inline mode first (greedy strings, expression-only).
+    // This allows natural values like URLs (http://foo.bar) and dotted paths
+    // to be parsed as single strings.
+    try {
+      return parseExpression(value, { mode: "inline" });
+    } catch (error) {
+      // Only fall back to script mode when inline mode hit a statement keyword
+      // (variable, if, while, etc.). All other errors are genuine failures.
+      const isStatementSyntax =
+        error instanceof ParserError &&
+        (error.code === ParserErrorCode.UNALLOWED_INLINE_SYNTAX ||
+          (error.code === ParserErrorCode.UNEXPECTED_TOKEN &&
+            SCRIPT_ONLY_STATEMENT_KEYWORDS.has(error.data?.token as string)));
+      if (isStatementSyntax) {
+        // Expression contains statements, retry in script mode.
+      } else if (isLanguageError(error)) {
+        return this.resolveError(refPath, error, value);
+      } else {
+        return this.resolveError(
+          refPath,
+          new ProcessorError(ProcessorErrorCode.UNKNOWN_PARSING_ERROR, {
+            data: { error: error instanceof Error ? error.message : String(error) },
+          }),
+          value,
+        );
+      }
+    }
+
     try {
       return parseExpression(value);
     } catch (error) {

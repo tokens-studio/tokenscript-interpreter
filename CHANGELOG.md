@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Greedy string parsing in inline mode** — unquoted values like URLs (`http://fonts.example.com`), dotted paths (`com.example.tokens`), and namespaced identifiers (`hello:world`) are now parsed as single strings in token `$value` fields. Characters like `:`, `/`, `.`, `+`, `=`, `#`, `&`, `?` are consumed greedily until whitespace or a structural delimiter. Format units adjacent to numbers (`3px`, `10rem`) are still correctly extracted.
+
+### Changed
+
+- **Unified `ParseMode` API** — replaced the `allowStatements` boolean with an explicit `"inline" | "script"` mode across parser, evaluator, REPL, and TokenResolver. Inline mode now wires up greedy lexing automatically.
+- **TokenResolver inline-first parsing** — token `$value` fields are parsed in inline mode first, falling back to script mode only when statement keywords (`variable`, `if`, `while`, `for`, `return`) are detected.
+- **Tolerant parser uses inline greedy mode** — fault-tolerant parsing for editors now uses greedy strings, matching runtime behavior.
+
+### Fixed
+
+- **Unconsumed tokens rejected in inline mode** — expressions like `1 + 2; 3 + 4` now error instead of silently discarding the trailing part.
+
 ## [0.36.4] - 2026-05-07
 
 ### Added

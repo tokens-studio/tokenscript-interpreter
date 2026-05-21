@@ -63,7 +63,7 @@ export * from "@interpreter/errors";
 
 export { Interpreter, type InterpreterResult } from "@interpreter/interpreter";
 export { Lexer } from "@interpreter/lexer";
-export { Parser, parseExpression } from "@interpreter/parser";
+export { lexerOptionsForMode, type ParseMode, Parser, parseExpression } from "@interpreter/parser";
 
 // Symbols ---------------------------------------------------------------------
 

@@ -1,4 +1,11 @@
-import { type ASTNode, Operations, ReservedKeyword, type Token, TokenType } from "@src/types";
+import {
+  type ASTNode,
+  Operations,
+  ReservedKeyword,
+  SCRIPT_ONLY_STATEMENT_KEYWORDS,
+  type Token,
+  TokenType,
+} from "@src/types";
 import {
   AssignNode,
   AttributeAccessNode,
@@ -27,7 +34,7 @@ import {
   WhileNode,
 } from "./ast";
 import { ParserError, ParserErrorCode } from "./errors";
-import { Lexer } from "./lexer";
+import { Lexer, type LexerOptions } from "./lexer";
 import {
   PartialBinOpNode,
   PartialFunctionCallNode,
@@ -983,7 +990,26 @@ export class Parser {
 
     if (this.currentToken.type === TokenType.EOF) return null;
 
-    if (inlineMode) return this.listExpr();
+    if (inlineMode) {
+      // Reject script-only keywords immediately — they cannot appear in inline mode.
+      if (
+        this.currentToken.type === TokenType.RESERVED_KEYWORD &&
+        SCRIPT_ONLY_STATEMENT_KEYWORDS.has(this.currentToken.value)
+      ) {
+        this.error(ParserErrorCode.UNALLOWED_INLINE_SYNTAX, {
+          originalError: `Unexpected token: ${this.currentToken.value}`,
+        });
+      }
+      const node = this.listExpr();
+      // Reject unconsumed tokens (e.g. `1 + 2; 3 + 4` — the `; 3 + 4` would
+      // otherwise be silently discarded). Aligns with Go's ParseInline().
+      if (!this.tolerant && (this.currentToken.type as TokenType) !== TokenType.EOF) {
+        this.error(ParserErrorCode.UNEXPECTED_TOKEN, {
+          token: String(this.currentToken.value),
+        });
+      }
+      return node;
+    }
 
     const node = this.statementsList();
     if ((this.currentToken.type as TokenType) !== TokenType.EOF) {
@@ -1001,10 +1027,47 @@ export interface ParseExpressionResult {
   ast: ASTNode | null;
 }
 
-export function parseExpression(text: string): ParseExpressionResult {
-  const lexer = new Lexer(text);
+/**
+ * Parsing mode — determines how the lexer and parser behave.
+ *
+ * - `"inline"` — Expression-only mode for token `$value` fields.
+ *   Enables greedy strings (URLs, dotted paths parsed as single tokens).
+ *   No statements (variable, if, while, etc.).
+ *
+ * - `"script"` — Full statement mode for schema/function bodies.
+ *   Standard lexing (`:`, `.`, `/` produce separate tokens).
+ */
+export type ParseMode = "inline" | "script";
+
+/**
+ * Derive LexerOptions from a ParseMode, with optional overrides.
+ *
+ * Centralises the coupling between mode and lexer flags so call sites
+ * don't have to manually keep them in sync.
+ */
+export function lexerOptionsForMode(
+  mode: ParseMode,
+  overrides?: Partial<LexerOptions>,
+): LexerOptions {
+  const base: LexerOptions = mode === "inline" ? { greedyStrings: true } : {};
+  return { ...base, ...overrides };
+}
+
+export interface ParseExpressionOptions {
+  /** Parsing mode. Defaults to `"script"`. */
+  mode?: ParseMode;
+  /** Extra lexer options merged on top of the mode defaults. */
+  lexerOverrides?: Partial<LexerOptions>;
+}
+
+export function parseExpression(
+  text: string,
+  options?: ParseExpressionOptions,
+): ParseExpressionResult {
+  const mode = options?.mode ?? "script";
+  const lexer = new Lexer(text, lexerOptionsForMode(mode, options?.lexerOverrides));
   const parser = new Parser(lexer);
-  const ast = parser.parse();
+  const ast = parser.parse(mode === "inline");
 
   return {
     lexer,

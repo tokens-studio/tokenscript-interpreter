@@ -1,8 +1,7 @@
 import type { Config } from "@interpreter/config";
 import type { LanguageError } from "@interpreter/errors";
 import { Interpreter, type InterpreterResult } from "@interpreter/interpreter";
-import { Lexer } from "@interpreter/lexer";
-import { Parser } from "@interpreter/parser";
+import { type ParseMode, parseExpression } from "@interpreter/parser";
 import {
   getResultTypeName,
   isTokenscriptSymbol,
@@ -14,7 +13,8 @@ import type { ReferenceRecord } from "@src/types";
 export interface EvalOptions {
   references?: ReferenceRecord;
   config?: Config;
-  allowStatements?: boolean;
+  /** Parsing mode. Defaults to `"script"`. */
+  mode?: ParseMode;
 }
 
 export interface EvalSuccess {
@@ -34,13 +34,11 @@ export interface EvalError {
 export type EvalResult = EvalSuccess | EvalError;
 
 export function evaluateExpression(expression: string, options: EvalOptions = {}): EvalResult {
-  const { references = {}, config, allowStatements = false } = options;
+  const { references = {}, config, mode = "script" } = options;
   const startTime = performance.now();
 
   try {
-    const lexer = new Lexer(expression);
-    const parser = new Parser(lexer);
-    const ast = parser.parse(allowStatements);
+    const { ast } = parseExpression(expression, { mode });
 
     if (!ast) {
       return {

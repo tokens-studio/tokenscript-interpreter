@@ -47,6 +47,9 @@ export const messages: MessageMap = {
   [ParserErrorCode.TOLERANT_REQUIRES_INLINE]:
     "Tolerant mode only supports inline expressions. Use parse(true) for tolerant parsing.",
 
+  [ParserErrorCode.UNALLOWED_INLINE_SYNTAX]: (data) =>
+    `Syntax not allowed in inline mode: ${data.originalError}`,
+
   // Interpreter errors
   [InterpreterErrorCode.UNKNOWN_NODE_TYPE]: (data) =>
     `No visit method for AST node type: ${data.nodeType}`,
