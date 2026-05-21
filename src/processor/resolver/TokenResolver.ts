@@ -21,7 +21,11 @@ import {
 } from "@interpreter/symbols";
 import { renameReferences } from "@interpreter/utils/references";
 import { isArray, isBoolean, isNull, isNumber, isObject, isString } from "@interpreter/utils/type";
-import { type ISymbolType, SCRIPT_ONLY_STATEMENT_KEYWORDS, UNINTERPRETED_KEYWORDS } from "@src/types";
+import {
+  type ISymbolType,
+  SCRIPT_ONLY_STATEMENT_KEYWORDS,
+  UNINTERPRETED_KEYWORDS,
+} from "@src/types";
 import { createDependencyError } from "../errors";
 import {
   createTokenSymbol,

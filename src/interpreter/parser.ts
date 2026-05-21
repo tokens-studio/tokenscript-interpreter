@@ -1,4 +1,11 @@
-import { type ASTNode, Operations, ReservedKeyword, SCRIPT_ONLY_STATEMENT_KEYWORDS, type Token, TokenType } from "@src/types";
+import {
+  type ASTNode,
+  Operations,
+  ReservedKeyword,
+  SCRIPT_ONLY_STATEMENT_KEYWORDS,
+  type Token,
+  TokenType,
+} from "@src/types";
 import {
   AssignNode,
   AttributeAccessNode,

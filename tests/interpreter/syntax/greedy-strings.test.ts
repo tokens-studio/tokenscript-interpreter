@@ -5,9 +5,10 @@
  * consume until whitespace or a structural delimiter, allowing values like
  * URLs and dotted paths to be parsed as a single string.
  */
-import { describe, expect, it } from "vitest";
+
 import { Lexer } from "@src/interpreter/lexer";
 import { TokenType } from "@src/types";
+import { describe, expect, it } from "vitest";
 import { interpret } from "../test-helpers";
 
 /**
@@ -76,77 +77,44 @@ describe("Greedy Strings - Lexer", () => {
   describe("Structural delimiters still break strings", () => {
     it("should break at opening paren (function calls)", () => {
       const tokens = tokenizeGreedy("rgb(255)");
-      expect(tokens).toEqual([
-        'STRING("rgb")',
-        'LPAREN("(")',
-        'NUMBER("255")',
-        'RPAREN(")")',
-      ]);
+      expect(tokens).toEqual(['STRING("rgb")', 'LPAREN("(")', 'NUMBER("255")', 'RPAREN(")")']);
     });
 
     it("should break at comma", () => {
       const tokens = tokenizeGreedy("foo,bar");
-      expect(tokens).toEqual([
-        'STRING("foo")',
-        'COMMA(",")',
-        'STRING("bar")',
-      ]);
+      expect(tokens).toEqual(['STRING("foo")', 'COMMA(",")', 'STRING("bar")']);
     });
 
     it("should break at curly braces (references)", () => {
       const tokens = tokenizeGreedy("foo{ref}bar");
-      expect(tokens).toEqual([
-        'STRING("foo")',
-        'REFERENCE("ref")',
-        'STRING("bar")',
-      ]);
+      expect(tokens).toEqual(['STRING("foo")', 'REFERENCE("ref")', 'STRING("bar")']);
     });
 
     it("should break at semicolon", () => {
       const tokens = tokenizeGreedy("foo;bar");
-      expect(tokens).toEqual([
-        'STRING("foo")',
-        'SEMICOLON(";")',
-        'STRING("bar")',
-      ]);
+      expect(tokens).toEqual(['STRING("foo")', 'SEMICOLON(";")', 'STRING("bar")']);
     });
 
     it("should break at square brackets", () => {
       const tokens = tokenizeGreedy("foo[0]");
-      expect(tokens).toEqual([
-        'STRING("foo")',
-        'LBLOCK("[")',
-        'NUMBER("0")',
-        'RBLOCK("]")',
-      ]);
+      expect(tokens).toEqual(['STRING("foo")', 'LBLOCK("[")', 'NUMBER("0")', 'RBLOCK("]")']);
     });
 
     it("should break at quotes", () => {
       const tokens = tokenizeGreedy('foo"bar"');
-      expect(tokens).toEqual([
-        'STRING("foo")',
-        'EXPLICIT_STRING("bar")',
-      ]);
+      expect(tokens).toEqual(['STRING("foo")', 'EXPLICIT_STRING("bar")']);
     });
   });
 
   describe("Whitespace still separates tokens", () => {
     it("should separate tokens at whitespace", () => {
       const tokens = tokenizeGreedy("http://foo.bar baz");
-      expect(tokens).toEqual([
-        'STRING("http://foo.bar")',
-        'STRING("baz")',
-      ]);
+      expect(tokens).toEqual(['STRING("http://foo.bar")', 'STRING("baz")']);
     });
 
     it("should still create implicit lists with spaces", () => {
       const tokens = tokenizeGreedy("1px solid black");
-      expect(tokens).toEqual([
-        'NUMBER("1")',
-        'FORMAT("px")',
-        'STRING("solid")',
-        'STRING("black")',
-      ]);
+      expect(tokens).toEqual(['NUMBER("1")', 'FORMAT("px")', 'STRING("solid")', 'STRING("black")']);
     });
   });
 
@@ -168,18 +136,12 @@ describe("Greedy Strings - Lexer", () => {
 
     it("should recognize format units adjacent to numbers", () => {
       const tokens = tokenizeGreedy("3px");
-      expect(tokens).toEqual([
-        'NUMBER("3")',
-        'FORMAT("px")',
-      ]);
+      expect(tokens).toEqual(['NUMBER("3")', 'FORMAT("px")']);
     });
 
     it("should recognize format units with decimals", () => {
       const tokens = tokenizeGreedy("1.5rem");
-      expect(tokens).toEqual([
-        'NUMBER("1.5")',
-        'FORMAT("rem")',
-      ]);
+      expect(tokens).toEqual(['NUMBER("1.5")', 'FORMAT("rem")']);
     });
 
     it("should NOT recognize keyword in dotted form", () => {
@@ -201,42 +163,24 @@ describe("Greedy Strings - Lexer", () => {
 
     it("should still lex references with attribute access", () => {
       const tokens = tokenizeGreedy("{color}.lightness()");
-      expect(tokens).toEqual([
-        'REFERENCE("color")',
-        'DOT(".")',
-        'STRING("lightness")',
-        'LPAREN("(")',
-        'RPAREN(")")',
-      ]);
+      expect(tokens).toEqual(['REFERENCE("color")', 'DOT(".")', 'STRING("lightness")', 'LPAREN("(")', 'RPAREN(")")']);
     });
 
     it("should still handle arithmetic with references", () => {
       const tokens = tokenizeGreedy("{base} * 2");
-      expect(tokens).toEqual([
-        'REFERENCE("base")',
-        'OPERATION("*")',
-        'NUMBER("2")',
-      ]);
+      expect(tokens).toEqual(['REFERENCE("base")', 'OPERATION("*")', 'NUMBER("2")']);
     });
   });
 
   describe("Non-greedy mode is unchanged", () => {
     it("should still break on colon without greedy", () => {
       const tokens = tokenizeDefault("hello:world");
-      expect(tokens).toEqual([
-        'STRING("hello")',
-        'COLON(":")',
-        'STRING("world")',
-      ]);
+      expect(tokens).toEqual(['STRING("hello")', 'COLON(":")', 'STRING("world")']);
     });
 
     it("should still break on dot without greedy", () => {
       const tokens = tokenizeDefault("foo.bar");
-      expect(tokens).toEqual([
-        'STRING("foo")',
-        'DOT(".")',
-        'STRING("bar")',
-      ]);
+      expect(tokens).toEqual(['STRING("foo")', 'DOT(".")', 'STRING("bar")']);
     });
   });
 });

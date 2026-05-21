@@ -14,7 +14,7 @@
 import type { ASTNode, Token } from "@src/types";
 import { ReferenceNode, walkAST } from "../ast";
 import { Lexer } from "../lexer";
-import { Parser, lexerOptionsForMode } from "../parser";
+import { lexerOptionsForMode, Parser } from "../parser";
 import { PartialReferenceNode } from "./partial-nodes";
 import { ParseState, type TolerantParseResult } from "./types";
 
