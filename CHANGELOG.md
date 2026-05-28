@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.38.0] - 2026-05-28
+
 ### Changed
 
 - Bump `@tokens-studio/schema-validation` to `^0.2.0` — adds support for `description` fields on schema properties
