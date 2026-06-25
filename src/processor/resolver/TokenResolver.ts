@@ -437,11 +437,11 @@ class PrefixResolver {
    * Returns the normalized value, or the original if no script or $type.
    */
   private normalizeTokenValue(tokenName: RefPath, value: InterpreterResult): InterpreterResult {
-    if (!(value && typeof value === 'object' && 'type' in value)) return value;
+    if (!(value && typeof value === "object" && "type" in value)) return value;
     const tokenData = this.tokens.get(tokenName);
     const tokenType =
-      tokenData && typeof tokenData === 'object' && '$type' in tokenData
-        ? (tokenData as any).$type as string
+      tokenData && typeof tokenData === "object" && "$type" in tokenData
+        ? ((tokenData as any).$type as string)
         : undefined;
     if (!tokenType) return value;
     if (!this.config?.tokenManager) return value;
@@ -1651,12 +1651,15 @@ export class TokenResolver {
 
     // Normalize using token type script (e.g. bare 300 → 300ms for duration)
     let normalizedResolved = resolved;
-    if (type && resolved && typeof resolved === 'object' && 'type' in resolved) {
-      normalizedResolved = this.config?.tokenManager.normalize(type, resolved as ISymbolType) ?? resolved;
+    if (type && resolved && typeof resolved === "object" && "type" in resolved) {
+      normalizedResolved =
+        this.config?.tokenManager.normalize(type, resolved as ISymbolType) ?? resolved;
     }
 
     if (validate && type) {
-      issues.push(...collectTypeValidationIssues(this.config, "\0__preview__", type, normalizedResolved));
+      issues.push(
+        ...collectTypeValidationIssues(this.config, "\0__preview__", type, normalizedResolved),
+      );
     }
 
     return { resolved: normalizedResolved, issues };

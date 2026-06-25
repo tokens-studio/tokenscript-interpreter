@@ -153,27 +153,21 @@ function makeDurationConfig(): Config {
 
 describe("processTokens normalization integration", () => {
   it("normalizes bare duration in resolved output", () => {
-    const tokens = new Map<string, TokenData>([
-      ["timing.fast", { $value: "200", $type: "duration" }],
-    ]);
+    const tokens = new Map<string, TokenData>([["timing.fast", { $value: "200", $type: "duration" }]]);
     const result = processTokens(tokens, { config: makeDurationConfig() });
     const output = result.output as Map<string, string | InterpreterResult>;
     expect(output.get("timing.fast")?.toString()).toBe("200ms");
   });
 
   it("normalizes seconds to ms in resolved output", () => {
-    const tokens = new Map<string, TokenData>([
-      ["timing.slow", { $value: "0.5s", $type: "duration" }],
-    ]);
+    const tokens = new Map<string, TokenData>([["timing.slow", { $value: "0.5s", $type: "duration" }]]);
     const result = processTokens(tokens, { config: makeDurationConfig() });
     const output = result.output as Map<string, string | InterpreterResult>;
     expect(output.get("timing.slow")?.toString()).toBe("500ms");
   });
 
   it("passes through ms values in resolved output", () => {
-    const tokens = new Map<string, TokenData>([
-      ["timing.normal", { $value: "300ms", $type: "duration" }],
-    ]);
+    const tokens = new Map<string, TokenData>([["timing.normal", { $value: "300ms", $type: "duration" }]]);
     const result = processTokens(tokens, { config: makeDurationConfig() });
     const output = result.output as Map<string, string | InterpreterResult>;
     expect(output.get("timing.normal")?.toString()).toBe("300ms");
@@ -191,18 +185,14 @@ describe("processTokens normalization integration", () => {
   });
 
   it("normalizes in resolveValue for form preview", () => {
-    const tokens = new Map<string, TokenData>([
-      ["timing.base", { $value: "200", $type: "duration" }],
-    ]);
+    const tokens = new Map<string, TokenData>([["timing.base", { $value: "200", $type: "duration" }]]);
     const result = processTokens(tokens, { config: makeDurationConfig() });
     const preview = result.resolver.resolveValue({ value: "42", type: "duration" });
     expect(preview.resolved?.toString()).toBe("42ms");
   });
 
   it("does not normalize tokens without $type", () => {
-    const tokens = new Map<string, TokenData>([
-      ["generic", { $value: "200" }],
-    ]);
+    const tokens = new Map<string, TokenData>([["generic", { $value: "200" }]]);
     const result = processTokens(tokens, { config: makeDurationConfig() });
     const output = result.output as Map<string, string | InterpreterResult>;
     expect(output.get("generic")?.toString()).toBe("200");
