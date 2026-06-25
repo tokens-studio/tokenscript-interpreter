@@ -1652,7 +1652,7 @@ export class TokenResolver {
     // Normalize using token type script (e.g. bare 300 → 300ms for duration)
     let normalizedResolved = resolved;
     if (type && resolved && typeof resolved === 'object' && 'type' in resolved) {
-      normalizedResolved = this.config.tokenManager.normalize(type, resolved as ISymbolType);
+      normalizedResolved = this.config?.tokenManager.normalize(type, resolved as ISymbolType) ?? resolved;
     }
 
     if (validate && type) {
