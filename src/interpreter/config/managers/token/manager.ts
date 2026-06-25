@@ -4,6 +4,7 @@ import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
 import {
   BooleanSymbol,
+  ColorSymbol,
   DictionarySymbol,
   ListSymbol,
   StringSymbol,
@@ -56,6 +57,33 @@ export class TokenManager extends BaseManager<TokenSpecification, TokenSymbol, T
    */
   private validationInterpreterCache = new Map<string, Interpreter>();
 
+  /**
+   * TokenScript stringification scripts keyed by `tokenType\0formatKey`.
+   * The script receives {input} (the resolved token value) and, for the
+   * color path, {colorSpace} (the export's target color space). It should
+   * return the formatted output string for that format.
+   */
+  private stringificationScripts: Map<string, string> = new Map();
+
+  /** Cached parsed ASTs for stringification scripts. */
+  private stringificationAstCache = new Map<string, ASTNode | null>();
+
+  /** Cached Interpreter instances for stringification scripts. */
+  private stringificationInterpreterCache = new Map<string, Interpreter>();
+
+  /**
+   * TokenScript normalization scripts by token type.
+   * The script receives {input} as the resolved value and returns the
+   * normalized value (e.g. bare number → number with unit).
+   */
+  private normalizationScripts: Map<string, string> = new Map();
+
+  /** Cached parsed ASTs for normalization scripts. */
+  private normalizationAstCache = new Map<string, ASTNode | null>();
+
+  /** Cached Interpreter instances for normalization scripts. */
+  private normalizationInterpreterCache = new Map<string, Interpreter>();
+
   protected getSpecName(spec: TokenSpecification): string {
     return specName(spec);
   }
@@ -74,14 +102,22 @@ export class TokenManager extends BaseManager<TokenSpecification, TokenSymbol, T
     tokenManager.validationScripts = new Map(this.validationScripts);
     tokenManager.validationAstCache = new Map(this.validationAstCache);
     tokenManager.validationInterpreterCache = new Map(this.validationInterpreterCache);
+    tokenManager.stringificationScripts = new Map(this.stringificationScripts);
+    tokenManager.stringificationAstCache = new Map(this.stringificationAstCache);
+    tokenManager.stringificationInterpreterCache = new Map(this.stringificationInterpreterCache);
+    tokenManager.normalizationScripts = new Map(this.normalizationScripts);
+    tokenManager.normalizationAstCache = new Map(this.normalizationAstCache);
+    tokenManager.normalizationInterpreterCache = new Map(this.normalizationInterpreterCache);
     return tokenManager as this;
   }
 
   public register(uri: uriType, spec: TokenSpecification | string): TokenSpecification {
     let parsedSpec: TokenSpecification;
+    let rawInput: unknown;
 
     try {
       const input = typeof spec === "string" ? JSON.parse(spec) : spec;
+      rawInput = input;
       parsedSpec = parseTokenSpec(input);
     } catch (err) {
       const summary =
@@ -100,6 +136,28 @@ export class TokenManager extends BaseManager<TokenSpecification, TokenSymbol, T
     // Auto-register validation script if present in spec
     if (parsedSpec.validation) {
       this.registerValidation(parsedSpec.name, parsedSpec.validation);
+    }
+
+    // Auto-register normalization script if present in spec
+    if (parsedSpec.normalization) {
+      this.registerNormalization(parsedSpec.name, parsedSpec.normalization);
+    }
+
+    // Auto-register per-format stringification scripts if present in spec.
+    // The schema field is `stringification: { <formatKey>: {type, script} }`.
+    // Read from the raw input: `stringification` is not (yet) part of the
+    // published schema-validation token schema, so the Zod parse strips it.
+    // It is opaque to schema validation — same as the Go side reads it from
+    // the raw spec JSON — so honour it directly off the original object.
+    const specStringification = (
+      rawInput as {
+        stringification?: Record<string, string | { type: string; script: string }>;
+      }
+    ).stringification;
+    if (specStringification) {
+      for (const [formatKey, block] of Object.entries(specStringification)) {
+        this.registerStringification(parsedSpec.name, formatKey, block);
+      }
     }
 
     return parsedSpec;
@@ -128,6 +186,222 @@ export class TokenManager extends BaseManager<TokenSpecification, TokenSymbol, T
    */
   public getValidation(tokenType: string): string | undefined {
     return this.validationScripts.get(tokenType.toLowerCase());
+  }
+
+  /**
+   * Register a TokenScript normalization script for a token type.
+   * The script receives {input} as the resolved value and returns the
+   * normalized form (e.g. bare 300 → 300ms for duration tokens).
+   * Accepts either a string (direct script) or an object with type and script properties.
+   */
+  public registerNormalization(
+    tokenType: string,
+    normalization: string | { type: string; script: string },
+  ): void {
+    const normalizedType = tokenType.toLowerCase();
+    const script = typeof normalization === "string" ? normalization : normalization.script;
+    this.normalizationScripts.set(normalizedType, script);
+    this.normalizationAstCache.delete(normalizedType);
+    this.normalizationInterpreterCache.delete(normalizedType);
+  }
+
+  /**
+   * Get normalization script for a token type.
+   */
+  public getNormalization(tokenType: string): string | undefined {
+    return this.normalizationScripts.get(tokenType.toLowerCase());
+  }
+
+  /**
+   * Normalize a resolved token value using the token type's normalization script.
+   * Returns the normalized value, or the original value if no script is registered
+   * or execution fails.
+   */
+  public normalize(tokenType: string, value: ISymbolType): ISymbolType {
+    const normalizedType = tokenType.toLowerCase();
+    const script = this.normalizationScripts.get(normalizedType);
+    if (!script) return value;
+
+    try {
+      let interpreter = this.normalizationInterpreterCache.get(normalizedType);
+
+      if (!interpreter) {
+        let ast = this.normalizationAstCache.get(normalizedType);
+        if (ast === undefined) {
+          ast = new Parser(new Lexer(script)).parse();
+          this.normalizationAstCache.set(normalizedType, ast);
+        }
+
+        interpreter = new Interpreter(ast, {
+          config: this.parentConfig ?? undefined,
+        });
+        this.normalizationInterpreterCache.set(normalizedType, interpreter);
+      }
+
+      interpreter.resetSymbolTable();
+      interpreter.setReference("input", value);
+
+      const result = interpreter.interpret();
+      if (result != null && typeof result === "object" && "type" in result) {
+        return result as ISymbolType;
+      }
+      return value;
+    } catch {
+      return value;
+    }
+  }
+
+  /** Map key for a (tokenType, formatKey) stringification pair. */
+  private stringifyKey(tokenType: string, formatKey: string): string {
+    return `${tokenType.toLowerCase()}\u0000${formatKey}`;
+  }
+
+  /**
+   * Register a TokenScript stringification script for a token type and output
+   * format (e.g. "css"). The script receives {input} (the resolved value) and
+   * should return the formatted output string. Accepts either a raw script
+   * string or a {type, script} block (from a built schema).
+   */
+  public registerStringification(
+    tokenType: string,
+    formatKey: string,
+    stringification: string | { type: string; script: string },
+  ): void {
+    const key = this.stringifyKey(tokenType, formatKey);
+    const script = typeof stringification === "string" ? stringification : stringification.script;
+    this.stringificationScripts.set(key, script);
+    // Invalidate caches when script changes
+    this.stringificationAstCache.delete(key);
+    this.stringificationInterpreterCache.delete(key);
+  }
+
+  /** Get the stringification script for a token type and format, if any. */
+  public getStringification(tokenType: string, formatKey: string): string | undefined {
+    return this.stringificationScripts.get(this.stringifyKey(tokenType, formatKey));
+  }
+
+  /** Whether a stringification script is registered for a token type and format. */
+  public hasStringification(tokenType: string, formatKey: string): boolean {
+    return this.stringificationScripts.has(this.stringifyKey(tokenType, formatKey));
+  }
+
+  /**
+   * Stringify a resolved token value for the given format. Before the script
+   * runs, the value's scalar leaves are walked: color leaves are rendered to
+   * their literal string form (valid CSS for manager-backed colors), so the
+   * script only ever interpolates strings/numbers — never live color objects.
+   *
+   * Returns the formatted string, or `undefined` if no script is registered
+   * or execution fails.
+   *
+   * This is the always-resolved path for non-color token types (gradient,
+   * border, shadow, fontFamily, cubicBezier). Color types use
+   * {@link stringifyColor}.
+   */
+  public stringify(tokenType: string, formatKey: string, value: ISymbolType): string | undefined {
+    const prepared = this.prepareStringifyValue(value);
+    return this.runStringificationScript(tokenType, formatKey, { input: prepared });
+  }
+
+  /**
+   * Stringify a color token, passing the raw color as {input} (NOT
+   * pre-stringified) and the export's target color space as {colorSpace}. The
+   * script converts ({input}.to(colorSpace)) and renders the channels itself —
+   * color conversion lives in TokenScript, not here.
+   *
+   * Returns the formatted string, or `undefined` when no script is registered,
+   * execution fails, or the script yields an empty string (the convention by
+   * which a script defers a color space it does not render back to the
+   * caller's fallback formatter).
+   */
+  public stringifyColor(
+    tokenType: string,
+    formatKey: string,
+    value: ISymbolType,
+    colorSpace: string,
+  ): string | undefined {
+    const result = this.runStringificationScript(tokenType, formatKey, {
+      input: value,
+      colorSpace: new StringSymbol(colorSpace),
+    });
+    if (result === "") {
+      return undefined;
+    }
+    return result;
+  }
+
+  /**
+   * Run a stringification script with the given references bound. Uses a cached
+   * Interpreter when available to avoid recreation overhead. Returns the script
+   * result coerced to a string, or `undefined` if no script is registered or
+   * execution fails.
+   */
+  private runStringificationScript(
+    tokenType: string,
+    formatKey: string,
+    references: Record<string, ISymbolType>,
+  ): string | undefined {
+    const key = this.stringifyKey(tokenType, formatKey);
+    const script = this.stringificationScripts.get(key);
+    if (!script) {
+      return undefined;
+    }
+
+    try {
+      let interpreter = this.stringificationInterpreterCache.get(key);
+      if (!interpreter) {
+        let ast = this.stringificationAstCache.get(key);
+        if (ast === undefined) {
+          ast = new Parser(new Lexer(script)).parse();
+          this.stringificationAstCache.set(key, ast);
+        }
+        interpreter = new Interpreter(ast, {
+          config: this.parentConfig ?? undefined,
+        });
+        this.stringificationInterpreterCache.set(key, interpreter);
+      }
+
+      interpreter.resetSymbolTable();
+      for (const [name, symbol] of Object.entries(references)) {
+        interpreter.setReference(name, symbol);
+      }
+
+      const result = interpreter.interpret();
+      if (result instanceof StringSymbol) {
+        return result.value as string;
+      }
+      if (result === null || result === undefined) {
+        return undefined;
+      }
+      // Non-string result: coerce via toString (mirrors the Go resolver).
+      return result.toString();
+    } catch {
+      return undefined;
+    }
+  }
+
+  /**
+   * Walk a value and rewrite its scalar leaves so a stringification script only
+   * ever interpolates strings/numbers. Color leaves are replaced with their
+   * literal string form; all other scalars pass through untouched. Dictionaries
+   * and lists are rebuilt recursively.
+   */
+  private prepareStringifyValue(value: ISymbolType): ISymbolType {
+    if (value instanceof DictionarySymbol) {
+      const entries = new Map<string, ISymbolType>();
+      for (const [k, v] of value.value) {
+        entries.set(k, this.prepareStringifyValue(v));
+      }
+      return new DictionarySymbol(entries, this.parentConfig ?? undefined);
+    }
+    if (value instanceof ListSymbol) {
+      const elements = value.value.map((el) => this.prepareStringifyValue(el));
+      return new ListSymbol(elements, value.isImplicit, this.parentConfig ?? undefined);
+    }
+    if (value instanceof ColorSymbol) {
+      return new StringSymbol(value.toString(), this.parentConfig ?? undefined);
+    }
+    return value;
   }
 
   /**
