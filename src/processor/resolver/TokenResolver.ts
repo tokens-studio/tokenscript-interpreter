@@ -432,11 +432,28 @@ class PrefixResolver {
     }
   }
 
+  /**
+   * Normalize a resolved value using the token type's normalization script.
+   * Returns the normalized value, or the original if no script or $type.
+   */
+  private normalizeTokenValue(tokenName: RefPath, value: InterpreterResult): InterpreterResult {
+    if (!(value && typeof value === "object" && "type" in value)) return value;
+    const tokenData = this.tokens.get(tokenName);
+    const tokenType =
+      tokenData && typeof tokenData === "object" && "$type" in tokenData
+        ? ((tokenData as any).$type as string)
+        : undefined;
+    if (!tokenType) return value;
+    if (!this.config?.tokenManager) return value;
+    return this.config.tokenManager.normalize(tokenType, value as ISymbolType);
+  }
+
   private earlyResolvePrimitiveToken(tokenName: RefPath, value: InterpreterResult): void {
-    this.resolved.set(tokenName, value);
-    this.referenceCache.set(tokenName, value);
-    this.callbacks?.onResolve?.(tokenName, value);
-    this.lintTokenResult(tokenName, value);
+    const normalized = this.normalizeTokenValue(tokenName, value);
+    this.resolved.set(tokenName, normalized);
+    this.referenceCache.set(tokenName, normalized);
+    this.callbacks?.onResolve?.(tokenName, normalized);
+    this.lintTokenResult(tokenName, normalized);
     this.graph.addNode(tokenName, []);
     this.earlyResolved.push(tokenName);
   }
@@ -669,11 +686,12 @@ class PrefixResolver {
         this.objectParsers,
         tokenData.$metadata,
       );
-      this.resolved.set(tokenName, tokenSymbol);
-      this.referenceCache.set(tokenName, tokenSymbol);
+      const normalizedSymbol = this.normalizeTokenValue(tokenName, tokenSymbol);
+      this.resolved.set(tokenName, normalizedSymbol);
+      this.referenceCache.set(tokenName, normalizedSymbol);
 
-      this.callbacks?.onResolve?.(tokenName, tokenSymbol);
-      this.lintTokenResult(tokenName, tokenSymbol);
+      this.callbacks?.onResolve?.(tokenName, normalizedSymbol);
+      this.lintTokenResult(tokenName, normalizedSymbol);
       this.graph.addNode(tokenName, []);
       this.earlyResolved.push(tokenName);
       return;
@@ -899,15 +917,18 @@ class PrefixResolver {
       this.addIssue(tokenName, dependencyError);
     } else {
       tokenValue = this.tokenInterpreter.interpretToken(tokenName, tokenValueStr);
-      this.resolved.set(tokenName, tokenValue);
 
       if (tokenValue instanceof Error) {
+        this.resolved.set(tokenName, tokenValue);
         this.callbacks?.onError?.(tokenName, tokenValue, tokenValueStr);
         this.addIssue(tokenName, this.ensureLanguageError(tokenValue));
       } else {
-        this.callbacks?.onResolve?.(tokenName, tokenValue);
-        this.lintTokenResult(tokenName, tokenValue);
-        this.tokenInterpreter.updateReferenceCache(tokenName, tokenValue);
+        const normalizedValue = this.normalizeTokenValue(tokenName, tokenValue);
+        tokenValue = normalizedValue as TokenResult;
+        this.resolved.set(tokenName, normalizedValue);
+        this.callbacks?.onResolve?.(tokenName, normalizedValue);
+        this.lintTokenResult(tokenName, normalizedValue);
+        this.tokenInterpreter.updateReferenceCache(tokenName, normalizedValue);
       }
     }
 
@@ -974,11 +995,12 @@ class PrefixResolver {
         this.objectParsers,
         tokenData.$metadata,
       );
-      this.resolved.set(tokenName, tokenSymbol);
-      this.referenceCache.set(tokenName, tokenSymbol);
+      const normalizedSymbol = this.normalizeTokenValue(tokenName, tokenSymbol);
+      this.resolved.set(tokenName, normalizedSymbol);
+      this.referenceCache.set(tokenName, normalizedSymbol);
 
-      this.callbacks?.onResolve?.(tokenName, tokenSymbol);
-      this.lintTokenResult(tokenName, tokenSymbol);
+      this.callbacks?.onResolve?.(tokenName, normalizedSymbol);
+      this.lintTokenResult(tokenName, normalizedSymbol);
     }
 
     this.unresolved.delete(tokenName);
@@ -1627,10 +1649,19 @@ export class TokenResolver {
       return { resolved: null, issues };
     }
 
-    if (validate && type) {
-      issues.push(...collectTypeValidationIssues(this.config, "\0__preview__", type, resolved));
+    // Normalize using token type script (e.g. bare 300 → 300ms for duration)
+    let normalizedResolved = resolved;
+    if (type && resolved && typeof resolved === "object" && "type" in resolved) {
+      normalizedResolved =
+        this.config?.tokenManager.normalize(type, resolved as ISymbolType) ?? resolved;
     }
 
-    return { resolved, issues };
+    if (validate && type) {
+      issues.push(
+        ...collectTypeValidationIssues(this.config, "\0__preview__", type, normalizedResolved),
+      );
+    }
+
+    return { resolved: normalizedResolved, issues };
   }
 }
