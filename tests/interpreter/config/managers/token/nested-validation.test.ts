@@ -128,11 +128,10 @@ const typographySchema = {
   validation: {
     type: "https://schema.tokenscript.dev.gcp.tokens.studio/api/v1/core/tokenscript/0/",
     script: `// Validation for typography values.
-if (!is_dictionary({input})) [
-  variable input_type: String = type({input});
-  if (input_type != "typography") [
-    return "INVALID_TYPOGRAPHY_TYPE";
-  ];
+// Accept dictionaries and token wrappers (cross-engine safe: Go's type() on a
+// token wrapper returns the base type "token", so use is_token()).
+if (!is_dictionary({input}) && !is_token({input})) [
+  return "INVALID_TYPOGRAPHY_TYPE";
 ];
 
 return true;
