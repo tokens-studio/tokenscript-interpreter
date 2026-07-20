@@ -7,7 +7,14 @@ import {
 import { Interpreter } from "@interpreter/interpreter";
 import { Lexer } from "@interpreter/lexer";
 import { Parser } from "@interpreter/parser";
-import { BooleanSymbol, ListSymbol, NumberSymbol, StringSymbol } from "@interpreter/symbols";
+import {
+  BooleanSymbol,
+  ListSymbol,
+  NumberSymbol,
+  NumberWithUnitSymbol,
+  StringSymbol,
+  TokenSymbol,
+} from "@interpreter/symbols";
 import type { ISymbolType, Token } from "@src/types";
 import { ZodError } from "@tokens-studio/schema-validation";
 import { BaseManager } from "../base-manager";
@@ -106,14 +113,24 @@ export class FunctionsManager extends BaseManager<
     });
 
     this.registerFunction("type", (arg: ISymbolType): StringSymbol => {
-      const typeName = arg.getTypeName();
-
-      if (typeName.includes(".")) {
-        const parts = typeName.split(".");
-        return new StringSymbol(parts[parts.length - 1].toLowerCase());
+      // For NumberWithUnit values, return the unit string (e.g. "%", "px", "s")
+      // so that expressions like type(val) == "%" work as expected. Matches the
+      // Go runtime's builtinType special-case.
+      if (arg instanceof NumberWithUnitSymbol) {
+        return new StringSymbol(arg.unit);
       }
 
-      return new StringSymbol(typeName.toLowerCase());
+      // For Token wrappers, return the base type "token" (without the sub-type)
+      // to match Go, whose TokenValue.Type() returns "Token" — unlike Color/List
+      // whose Type() includes the sub-type.
+      if (arg instanceof TokenSymbol) {
+        return new StringSymbol(arg.type.toLowerCase());
+      }
+
+      // Return the full lowercase type name (e.g. "list.implicit", "color.hex")
+      // for cross-runtime consistency (Go/TS parity) — Go returns
+      // strings.ToLower(Type()) without stripping the sub-type.
+      return new StringSymbol(arg.getTypeName().toLowerCase());
     });
 
     // Type predicate functions
